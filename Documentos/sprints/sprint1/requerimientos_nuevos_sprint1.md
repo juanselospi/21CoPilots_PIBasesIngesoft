@@ -140,6 +140,14 @@ Cada punto necesita que Daniel apruebe, rechace o ajuste, antes de que entre a u
 
 **Por qué se discute:** el SRS define el inicio de sesión (RF-50, RF-53) y la recuperación de contraseña (RF-54), pero nunca el cierre de sesión ni una política mínima de contraseña.
 
+**Input del cliente:** 8 a 12 caracteres 1 mayuscula 1 numero y 1 caracter especial
+
+### 16. Landing page de inicio universal
+
+> Como usuario del sistema, quiero ver una pantalla de inicio al entrar al sitio que muestre un carrusel se items nuevos en el sitio, grupos de items por categoría, y un banner del negocio.
+
+**Por qué se discute:** ningun RF define formalmente la pagina de inicio y su apariencia.
+
 ---
 
 ## Resumen para la reunión
@@ -161,3 +169,6 @@ Cada punto necesita que Daniel apruebe, rechace o ajuste, antes de que entre a u
 | 13 | Editar términos y condiciones | Menor |
 | 14 | Umbral de alerta configurable | Confirmar |
 | 15 | Cerrar sesión y contraseñas | Menor |
+| 16 | Landing page de inicio | Faltante |
+
+> ENTREVISTA REALIZADA -> TODO FUE APROBADO POR EL CLIENTE: 24/SEP/2026 7:25am
