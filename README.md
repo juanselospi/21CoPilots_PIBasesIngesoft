@@ -24,6 +24,6 @@ Plataforma de comercio electrónico para una tienda de cultura geek, con **módu
 > **Estado:** decisión del equipo.
 
 | Capa               | Tecnología                 | Responsabilidades |
-| **Frontend**       | React + JavaScript         | Catálogo, ficha de producto, carrito, login/registro, panel de usuario, checkout, panel administrativo |
+| **Frontend**       | React + Vite               | Catálogo, ficha de producto, carrito, login/registro, panel de usuario, checkout, panel administrativo |
 | **Backend**        | Node.js + Express          | API REST, autenticación, lógica de negocio (motor de precios, inventario, niveles de fidelidad), gestión de usuarios, productos, carrito y órdenes |
 | **Base de datos**  | PostgreSQL                 | Usuarios, clientes, administrador, productos, categorías, inventario, carrito, pedidos, detalles de pedido, pagos, historial de estados y bitácora de auditoría |
