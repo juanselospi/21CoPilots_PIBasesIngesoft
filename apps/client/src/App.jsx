@@ -1,13 +1,11 @@
 import Header from './components/header/Header.jsx'
 import Footer from './components/footer/Footer.jsx'
-import Home from './pages/home/Home.jsx'
+import Products from './pages/products/Products.jsx'
 
 function App() {
   return (
     <>
-      <Header />
-      <Home />
-      <Footer />
+      <Products />
     </>
   )
 }
