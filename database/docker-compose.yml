@@ -1,0 +1,43 @@
+# Base de datos local de desarrollo — DC Hobbies Cultura Geek Online
+#
+# Solo PostgreSQL corre en Docker. El backend (apps/server) y el frontend
+# (apps/client) se ejecutan directamente con npm para tener recarga en caliente.
+#
+#   npm run db:up      -> levanta PostgreSQL
+#   npm run db:reset   -> borra todo, aplica migraciones y semillas
+#
+# Adminer (cliente web opcional): docker compose --profile tools up -d
+#   luego abrir http://localhost:8080  (servidor: db, usuario/clave del .env)
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: dchobbies_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-dchobbies}
+      POSTGRES_USER: ${DB_USER:-dchobbies}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dchobbies_dev}
+      TZ: America/Costa_Rica
+      PGTZ: America/Costa_Rica
+    ports:
+      # Puerto 5433 en su máquina para no chocar con un PostgreSQL instalado localmente
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - dchobbies_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  adminer:
+    image: adminer:latest
+    profiles: ["tools"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  dchobbies_db_data:
