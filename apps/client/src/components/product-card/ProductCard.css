@@ -1,0 +1,121 @@
+.product-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+}
+
+.product-card-image {
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  object-fit: cover;
+  background: #e5e7eb;
+}
+
+.product-card-compact .product-card-image {
+  aspect-ratio: 16 / 7;
+}
+
+.product-card-no-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  border-bottom: 1px dashed #9ca3af;
+  background: #f1f3f6;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.product-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+
+.product-card-name {
+  margin: 0;
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.product-card-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.product-card-compact .product-card-details {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-card-price {
+  margin: 0;
+  color: #111827;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.product-card-compact .product-card-price {
+  font-size: 17px;
+}
+
+.product-card-tax {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.product-card-availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.product-card-availability::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.product-card-availability.in-stock {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.product-card-availability.backorder {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.product-card-button {
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #334155;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.product-card-button:hover {
+  background: #1e293b;
+}

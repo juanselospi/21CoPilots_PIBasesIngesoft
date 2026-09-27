@@ -1,0 +1,101 @@
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-logo {
+  padding: 8px 32px;
+  border-radius: 6px;
+  background: #e5e7eb;
+  color: #475569;
+  font-weight: 600;
+}
+
+.header-search {
+  display: flex;
+  flex: 1;
+}
+
+.header-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.header-search button {
+  padding: 0 16px;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  background: #334155;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.header-search button:hover {
+  background: #1e293b;
+}
+
+.header-top > a {
+  color: #1f2937;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header-top > a:hover {
+  color: #000;
+}
+
+.header-top > a:last-child {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.header-categories {
+  display: flex;
+  gap: 32px;
+  padding: 12px 24px;
+  background: #f1f3f6;
+  overflow-x: auto;
+}
+
+.header-categories a {
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header-categories a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .header-top {
+    flex-wrap: wrap;
+    gap: 12px 16px;
+  }
+
+  .header-search {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
