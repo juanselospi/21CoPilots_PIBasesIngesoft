@@ -1,0 +1,20 @@
+{
+  "name": "dc-hobbies-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "API REST de DC Hobbies Cultura Geek Online. Multicapa con capas por módulo (ver documentos/diseño/arquitectura.md).",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.13.0"
+  }
+}
