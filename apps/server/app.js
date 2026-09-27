@@ -45,7 +45,9 @@ export function crearAplicacion(sistema) {
   });
 
   // ---- Módulos de negocio ----
-  // Se montan aquí conforme se agregan: aplicacion.use("/api/<modulo>", ...).
+  const { modulos } = sistema;
+
+  aplicacion.use("/api/catalogo", modulos.catalogo.rutas);
 
   // Cualquier ruta que nadie atendió termina aquí, con el mismo formato
   // de error que el resto de la API.

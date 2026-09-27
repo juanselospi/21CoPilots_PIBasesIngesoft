@@ -19,17 +19,22 @@
 import { crearPool } from "./shared/db/pool.js";
 import { BusDeEventos } from "./shared/eventos/bus-de-eventos.js";
 
+import { crearModuloCatalogo } from "./modules/catalogo/index.js";
+
 export function componerSistema(configuracion) {
   // ---- 1. Infraestructura ----
   // Una sola instancia del pool, inyectada; no es un Singleton (§ 4.5).
   const pool = crearPool(configuracion.baseDeDatos);
   const busDeEventos = new BusDeEventos();
 
-  // Los adaptadores, los módulos y los observadores se agregan aquí,
-  // en el orden de construcción de arriba.
+  // ---- 4. Módulos, en orden de dependencia ----
+  const catalogo = crearModuloCatalogo({
+    pool,
+    negocio: configuracion.negocio,
+  });
 
   return {
-    modulos: {},
+    modulos: { catalogo },
     busDeEventos,
     verificarBaseDeDatos: () => pool.query("SELECT 1"),
     cerrar: () => pool.end(),
