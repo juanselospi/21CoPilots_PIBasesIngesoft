@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './Products.css'
 import { products } from '../../data/products.js'
+import ProductEditModal from '../../components/product-edit-modal/ProductEditModal.jsx'
 
 const priceFormat = new Intl.NumberFormat('es-CR', {
     style: 'currency',
@@ -22,16 +23,23 @@ const sortOptions = [
 
 const pageSizes = [24, 48, 96]
 
+// TODO: leer de la configuración del negocio que entregue la API (RES-06)
+const taxRate = 13
+
 function Products() {
     const [search, setSearch] = useState('')
     const [view, setView] = useState('grid')
     const [sort, setSort] = useState('name-asc')
     const [pageSize, setPageSize] = useState(pageSizes[0])
+    const [editingProduct, setEditingProduct] = useState(null)
 
     const term = search.trim().toLowerCase()
     const visibleProducts = products.filter(({ name, sku }) =>
         name.toLowerCase().includes(term) || sku.toLowerCase().includes(term)
     )
+
+    // TODO: enviar los cambios a la API; el servidor recalcula el precio (RF-51)
+    const handleSave = () => setEditingProduct(null)
 
     return (
         <main className='products'>
@@ -121,7 +129,13 @@ function Products() {
                                 <h3 className='products-card-name'>{product.name}</h3>
                                 <p className='products-card-category'>{product.category}</p>
                                 <p className='products-card-price'>{priceFormat.format(product.price)}</p>
-                                <button type='button' className='products-button'>Editar</button>
+                                <button
+                                    type='button'
+                                    className='products-button'
+                                    onClick={() => setEditingProduct(product)}
+                                >
+                                    Editar
+                                </button>
                             </div>
                         </article>
                     ))}
@@ -147,6 +161,15 @@ function Products() {
                     ))}
                 </select>
             </section>
+
+            {editingProduct && (
+                <ProductEditModal
+                    product={editingProduct}
+                    taxRate={taxRate}
+                    onClose={() => setEditingProduct(null)}
+                    onSave={handleSave}
+                />
+            )}
         </main>
     )
 }

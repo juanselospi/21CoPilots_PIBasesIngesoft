@@ -1,0 +1,156 @@
+.product-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.product-edit-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 440px;
+  max-height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  color-scheme: light;
+  text-align: left;
+}
+
+.product-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.product-edit-header h2 {
+  margin: 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.product-edit-header p {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.product-edit-close {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.product-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.product-edit-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.product-edit-input input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #1f2937;
+  font: inherit;
+}
+
+.product-edit-input span {
+  padding: 0 12px;
+  color: #6b7280;
+}
+
+.product-edit-locked {
+  padding: 12px;
+  border-radius: 6px;
+  background: #f1f3f6;
+}
+
+.product-edit-locked p {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.product-edit-derived {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.product-edit-derived div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-edit-derived div span:last-child {
+  color: #9ca3af;
+}
+
+.product-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.product-edit-button {
+  padding: 10px 18px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.product-edit-button:hover {
+  background: #f1f3f6;
+}
+
+.product-edit-button-primary {
+  border-color: #334155;
+  background: #334155;
+  color: #fff;
+}
+
+.product-edit-button-primary:hover {
+  background: #1e293b;
+}
+
+.product-edit-input:has(input[aria-invalid='true']) {
+  border-color: #dc2626;
+}
+
+.product-edit-error {
+  color: #dc2626;
+  font-size: 12px;
+}
