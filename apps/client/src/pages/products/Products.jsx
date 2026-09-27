@@ -23,11 +23,15 @@ const sortOptions = [
 const pageSizes = [24, 48, 96]
 
 function Products() {
+    const [search, setSearch] = useState('')
     const [view, setView] = useState('grid')
     const [sort, setSort] = useState('name-asc')
     const [pageSize, setPageSize] = useState(pageSizes[0])
 
-    const visibleProducts = products
+    const term = search.trim().toLowerCase()
+    const visibleProducts = products.filter(({ name, sku }) =>
+        name.toLowerCase().includes(term) || sku.toLowerCase().includes(term)
+    )
 
     return (
         <main className='products'>
@@ -41,11 +45,12 @@ function Products() {
                 </div>
             </section>
 
-            {/* TODO: búsqueda por nombre o código */}
             <input
                 type='search'
                 className='products-search'
                 placeholder='Buscar por nombre o código...'
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
             />
 
             <section className='products-toolbar'>
@@ -101,7 +106,7 @@ function Products() {
                 <section className='products-empty'>
                     <h2>No hay productos que coincidan</h2>
                     <p>Pruebe con otros filtros o con otro término de búsqueda.</p>
-                    <button type='button' className='products-button'>
+                    <button type='button' className='products-button' onClick={() => setSearch('')}>
                         Limpiar filtros
                     </button>
                 </section>
