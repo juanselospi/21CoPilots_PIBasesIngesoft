@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import { BusDeEventos } from "./bus-de-eventos.js";
 import { EVENTOS } from "./eventos-de-dominio.js";
+import { registrarAlertaDeExistenciasBajas } from "../../modules/inventario/suscriptores/alerta-de-existencias-bajas.js";
 
 test("entrega el evento a todos los suscriptores", async () => {
   const bus = new BusDeEventos();
@@ -44,3 +45,24 @@ test("cancelar la suscripción deja de entregar el evento", async () => {
   assert.equal(veces, 1);
 });
 
+test("RF-16 / RN-04: la alerta salta al llegar al umbral de dos unidades", async () => {
+  const bus = new BusDeEventos();
+  const alertas = [];
+
+  registrarAlertaDeExistenciasBajas(bus, { umbral: 2 });
+  bus.suscribir(EVENTOS.EXISTENCIAS_BAJAS, (datos) => alertas.push(datos));
+
+  await bus.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, {
+    productoId: 1,
+    sku: "SKU-1",
+    existenciasResultantes: 3,
+  });
+  await bus.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, {
+    productoId: 1,
+    sku: "SKU-1",
+    existenciasResultantes: 2,
+  });
+
+  assert.equal(alertas.length, 1);
+  assert.equal(alertas[0].existencias, 2);
+});

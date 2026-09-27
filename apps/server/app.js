@@ -48,6 +48,11 @@ export function crearAplicacion(sistema) {
   const { modulos } = sistema;
 
   aplicacion.use("/api/catalogo", modulos.catalogo.rutas);
+  aplicacion.use("/api/clientes", modulos.clientes.rutas);
+  aplicacion.use("/api/inventario", modulos.inventario.rutas);
+  aplicacion.use("/api/pedidos", modulos.pedidos.rutas);
+  aplicacion.use("/api/reportes", modulos.reportes.rutas);
+  aplicacion.use("/api/admin", modulos.admin.rutas);
 
   // Cualquier ruta que nadie atendió termina aquí, con el mismo formato
   // de error que el resto de la API.
