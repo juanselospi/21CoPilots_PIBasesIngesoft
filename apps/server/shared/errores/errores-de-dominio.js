@@ -38,6 +38,13 @@ export class NoAutenticado extends ErrorDeDominio {
   }
 }
 
+/** Correo o contraseña incorrectos (RF-53). Un solo mensaje para ambos casos. */
+export class CredencialesInvalidas extends ErrorDeDominio {
+  constructor() {
+    super("Correo o contraseña incorrectos.", { codigo: "CREDENCIALES_INVALIDAS" });
+  }
+}
+
 /** Identificado, pero sin el rol necesario (RF-50, RNF-10). */
 export class NoAutorizado extends ErrorDeDominio {
   constructor(accion) {

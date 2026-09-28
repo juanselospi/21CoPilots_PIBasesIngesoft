@@ -19,6 +19,7 @@
 import { crearPool } from "./shared/db/pool.js";
 import { BusDeEventos } from "./shared/eventos/bus-de-eventos.js";
 import { crearExigirRol } from "./shared/http/autorizacion-por-rol.js";
+import { crearIdentificarUsuario } from "./shared/http/autenticacion.js";
 
 import { crearPasarelaDePago } from "./modules/pagos/index.js";
 import { crearFacturacionElectronica } from "./modules/facturacion/index.js";
@@ -52,7 +53,17 @@ export function componerSistema(configuracion) {
 
   // ---- 4. Módulos, en orden de dependencia ----
   // admin va primero porque clientes lee de él los parámetros de negocio.
-  const admin = crearModuloAdmin({ pool, busDeEventos, exigirRol });
+  const admin = crearModuloAdmin({
+    pool,
+    busDeEventos,
+    exigirRol,
+    sesion: configuracion.sesion,
+  });
+
+  // admin es dueño de admin.sesion: resuelve el usuario de cada cookie (RF-53).
+  const identificarUsuario = crearIdentificarUsuario((token) =>
+    admin.servicio.identificarPorToken(token)
+  );
 
   const catalogo = crearModuloCatalogo({
     pool,
@@ -89,6 +100,7 @@ export function componerSistema(configuracion) {
 
   return {
     modulos: { admin, catalogo, inventario, clientes, pedidos, reportes },
+    identificarUsuario,
     busDeEventos,
     verificarBaseDeDatos: () => pool.query("SELECT 1"),
     cerrar: () => pool.end(),

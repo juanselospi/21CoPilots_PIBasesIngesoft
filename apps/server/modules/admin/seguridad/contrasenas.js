@@ -1,12 +1,8 @@
 /**
- * Hash y verificación de contraseñas. RNF-08, SCRUM-7.
+ * Hash y verificación de contraseñas. RNF-08.
  *
- * bcrypt genera un salt aleatorio por cada hash y lo guarda dentro del
- * mismo texto, así que dos usuarios con la misma contraseña quedan con
- * hashes distintos y no hace falta una columna aparte para el salt.
- *
- * Es compatible con los hashes que crea PostgreSQL con
- * `crypt(..., gen_salt('bf', 10))` en las semillas.
+ * bcrypt con salt por hash (incluido en el mismo texto) y 10 rondas.
+ * Compatible con `crypt(..., gen_salt('bf', 10))` de las semillas.
  */
 
 import bcrypt from "bcryptjs";

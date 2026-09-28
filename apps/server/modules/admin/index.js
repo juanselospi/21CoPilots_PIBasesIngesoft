@@ -12,10 +12,17 @@ import { AdminService } from "./admin.service.js";
 import { AdminController } from "./admin.controller.js";
 import { crearRutasDeAdmin } from "./admin.routes.js";
 
-export function crearModuloAdmin({ pool, busDeEventos, exigirRol }) {
+export function crearModuloAdmin({ pool, busDeEventos, exigirRol, sesion }) {
   const repositorio = new AdminRepository({ pool });
-  const servicio = new AdminService({ repositorio, busDeEventos });
-  const controlador = new AdminController({ servicio });
+  const servicio = new AdminService({
+    repositorio,
+    busDeEventos,
+    duracionSesionHoras: sesion.duracionHoras,
+  });
+  const controlador = new AdminController({
+    servicio,
+    cookieSegura: sesion.cookieSegura,
+  });
 
   return {
     rutas: crearRutasDeAdmin(controlador, { exigirRol }),

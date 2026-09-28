@@ -6,17 +6,29 @@
  * permite rutas públicas autenticadas (el catálogo de un cliente logueado)
  * sin duplicar la verificación de rol.
  *
- * PENDIENTE: resolver la sesión real (token firmado o cookie de sesión).
- * Las contraseñas se almacenan con hash y salt — RNF-08 —, nunca en claro.
+ * La sesión viaja en la cookie `sesion`; admin.sesion guarda solo el hash
+ * del token. Las contraseñas se almacenan con hash y salt — RNF-08 —,
+ * nunca en claro.
  */
 
 import { NoAutenticado } from "../errores/errores-de-dominio.js";
 
-/** Identifica al usuario si viene credencial; no bloquea si no viene. */
-export function identificarUsuario(peticion, _respuesta, siguiente) {
-  // PENDIENTE: leer y verificar el token de la cabecera Authorization.
-  peticion.usuario = null;
-  siguiente();
+export const COOKIE_DE_SESION = "sesion";
+
+/**
+ * Identifica al usuario si viene la cookie; no bloquea si no viene.
+ * La búsqueda por token se inyecta desde la raíz de composición.
+ */
+export function crearIdentificarUsuario(buscarUsuarioPorToken) {
+  return async (peticion, _respuesta, siguiente) => {
+    try {
+      const token = peticion.cookies?.[COOKIE_DE_SESION];
+      peticion.usuario = token ? await buscarUsuarioPorToken(token) : null;
+      siguiente();
+    } catch (error) {
+      siguiente(error);
+    }
+  };
 }
 
 /** Exige sesión activa. Se monta solo en las rutas que la necesitan. */

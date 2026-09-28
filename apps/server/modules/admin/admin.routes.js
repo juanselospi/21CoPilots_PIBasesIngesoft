@@ -17,9 +17,12 @@
  */
 
 import { Router } from "express";
+import { asincrono } from "../../shared/http/envoltura-async.js";
 
 export function crearRutasDeAdmin(controlador, { exigirRol }) {
   const rutas = Router();
+
+  rutas.post("/sesion", asincrono(controlador.iniciarSesion));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
   // Las protegidas se montan detrás de exigirRol(ROLES.ADMINISTRADOR).
