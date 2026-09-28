@@ -1,3 +1,7 @@
+/* Estilos del modal "Editar precio" (ProductEditModal.jsx) */
+
+/* Fondo oscuro semitransparente que cubre toda la pantalla y centra el modal.
+   Al hacer clic sobre él se cierra el modal. */
 .product-edit-overlay {
   position: fixed;
   inset: 0;
@@ -9,6 +13,9 @@
   background: rgba(15, 23, 42, 0.45);
 }
 
+/* Tarjeta blanca del modal (el <form> con role="dialog").
+   Apila sus secciones en columna y hace scroll interno si no cabe en pantalla.
+   color-scheme: light evita que el navegador oscurezca los inputs en modo oscuro. */
 .product-edit-modal {
   display: flex;
   flex-direction: column;
@@ -26,6 +33,7 @@
   text-align: left;
 }
 
+/* Encabezado: título y datos del producto a la izquierda, botón de cerrar a la derecha */
 .product-edit-header {
   display: flex;
   justify-content: space-between;
@@ -33,6 +41,7 @@
   gap: 16px;
 }
 
+/* Título "Editar precio" */
 .product-edit-header h2 {
   margin: 0;
   color: #1f2937;
@@ -40,11 +49,13 @@
   font-weight: 700;
 }
 
+/* Subtítulo con el SKU y el nombre del producto */
 .product-edit-header p {
   color: #6b7280;
   font-size: 13px;
 }
 
+/* Botón "✕" para cerrar el modal, sin borde ni fondo */
 .product-edit-close {
   padding: 4px 8px;
   border: none;
@@ -54,6 +65,8 @@
   cursor: pointer;
 }
 
+/* Cada campo del formulario (<label>): etiqueta, input y mensaje de error apilados.
+   También lo usa el bloque bloqueado del impuesto de venta. */
 .product-edit-field {
   display: flex;
   flex-direction: column;
@@ -61,6 +74,7 @@
   font-size: 14px;
 }
 
+/* Caja con borde que agrupa el input y su unidad (₡ o %) en una sola fila */
 .product-edit-input {
   display: flex;
   align-items: center;
@@ -69,6 +83,8 @@
   background: #fff;
 }
 
+/* Input numérico: ocupa el espacio disponible y no tiene borde propio,
+   el borde lo pone la caja contenedora (.product-edit-input) */
 .product-edit-input input {
   flex: 1;
   min-width: 0;
@@ -80,22 +96,28 @@
   font: inherit;
 }
 
+/* Unidad a la derecha del input (₡ para costo, % para importación y margen) */
 .product-edit-input span {
   padding: 0 12px;
   color: #6b7280;
 }
 
+/* Campo de solo lectura con fondo gris: el impuesto de venta, que no se edita aquí */
 .product-edit-locked {
   padding: 12px;
   border-radius: 6px;
   background: #f1f3f6;
 }
 
+/* Texto de ayuda dentro del campo bloqueado (p. ej. de dónde sale el valor).
+   Actualmente el JSX no incluye un <p> ahí; se aplicaría si se agrega. */
 .product-edit-locked p {
   color: #6b7280;
   font-size: 12px;
 }
 
+/* Sección de valores derivados (costo total, precio sin impuesto, precio final),
+   separada del formulario por una línea superior */
 .product-edit-derived {
   display: flex;
   flex-direction: column;
@@ -105,22 +127,26 @@
   font-size: 14px;
 }
 
+/* Cada fila derivada: nombre a la izquierda y valor a la derecha */
 .product-edit-derived div {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
 
+/* Valor de la fila derivada en gris, por ahora el texto "Se calcula al guardar" */
 .product-edit-derived div span:last-child {
   color: #9ca3af;
 }
 
+/* Pie del modal: botones Cancelar y Guardar alineados a la derecha */
 .product-edit-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
+/* Botón secundario (Cancelar): fondo blanco con borde gris */
 .product-edit-button {
   padding: 10px 18px;
   border: 1px solid #d1d5db;
@@ -136,6 +162,7 @@
   background: #f1f3f6;
 }
 
+/* Botón principal (Guardar): se combina con .product-edit-button y lo rellena de oscuro */
 .product-edit-button-primary {
   border-color: #334155;
   background: #334155;
@@ -146,10 +173,13 @@
   background: #1e293b;
 }
 
+/* Marca en rojo el borde de la caja cuando su input tiene un valor inválido
+   (el JSX pone aria-invalid="true" al fallar la validación) */
 .product-edit-input:has(input[aria-invalid='true']) {
   border-color: #dc2626;
 }
 
+/* Mensaje de error debajo del campo inválido */
 .product-edit-error {
   color: #dc2626;
   font-size: 12px;
