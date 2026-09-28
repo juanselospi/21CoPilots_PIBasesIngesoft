@@ -36,3 +36,4 @@ dudas por confirmar, etc.
 | Duda | Origen | Afecta a |
 |---|---|---|
 | ¿El registro de clientes ("Crear cuenta") está disponible antes de comprar o solo al hacer la primera compra? | Notas del wireframe de Acceso | Pantalla de login y registro (SCRUM-11) |
+| ¿De dónde sale la subcategoría de un producto importado? La hoja real no la trae; mientras tanto se toma del prefijo de `codigo_item` (PS5, NSW, LEG, PKM, YGO) | Hoja real de productos (DEP-01) | Importación del Excel (SCRUM-33, SCRUM-34) |
