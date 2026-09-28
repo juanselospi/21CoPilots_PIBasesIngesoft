@@ -34,6 +34,12 @@ export const configuracion = Object.freeze({
     contrasena: process.env.DB_PASSWORD ?? "",
   }),
 
+  /** RF-53 — cookie de sesión; `Secure` solo en producción (HTTPS). */
+  sesion: Object.freeze({
+    duracionHoras: numero(process.env.DURACION_SESION_HORAS, 8),
+    cookieSegura: process.env.NODE_ENV === "production",
+  }),
+
   /** Valores de negocio fijados por ley o por el SRS; no son editables. */
   negocio: Object.freeze({
     /** RES-06 — 13 % sobre el precio sin impuesto. */

@@ -19,7 +19,7 @@ esquemas sí se permiten.
 
 | Esquema | Tablas | Migración |
 |---|---|---|
-| `admin` | `usuario`, `recuperacion_contrasena`, `bitacora`, `parametro_negocio` | `002_admin.sql` |
+| `admin` | `usuario`, `sesion`, `recuperacion_contrasena`, `bitacora`, `parametro_negocio` | `002_admin.sql`, `009_sesion.sql` |
 | `catalogo` | `categoria`, `subcategoria`, `producto` | `003_catalogo.sql` |
 | `inventario` | `existencia`, `movimiento` | `004_inventario.sql` |
 | `clientes` | `nivel_fidelidad`, `cliente`, `cliente_telefono`, `consentimiento_terminos` | `005_clientes.sql` |
@@ -79,6 +79,10 @@ particular. El detalle exacto está en las migraciones.
 | `contrasena_hash` | Hash bcrypt; nunca la contraseña en texto plano (RNF-08) |
 | `rol` | `administrador` o `cliente` (RF-50). Solo puede existir un administrador (`ux_usuario_administrador_unico`, RF-49) |
 | `activo` | Permite desactivar una cuenta sin borrarla |
+
+**`sesion`** — sesiones iniciadas (RF-53). El navegador guarda el token en una cookie
+`HttpOnly`; aquí solo se guarda su hash (`token_hash`, único) junto con `usuario_id` y
+`vence_en`. Una sesión es válida si `vence_en` no ha pasado y la cuenta está activa.
 
 **`recuperacion_contrasena`** — enlaces de restablecimiento (RF-54). Guarda el hash
 del token (`token_hash`, único), `vence_en` y `usado_en`. Un enlace es válido si
@@ -254,6 +258,7 @@ diagrama EER y el mapeo deben actualizarse para reflejarlos.**
 | M-13 | Se elimina **Oferta** (del EER actualizado). | Modelaba cupones (RF-66), que el SRS tiene en suspenso con prioridad W. El descuento confirmado es por nivel. | RF-66, RN-09 |
 | M-14 | Entidades nuevas: **Nivel de fidelidad**, **Parámetro de negocio**, **Bitácora**, **Recuperación de contraseña** y **Consentimiento de términos**. | Requerimientos sin representación en el EER. | RN-08, RN-09, aprobado #10, RF-38, RF-52, RF-54, RNF-10 |
 | M-15 | Un **esquema de PostgreSQL por módulo** y triggers que rechazan la modificación de registros históricos. | Alinea la base de datos con la arquitectura por módulos (DD-11) y hace verificable RF-19 (DD-16). | RF-19, RNF-19 |
+| M-16 | Entidad nueva **Sesión** (`admin.sesion`, migración 009). | El inicio de sesión usa una cookie con un token aleatorio; la base de datos guarda solo su hash y el vencimiento, para poder validar la sesión en cada petición sin exponer tokens si se filtra la tabla. | RF-53, RNF-08 |
 
 ### Lo que se conservó del prototipo
 

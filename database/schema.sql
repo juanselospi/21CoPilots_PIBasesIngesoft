@@ -211,6 +211,34 @@ ALTER TABLE admin.recuperacion_contrasena ALTER COLUMN id ADD GENERATED ALWAYS A
 
 
 --
+-- Name: sesion; Type: TABLE; Schema: admin; Owner: -
+--
+
+CREATE TABLE admin.sesion (
+    id bigint NOT NULL,
+    usuario_id bigint NOT NULL,
+    token_hash character varying(128) NOT NULL,
+    creado_en timestamp with time zone DEFAULT now() NOT NULL,
+    vence_en timestamp with time zone NOT NULL,
+    CONSTRAINT ck_sesion_vigencia CHECK ((vence_en > creado_en))
+);
+
+
+--
+-- Name: sesion_id_seq; Type: SEQUENCE; Schema: admin; Owner: -
+--
+
+ALTER TABLE admin.sesion ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME admin.sesion_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+--
 -- Name: usuario; Type: TABLE; Schema: admin; Owner: -
 --
 
@@ -800,6 +828,22 @@ ALTER TABLE ONLY admin.recuperacion_contrasena
 
 
 --
+-- Name: sesion sesion_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.sesion
+    ADD CONSTRAINT sesion_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sesion sesion_token_hash_key; Type: CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.sesion
+    ADD CONSTRAINT sesion_token_hash_key UNIQUE (token_hash);
+
+
+--
 -- Name: usuario usuario_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
 --
 
@@ -1010,6 +1054,13 @@ CREATE INDEX ix_bitacora_usuario ON admin.bitacora USING btree (usuario_id);
 --
 
 CREATE INDEX ix_recuperacion_usuario ON admin.recuperacion_contrasena USING btree (usuario_id);
+
+
+--
+-- Name: ix_sesion_usuario; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_sesion_usuario ON admin.sesion USING btree (usuario_id);
 
 
 --
@@ -1258,6 +1309,14 @@ ALTER TABLE ONLY admin.parametro_negocio
 
 ALTER TABLE ONLY admin.recuperacion_contrasena
     ADD CONSTRAINT recuperacion_contrasena_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES admin.usuario(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sesion sesion_usuario_id_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.sesion
+    ADD CONSTRAINT sesion_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES admin.usuario(id) ON DELETE CASCADE;
 
 
 --

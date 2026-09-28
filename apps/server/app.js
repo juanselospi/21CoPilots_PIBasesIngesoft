@@ -16,7 +16,7 @@
  */
 
 import express from "express";
-import { identificarUsuario } from "./shared/http/autenticacion.js";
+import cookieParser from "cookie-parser";
 import { manejadorDeErrores } from "./shared/http/manejador-de-errores.js";
 import { rutaNoEncontrada } from "./shared/http/ruta-no-encontrada.js";
 
@@ -24,10 +24,11 @@ export function crearAplicacion(sistema) {
   const aplicacion = express();
 
   aplicacion.use(express.json({ limit: "1mb" }));
+  aplicacion.use(cookieParser());
 
   // Deja al usuario identificado en la petición si trae credencial.
   // No bloquea: exigir sesión o rol es decisión de cada ruta.
-  aplicacion.use(identificarUsuario);
+  aplicacion.use(sistema.identificarUsuario);
 
   // Verificación de vida (RNF-04). Informa también si hay conexión con
   // PostgreSQL, que es lo primero que falla al levantar el entorno.
