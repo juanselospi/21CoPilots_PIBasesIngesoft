@@ -1,42 +1,40 @@
 /**
- * PLANTILLA DE IMPORTACIÓN — Template Method (§ 6.6).
+ * Plantilla de importación (Template Method).
  *
- * Define el esqueleto invariante del proceso de importación y deja
- * redefinibles los pasos que dependen del formato del archivo:
+ * Define los pasos fijos de cualquier importación:
+ *   parsear -> prepararContexto -> validarFila -> mapearFila -> guardarFila
  *
- *     parsear → validarFila → mapearFila → guardarFila
+ * Cada formato de archivo implementa los pasos en una subclase, por
+ * ejemplo ImportacionDeExcel. El orden no cambia.
  *
- * El algoritmo fija tres requerimientos que ninguna subclase puede
- * alterar:
- *   RF-58 — una fila inválida no detiene la importación; se acumula en el
- *           reporte de rechazos con su motivo
- *   RF-57 — al terminar se informa cuántas filas se importaron
- *   RF-59 — `guardarFila` debe ser idempotente por SKU: reimportar el
- *           mismo archivo actualiza, no duplica
+ * Primero se valida el archivo completo y después se guarda. Así una fila
+ * mala no detiene la importación (RF-58) y se pueden revisar cosas que
+ * dependen de todo el archivo, como un código repetido.
  *
- * La subclase concreta (por ejemplo `ImportacionDeExcel`) implementa los
- * cuatro pasos abstractos. `guardarFila` no escribe SQL sobre
- * `catalogo.producto`: pide el upsert a la fachada de catalogo, que es la
- * dueña de ese esquema (§ 9.3). El SKU se normaliza antes (RF-01). SUP-01 advierte que aún no se han visto los
- * datos reales, así que el validador debe ser explícito sobre cada motivo
- * de rechazo.
+ * guardarFila no escribe SQL: le pide el guardado al módulo de catálogo,
+ * que es el dueño de esas tablas.
  */
 
 export class PlantillaDeImportacion {
-  /** Método plantilla: su estructura no se redefine. */
   async importar(archivo) {
     const filas = await this.parsear(archivo);
+    const contexto = this.prepararContexto(filas);
 
-    const resultado = { importadas: 0, rechazadas: [] };
+    const resultado = { leidas: filas.length, importadas: 0, rechazadas: [] };
+    const validas = [];
 
-    for (const [indice, fila] of filas.entries()) {
-      const motivo = this.validarFila(fila);
+    for (const fila of filas) {
+      const motivos = this.validarFila(fila, contexto);
 
-      if (motivo) {
-        resultado.rechazadas.push({ linea: indice + 1, fila, motivo });
-        continue;
+      if (motivos.length > 0) {
+        resultado.rechazadas.push({ linea: fila.linea, fila, motivos });
+      } else {
+        validas.push(fila);
       }
+    }
 
+    // TODO SCRUM-35: guardar todas las válidas en una sola transacción.
+    for (const fila of validas) {
       await this.guardarFila(this.mapearFila(fila));
       resultado.importadas += 1;
     }
@@ -44,24 +42,31 @@ export class PlantillaDeImportacion {
     return resultado;
   }
 
-  // ---- Pasos que la subclase debe implementar ----
+  /** Datos que la validación necesita de todo el archivo. Opcional. */
+  prepararContexto(_filas) {
+    return {};
+  }
 
-  /** @returns {Promise<object[]>} filas crudas del archivo */
+  /**
+   * Devuelve las filas del archivo. Cada una trae `linea`, el número de
+   * fila en el archivo, para que el reporte le diga al usuario dónde
+   * está el problema.
+   */
   async parsear(_archivo) {
     throw new Error("Sin implementar: parsear()");
   }
 
-  /** @returns {string|null} motivo del rechazo, o null si la fila es válida */
-  validarFila(_fila) {
+  /** Devuelve la lista de problemas de la fila. Vacía si está bien. */
+  validarFila(_fila, _contexto) {
     throw new Error("Sin implementar: validarFila()");
   }
 
-  /** @returns {object} fila traducida al modelo de dominio */
+  /** Convierte la fila al objeto de producto. */
   mapearFila(_fila) {
     throw new Error("Sin implementar: mapearFila()");
   }
 
-  /** Debe ser idempotente por SKU (RF-59). */
+  /** Tiene que actualizar si el SKU ya existe, no duplicar (RF-59). */
   async guardarFila(_producto) {
     throw new Error("Sin implementar: guardarFila()");
   }
