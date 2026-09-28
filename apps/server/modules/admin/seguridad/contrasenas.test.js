@@ -33,3 +33,5 @@ test("verifica hashes creados por PostgreSQL en las semillas", async () => {
   assert.equal(await verificarContrasena("Admin123!", hashDePostgres), true);
   assert.equal(await verificarContrasena("Otra123!", hashDePostgres), false);
 });
+
+// Test de contraseñas hechos con la ayuda de Claude
