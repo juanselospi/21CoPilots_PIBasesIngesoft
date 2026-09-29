@@ -1,3 +1,6 @@
+/* Estilos de la página de productos (Products.jsx) */
+
+/* Contenedor principal (<main>): apila las secciones de la página en columna */
 .products {
   display: flex;
   flex-direction: column;
@@ -7,6 +10,7 @@
   text-align: left;
 }
 
+/* Botón base de la página: fondo blanco con borde gris */
 .products-button {
   padding: 10px 18px;
   border: 1px solid #d1d5db;
@@ -22,6 +26,7 @@
   background: #f1f3f6;
 }
 
+/* Variante principal del botón (ej. "Nuevo producto"): fondo oscuro y texto blanco */
 .products-button-primary {
   border-color: #334155;
   background: #334155;
@@ -34,6 +39,7 @@
 
 /* Encabezado */
 
+/* Título a la izquierda y acciones a la derecha, separados por una línea inferior */
 .products-header {
   display: flex;
   justify-content: space-between;
@@ -49,6 +55,7 @@
   color: #1f2937;
 }
 
+/* Grupo de botones de acción del encabezado */
 .products-actions {
   display: flex;
   gap: 12px;
@@ -56,6 +63,7 @@
 
 /* Búsqueda y barra de herramientas */
 
+/* Campo de búsqueda de productos */
 .products-search {
   padding: 12px 16px;
   border: 1px solid #d1d5db;
@@ -66,12 +74,14 @@
   font-size: 14px;
 }
 
+/* Fila con filtros, cambio de vista y orden */
 .products-toolbar {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
+/* Selector de vista cuadrícula/tabla, empujado a la derecha de la barra */
 .products-view-toggle {
   display: flex;
   margin-left: auto;
@@ -92,12 +102,15 @@
   cursor: pointer;
 }
 
+/* Resalta la vista seleccionada */
 .products-view-toggle button.active {
   background: #e5e7eb;
   color: #1f2937;
   font-weight: 600;
 }
 
+/* Selects de orden y de cantidad por página.
+   color-scheme: light evita que el navegador oscurezca el menú en modo oscuro. */
 .products-sort,
 .products-page-size {
   padding: 10px 14px;
@@ -112,6 +125,7 @@
 
 /* Filtros activos */
 
+/* Lista de filtros aplicados; pasa a otra línea si no caben */
 .products-active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -119,6 +133,7 @@
   gap: 12px;
 }
 
+/* Etiqueta redondeada de un filtro, con su botón para quitarlo */
 .products-filter-tag {
   display: inline-flex;
   align-items: center;
@@ -131,6 +146,7 @@
   font-size: 13px;
 }
 
+/* Botones de texto sin fondo: quitar un filtro y "Limpiar filtros" */
 .products-filter-tag button,
 .products-clear-filters {
   padding: 0;
@@ -142,6 +158,7 @@
   cursor: pointer;
 }
 
+/* Texto con la cantidad de productos encontrados */
 .products-count {
   color: #6b7280;
   font-size: 14px;
@@ -149,12 +166,14 @@
 
 /* Cuadrícula */
 
+/* Cuadrícula de tarjetas: 4 columnas en escritorio */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
+/* Tarjeta de un producto: imagen arriba y datos abajo */
 .products-card {
   display: flex;
   flex-direction: column;
@@ -164,6 +183,7 @@
   background: #fff;
 }
 
+/* Espacio gris para la imagen, con proporción fija */
 .products-card-image {
   display: flex;
   justify-content: center;
@@ -174,6 +194,7 @@
   font-size: 13px;
 }
 
+/* Datos del producto; ocupa el alto restante para alinear las tarjetas */
 .products-card-body {
   display: flex;
   flex: 1;
@@ -188,6 +209,7 @@
   font-weight: 600;
 }
 
+/* Nombre del producto, recortado a 2 líneas con "..." */
 .products-card-name {
   display: -webkit-box;
   margin: 0;
@@ -206,6 +228,7 @@
   font-size: 13px;
 }
 
+/* Precio destacado; el margen automático empuja el botón al fondo de la tarjeta */
 .products-card-price {
   margin-bottom: auto;
   color: #111827;
@@ -213,12 +236,14 @@
   font-weight: 700;
 }
 
+/* Separación del botón dentro de la tarjeta */
 .products-card .products-button {
   margin-top: 12px;
 }
 
 /* Estados */
 
+/* Caja con borde punteado para "sin resultados" y la vista de tabla pendiente */
 .products-empty,
 .products-table-placeholder {
   display: flex;
@@ -234,6 +259,7 @@
 
 /* Paginación */
 
+/* Botones de página centrados, separados por una línea superior */
 .products-pagination {
   display: flex;
   justify-content: center;
@@ -254,33 +280,13 @@
   cursor: pointer;
 }
 
+/* Resalta la página actual */
 .products-pagination button.active {
   background: #334155;
   color: #fff;
 }
 
+/* Empuja el select de cantidad por página a la derecha */
 .products-page-size {
   margin-left: auto;
-}
-
-@media (max-width: 1024px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .products-header,
-  .products-toolbar {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .products-view-toggle {
-    margin-left: 0;
-  }
-
-  .products-grid {
-    grid-template-columns: 1fr;
-  }
 }
