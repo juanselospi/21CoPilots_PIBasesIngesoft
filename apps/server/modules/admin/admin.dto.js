@@ -9,6 +9,8 @@
  *   - aParametroComercial() (RF-51)
  */
 
+import { NOMBRE_DEL_REPORTE, TIPO_DEL_REPORTE } from "./importacion/reporte-de-rechazos.js";
+
 /** Usuario sin credenciales. */
 export const aUsuario = (usuario) => ({
   id: usuario.id,
@@ -20,8 +22,10 @@ export const aUsuario = (usuario) => ({
 /**
  * Resumen de una importación del Excel. De cada fila rechazada sale solo
  * el número de fila, el código y los motivos, no la fila completa.
+ *
+ * `reporte` es el Excel de filas rechazadas, o null si no hubo rechazos.
  */
-export const aResultadoDeImportacion = (resultado) => ({
+export const aResultadoDeImportacion = (resultado, reporte = null) => ({
   leidas: resultado.leidas,
   importadas: resultado.importadas,
   actualizadas: resultado.actualizadas,
@@ -30,4 +34,9 @@ export const aResultadoDeImportacion = (resultado) => ({
     codigoSku: fila.codigoSku ?? null,
     motivos,
   })),
+  reporte: reporte && {
+    nombreArchivo: NOMBRE_DEL_REPORTE,
+    tipo: TIPO_DEL_REPORTE,
+    contenidoBase64: reporte.toString("base64"),
+  },
 });

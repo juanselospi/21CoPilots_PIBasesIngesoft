@@ -14,6 +14,7 @@ import { COOKIE_DE_SESION } from "../../shared/http/autenticacion.js";
 import { aUsuario, aResultadoDeImportacion } from "./admin.dto.js";
 import { CAMPO_DEL_ARCHIVO } from "./importacion/recibir-excel.js";
 import { RUTA_DE_LA_PLANTILLA } from "./importacion/columnas.js";
+import { generarReporteDeRechazos } from "./importacion/reporte-de-rechazos.js";
 
 export class AdminController {
   #servicio;
@@ -58,6 +59,10 @@ export class AdminController {
    * POST /importaciones con el Excel en el campo `archivo`
    * (multipart/form-data). Responde 200 aunque haya filas rechazadas: el
    * resumen dice cuáles fueron y por qué.
+   *
+   * Si hubo rechazos, la respuesta trae también el reporte en Excel
+   * (en base64) para que la pantalla lo ofrezca como descarga. Así no hay
+   * que guardarlo en el servidor ni pedirlo en otra llamada.
    */
   importarExcel = async (peticion, respuesta) => {
     if (!peticion.file) {
@@ -68,7 +73,10 @@ export class AdminController {
     }
 
     const resultado = await this.#servicio.importarCatalogo(peticion.file.buffer);
-    respuesta.json({ datos: aResultadoDeImportacion(resultado) });
+    const reporte =
+      resultado.rechazadas.length > 0 ? await generarReporteDeRechazos(resultado.rechazadas) : null;
+
+    respuesta.json({ datos: aResultadoDeImportacion(resultado, reporte) });
   };
 
   /** GET /importaciones/plantilla: descarga la plantilla oficial. */

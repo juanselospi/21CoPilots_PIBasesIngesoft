@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import express from "express";
+import ExcelJS from "exceljs";
 
 import { crearRutasDeAdmin } from "../admin.routes.js";
 import { AdminController } from "../admin.controller.js";
@@ -11,7 +12,7 @@ import { crearExigirRol, ROLES } from "../../../shared/http/autorizacion-por-rol
 import { manejadorDeErrores } from "../../../shared/http/manejador-de-errores.js";
 
 // Servicio falso: devuelve siempre el mismo resumen, con una fila rechazada.
-const servicio = {
+const servicioConRechazo = {
   importarCatalogo: async () => ({
     leidas: 3,
     importadas: 1,
@@ -22,7 +23,7 @@ const servicio = {
 
 // Levanta las rutas reales de admin. La cabecera x-rol simula la sesión:
 // sin ella no hay usuario.
-async function levantarServidor({ tamanoMaximoMb = 5 } = {}) {
+async function levantarServidor({ tamanoMaximoMb = 5, servicio = servicioConRechazo } = {}) {
   const aplicacion = express();
   aplicacion.use((peticion, _respuesta, siguiente) => {
     const rol = peticion.get("x-rol");
@@ -78,14 +79,31 @@ test("el administrador recibe el resumen de la importación", async (t) => {
   t.after(cerrar);
 
   const { estado, cuerpo } = await subir(url, { rol: ROLES.ADMINISTRADOR, archivo: plantilla });
+  const { reporte, ...resumen } = cuerpo.datos;
 
   assert.equal(estado, 200);
-  assert.deepEqual(cuerpo.datos, {
+  assert.deepEqual(resumen, {
     leidas: 3,
     importadas: 1,
     actualizadas: 1,
     rechazadas: [{ fila: 4, codigoSku: "PS5-001", motivos: ["costo_usd no es un número."] }],
   });
+
+  // Como hubo un rechazo, viene el reporte en Excel listo para descargar.
+  assert.equal(reporte.nombreArchivo, "filas-rechazadas.xlsx");
+  const libro = new ExcelJS.Workbook();
+  await libro.xlsx.load(Buffer.from(reporte.contenidoBase64, "base64"));
+  assert.deepEqual(libro.worksheets[0].getRow(2).values.slice(1), [4, "PS5-001", "", "costo_usd no es un número."]);
+});
+
+test("sin filas rechazadas no viene reporte", async (t) => {
+  const { url, cerrar } = await levantarServidor({
+    servicio: { importarCatalogo: async () => ({ leidas: 1, importadas: 1, actualizadas: 0, rechazadas: [] }) },
+  });
+  t.after(cerrar);
+
+  const { cuerpo } = await subir(url, { rol: ROLES.ADMINISTRADOR, archivo: plantilla });
+  assert.equal(cuerpo.datos.reporte, null);
 });
 
 const CASOS_400 = [
