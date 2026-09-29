@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import './Products.css'
 import { products } from '../../data/products.js'
 
@@ -35,6 +36,7 @@ function Products() {
             <section className='products-header'>
                 <h1>Productos</h1>
                 <div className='products-actions'>
+                    <ImportExcel />
                     <button type='button' className='products-button products-button-primary'>
                         + Agregar producto
                     </button>

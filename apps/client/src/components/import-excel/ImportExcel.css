@@ -1,0 +1,169 @@
+/* Modal "Cargar productos desde Excel" (ImportExcel.jsx).
+   Sigue el mismo estilo que el modal de editar producto. */
+
+.import-excel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.import-excel-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 100%;
+  padding: 24px;
+  overflow-y: auto;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+}
+
+.import-excel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.import-excel-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.import-excel-header p,
+.import-excel-hint {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.import-excel-close {
+  padding: 4px 8px;
+  border: none;
+  background: none;
+  color: #6b7280;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.import-excel-form,
+.import-excel-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.import-excel-hint a,
+.import-excel-report {
+  color: #334155;
+  font-weight: 600;
+}
+
+.import-excel-file {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.import-excel-file input {
+  padding: 10px;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  background: #f8f9fb;
+  font: inherit;
+}
+
+.import-excel-error {
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.import-excel-ok {
+  color: #15803d;
+}
+
+.import-excel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.import-excel-actions button:disabled,
+.import-excel-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Los tres contadores del resumen */
+.import-excel-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0;
+}
+
+.import-excel-counts div {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.import-excel-counts dt {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.import-excel-counts dd {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.import-excel-count-rejected dd {
+  color: #b91c1c;
+}
+
+/* Tabla de filas rechazadas; si son muchas, se desplaza dentro del modal */
+.import-excel-table-wrapper {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.import-excel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.import-excel-table th,
+.import-excel-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.import-excel-table th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fb;
+  text-align: left;
+}
+
+/* Un motivo por línea */
+.import-excel-table td span {
+  display: block;
+}
