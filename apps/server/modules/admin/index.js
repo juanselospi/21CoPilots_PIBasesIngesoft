@@ -13,6 +13,7 @@ import { AdminService } from "./admin.service.js";
 import { AdminController } from "./admin.controller.js";
 import { crearRutasDeAdmin } from "./admin.routes.js";
 import { ImportacionDeExcel } from "./importacion/importacion-de-excel.js";
+import { crearRecibirExcel } from "./importacion/recibir-excel.js";
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 
 export function crearModuloAdmin({
@@ -20,6 +21,7 @@ export function crearModuloAdmin({
   busDeEventos,
   exigirRol,
   sesion,
+  importacion,
   catalogo,
   inventario,
   negocio,
@@ -51,7 +53,10 @@ export function crearModuloAdmin({
   });
 
   return {
-    rutas: crearRutasDeAdmin(controlador, { exigirRol }),
+    rutas: crearRutasDeAdmin(controlador, {
+      exigirRol,
+      recibirExcel: crearRecibirExcel({ tamanoMaximoMb: importacion.tamanoMaximoMb }),
+    }),
     servicio,
     repositorio,
   };

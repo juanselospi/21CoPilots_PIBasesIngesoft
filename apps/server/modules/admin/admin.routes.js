@@ -1,31 +1,40 @@
 /**
  * Rutas de administración.
  *
- * Las de sesión son públicas por definición; el resto exige rol
- * administrador (Chain of Responsibility, § 6.1).
+ * Iniciar sesión y recuperar la contraseña son públicas, así que no se
+ * puede poner exigirRol en todo el router: cada ruta protegida lo lleva.
  *
- * RF-53 y RF-54 son públicas: no montar `exigirRol` en todo el router.
- *
- * Rutas previstas — confirmar el contrato con el equipo antes de fijarlo:
- *   POST   /sesion                  RF-53   pública
- *   DELETE /sesion                  aprobado #15
- *   POST   /contrasena/recuperacion RF-54   pública
- *   POST   /usuarios                RF-49, aprobado #6
- *   PATCH  /parametros              RF-51
- *   GET    /bitacora                RF-52
- *   POST   /importaciones           RF-57, RF-58, RF-59
+ * Rutas previstas (confirmar con el equipo antes de fijarlas):
+ *   POST   /sesion                    pública
+ *   DELETE /sesion
+ *   POST   /contrasena/recuperacion   pública
+ *   POST   /usuarios
+ *   PATCH  /parametros
+ *   GET    /bitacora
+ *   POST   /importaciones             listo
+ *   GET    /importaciones/plantilla   listo
  */
 
 import { Router } from "express";
 import { asincrono } from "../../shared/http/envoltura-async.js";
+import { exigirSesion } from "../../shared/http/autenticacion.js";
+import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 
-export function crearRutasDeAdmin(controlador, { exigirRol }) {
+export function crearRutasDeAdmin(controlador, { exigirRol, recibirExcel }) {
   const rutas = Router();
+  const soloAdministrador = [exigirSesion, exigirRol(ROLES.ADMINISTRADOR)];
 
   rutas.post("/sesion", asincrono(controlador.iniciarSesion));
 
-  // Las rutas se agregan conforme se implementen los RF de arriba.
-  // Las protegidas se montan detrás de exigirRol(ROLES.ADMINISTRADOR).
+  // Primero se revisan la sesión y el rol, y solo después se recibe el
+  // archivo, para no cargar en memoria lo que mande alguien sin permiso.
+  rutas.post(
+    "/importaciones",
+    ...soloAdministrador,
+    recibirExcel,
+    asincrono(controlador.importarExcel)
+  );
+  rutas.get("/importaciones/plantilla", ...soloAdministrador, controlador.descargarPlantilla);
 
   return rutas;
 }

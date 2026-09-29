@@ -9,12 +9,10 @@
  */
 
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
-import { COLUMNAS, TIPOS } from "../modules/admin/importacion/columnas.js";
+import { COLUMNAS, TIPOS, RUTA_DE_LA_PLANTILLA } from "../modules/admin/importacion/columnas.js";
 
-const directorio = path.dirname(fileURLToPath(import.meta.url));
-const destino = path.join(directorio, "../modules/admin/importacion/plantilla-de-productos.xlsx");
+const destino = RUTA_DE_LA_PLANTILLA;
 
 const FORMATO = {
   [TIPOS.MONTO]: '"$"#,##0.00',

@@ -1,18 +1,19 @@
 /**
- * CAPA DE API — Controlador de administración.
+ * Controlador de administración: traduce HTTP a llamadas al servicio.
  *
- * POR IMPLEMENTAR
- *   cerrarSesion         aprobado #15
- *   recuperarContrasena  RF-54
- *   crearUsuario         RF-49, aprobado #6
- *   cambiarParametro     RF-51
- *   consultarBitacora    RF-52
- *   importarExcel        RF-57, RF-58, RF-59
+ * Falta implementar:
+ *   - cerrarSesion (aprobado #15)
+ *   - recuperarContrasena (RF-54)
+ *   - crearUsuario (RF-49, aprobado #6)
+ *   - cambiarParametro (RF-51)
+ *   - consultarBitacora (RF-52)
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import { COOKIE_DE_SESION } from "../../shared/http/autenticacion.js";
-import { aUsuario } from "./admin.dto.js";
+import { aUsuario, aResultadoDeImportacion } from "./admin.dto.js";
+import { CAMPO_DEL_ARCHIVO } from "./importacion/recibir-excel.js";
+import { RUTA_DE_LA_PLANTILLA } from "./importacion/columnas.js";
 
 export class AdminController {
   #servicio;
@@ -23,7 +24,7 @@ export class AdminController {
     this.#cookieSegura = cookieSegura;
   }
 
-  /** RF-53: POST /sesion con { correo, contrasena }. */
+  /** POST /sesion con { correo, contrasena }. */
   iniciarSesion = async (peticion, respuesta) => {
     const correo = leerTexto(peticion.body?.correo);
     const contrasena = leerTexto(peticion.body?.contrasena);
@@ -40,7 +41,8 @@ export class AdminController {
       contrasena,
     });
 
-    // HttpOnly y SameSite=Lax (RNF-08); Secure según configuración.
+    // HttpOnly para que el JavaScript de la página no pueda leer la cookie.
+    // Secure solo en producción, que es donde hay HTTPS.
     respuesta.cookie(COOKIE_DE_SESION, token, {
       httpOnly: true,
       sameSite: "lax",
@@ -50,6 +52,30 @@ export class AdminController {
     });
 
     respuesta.status(201).json({ datos: aUsuario(usuario) });
+  };
+
+  /**
+   * POST /importaciones con el Excel en el campo `archivo`
+   * (multipart/form-data). Responde 200 aunque haya filas rechazadas: el
+   * resumen dice cuáles fueron y por qué.
+   */
+  importarExcel = async (peticion, respuesta) => {
+    if (!peticion.file) {
+      throw new EntradaInvalida(
+        `Falta el archivo de Excel en el campo "${CAMPO_DEL_ARCHIVO}".`,
+        [CAMPO_DEL_ARCHIVO]
+      );
+    }
+
+    const resultado = await this.#servicio.importarCatalogo(peticion.file.buffer);
+    respuesta.json({ datos: aResultadoDeImportacion(resultado) });
+  };
+
+  /** GET /importaciones/plantilla: descarga la plantilla oficial. */
+  descargarPlantilla = (_peticion, respuesta, siguiente) => {
+    respuesta.download(RUTA_DE_LA_PLANTILLA, "plantilla-de-productos.xlsx", (error) => {
+      if (error) siguiente(error);
+    });
   };
 }
 

@@ -13,6 +13,13 @@
  * agrega una columna basta con ponerla aquí.
  */
 
+import { fileURLToPath } from "node:url";
+
+/** Dónde queda la plantilla que genera `npm run plantilla`. */
+export const RUTA_DE_LA_PLANTILLA = fileURLToPath(
+  new URL("./plantilla-de-productos.xlsx", import.meta.url)
+);
+
 export const TIPOS = Object.freeze({
   TEXTO: "texto",
   MONTO: "monto",
