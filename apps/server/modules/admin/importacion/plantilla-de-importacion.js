@@ -11,6 +11,9 @@
  * mala no detiene la importación (RF-58) y se pueden revisar cosas que
  * dependen de todo el archivo, como un código repetido.
  *
+ * Las filas válidas se guardan todas en una sola transacción: si falla
+ * la base de datos a medio camino, no queda el catálogo a medias.
+ *
  * guardarFila no escribe SQL: le pide el guardado al módulo de catálogo,
  * que es el dueño de esas tablas.
  */
@@ -20,7 +23,7 @@ export class PlantillaDeImportacion {
     const filas = await this.parsear(archivo);
     const contexto = this.prepararContexto(filas);
 
-    const resultado = { leidas: filas.length, importadas: 0, rechazadas: [] };
+    const resultado = { leidas: filas.length, importadas: 0, actualizadas: 0, rechazadas: [] };
     const validas = [];
 
     for (const fila of filas) {
@@ -33,13 +36,20 @@ export class PlantillaDeImportacion {
       }
     }
 
-    // TODO SCRUM-35: guardar todas las válidas en una sola transacción.
-    for (const fila of validas) {
-      await this.guardarFila(this.mapearFila(fila));
-      resultado.importadas += 1;
-    }
+    // importadas = productos nuevos; actualizadas = SKU que ya existían.
+    // Reimportar la misma hoja debería dar solo actualizadas (RF-59).
+    // Si la transacción falla, el error sube y no se devuelve ningún conteo.
+    const conteo = await this.enTransaccion(async (cliente) => {
+      const parcial = { importadas: 0, actualizadas: 0 };
+      for (const fila of validas) {
+        const { insertado } = await this.guardarFila(cliente, this.mapearFila(fila));
+        if (insertado) parcial.importadas += 1;
+        else parcial.actualizadas += 1;
+      }
+      return parcial;
+    });
 
-    return resultado;
+    return { ...resultado, ...conteo };
   }
 
   /** Datos que la validación necesita de todo el archivo. Opcional. */
@@ -66,8 +76,19 @@ export class PlantillaDeImportacion {
     throw new Error("Sin implementar: mapearFila()");
   }
 
-  /** Tiene que actualizar si el SKU ya existe, no duplicar (RF-59). */
-  async guardarFila(_producto) {
+  /**
+   * Corre `trabajo(cliente)` dentro de una transacción y devuelve lo que
+   * este devuelva. Si algo falla, no se guarda nada.
+   */
+  async enTransaccion(_trabajo) {
+    throw new Error("Sin implementar: enTransaccion()");
+  }
+
+  /**
+   * Tiene que actualizar si el SKU ya existe, no duplicar (RF-59).
+   * Devuelve `{ insertado }` para saber si fue nuevo o actualizado.
+   */
+  async guardarFila(_cliente, _producto) {
     throw new Error("Sin implementar: guardarFila()");
   }
 }

@@ -1,16 +1,15 @@
 /**
- * CAPA DE PERSISTENCIA — Repositorio del catálogo.
+ * Repositorio del catálogo.
  *
- * Único lugar del módulo que escribe SQL. Devuelve objetos de dominio en
- * camelCase, no filas en snake_case (Data Mapper): si mañana cambia una
- * columna, el cambio muere en este archivo (§ 10.1).
+ * Es el único archivo del módulo con SQL. Devuelve objetos en camelCase
+ * y no filas de la base, así que si cambia una columna solo hay que
+ * tocar este archivo.
  *
- * Solo escribe en el esquema `catalogo` (§ 9.3). Leer las existencias de
- * `inventario.existencia` está permitido: la regla de propiedad limita la
- * escritura, no la lectura.
+ * Solo escribe en el esquema `catalogo`. Leer `inventario.existencia`
+ * está bien: lo que no se permite es escribir en tablas de otro módulo.
  *
- * Todas las consultas usan parámetros ($1, $2...), nunca concatenación:
- * es la defensa contra inyección de SQL.
+ * Las consultas siempre usan parámetros ($1, $2...) y nunca concatenan
+ * texto, para evitar inyección de SQL.
  */
 
 const COLUMNAS_DE_PRODUCTO = `
@@ -45,7 +44,7 @@ export class CatalogoRepository {
 
   /**
    * Productos activos, con filtro opcional por categoría y por nombre.
-   * La regla de visibilidad (RN-03) la aplica el servicio, no este SQL.
+   * Qué productos se muestran al público lo decide el servicio, no este SQL.
    */
   async listarActivos({ categoriaId = null, termino = null } = {}) {
     const { rows } = await this.#pool.query(
@@ -61,7 +60,7 @@ export class CatalogoRepository {
     return rows.map(aProducto);
   }
 
-  /** Ficha de un producto (RF-12), sin importar su estado. */
+  /** Ficha de un producto, sin importar su estado. */
   async obtenerPorId(productoId) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
@@ -73,7 +72,7 @@ export class CatalogoRepository {
     return rows[0] ? aProducto(rows[0]) : null;
   }
 
-  /** Categorías con su conteo de productos activos (RF-02). */
+  /** Categorías con cuántos productos activos tiene cada una. */
   async listarCategorias() {
     const { rows } = await this.#pool.query(
       `SELECT c.id, c.nombre, COUNT(p.id)::int AS cantidad_de_productos
@@ -90,12 +89,82 @@ export class CatalogoRepository {
       cantidadDeProductos: fila.cantidad_de_productos,
     }));
   }
+
+  /**
+   * Guarda un producto de la importación: lo crea si el SKU no existe y lo
+   * actualiza si ya existe, así reimportar la misma hoja no duplica nada
+   * (RF-59). La categoría y la subcategoría se crean si hace falta.
+   *
+   * Al actualizar no se tocan contrapedido, proveedor ni estado, porque la
+   * hoja no los trae y el administrador pudo cambiarlos a mano. Tampoco se
+   * borra una descripción o imagen si en la hoja vienen vacías.
+   *
+   * Se llama dentro de la transacción de la importación, con el `cliente`
+   * que entrega enTransaccion.
+   *
+   * @returns {Promise<{id: number, insertado: boolean}>}
+   */
+  async guardarPorSku(cliente, producto) {
+    const categoriaId = await idDeCategoria(cliente, producto.categoria);
+    const subcategoriaId = await idDeSubcategoria(cliente, categoriaId, producto.subcategoria);
+
+    // xmax = 0 solo en filas recién insertadas; así sabemos si fue
+    // inserción o actualización sin hacer otra consulta.
+    const { rows } = await cliente.query(
+      `INSERT INTO catalogo.producto
+              (sku, nombre, descripcion, subcategoria_id, imagen_url,
+               costo_item, porcentaje_importacion, margen_ganancia)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (sku) DO UPDATE SET
+              nombre                 = EXCLUDED.nombre,
+              descripcion            = coalesce(EXCLUDED.descripcion, producto.descripcion),
+              subcategoria_id        = EXCLUDED.subcategoria_id,
+              imagen_url             = coalesce(EXCLUDED.imagen_url, producto.imagen_url),
+              costo_item             = EXCLUDED.costo_item,
+              porcentaje_importacion = EXCLUDED.porcentaje_importacion,
+              margen_ganancia        = EXCLUDED.margen_ganancia
+       RETURNING id, (xmax = 0) AS insertado`,
+      [
+        producto.sku,
+        producto.nombre,
+        producto.descripcion,
+        subcategoriaId,
+        producto.imagenUrl,
+        producto.costoItem,
+        producto.porcentajeImportacion,
+        producto.margenGanancia,
+      ]
+    );
+
+    return { id: Number(rows[0].id), insertado: rows[0].insertado };
+  }
 }
 
-/**
- * Fila snake_case → objeto de dominio camelCase. PostgreSQL devuelve
- * BIGINT y NUMERIC como texto; aquí se convierten a número.
- */
+// El DO UPDATE que no cambia nada es para que RETURNING devuelva el id
+// también cuando la categoría ya existía (con DO NOTHING no lo devuelve).
+// Si ya existe, se respeta cómo estaba escrito el nombre.
+async function idDeCategoria(cliente, nombre) {
+  const { rows } = await cliente.query(
+    `INSERT INTO catalogo.categoria (nombre) VALUES ($1)
+     ON CONFLICT ((lower(btrim(nombre)))) DO UPDATE SET nombre = categoria.nombre
+     RETURNING id`,
+    [nombre]
+  );
+  return rows[0].id;
+}
+
+async function idDeSubcategoria(cliente, categoriaId, nombre) {
+  const { rows } = await cliente.query(
+    `INSERT INTO catalogo.subcategoria (categoria_id, nombre) VALUES ($1, $2)
+     ON CONFLICT (categoria_id, (lower(btrim(nombre)))) DO UPDATE SET nombre = subcategoria.nombre
+     RETURNING id`,
+    [categoriaId, nombre]
+  );
+  return rows[0].id;
+}
+
+// Pasa la fila de la base a camelCase. PostgreSQL devuelve BIGINT y
+// NUMERIC como texto, así que aquí se convierten a número.
 const aProducto = (fila) => ({
   id: Number(fila.id),
   sku: fila.sku,

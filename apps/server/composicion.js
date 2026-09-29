@@ -1,19 +1,14 @@
 /**
  * Raíz de composición (Composition Root).
  *
- * Único archivo que decide qué implementación concreta usa cada
- * interfaz. Construye una familia coherente de objetos a partir de una
- * sola configuración, que es la intención de Abstract Factory (§ 4.2), y
- * es lo que hace que los módulos dependan de abstracciones y no de clases
- * concretas: sustituir la pasarela simulada por una real (RNF-20) se hace
- * aquí, sin tocar la lógica de pedidos.
+ * Aquí se arma todo el sistema y es el único lugar que decide qué
+ * implementación concreta se usa. Por ejemplo, para cambiar la pasarela
+ * de pago simulada por una real solo hay que tocar este archivo, no la
+ * lógica de pedidos.
  *
- * Orden de construcción:
- *   1. Infraestructura      pool de conexiones y bus de eventos
- *   2. Adaptadores externos pago y facturación (Factory Method)
- *   3. Control de acceso    fábrica de middlewares de rol
- *   4. Módulos              en orden de dependencia
- *   5. Observadores         se registran con los módulos ya construidos
+ * El orden importa: primero la infraestructura (pool y bus de eventos),
+ * luego los adaptadores externos, el control de acceso, los módulos y al
+ * final los observadores del bus, que necesitan los módulos ya armados.
  */
 
 import { crearPool } from "./shared/db/pool.js";
@@ -35,12 +30,12 @@ import { registrarAlertaDeExistenciasBajas } from "./modules/inventario/suscript
 import { registrarBitacoraDeAuditoria } from "./modules/admin/suscriptores/bitacora-de-auditoria.js";
 
 export function componerSistema(configuracion) {
-  // ---- 1. Infraestructura ----
-  // Una sola instancia del pool, inyectada; no es un Singleton (§ 4.5).
+  // Un solo pool para todo el sistema. Se pasa a cada módulo en vez de ser
+  // global, así una prueba puede usar su propia base.
   const pool = crearPool(configuracion.baseDeDatos);
   const busDeEventos = new BusDeEventos();
 
-  // ---- 2. Adaptadores de los sistemas externos (Bridge, § 5.2) ----
+  // Sistemas externos (por ahora simulados).
   const pasarelaDePago = crearPasarelaDePago(
     configuracion.adaptadores.pasarelaDePago
   );
@@ -48,29 +43,34 @@ export function componerSistema(configuracion) {
     configuracion.adaptadores.facturacionElectronica
   );
 
-  // ---- 3. Control de acceso por rol ----
   const exigirRol = crearExigirRol(busDeEventos);
 
-  // ---- 4. Módulos, en orden de dependencia ----
-  // admin va primero porque clientes lee de él los parámetros de negocio.
-  const admin = crearModuloAdmin({
-    pool,
-    busDeEventos,
-    exigirRol,
-    sesion: configuracion.sesion,
-  });
-
-  // admin es dueño de admin.sesion: resuelve el usuario de cada cookie (RF-53).
-  const identificarUsuario = crearIdentificarUsuario((token) =>
-    admin.servicio.identificarPorToken(token)
-  );
-
+  // Los módulos van en orden de dependencia. catalogo e inventario van
+  // antes que admin porque la importación del Excel guarda productos y
+  // existencias a través de ellos. admin va antes que clientes porque
+  // clientes le pide los parámetros de negocio.
   const catalogo = crearModuloCatalogo({
     pool,
     negocio: configuracion.negocio,
   });
 
   const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
+
+  const admin = crearModuloAdmin({
+    pool,
+    busDeEventos,
+    exigirRol,
+    sesion: configuracion.sesion,
+    catalogo,
+    inventario,
+    negocio: configuracion.negocio,
+  });
+
+  // Las sesiones son de admin, así que admin es quien dice de quién es
+  // cada cookie.
+  const identificarUsuario = crearIdentificarUsuario((token) =>
+    admin.servicio.identificarPorToken(token)
+  );
 
   const clientes = crearModuloClientes({
     pool,
@@ -90,7 +90,7 @@ export function componerSistema(configuracion) {
 
   const reportes = crearModuloReportes({ pool, exigirRol });
 
-  // ---- 5. Observadores del bus de eventos (§ 6.2) ----
+  // Observadores del bus de eventos.
   registrarAlertaDeExistenciasBajas(busDeEventos, {
     umbral: configuracion.negocio.umbralDeExistenciasBajas,
   });

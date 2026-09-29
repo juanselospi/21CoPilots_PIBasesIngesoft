@@ -1,21 +1,17 @@
 /**
- * CAPA DE PERSISTENCIA — Repositorio de inventario.
+ * Repositorio de inventario.
  *
- * Único lugar del sistema que escribe en el esquema `inventario` (§ 9.3):
- * `existencia` guarda el saldo y `movimiento` el libro que lo explica.
- * Ambas se escriben en la misma transacción (§ 9.4).
+ * Es el único lugar del sistema que escribe en el esquema `inventario`.
+ * `existencia` guarda cuánto hay de cada producto y `movimiento` explica
+ * cómo se llegó a ese número; las dos se escriben en la misma transacción.
  *
- * Expone `enTransaccion` para que el servicio pueda pedir atomicidad
- * (Unit of Work) sin conocer el driver de PostgreSQL (§ 15, convención 1).
+ * Falta implementar:
+ *   - registrarMovimiento(): los ingresos llevan costo_unitario (RN-06)
+ *   - actualizarExistencia(): siempre junto con registrarMovimiento()
+ *   - listarMovimientos()
  *
- * POR IMPLEMENTAR
- *   registrarMovimiento()   RF-13..RF-17 — tipos del CHECK de movimiento.tipo;
- *                           los ingresos llevan costo_unitario (RN-06, RF-14)
- *   actualizarExistencia()  siempre junto con registrarMovimiento()
- *   listarMovimientos()     RF-19
- *
- * El trigger de `movimiento` rechaza UPDATE y DELETE (DD-16): un error se
- * corrige con un movimiento compensatorio, nunca editando el original.
+ * Los movimientos no se pueden editar ni borrar (lo impide un trigger).
+ * Un error se corrige con otro movimiento que lo compense.
  */
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
@@ -27,21 +23,21 @@ export class InventarioRepository {
     this.#pool = pool;
   }
 
-  /** Unit of Work: ejecuta el trabajo dentro de una sola transacción. */
+  /** Ejecuta el trabajo dentro de una sola transacción. */
   enTransaccion(trabajo) {
     return enTransaccion(this.#pool, trabajo);
   }
 
   /**
-   * Monitor Object delegado al SGBD (§ 7.3): bloquea las filas de
-   * existencia de los productos indicados hasta el COMMIT.
+   * Bloquea las existencias de los productos hasta el COMMIT, para que dos
+   * pedidos al mismo tiempo no vendan la misma unidad.
    *
-   * Los candados se toman en UNA consulta y en orden ascendente de
-   * `producto_id`: si dos pedidos los tomaran en distinto orden, cada uno
-   * esperaría al otro para siempre (deadlock). Debe llamarse dentro de
+   * Se bloquean en una sola consulta y ordenadas por producto_id. Si dos
+   * pedidos las bloquearan en distinto orden, cada uno se quedaría
+   * esperando al otro (deadlock). Hay que llamarla dentro de
    * `enTransaccion`, con el `cliente` que esta entrega.
    *
-   * @returns {Promise<Map<number, number>>} producto_id → cantidad
+   * @returns {Promise<Map<number, number>>} de producto_id a cantidad
    */
   async bloquearExistencias(cliente, productoIds) {
     const { rows } = await cliente.query(
@@ -54,5 +50,19 @@ export class InventarioRepository {
     );
 
     return new Map(rows.map((fila) => [Number(fila.producto_id), fila.cantidad]));
+  }
+
+  /**
+   * Crea la fila de existencias en 0 de un producto nuevo. No registra
+   * movimiento porque no entra mercancía. Sin esta fila,
+   * bloquearExistencias no podría bloquear el producto al confirmar un
+   * pedido.
+   */
+  async crearExistenciaSiFalta(cliente, productoId) {
+    await cliente.query(
+      `INSERT INTO inventario.existencia (producto_id) VALUES ($1)
+       ON CONFLICT (producto_id) DO NOTHING`,
+      [productoId]
+    );
   }
 }
