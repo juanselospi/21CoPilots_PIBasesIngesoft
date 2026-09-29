@@ -1,12 +1,9 @@
 /**
- * Ensamblado del módulo de catálogo.
+ * Arma el módulo de catálogo.
  *
- * Fachada del módulo: el resto del sistema importa solo este archivo y
- * recibe las rutas ya armadas. Las clases internas —repositorio,
- * servicio, pasos de precio— no se exponen hacia afuera.
- *
- * Aquí se ve el orden de las capas: repositorio → servicio → controlador
- * → rutas, con las dependencias siempre hacia adentro.
+ * El resto del sistema importa solo este archivo. El repositorio, el
+ * servicio y los pasos de precio quedan adentro; hacia afuera solo salen
+ * las rutas y lo que otros módulos necesitan.
  */
 
 import { CatalogoRepository } from "./catalogo.repository.js";
@@ -19,8 +16,8 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 
 export function crearModuloCatalogo({ pool, negocio }) {
-  // El orden de este arreglo ES la fórmula de precio (RN-01).
-  // Cuando se resuelva INC-05 con el Excel del cliente, se ajusta aquí.
+  // El orden de estos pasos es la fórmula del precio. Coincide con la que
+  // usa el Excel del negocio: costo, más importación, más margen, más IVA.
   const motorDePrecios = new MotorDePrecios([
     new ImportacionPorAranceles(),
     new MargenDeGanancia(),
@@ -33,8 +30,11 @@ export function crearModuloCatalogo({ pool, negocio }) {
 
   return {
     rutas: crearRutasDeCatalogo(controlador),
-    // Se exporta para que los módulos de carrito y pedidos reutilicen el
-    // mismo cálculo en vez de reimplementarlo.
+    // Carrito y pedidos usan el mismo motor para no calcular el precio de
+    // otra forma.
     motorDePrecios,
+    // La importación del Excel guarda los productos por aquí, porque las
+    // tablas de catálogo solo las escribe este módulo.
+    guardarProductoPorSku: (cliente, producto) => repositorio.guardarPorSku(cliente, producto),
   };
 }

@@ -42,17 +42,20 @@ const LIMITES = Object.freeze({
 
 export class ImportacionDeExcel extends PlantillaDeImportacion {
   #guardarProducto;
+  #enTransaccion;
   #porcentajeIva;
 
   /**
    * @param {object} dependencias
-   * @param {(producto: object) => Promise<unknown>} dependencias.guardarProducto
-   *        función del módulo de catálogo que inserta o actualiza por SKU
+   * @param {(cliente, producto: object) => Promise<{insertado: boolean}>} dependencias.guardarProducto
+   *        inserta o actualiza el producto por SKU
+   * @param {(trabajo: (cliente) => Promise<any>) => Promise<any>} dependencias.enTransaccion
    * @param {number} dependencias.impuestoDeVenta como proporción: 0.13
    */
-  constructor({ guardarProducto, impuestoDeVenta }) {
+  constructor({ guardarProducto, enTransaccion, impuestoDeVenta }) {
     super();
     this.#guardarProducto = guardarProducto;
+    this.#enTransaccion = enTransaccion;
     this.#porcentajeIva = redondear(impuestoDeVenta * 100);
   }
 
@@ -165,8 +168,12 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
     };
   }
 
-  async guardarFila(producto) {
-    return this.#guardarProducto(producto);
+  async enTransaccion(trabajo) {
+    return this.#enTransaccion(trabajo);
+  }
+
+  async guardarFila(cliente, producto) {
+    return this.#guardarProducto(cliente, producto);
   }
 }
 

@@ -1,25 +1,21 @@
 /**
- * CAPA DE DOMINIO — Administración y seguridad.
+ * Servicio de administración y seguridad.
  *
- * POR IMPLEMENTAR
- *   RF-49, RF-50  Cuenta de administrador y acceso por rol
- *   RF-51         Modificar precios, descuentos y márgenes
- *   RF-52         Bitácora de auditoría (el observador ya existe)
- *   RF-54         Recuperación de contraseña
- *   RF-57..RF-59  Importación del Excel (SUP-01)
+ * Falta implementar:
+ *   - cuenta de administrador y acceso por rol (RF-49, RF-50)
+ *   - modificar precios, descuentos y márgenes (RF-51)
+ *   - consultar la bitácora (RF-52; el observador que la escribe ya existe)
+ *   - recuperación de contraseña (RF-54)
  *
- * Reglas al implementar:
- *   · Todo cambio de parámetro publica PARAMETRO_MODIFICADO después de
- *     guardarlo; la bitácora lo registra sola (§ 6.2).
- *   · RNF-10: los intentos no autorizados ya los registra el middleware
- *     de rol. No duplicar ese registro aquí.
- *   · La importación extiende `importacion/plantilla-de-importacion.js`
- *     (Template Method, § 6.6); no reescribir el bucle de importación.
- *   · RF-53: la sesión se guarda como hash del token (admin.sesion); el
- *     token en claro solo viaja en la cookie.
- *   · RNF-08: hash antes de persistir cualquier contraseña. La política
- *     de contraseña es de 8 a 12 caracteres, con mayúscula, número y
- *     carácter especial (aprobado #15).
+ * A tener en cuenta:
+ *   - Cada cambio de parámetro publica PARAMETRO_MODIFICADO después de
+ *     guardarlo, y la bitácora lo registra sola.
+ *   - Los accesos denegados ya los registra el middleware de rol; no hay
+ *     que registrarlos otra vez aquí.
+ *   - La sesión se guarda como hash del token. El token en claro solo
+ *     viaja en la cookie.
+ *   - Las contraseñas se guardan siempre con hash. Deben tener de 8 a 12
+ *     caracteres, con mayúscula, número y carácter especial.
  */
 
 import {
@@ -29,21 +25,24 @@ import {
 import { verificarContrasena } from "./seguridad/contrasenas.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
 
-// Correo inexistente: se verifica contra este hash para igualar el tiempo de respuesta.
+// Si el correo no existe se compara igual contra este hash, para que la
+// respuesta tarde lo mismo y no se pueda adivinar qué correos existen.
 const HASH_DE_RELLENO = "$2a$10$1vuYiMqJwRihSl4xTujnxu7/C4bPZQcfg.BGDMjcFy7ox70upM9Ja";
 
 export class AdminService {
   #repositorio;
   #busDeEventos;
   #duracionSesionHoras;
+  #importacionDeExcel;
 
-  constructor({ repositorio, busDeEventos, duracionSesionHoras = 8 }) {
+  constructor({ repositorio, busDeEventos, duracionSesionHoras = 8, importacionDeExcel }) {
     this.#repositorio = repositorio;
     this.#busDeEventos = busDeEventos;
     this.#duracionSesionHoras = duracionSesionHoras;
+    this.#importacionDeExcel = importacionDeExcel;
   }
 
-  /** RF-53 — valida credenciales y abre sesión. Devuelve el token para la cookie. */
+  /** Valida las credenciales y abre la sesión. Devuelve el token para la cookie. */
   async iniciarSesion({ correo, contrasena }) {
     const usuario = await this.#repositorio.buscarUsuarioPorCorreo(correo);
     const contrasenaCorrecta = await verificarContrasena(
@@ -68,14 +67,23 @@ export class AdminService {
     return { token, venceEn, usuario: datosDelUsuario };
   }
 
-  /** RF-53 — usuario dueño del token de la cookie, o `null`. */
+  /** Usuario dueño del token de la cookie, o `null` si no hay sesión válida. */
   async identificarPorToken(token) {
     if (!token) return null;
     return this.#repositorio.buscarUsuarioPorSesion(hashearToken(token));
   }
 
   /**
-   * Parámetro de negocio numérico (DD-14). Lo usa, por ejemplo, el módulo
+   * Importa la hoja de productos. Devuelve cuántas filas se leyeron,
+   * cuántos productos se crearon y actualizaron, y las filas rechazadas
+   * con sus motivos.
+   */
+  async importarCatalogo(archivo) {
+    return this.#importacionDeExcel.importar(archivo);
+  }
+
+  /**
+   * Lee un parámetro de negocio numérico. Lo usa, por ejemplo, el módulo
    * de clientes para leer `monto_minimo_descuento`.
    */
   async obtenerNumero(clave) {

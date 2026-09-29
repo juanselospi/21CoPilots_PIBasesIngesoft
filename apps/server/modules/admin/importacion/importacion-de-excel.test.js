@@ -65,10 +65,27 @@ async function crearExcel(filas, { encabezados = ENCABEZADOS, filasPrevias = [] 
   return libro.xlsx.writeBuffer();
 }
 
-function crearImportacion() {
+// Base de datos falsa: recuerda los SKU (el primero se inserta y los
+// siguientes se actualizan) y solo confirma lo guardado si la transacción
+// termina bien. `fallarEn` hace fallar el guardado de ese SKU.
+function crearImportacion({ fallarEn } = {}) {
   const guardados = [];
+  const skusEnLaBase = new Set();
   const importacion = new ImportacionDeExcel({
-    guardarProducto: async (producto) => guardados.push(producto),
+    enTransaccion: async (trabajo) => {
+      const cliente = { pendientes: [] };
+      const resultado = await trabajo(cliente);
+      for (const producto of cliente.pendientes) {
+        guardados.push(producto);
+        skusEnLaBase.add(producto.sku);
+      }
+      return resultado;
+    },
+    guardarProducto: async (cliente, producto) => {
+      if (producto.sku === fallarEn) throw new Error("falla simulada de la base");
+      cliente.pendientes.push(producto);
+      return { insertado: !skusEnLaBase.has(producto.sku) };
+    },
     impuestoDeVenta: 0.13,
   });
   return { importacion, guardados };
@@ -265,6 +282,27 @@ test("RF-58: importa las válidas, rechaza las inválidas e informa el total", a
   });
   assert.equal(guardados[1].sku, "LEG-WL42-XHGA");
   assert.equal(guardados[1].subcategoria, "LEGO");
+});
+
+test("RF-59: reimportar la misma hoja actualiza y no crea productos", async () => {
+  const { importacion } = crearImportacion();
+  const archivo = await crearExcel([GOD_OF_WAR, MILLENNIUM_FALCON]);
+
+  const primera = await importacion.importar(archivo);
+  const segunda = await importacion.importar(archivo);
+
+  assert.equal(primera.importadas, 2);
+  assert.equal(primera.actualizadas, 0);
+  assert.equal(segunda.importadas, 0);
+  assert.equal(segunda.actualizadas, 2);
+});
+
+test("si falla el guardado de una fila no se guarda ninguna", async () => {
+  const { importacion, guardados } = crearImportacion({ fallarEn: "LEG-QGR6-3FCS" });
+  const archivo = await crearExcel([GOD_OF_WAR, MILLENNIUM_FALCON]);
+
+  await assert.rejects(importacion.importar(archivo), /falla simulada/);
+  assert.equal(guardados.length, 0);
 });
 
 test("SCRUM-30: la plantilla versionada se importa sin rechazos", async () => {
