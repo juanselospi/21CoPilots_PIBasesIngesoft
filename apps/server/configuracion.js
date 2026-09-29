@@ -40,6 +40,11 @@ export const configuracion = Object.freeze({
     cookieSegura: process.env.NODE_ENV === "production",
   }),
 
+  /** Importación del Excel de productos. La hoja real pesa unos pocos KB. */
+  importacion: Object.freeze({
+    tamanoMaximoMb: numero(process.env.IMPORTACION_TAMANO_MAXIMO_MB, 5),
+  }),
+
   /** Valores de negocio fijados por ley o por el SRS; no son editables. */
   negocio: Object.freeze({
     /** RES-06 — 13 % sobre el precio sin impuesto. */
