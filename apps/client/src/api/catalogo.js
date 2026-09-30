@@ -13,7 +13,8 @@ export function listarProductos({ categoria, q, limite, pagina } = {}, { signal 
     return pedir('/api/catalogo/productos', { parametros: { categoria, q, limite, pagina }, signal })
 }
 
-// Devuelve las categorías: { id, nombre, cantidadDeProductos }
+// Devuelve las categorías: { id, nombre, cantidadDeProductos, subcategorias }.
+// Cada subcategoría trae { id, nombre, cantidadDeProductos }.
 export function listarCategorias({ signal } = {}) {
     return pedir('/api/catalogo/categorias', { signal })
 }
