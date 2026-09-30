@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router'
 import StoreLayout from './components/store-layout/StoreLayout.jsx'
 import Home from './pages/home/Home.jsx'
 import Products from './pages/products/Products.jsx'
+import Access from './pages/access/Access.jsx'
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <Route element={<StoreLayout />}>
           <Route index element={<Home />} />
         </Route>
+        <Route path='/acceso' element={<Access />} />
         <Route path='/admin/productos' element={<Products />} />
       </Routes>
     </BrowserRouter>
