@@ -95,21 +95,20 @@ Compruebe que ve datos:
 
 ```bash
 npm run db:psql
-dchobbies=# SELECT sku, existencias FROM reportes.v_existencias ORDER BY sku;
+dchobbies=# SELECT sku, stock FROM reportes.v_existencias ORDER BY sku;
 dchobbies=# \dn          -- lista los esquemas: admin, catalogo, inventario, ...
 dchobbies=# \q
 ```
 
 **Usuarios de prueba:** `admin@dchobbies.test` / `Admin123!` · `cliente@correo.test` /
-`Cliente123!` (hash bcrypt, compatible con `bcrypt`/`bcryptjs` en Node).
+`Cliente123!` · `presencial@correo.test` / `Presencial123!` (hash bcrypt, compatible con `bcrypt`/`bcryptjs` en Node).
 
 **Casos de prueba preparados en las semillas:**
 
 | SKU | Caso | Requerimiento |
 |---|---|---|
-| `MTG-002` | Sin existencias, admite contrapedido: debe verse | RF-07, RN-03 |
-| `FUN-003` | Sin existencias ni contrapedido: no debe verse | RF-08 |
-| `VDJ-003` | Descontinuado: no debe verse | RF-18 |
+| `MTG-002` | Sin stock, admite contrapedido: debe verse | RF-07, RN-03 |
+| `FUN-003` | Sin stock ni contrapedido: no debe verse | RF-08, RN-03 |
 | `LIQ-001` | Margen negativo (liquidación) | RN-02, RF-43 |
 | `FUN-001`, `ANI-001` | En 2 unidades: disparan la alerta | RF-16, RN-04 |
 | `PKM-001` | Dos ingresos a costos distintos | RN-06, RF-14 |
@@ -351,13 +350,13 @@ Reglas para el código de acceso a datos:
 
 - **Siempre use parámetros** (`$1`, `$2`); nunca arme SQL concatenando texto.
 - **Traduzca los errores de PostgreSQL a mensajes de negocio**, usando el nombre de la
-  restricción (`err.constraint`): `23505` en `ux_producto_sku` → "El código ya existe"
-  (RF-01); `23514` en `ck_existencia_no_negativa` → "No hay suficientes existencias";
+  restricción (`err.constraint`): `23505` en `producto_pkey` → "El código ya existe"
+  (RF-01); `23514` en `ck_producto_stock` → "No hay suficiente stock";
   `23001` → "Este registro es histórico y no se puede modificar".
 - **Valide también en el servidor.** Las restricciones de la BD son la última línea de
   defensa, no los mensajes al usuario.
 - **Toda escritura que toque varias tablas va en una transacción** (`enTransaccion`),
-  y las existencias se bloquean en orden de `producto_id` (arquitectura § 7.3).
+  y el stock se bloquea en orden de `sku` (arquitectura § 7.3).
 
 ---
 
