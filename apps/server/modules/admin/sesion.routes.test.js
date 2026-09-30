@@ -11,8 +11,8 @@ import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 
 // Sesiones vigentes, por token. Cualquier otro token no identifica a nadie.
 const USUARIOS_POR_TOKEN = {
-  "token-admin": { id: 1, correo: "admin@dchobbies.test", nombre: "Administración", rol: ROLES.ADMINISTRADOR },
-  "token-cliente": { id: 2, correo: "cliente@correo.test", nombre: "Cliente", rol: ROLES.CLIENTE },
+  "token-admin": { correo: "admin@dchobbies.test", nombre: "Administración", rol: ROLES.ADMINISTRADOR },
+  "token-cliente": { correo: "cliente@correo.test", nombre: "Cliente", rol: ROLES.CLIENTE },
 };
 
 // Levanta las rutas reales de admin detrás de la misma cadena que app.js:

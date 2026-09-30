@@ -1,5 +1,13 @@
 # Base de datos — DC Hobbies Cultura Geek Online
 
+> **Esta base de datos sigue al pie de la letra el EER y el mapeo del equipo**
+> (`EER 21 CoPilots.drawio`), más la entidad débil **Sesión** para el login: llaves
+> naturales (correo, SKU, número de referencia, número de factura), especialización
+> Usuario → Administrador / Cliente, Carrito, Pedido e Historial como entidades débiles,
+> y Stock, Costo Total y Tasa de impuesto guardados en Producto. En `apps/server` ya
+> está adaptado el inicio de sesión; los demás módulos todavía usan el modelo anterior
+> (ver `documentos/diseño/modelo-datos.md` § 4).
+
 Guía para levantar, cambiar y probar la base de datos (PostgreSQL 17). Léala completa
 una vez; después use la [chuleta de comandos](#9-chuleta-de-comandos).
 
@@ -132,23 +140,23 @@ database/
 ├── .nvmrc                         versión de Node (22)
 ├── migraciones/                   001 … 008: un archivo por módulo, en orden de dependencias
 ├── semillas/
-│   ├── referencia/                escala de niveles, parámetros de negocio
-│   └── demo/                      usuarios, catálogo, existencias y pedidos de prueba
+│   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
 ├── scripts/                       migrate, seed, reset, probar, dump, new-migration
 └── schema.sql                     DDL completo GENERADO (entregable)
 ```
 
-| Migración | Esquema | Contenido |
+| Migración | Esquema | Tablas del mapeo |
 |---|---|---|
-| `001_esquemas_y_utilidades.sql` | todos | Crea los esquemas y dos funciones técnicas: `fijar_actualizado_en()` y `rechazar_modificacion()` |
-| `002_admin.sql` | `admin` | usuarios, recuperación de contraseña, bitácora, parámetros de negocio |
-| `003_catalogo.sql` | `catalogo` | categorías, subcategorías, productos |
-| `004_inventario.sql` | `inventario` | existencias y movimientos |
-| `005_clientes.sql` | `clientes` | niveles de fidelidad, clientes, teléfonos, consentimientos |
-| `006_pedidos.sql` | `pedidos` | carritos, pedidos, líneas, historial de estados |
-| `007_pagos_facturacion.sql` | `pagos`, `facturacion` | intentos de pago, facturas |
-| `008_reportes.sql` | `reportes` | vistas de solo lectura |
+| `001_esquemas_y_utilidades.sql` | todos | Crea los esquemas y dos funciones técnicas: `fijar_fecha_actualizacion()` y `rechazar_modificacion()` |
+| `002_admin.sql` | `admin` | `USUARIO`, `ADMINISTRADOR` |
+| `003_clientes.sql` | `clientes` | `CLIENTE`, `CLIENTE_TELEFONO` y la especialización disjunta |
+| `004_catalogo.sql` | `catalogo` | `PRODUCTO` |
+| `005_inventario.sql` | `inventario` | `PRODUCTO_ADMINISTRA` |
+| `006_pedidos.sql` | `pedidos` | `CARRITO`, `AGREGA`, `OFERTA`, `PEDIDO`, `HISTORIAL_ESTADO` |
+| `007_pagos_facturacion.sql` | `pagos`, `facturacion` | `PAGO`, `FACTURA` |
+| `008_reportes.sql` | `reportes` | vistas de solo lectura y atributos derivados (estado del pedido, montos) |
+| `009_sesion.sql` | `admin` | `SESION`, entidad débil de `USUARIO` para el inicio de sesión (agregada al EER) |
 
 ---
 
@@ -195,7 +203,7 @@ Supongamos que se definen las tarifas de envío (DEP-07):
 ```bash
 git checkout -b feature/SCRUM-40-tarifas-envio
 npm run db:new -- tarifas de envio
-# ✔ Creado database/migraciones/009_tarifas_de_envio.sql
+# ✔ Creado database/migraciones/010_tarifas_de_envio.sql
 ```
 
 Escriba el SQL, **siempre con el nombre del esquema**:
@@ -236,12 +244,12 @@ Antes del PR:
 | Reglas de negocio en `apps/server` (DD-10) | Triggers o procedimientos con reglas de negocio |
 | Corregir un movimiento con otro movimiento | Intentar editar o borrar registros históricos (la BD lo rechaza) |
 
-### 5.4 Choque de números (dos personas crean la `009` a la vez)
+### 5.4 Choque de números (dos personas crean la `010` a la vez)
 
 Es normal. El script lo detecta:
 
 ```
-✖ Dos migraciones con el número 009: "009_a.sql" y "009_b.sql".
+✖ Dos migraciones con el número 010: "010_a.sql" y "010_b.sql".
 ```
 
 Quien **todavía no hizo merge** renombra la suya a `010_…`, corre `npm run db:reset` y sigue.
@@ -269,11 +277,11 @@ Cada archivo de `database/pruebas/` corre en su propia transacción, precedido p
 con o sin semillas. Para agregar una prueba:
 
 ```sql
-SELECT pg_temp.producto_prueba('PRB-X');   -- producto de prueba con su fila de existencias
+SELECT pg_temp.producto_prueba('PRB-X', 3);   -- producto de prueba con 3 de stock
 
-SELECT pg_temp.debe_fallar('Un ingreso sin costo se rechaza (RN-06)',
-    $$INSERT INTO inventario.movimiento (producto_id, tipo, cantidad)
-      VALUES ((SELECT id FROM catalogo.producto WHERE sku = 'PRB-X'), 'ingreso', 5)$$, '23514');
+SELECT pg_temp.debe_fallar('Un registro con cantidad cero se rechaza',
+    $$INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad)
+      VALUES ('PRB-X', pg_temp.admin_prueba(), 0)$$, '23514');
 
 SELECT pg_temp.debe_funcionar('El margen negativo se acepta (RN-02)',
     $$UPDATE catalogo.producto SET margen_ganancia = -10 WHERE sku = 'PRB-X'$$);
@@ -327,12 +335,10 @@ class CatalogoRepository {
   // Entradas del precio; el precio lo calcula el motor de precios (DD-13)
   async listarActivos() {
     const { rows } = await this.pool.query(
-      `SELECT p.id, p.sku, p.nombre, p.costo_item, p.porcentaje_importacion,
-              p.margen_ganancia, p.admite_contrapedido, e.cantidad AS existencias
-       FROM   catalogo.producto p
-       JOIN   inventario.existencia e ON e.producto_id = p.id
-       WHERE  p.estado = 'activo'
-       ORDER  BY p.nombre`
+      `SELECT sku, nombre, categoria, item, importacion, costo_total,
+              margen_ganancia, tasa_impuesto, contrapedido, stock
+       FROM   catalogo.producto
+       ORDER  BY nombre`
     );
     return rows;
   }
@@ -394,5 +400,5 @@ npm run db:psql      # consola SQL dentro del contenedor
 | `password authentication failed` después de cambiar la clave en `.env` | El volumen guarda la clave original. Corra `docker compose down -v` (borra la BD local), luego `db:up` y `db:reset`. |
 | `✖ Estas migraciones ... su contenido cambió` | Alguien editó una migración aplicada. Si es suya y no está en `main`: `db:reset`. Si está en `main`: revierta la edición y cree una migración nueva. |
 | `relation "producto" does not exist` | Falta el esquema: use `catalogo.producto`. |
-| `La tabla ... es de solo inserción` | Es intencional (RF-19). Registre un movimiento compensatorio en lugar de editar. |
+| `La tabla ... es de solo inserción` | Es intencional (RF-19). Registre un nuevo registro compensatorio (p. ej. mercancía con cantidad negativa) en lugar de editar. |
 | Todo raro después de cambiar de rama | `npm run db:reset` |

@@ -11,9 +11,8 @@
 
 import { NOMBRE_DEL_REPORTE, TIPO_DEL_REPORTE } from "./importacion/reporte-de-rechazos.js";
 
-/** Usuario sin credenciales. */
+/** Usuario sin credenciales. El correo es su identificador (llave del EER). */
 export const aUsuario = (usuario) => ({
-  id: usuario.id,
   correo: usuario.correo,
   nombre: usuario.nombre,
   rol: usuario.rol,

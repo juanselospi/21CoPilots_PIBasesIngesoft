@@ -50,7 +50,7 @@ export class AdminService {
       usuario?.contrasenaHash ?? HASH_DE_RELLENO
     );
 
-    if (!usuario || !usuario.activo || !contrasenaCorrecta) {
+    if (!usuario || !contrasenaCorrecta) {
       throw new CredencialesInvalidas();
     }
 
@@ -58,12 +58,12 @@ export class AdminService {
     const venceEn = new Date(Date.now() + this.#duracionSesionHoras * 60 * 60 * 1000);
 
     await this.#repositorio.crearSesion({
-      usuarioId: usuario.id,
+      correoUsuario: usuario.correo,
       tokenHash: hashearToken(token),
       venceEn,
     });
 
-    const { contrasenaHash: _hash, activo: _activo, ...datosDelUsuario } = usuario;
+    const { contrasenaHash: _hash, ...datosDelUsuario } = usuario;
     return { token, venceEn, usuario: datosDelUsuario };
   }
 

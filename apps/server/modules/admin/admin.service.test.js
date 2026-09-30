@@ -6,23 +6,19 @@ import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { hashearToken } from "./seguridad/tokens-de-sesion.js";
 import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";
 
-/** Repositorio en memoria con un administrador y un cliente inactivo. */
+/** Repositorio en memoria con un administrador y un cliente. */
 async function crearRepositorioFalso() {
   const usuarios = [
     {
-      id: 1,
       correo: "admin@dchobbies.test",
       nombre: "Administración",
       rol: "administrador",
-      activo: true,
       contrasenaHash: await hashearContrasena("Admin123!"),
     },
     {
-      id: 2,
-      correo: "inactivo@correo.test",
-      nombre: "Cuenta inactiva",
+      correo: "cliente@correo.test",
+      nombre: "Cliente",
       rol: "cliente",
-      activo: false,
       contrasenaHash: await hashearContrasena("Cliente123!"),
     },
   ];
@@ -38,8 +34,8 @@ async function crearRepositorioFalso() {
     },
     async buscarUsuarioPorSesion(tokenHash) {
       const sesion = sesiones.find((s) => s.tokenHash === tokenHash);
-      const usuario = usuarios.find((u) => u.id === sesion?.usuarioId);
-      return usuario ? { id: usuario.id, rol: usuario.rol } : null;
+      const usuario = usuarios.find((u) => u.correo === sesion?.correoUsuario);
+      return usuario ? { correo: usuario.correo, rol: usuario.rol } : null;
     },
   };
 }
@@ -56,6 +52,7 @@ test("RF-53: con credenciales válidas abre una sesión y devuelve el rol", asyn
   assert.equal(usuario.rol, "administrador");
   assert.equal(usuario.contrasenaHash, undefined);
   assert.equal(repositorio.sesiones.length, 1);
+  assert.equal(repositorio.sesiones[0].correoUsuario, "admin@dchobbies.test");
 
   const horas = (venceEn - Date.now()) / (60 * 60 * 1000);
   assert.ok(horas > 7.9 && horas <= 8);
@@ -98,14 +95,16 @@ test("un correo inexistente da el mismo error que una contraseña incorrecta", a
   );
 });
 
-test("una cuenta inactiva no puede iniciar sesión", async () => {
+test("un cliente inicia sesión con su rol", async () => {
   const repositorio = await crearRepositorioFalso();
   const servicio = new AdminService({ repositorio });
 
-  await assert.rejects(
-    servicio.iniciarSesion({ correo: "inactivo@correo.test", contrasena: "Cliente123!" }),
-    CredencialesInvalidas
-  );
+  const { usuario } = await servicio.iniciarSesion({
+    correo: "cliente@correo.test",
+    contrasena: "Cliente123!",
+  });
+
+  assert.equal(usuario.rol, "cliente");
 });
 
 test("identifica al usuario a partir del token de la cookie", async () => {
@@ -118,7 +117,7 @@ test("identifica al usuario a partir del token de la cookie", async () => {
   });
 
   assert.deepEqual(await servicio.identificarPorToken(token), {
-    id: 1,
+    correo: "admin@dchobbies.test",
     rol: "administrador",
   });
   assert.equal(await servicio.identificarPorToken("token-inventado"), null);

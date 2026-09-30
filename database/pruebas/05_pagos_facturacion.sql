@@ -1,28 +1,43 @@
--- Restricciones de pagos y facturación (RF-39, RF-40, RF-41, RNF-06)
+-- Restricciones de pagos y facturación (RF-39, RF-40, RF-41)
 
-SELECT pg_temp.debe_fallar('Un intento de pago sin pedido ni carrito se rechaza',
-    $$INSERT INTO pagos.intento_pago (metodo, monto) VALUES ('tarjeta', 1000)$$, '23514');
+SELECT pg_temp.pedido_prueba();
 
-SELECT pg_temp.debe_funcionar('Un intento sin referencia externa se registra si la pasarela no responde (RNF-06)',
-    $$INSERT INTO pagos.intento_pago (pedido_id, metodo, monto, resultado, resuelto_en)
-      VALUES (pg_temp.pedido_prueba(), 'tarjeta', 1000, 'no_disponible', now())$$);
+SELECT pg_temp.debe_funcionar('Se registra un pago rechazado del pedido (RF-40)',
+    $$INSERT INTO pagos.pago (num_referencia, monto, metodo_pago, estado_pago, correo_cliente, num_carrito)
+      SELECT 'PRB-PAGO-1', 1695, 'tarjeta', 'rechazado', correo_cliente, num_carrito
+      FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba() LIMIT 1$$);
 
-SELECT pg_temp.debe_fallar('Un intento resuelto debe tener fecha de resolución (RF-40)',
-    $$INSERT INTO pagos.intento_pago (pedido_id, metodo, monto, resultado)
-      VALUES (pg_temp.pedido_prueba(), 'tarjeta', 1000, 'aprobado')$$, '23514');
+SELECT pg_temp.debe_funcionar('El mismo pedido admite otro pago (Necesita, 1 a N)',
+    $$INSERT INTO pagos.pago (num_referencia, monto, metodo_pago, estado_pago, correo_cliente, num_carrito)
+      SELECT 'PRB-PAGO-2', 1695, 'tarjeta', 'aprobado', correo_cliente, num_carrito
+      FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba() LIMIT 1$$);
 
-SELECT pg_temp.debe_funcionar('Se registra una factura pendiente',
-    $$INSERT INTO facturacion.factura (pedido_id, emisor_razon_social, emisor_cedula_juridica,
-                                       receptor_nombre, receptor_cedula, subtotal, impuesto, total)
-      VALUES ((SELECT max(id) FROM pedidos.pedido), 'Sociedad', '3-101-000000',
-              'Cliente de prueba', '9-9999-9999', 0, 0, 0)$$);
+SELECT pg_temp.debe_fallar('Un número de referencia repetido se rechaza (PK)',
+    $$INSERT INTO pagos.pago (num_referencia, monto, metodo_pago, correo_cliente, num_carrito)
+      SELECT 'PRB-PAGO-1', 1695, 'tarjeta', correo_cliente, num_carrito
+      FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba() LIMIT 1$$, '23505');
 
-SELECT pg_temp.debe_fallar('Un pedido no puede tener dos facturas',
-    $$INSERT INTO facturacion.factura (pedido_id, emisor_razon_social, emisor_cedula_juridica,
-                                       receptor_nombre, receptor_cedula, subtotal, impuesto, total)
-      VALUES ((SELECT max(id) FROM pedidos.pedido), 'Sociedad', '3-101-000000',
-              'Cliente de prueba', '9-9999-9999', 0, 0, 0)$$, '23505');
+SELECT pg_temp.debe_fallar('Un pago sin pedido se rechaza',
+    $$INSERT INTO pagos.pago (num_referencia, monto, metodo_pago, correo_cliente, num_carrito)
+      VALUES ('PRB-PAGO-3', 1000, 'tarjeta', pg_temp.cliente_prueba(), 999)$$, '23503');
 
-SELECT pg_temp.debe_fallar('Una factura emitida debe tener consecutivo y fecha de emisión',
-    $$UPDATE facturacion.factura SET estado = 'emitida'
-      WHERE pedido_id = (SELECT max(id) FROM pedidos.pedido)$$, '23514');
+SELECT pg_temp.debe_fallar('Un monto negativo se rechaza',
+    $$UPDATE pagos.pago SET monto = -1 WHERE num_referencia = 'PRB-PAGO-2'$$, '23514');
+
+SELECT pg_temp.debe_fallar('Un método de pago desconocido se rechaza',
+    $$UPDATE pagos.pago SET metodo_pago = 'trueque' WHERE num_referencia = 'PRB-PAGO-2'$$, '23514');
+
+SELECT pg_temp.debe_fallar('Un estado de pago desconocido se rechaza',
+    $$UPDATE pagos.pago SET estado_pago = 'regalado' WHERE num_referencia = 'PRB-PAGO-2'$$, '23514');
+
+SELECT pg_temp.debe_funcionar('Se emite la factura del pago (Respalda)',
+    $$INSERT INTO facturacion.factura (num_factura, num_referencia)
+      VALUES ('PRB-FE-1', 'PRB-PAGO-2')$$);
+
+SELECT pg_temp.debe_fallar('Un pago no puede tener dos facturas (0..1)',
+    $$INSERT INTO facturacion.factura (num_factura, num_referencia)
+      VALUES ('PRB-FE-2', 'PRB-PAGO-2')$$, '23505');
+
+SELECT pg_temp.debe_fallar('Una factura sin pago se rechaza',
+    $$INSERT INTO facturacion.factura (num_factura, num_referencia)
+      VALUES ('PRB-FE-3', 'NO-EXISTE')$$, '23503');

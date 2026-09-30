@@ -7,7 +7,7 @@ const messagesByStatus = {
 }
 
 /**
- * Inicia sesión y devuelve el usuario: { id, correo, nombre, rol }.
+ * Inicia sesión y devuelve el usuario: { correo, nombre, rol }.
  * El servidor deja la cookie de sesión en la respuesta.
  * Si algo sale mal lanza un Error con un mensaje para mostrar tal cual.
  */

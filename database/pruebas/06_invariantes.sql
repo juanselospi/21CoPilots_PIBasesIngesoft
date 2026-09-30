@@ -1,48 +1,47 @@
 -- Invariantes que deben cumplirse con cualquier contenido de la BD.
 -- Con los datos de prueba cargados, verifican además que las semillas son coherentes.
+-- Cruzan varias tablas, así que las garantiza el servicio y no un CHECK.
 
--- RES-07, RF-15: el saldo de cada producto es la suma de sus movimientos.
--- Si esto falla, alguien cambió existencias sin registrar el movimiento.
+-- Un pedido nace de un carrito que se cerró al convertirse ("Convierte")
 SELECT pg_temp.debe_cumplirse(
-    'Las existencias coinciden con la suma de los movimientos (RF-15)',
+    'Todo pedido viene de un carrito convertido',
     NOT EXISTS (
         SELECT 1
-        FROM   catalogo.producto p
-        LEFT   JOIN inventario.existencia e ON e.producto_id = p.id
-        LEFT   JOIN (SELECT producto_id, sum(cantidad) AS total
-                     FROM   inventario.movimiento
-                     GROUP  BY producto_id) m ON m.producto_id = p.id
-        WHERE  coalesce(e.cantidad, 0) <> coalesce(m.total, 0)
+        FROM   pedidos.pedido  pe
+        JOIN   pedidos.carrito c ON c.correo_cliente = pe.correo_cliente
+                                AND c.num_carrito    = pe.num_carrito
+        WHERE  c.estado_carrito <> 'convertido'
     )
 );
 
--- Todo producto tiene su fila de existencias (la crea el servicio al crear el producto)
 SELECT pg_temp.debe_cumplirse(
-    'Todo producto tiene fila de existencias',
+    'Todo pedido tiene al menos un producto',
     NOT EXISTS (
-        SELECT 1 FROM catalogo.producto p
-        WHERE  NOT EXISTS (SELECT 1 FROM inventario.existencia e WHERE e.producto_id = p.id)
+        SELECT 1 FROM pedidos.pedido pe
+        WHERE  NOT EXISTS (SELECT 1 FROM pedidos.agrega a
+                           WHERE a.correo_cliente = pe.correo_cliente
+                             AND a.num_carrito    = pe.num_carrito)
     )
 );
 
--- El estado vigente de cada pedido coincide con su último registro de historial
+-- RF-26: el historial empieza en "colocado" y numera sus cambios sin huecos
 SELECT pg_temp.debe_cumplirse(
-    'El estado de cada pedido coincide con su último cambio registrado (RF-26)',
+    'El historial de cada pedido empieza en colocado y no tiene huecos (RF-26)',
     NOT EXISTS (
         SELECT 1
-        FROM   pedidos.pedido pe
-        JOIN   LATERAL (SELECT h.estado
-                        FROM   pedidos.historial_estado h
-                        WHERE  h.pedido_id = pe.id
-                        ORDER  BY h.registrado_en DESC, h.id DESC
-                        LIMIT  1) ultimo ON TRUE
-        WHERE  ultimo.estado <> pe.estado
+        FROM   pedidos.historial_estado h
+        GROUP  BY h.correo_cliente, h.num_carrito
+        HAVING max(h.numero_cambio) <> count(*)
+            OR bool_or(h.numero_cambio = 1 AND h.estado <> 'colocado')
     )
 );
 
--- La escala de niveles tiene un nivel de entrada con 0 compras (RN-08)
 SELECT pg_temp.debe_cumplirse(
-    'Existe un nivel de fidelidad para clientes sin compras (RN-08)',
-    NOT EXISTS (SELECT 1 FROM clientes.nivel_fidelidad)
-    OR EXISTS (SELECT 1 FROM clientes.nivel_fidelidad WHERE compras_minimas = 0)
+    'Solo se factura un pago aprobado (RF-41)',
+    NOT EXISTS (
+        SELECT 1
+        FROM   facturacion.factura f
+        JOIN   pagos.pago          p ON p.num_referencia = f.num_referencia
+        WHERE  p.estado_pago <> 'aprobado'
+    )
 );

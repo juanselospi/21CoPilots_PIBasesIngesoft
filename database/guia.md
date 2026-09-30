@@ -46,7 +46,7 @@ Debe terminar con `✔ BD reconstruida desde cero.`
 npm run db:test
 ```
 
-Debe terminar con `✔ 53 prueba(s) aprobada(s).`
+Debe terminar con `✔ 86 prueba(s) aprobada(s).`
 
 Listo: la base de datos está corriendo.
 

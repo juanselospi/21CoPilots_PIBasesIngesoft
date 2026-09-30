@@ -4,6 +4,7 @@
 
 -- La instrucción debe fallar con el código de error indicado
 --   23505 unicidad · 23514 CHECK · 23503 llave foránea · 23001 solo inserción
+--   428C9 columna generada
 CREATE FUNCTION pg_temp.debe_fallar(p_prueba text, p_sql text, p_codigo text) RETURNS void
 LANGUAGE plpgsql AS $$
 BEGIN
@@ -47,92 +48,63 @@ $$;
 -- Datos mínimos para las pruebas
 -- ---------------------------------------------------------------------
 
-CREATE FUNCTION pg_temp.subcategoria_prueba() RETURNS integer
+CREATE FUNCTION pg_temp.producto_prueba(p_sku text, p_stock integer DEFAULT 0) RETURNS text
 LANGUAGE plpgsql AS $$
-DECLARE
-    v_categoria    integer;
-    v_subcategoria integer;
 BEGIN
-    SELECT s.id INTO v_subcategoria
-    FROM   catalogo.subcategoria s
-    JOIN   catalogo.categoria    c ON c.id = s.categoria_id
-    WHERE  c.nombre = 'Categoría de prueba';
-
-    IF v_subcategoria IS NULL THEN
-        INSERT INTO catalogo.categoria (nombre) VALUES ('Categoría de prueba')
-        RETURNING id INTO v_categoria;
-        INSERT INTO catalogo.subcategoria (categoria_id, nombre) VALUES (v_categoria, 'Subcategoría de prueba')
-        RETURNING id INTO v_subcategoria;
-    END IF;
-    RETURN v_subcategoria;
+    INSERT INTO catalogo.producto (sku, nombre, categoria, item, stock)
+    VALUES (p_sku, 'Producto ' || p_sku, 'Categoría de prueba', 1000, p_stock);
+    RETURN p_sku;
 END;
 $$;
 
-CREATE FUNCTION pg_temp.producto_prueba(p_sku text, p_existencias integer DEFAULT 0) RETURNS bigint
+-- Devuelve el correo del administrador existente o crea uno (RF-49 permite solo uno)
+CREATE FUNCTION pg_temp.admin_prueba() RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_producto bigint;
-BEGIN
-    INSERT INTO catalogo.producto (sku, nombre, subcategoria_id, costo_item)
-    VALUES (p_sku, 'Producto ' || p_sku, pg_temp.subcategoria_prueba(), 1000)
-    RETURNING id INTO v_producto;
-    INSERT INTO inventario.existencia (producto_id, cantidad) VALUES (v_producto, p_existencias);
-    RETURN v_producto;
-END;
-$$;
-
--- Devuelve el administrador existente o crea uno (RF-49 permite solo uno)
-CREATE FUNCTION pg_temp.admin_prueba() RETURNS bigint
-LANGUAGE plpgsql AS $$
-DECLARE
-    v_admin bigint := (SELECT id FROM admin.usuario WHERE rol = 'administrador');
+    v_admin text := (SELECT correo_usuario FROM admin.administrador);
 BEGIN
     IF v_admin IS NULL THEN
-        INSERT INTO admin.usuario (correo, contrasena_hash, nombre, rol)
-        VALUES ('admin.prueba@prueba.test', 'x', 'Admin de prueba', 'administrador')
-        RETURNING id INTO v_admin;
+        v_admin := 'admin.prueba@prueba.test';
+        INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES (v_admin, 'x', 'Admin de prueba');
+        INSERT INTO admin.administrador (correo_usuario) VALUES (v_admin);
     END IF;
     RETURN v_admin;
 END;
 $$;
 
-CREATE FUNCTION pg_temp.usuario_cliente_prueba() RETURNS bigint
+-- Crea (una sola vez) un usuario cliente y devuelve su correo
+CREATE FUNCTION pg_temp.cliente_prueba() RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_usuario bigint := (SELECT id FROM admin.usuario WHERE correo = 'usuario.prueba@prueba.test');
+    v_correo text := 'cliente.prueba@prueba.test';
 BEGIN
-    IF v_usuario IS NULL THEN
-        INSERT INTO admin.usuario (correo, contrasena_hash, nombre, rol)
-        VALUES ('usuario.prueba@prueba.test', 'x', 'Usuario de prueba', 'cliente')
-        RETURNING id INTO v_usuario;
+    IF NOT EXISTS (SELECT 1 FROM clientes.cliente WHERE correo_usuario = v_correo) THEN
+        INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES (v_correo, 'x', 'Cliente de prueba');
+        INSERT INTO clientes.cliente (correo_usuario, cedula) VALUES (v_correo, '9-9999-9999');
     END IF;
-    RETURN v_usuario;
+    RETURN v_correo;
 END;
 $$;
 
-CREATE FUNCTION pg_temp.cliente_prueba() RETURNS bigint
+-- Carrito convertido del cliente de prueba con una línea, y su pedido.
+-- Devuelve el número de carrito (la llave es cliente_prueba() + ese número).
+CREATE FUNCTION pg_temp.pedido_prueba() RETURNS integer
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_cliente bigint := (SELECT id FROM clientes.cliente WHERE correo = 'cliente.prueba@prueba.test');
+    v_cliente text    := pg_temp.cliente_prueba();
+    v_num     integer := (SELECT coalesce(max(num_carrito), 0) + 1
+                          FROM pedidos.carrito WHERE correo_cliente = v_cliente);
 BEGIN
-    IF v_cliente IS NULL THEN
-        INSERT INTO clientes.cliente (nombre, correo, tipo_cedula, cedula)
-        VALUES ('Cliente de prueba', 'cliente.prueba@prueba.test', 'fisica', '9-9999-9999')
-        RETURNING id INTO v_cliente;
+    IF NOT EXISTS (SELECT 1 FROM catalogo.producto WHERE sku = 'PRB-AYU') THEN
+        PERFORM pg_temp.producto_prueba('PRB-AYU', 10);
     END IF;
-    RETURN v_cliente;
-END;
-$$;
-
--- Venta presencial mínima, útil como pedido de referencia
-CREATE FUNCTION pg_temp.pedido_prueba() RETURNS bigint
-LANGUAGE plpgsql AS $$
-DECLARE
-    v_pedido bigint;
-BEGIN
-    INSERT INTO pedidos.pedido (canal, cliente_id, registrado_por, subtotal, impuesto, total)
-    VALUES ('presencial', pg_temp.cliente_prueba(), pg_temp.admin_prueba(), 0, 0, 0)
-    RETURNING id INTO v_pedido;
-    RETURN v_pedido;
+    INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_cierre)
+    VALUES (v_cliente, v_num, 'convertido', now());
+    INSERT INTO pedidos.agrega (correo_cliente, num_carrito, sku, cantidad_solicitada,
+                                precio_unitario, tasa_impuesto_aplicada)
+    VALUES (v_cliente, v_num, 'PRB-AYU', 1, 1500, 13);
+    INSERT INTO pedidos.pedido (correo_cliente, num_carrito, modalidad_entrega)
+    VALUES (v_cliente, v_num, 'entrega_personal');
+    RETURN v_num;
 END;
 $$;
