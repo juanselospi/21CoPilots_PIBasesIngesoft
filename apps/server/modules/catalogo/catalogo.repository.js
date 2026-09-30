@@ -5,35 +5,26 @@
  * y no filas de la base, así que si cambia una columna solo hay que
  * tocar este archivo.
  *
- * Solo escribe en el esquema `catalogo`. Leer `inventario.existencia`
- * está bien: lo que no se permite es escribir en tablas de otro módulo.
+ * La tabla sigue el EER: el SKU es la llave, la categoría es un texto y
+ * el stock vive en el mismo producto. aProducto() traduce esas columnas a
+ * los nombres que usa el dominio (costoItem, porcentajeImportacion,
+ * existencias...), así el motor de precios no depende del esquema.
  *
  * Las consultas siempre usan parámetros ($1, $2...) y nunca concatenan
  * texto, para evitar inyección de SQL.
  */
 
 const COLUMNAS_DE_PRODUCTO = `
-       p.id,
-       p.sku,
-       p.nombre,
-       p.descripcion,
-       p.imagen_url,
-       p.costo_item,
-       p.porcentaje_importacion,
-       p.margen_ganancia,
-       p.admite_contrapedido,
-       p.estado,
-       coalesce(e.cantidad, 0) AS existencias,
-       c.id     AS categoria_id,
-       c.nombre AS categoria,
-       s.id     AS subcategoria_id,
-       s.nombre AS subcategoria`;
-
-const ORIGEN_DE_PRODUCTO = `
-  FROM catalogo.producto        p
-  JOIN catalogo.subcategoria    s ON s.id = p.subcategoria_id
-  JOIN catalogo.categoria       c ON c.id = s.categoria_id
-  LEFT JOIN inventario.existencia e ON e.producto_id = p.id`;
+       sku,
+       nombre,
+       descripcion,
+       imagen,
+       categoria,
+       item,
+       importacion,
+       margen_ganancia,
+       contrapedido,
+       stock`;
 
 export class CatalogoRepository {
   #pool;
@@ -43,51 +34,35 @@ export class CatalogoRepository {
   }
 
   /**
-   * Productos activos, con filtro opcional por categoría y por nombre.
+   * Productos con filtro opcional por categoría y por nombre.
    * Qué productos se muestran al público lo decide el servicio, no este SQL.
    */
-  async listarActivos({ categoriaId = null, termino = null } = {}) {
+  async listar({ categoria = null, termino = null } = {}) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
-       ${ORIGEN_DE_PRODUCTO}
-        WHERE p.estado = 'activo'
-          AND ($1::int  IS NULL OR c.id = $1)
-          AND ($2::text IS NULL OR p.nombre ILIKE '%' || $2 || '%')
-        ORDER BY p.nombre`,
-      [categoriaId, termino]
+         FROM catalogo.producto
+        WHERE ($1::text IS NULL OR categoria = $1)
+          AND ($2::text IS NULL OR nombre ILIKE '%' || $2 || '%')
+        ORDER BY nombre`,
+      [categoria, termino]
     );
 
     return rows.map(aProducto);
   }
 
-  /** Ficha de un producto, sin importar su estado. */
-  async obtenerPorId(productoId) {
+  /**
+   * Ficha de un producto, sea visible o no. El SKU se guarda normalizado
+   * (mayúsculas, sin espacios en los extremos), así que se busca igual.
+   */
+  async obtenerPorSku(sku) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
-       ${ORIGEN_DE_PRODUCTO}
-        WHERE p.id = $1`,
-      [productoId]
+         FROM catalogo.producto
+        WHERE sku = upper(btrim($1))`,
+      [sku]
     );
 
     return rows[0] ? aProducto(rows[0]) : null;
-  }
-
-  /** Categorías con cuántos productos activos tiene cada una. */
-  async listarCategorias() {
-    const { rows } = await this.#pool.query(
-      `SELECT c.id, c.nombre, COUNT(p.id)::int AS cantidad_de_productos
-         FROM catalogo.categoria c
-    LEFT JOIN catalogo.subcategoria s ON s.categoria_id = c.id
-    LEFT JOIN catalogo.producto     p ON p.subcategoria_id = s.id AND p.estado = 'activo'
-     GROUP BY c.id, c.nombre
-     ORDER BY c.nombre`
-    );
-
-    return rows.map((fila) => ({
-      id: fila.id,
-      nombre: fila.nombre,
-      cantidadDeProductos: fila.cantidad_de_productos,
-    }));
   }
 
   /**
@@ -163,22 +138,17 @@ async function idDeSubcategoria(cliente, categoriaId, nombre) {
   return rows[0].id;
 }
 
-// Pasa la fila de la base a camelCase. PostgreSQL devuelve BIGINT y
+// Pasa la fila de la base a los nombres del dominio. PostgreSQL devuelve
 // NUMERIC como texto, así que aquí se convierten a número.
 const aProducto = (fila) => ({
-  id: Number(fila.id),
   sku: fila.sku,
   nombre: fila.nombre,
   descripcion: fila.descripcion,
-  imagenUrl: fila.imagen_url,
-  costoItem: Number(fila.costo_item),
-  porcentajeImportacion: Number(fila.porcentaje_importacion),
-  margenGanancia: Number(fila.margen_ganancia),
-  admiteContrapedido: fila.admite_contrapedido,
-  estado: fila.estado,
-  existencias: Number(fila.existencias),
-  categoriaId: fila.categoria_id,
+  imagenUrl: fila.imagen,
   categoria: fila.categoria,
-  subcategoriaId: fila.subcategoria_id,
-  subcategoria: fila.subcategoria,
+  costoItem: Number(fila.item),
+  porcentajeImportacion: Number(fila.importacion),
+  margenGanancia: Number(fila.margen_ganancia),
+  admiteContrapedido: fila.contrapedido,
+  existencias: fila.stock,
 });

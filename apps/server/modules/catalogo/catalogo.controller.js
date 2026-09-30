@@ -24,8 +24,8 @@ export class CatalogoController {
     const porPagina = leerEntero(limite, "limite", { minimo: 1, maximo: LIMITE_MAXIMO }) ?? LIMITE_POR_DEFECTO;
 
     const productos = await this.#servicio.listarCatalogo({
-      categoriaId: leerEntero(categoria, "categoria", { minimo: 1 }),
-      termino: q?.trim() || null,
+      categoria: leerTexto(categoria),
+      termino: leerTexto(q),
       limite: porPagina,
       desplazamiento: (leerEntero(pagina, "pagina", { minimo: 0 }) ?? 0) * porPagina,
     });
@@ -34,8 +34,7 @@ export class CatalogoController {
   };
 
   obtenerFicha = async (peticion, respuesta) => {
-    const id = leerEntero(peticion.params.id, "id", { minimo: 1 });
-    const producto = await this.#servicio.obtenerFicha(id);
+    const producto = await this.#servicio.obtenerFicha(peticion.params.sku);
     respuesta.json({ datos: aProductoPublico(producto) });
   };
 
@@ -43,6 +42,11 @@ export class CatalogoController {
     const categorias = await this.#servicio.listarCategorias();
     respuesta.json({ datos: categorias.map(aCategoriaPublica) });
   };
+}
+
+/** Lee un texto opcional de la petición; `null` si no viene o viene vacío. */
+function leerTexto(valor) {
+  return typeof valor === "string" && valor.trim() !== "" ? valor.trim() : null;
 }
 
 /** Lee un entero opcional de la petición; `null` si no viene. */

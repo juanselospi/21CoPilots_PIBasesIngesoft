@@ -5,15 +5,16 @@ import { pedir } from './clienteHttp.js'
 
 /**
  * Devuelve los productos visibles del catálogo, cada uno con
- * { id, sku, nombre, descripcion, imagenUrl, categoria, subcategoria,
+ * { sku, nombre, descripcion, imagenUrl, categoria,
  *   precioFinal, moneda, disponibilidad, admiteContrapedido }.
- * Filtros opcionales: `categoria` (id), `q` (texto), `limite` (máx. 48) y `pagina` (empieza en 0).
+ * El `sku` identifica al producto.
+ * Filtros opcionales: `categoria` (nombre), `q` (texto), `limite` (máx. 48) y `pagina` (empieza en 0).
  */
 export function listarProductos({ categoria, q, limite, pagina } = {}, { signal } = {}) {
     return pedir('/api/catalogo/productos', { parametros: { categoria, q, limite, pagina }, signal })
 }
 
-// Devuelve las categorías: { id, nombre, cantidadDeProductos }
+// Devuelve las categorías: { nombre, cantidadDeProductos }
 export function listarCategorias({ signal } = {}) {
     return pedir('/api/catalogo/categorias', { signal })
 }

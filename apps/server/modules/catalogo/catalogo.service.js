@@ -29,8 +29,8 @@ export class CatalogoService {
    * Con ~195 SKU (RNF-02) filtrar y paginar en memoria es suficiente; si
    * el catálogo crece, la paginación baja al repositorio.
    */
-  async listarCatalogo({ categoriaId, termino, limite, desplazamiento }) {
-    const productos = await this.#repositorio.listarActivos({ categoriaId, termino });
+  async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
+    const productos = await this.#repositorio.listar({ categoria, termino });
 
     return productos
       .map((producto) => this.#conPrecioYDisponibilidad(producto))
@@ -39,20 +39,35 @@ export class CatalogoService {
   }
 
   /** Ficha de producto (RF-12). */
-  async obtenerFicha(productoId) {
-    const producto = await this.#repositorio.obtenerPorId(productoId);
+  async obtenerFicha(sku) {
+    const producto = await this.#repositorio.obtenerPorSku(sku);
     const ficha = producto && this.#conPrecioYDisponibilidad(producto);
 
     // RN-03: si no es visible, para el público es como si no existiera.
     if (!ficha || !esVisible(ficha)) {
-      throw new RecursoNoEncontrado("el producto", productoId);
+      throw new RecursoNoEncontrado("el producto", sku);
     }
 
     return ficha;
   }
 
+  /**
+   * Categorías con cuántos productos visibles tiene cada una (RF-10). En el
+   * EER la categoría es un atributo del producto, así que se arman a partir
+   * de los productos; el conteo usa la misma regla de visibilidad (RN-03).
+   */
   async listarCategorias() {
-    return this.#repositorio.listarCategorias();
+    const productos = await this.#repositorio.listar();
+    const conteo = new Map();
+
+    for (const producto of productos.map((p) => this.#conPrecioYDisponibilidad(p))) {
+      const visibles = conteo.get(producto.categoria) ?? 0;
+      conteo.set(producto.categoria, visibles + (esVisible(producto) ? 1 : 0));
+    }
+
+    return [...conteo]
+      .map(([nombre, cantidadDeProductos]) => ({ nombre, cantidadDeProductos }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
   /**
@@ -76,9 +91,13 @@ export class CatalogoService {
 const esVisible = (producto) =>
   producto.disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE;
 
-/** RF-07, RF-08, RN-03 — los tres estados posibles. */
+/**
+ * RF-07, RF-08, RN-03 — los tres estados posibles.
+ * RF-18 (descontinuar) queda pendiente: el EER no tiene un estado del
+ * producto. Mientras tanto, un producto sin stock y sin contrapedido ya
+ * queda oculto por RN-03.
+ */
 function determinarDisponibilidad(producto) {
-  if (producto.estado === "descontinuado") return DISPONIBILIDAD.NO_DISPONIBLE; // RF-18
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;
   if (producto.admiteContrapedido) return DISPONIBILIDAD.POR_CONTRAPEDIDO;
   return DISPONIBILIDAD.NO_DISPONIBLE;

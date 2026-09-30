@@ -11,15 +11,13 @@
  * mañana alguien agregue una columna nueva a la tabla.
  */
 
-/** Vista pública: visitante y cliente (RF-10, RF-12). */
+/** Vista pública: visitante y cliente (RF-10, RF-12). El SKU identifica al producto. */
 export const aProductoPublico = (producto) => ({
-  id: producto.id,
   sku: producto.sku,
   nombre: producto.nombre,
   descripcion: producto.descripcion,
   imagenUrl: producto.imagenUrl,
   categoria: producto.categoria,
-  subcategoria: producto.subcategoria,
   precioFinal: producto.precioFinal,
   moneda: "CRC",
   disponibilidad: producto.disponibilidad,
@@ -32,7 +30,6 @@ export const aProductoPublico = (producto) => ({
  */
 export const aProductoAdministrativo = (producto) => ({
   ...aProductoPublico(producto),
-  estado: producto.estado,
   costoItem: producto.costoItem,
   porcentajeImportacion: producto.porcentajeImportacion,
   margenGanancia: producto.margenGanancia,
@@ -41,7 +38,6 @@ export const aProductoAdministrativo = (producto) => ({
 });
 
 export const aCategoriaPublica = (categoria) => ({
-  id: categoria.id,
   nombre: categoria.nombre,
   cantidadDeProductos: categoria.cantidadDeProductos,
 });
