@@ -72,22 +72,25 @@ export class CatalogoRepository {
     return rows[0] ? aProducto(rows[0]) : null;
   }
 
-  /** Categorías con cuántos productos activos tiene cada una. */
+  /**
+   * Categorías con sus subcategorías, y cuántos productos activos tiene
+   * cada una. Sale una fila por subcategoría y aquí se agrupan.
+   */
   async listarCategorias() {
     const { rows } = await this.#pool.query(
-      `SELECT c.id, c.nombre, COUNT(p.id)::int AS cantidad_de_productos
+      `SELECT c.id     AS categoria_id,
+              c.nombre AS categoria,
+              s.id     AS subcategoria_id,
+              s.nombre AS subcategoria,
+              COUNT(p.id)::int AS cantidad_de_productos
          FROM catalogo.categoria c
     LEFT JOIN catalogo.subcategoria s ON s.categoria_id = c.id
     LEFT JOIN catalogo.producto     p ON p.subcategoria_id = s.id AND p.estado = 'activo'
-     GROUP BY c.id, c.nombre
-     ORDER BY c.nombre`
+     GROUP BY c.id, c.nombre, s.id, s.nombre
+     ORDER BY c.nombre, s.nombre`
     );
 
-    return rows.map((fila) => ({
-      id: fila.id,
-      nombre: fila.nombre,
-      cantidadDeProductos: fila.cantidad_de_productos,
-    }));
+    return agruparPorCategoria(rows);
   }
 
   /**
@@ -161,6 +164,37 @@ async function idDeSubcategoria(cliente, categoriaId, nombre) {
     [categoriaId, nombre]
   );
   return rows[0].id;
+}
+
+/**
+ * Arma el árbol de categorías con sus subcategorías a partir de una fila
+ * por subcategoría. Una categoría sin subcategorías llega con
+ * subcategoria_id en null y queda con la lista vacía.
+ */
+export function agruparPorCategoria(filas) {
+  const categorias = new Map();
+
+  for (const fila of filas) {
+    if (!categorias.has(fila.categoria_id)) {
+      categorias.set(fila.categoria_id, {
+        id: fila.categoria_id,
+        nombre: fila.categoria,
+        cantidadDeProductos: 0,
+        subcategorias: [],
+      });
+    }
+    if (fila.subcategoria_id === null) continue;
+
+    const categoria = categorias.get(fila.categoria_id);
+    categoria.cantidadDeProductos += fila.cantidad_de_productos;
+    categoria.subcategorias.push({
+      id: fila.subcategoria_id,
+      nombre: fila.subcategoria,
+      cantidadDeProductos: fila.cantidad_de_productos,
+    });
+  }
+
+  return [...categorias.values()];
 }
 
 // Pasa la fila de la base a camelCase. PostgreSQL devuelve BIGINT y

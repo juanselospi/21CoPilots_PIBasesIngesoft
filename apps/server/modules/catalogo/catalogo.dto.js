@@ -40,8 +40,14 @@ export const aProductoAdministrativo = (producto) => ({
   desglosePrecio: producto.desglosePrecio,
 });
 
+/** Categoría con sus subcategorías, para la barra de categorías de Inicio. */
 export const aCategoriaPublica = (categoria) => ({
   id: categoria.id,
   nombre: categoria.nombre,
   cantidadDeProductos: categoria.cantidadDeProductos,
+  subcategorias: categoria.subcategorias.map((subcategoria) => ({
+    id: subcategoria.id,
+    nombre: subcategoria.nombre,
+    cantidadDeProductos: subcategoria.cantidadDeProductos,
+  })),
 });
