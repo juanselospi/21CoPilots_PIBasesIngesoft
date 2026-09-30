@@ -23,6 +23,8 @@ dudas por confirmar, etc.
 | Recuperación de contraseña (RF-54) | HU-02 (SCRUM-3) | Es _Should_ y se dejó para el Sprint 2 | Pendiente |
 | Cierre de sesión y expiración (SCRUM-13) | Backlog | No corresponde a ningún RF del SRS; se reevalúa junto con RF-54 | Pendiente |
 | Bloque "Recién llegados" de la página de inicio | Wireframe de Inicio, bloque 5 (SCRUM-60) | Depende de la fecha de ingreso de mercancía (HU-07) | Pendiente |
+| Total de productos en la respuesta de `GET /api/catalogo/productos`.<br>• **Por definir:** si "Ver todo" usa números de página o un botón "Cargar más". Mientras tanto, el cliente sabe que hay otra página cuando recibe tantos productos como pidió en `limite` | Plan de SCRUM-69 (cliente HTTP y `useCatalogo`) | Cambia el contrato del endpoint (SCRUM-40, ya cerrado); para SCRUM-51 alcanza con saber si hay otra página | Pendiente |
+| Pasar `api/sesion.js` y `api/importaciones.js` al `clienteHttp`, y que `ImportExcel` reciba la llamada por props en vez de importar de `api/` | Plan de SCRUM-69 (cliente HTTP y `useCatalogo`) | Se dejó fuera de SCRUM-69 para limitarla a lo nuevo. Mientras no se haga, `ImportExcel.jsx` incumple la regla de [`arquitectura.md` § 11.1](../diseño/arquitectura.md) (ningún componente importa de `api/`) | Pendiente |
 
 ## Sprint 2 → Sprint 3
 
