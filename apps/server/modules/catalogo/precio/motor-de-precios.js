@@ -1,17 +1,14 @@
 /**
- * Motor de precios (Strategy compuesta, en forma de Pipes & Filters, § 5.4).
+ * Motor de precios.
  *
- * Encadena pasos intercambiables sobre el costo del producto:
+ * Aplica los pasos en orden sobre el costo del producto: importación,
+ * margen e impuesto (ver documentos/diseño/formula-precio.md).
  *
- *   costo → importación → margen → impuesto → precio final
+ * Además del precio final devuelve el desglose de cada paso, para poder
+ * comparar el cálculo del sistema con el del Excel y ver en qué paso se
+ * separan si no coinciden.
  *
- * Devuelve además el desglose paso por paso. Eso no es un lujo: RNF-17
- * se verifica comparando el cálculo del sistema contra el cálculo manual,
- * y con el desglose se ve en cuál paso se separan los números. También
- * sirve para cerrar INC-05 cuando llegue el Excel del cliente.
- *
- * El motor no toca la base de datos ni HTTP: es una función pura sobre
- * los datos del producto, y se prueba sin levantar nada (§ 3.2).
+ * No toca la base de datos ni HTTP, así que se prueba sin levantar nada.
  */
 
 export class MotorDePrecios {
@@ -43,5 +40,10 @@ export class MotorDePrecios {
   }
 }
 
-/** Los montos se expresan en colones (RNF-17); se redondea al colón. */
-const redondear = (monto) => Math.round(monto);
+// Se calcula con el valor exacto y solo se redondea lo que se muestra, a
+// 2 decimales, igual que el Excel del cliente. Si se redondeara en cada
+// paso, el precio de algunos productos quedaría un centavo más alto.
+//
+// El EPSILON corrige casos como 1,005, que en JavaScript se guarda como
+// 1,00499... y sin él quedaría en 1,00 en vez de 1,01.
+const redondear = (monto) => Math.round((monto + Number.EPSILON) * 100) / 100;
