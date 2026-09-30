@@ -20,7 +20,7 @@ test("RN-01: aplica importación, margen e impuesto en ese orden", () => {
   });
 
   // 100 → 120 (aranceles) → 180 (margen) → 203,4 (impuesto)
-  assert.equal(precioFinal, 203);
+  assert.equal(precioFinal, 203.4);
   assert.deepEqual(
     desglose.map((paso) => paso.paso),
     ["costo", "importacion", "margen", "impuesto"]
@@ -34,7 +34,42 @@ test("RN-02: un margen negativo vende por debajo del costo", () => {
     margenGanancia: -20,
   });
 
-  assert.equal(precioFinal, 90); // 80 + 13 %
+  assert.equal(precioFinal, 90.4); // 80 + 13 %
+});
+
+// Los tres ejemplos de documentos/diseño/formula-precio.md
+test("₡100 con 20 % de importación y 25 % de margen da ₡169,50", () => {
+  const { precioFinal, desglose } = motor.calcular({
+    costoItem: 100,
+    porcentajeImportacion: 20,
+    margenGanancia: 25,
+  });
+
+  assert.equal(precioFinal, 169.5);
+  assert.deepEqual(desglose.map((paso) => paso.monto), [100, 120, 150, 169.5]);
+});
+
+test("un margen de -10 % sobre el mismo producto da ₡122,04", () => {
+  const { precioFinal } = motor.calcular({
+    costoItem: 100,
+    porcentajeImportacion: 20,
+    margenGanancia: -10,
+  });
+
+  assert.equal(precioFinal, 122.04);
+});
+
+test("coincide con el Excel del cliente: redondea solo al final", () => {
+  // God of War Ragnarök: 49,99 con 20 % y 20 %. Si se redondeara en cada
+  // paso daría 81,35; el Excel dice 81,34.
+  const { precioFinal, desglose } = motor.calcular({
+    costoItem: 49.99,
+    porcentajeImportacion: 20,
+    margenGanancia: 20,
+  });
+
+  assert.equal(precioFinal, 81.34);
+  assert.deepEqual(desglose.map((paso) => paso.monto), [49.99, 59.99, 71.99, 81.34]);
 });
 
 test("el desglose permite verificar RNF-17 paso por paso", () => {
