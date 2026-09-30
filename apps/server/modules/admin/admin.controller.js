@@ -25,7 +25,7 @@ export class AdminController {
     this.#cookieSegura = cookieSegura;
   }
 
-  /** POST /sesion con { correo, contrasena }. */
+  // POST / sesion con { correo, contrasena }
   iniciarSesion = async (peticion, respuesta) => {
     const correo = leerTexto(peticion.body?.correo);
     const contrasena = leerTexto(peticion.body?.contrasena);
@@ -42,17 +42,21 @@ export class AdminController {
       contrasena,
     });
 
-    // HttpOnly para que el JavaScript de la página no pueda leer la cookie.
-    // Secure solo en producción, que es donde hay HTTPS.
+    // HttpOnly para que el JavaScript de la pagina no pueda leer la cookie
     respuesta.cookie(COOKIE_DE_SESION, token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: this.#cookieSegura,
+      secure: this.#cookieSegura, // Secure solo en produccion que es donde hay HTTPS
       path: "/api",
       expires: venceEn,
     });
 
     respuesta.status(201).json({ datos: aUsuario(usuario) });
+  };
+
+  // GET / sesion del usuario de la cookie con la misma forma que al iniciar sesion
+  consultarSesion = (peticion, respuesta) => {
+    respuesta.json({ datos: aUsuario(peticion.usuario) });
   };
 
   /**
@@ -79,7 +83,7 @@ export class AdminController {
     respuesta.json({ datos: aResultadoDeImportacion(resultado, reporte) });
   };
 
-  /** GET /importaciones/plantilla: descarga la plantilla oficial. */
+  // GET / importaciones/ plantilla de descarga
   descargarPlantilla = (_peticion, respuesta, siguiente) => {
     respuesta.download(RUTA_DE_LA_PLANTILLA, "plantilla-de-productos.xlsx", (error) => {
       if (error) siguiente(error);
