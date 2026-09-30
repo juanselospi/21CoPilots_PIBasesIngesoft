@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import './Header.css'
 import { categories } from '../../data/categories.js'
 
@@ -12,7 +13,7 @@ function Header() {
                     <button type='submit'>Buscar</button>
                 </form>
 
-                <a href='#'>Iniciar sesión</a>
+                <Link to='/acceso'>Iniciar sesión</Link>
                 <a href='#'>Carrito (0)</a>
             </div>
 

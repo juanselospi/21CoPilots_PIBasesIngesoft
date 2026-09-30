@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import './Footer.css'
 import { categories } from '../../data/categories.js'
 
@@ -27,7 +28,7 @@ function Footer() {
 
             <div className='footer-column'>
                 <h3>Admin</h3>
-                <a href='#'>Acceso administrador</a>
+                <Link to='/acceso'>Acceso administrador</Link>
             </div>
         </footer>
     )
