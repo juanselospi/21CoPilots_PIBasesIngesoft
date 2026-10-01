@@ -4,23 +4,15 @@
  * Ejecuta varias operaciones de repositorio dentro de una sola
  * transacción: o se confirman todas, o no se confirma ninguna.
  *
- * Es obligatoria para confirmar un pedido (RF-25, RF-30): descontar
- * existencias, crear el pedido y registrar el movimiento de inventario
- * deben ser atómicos (§ 10.2). El candado de fila sobre
- * `inventario.existencia` lo toma `InventarioRepository.bloquearExistencias`
- * dentro de esta misma transacción (§ 7.3); vive allá porque solo el
- * repositorio de inventario conoce ese esquema (§ 9.3).
+ * Es obligatoria para confirmar un pedido (RF-25, RF-30): descontar el stock,
+ * cerrar el carrito y crear el pedido con su historial tienen que ser atomicos (§ 10.2).
+ * El candado sobre el stock de catalogo.producto se toma dentro de esta misma
+ * transaccion (§ 7.3) con SELECT ... FOR UPDATE.
  *
  * Los eventos del bus se publican DESPUÉS de que esta función devuelve,
  * es decir, después del COMMIT (§ 6.2).
  */
 
-/**
- * @param {import('pg').Pool} pool
- * @param {(cliente: import('pg').PoolClient) => Promise<T>} trabajo
- * @returns {Promise<T>}
- * @template T
- */
 export async function enTransaccion(pool, trabajo) {
   const cliente = await pool.connect();
   try {

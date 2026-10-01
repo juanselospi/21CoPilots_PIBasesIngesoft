@@ -4,8 +4,8 @@
  * Los nombres viven en un solo archivo para que quien publica y quien se
  * suscribe no dependan de una cadena escrita a mano en dos lugares.
  *
- * El valor de cada evento es el que la bitácora guarda en la columna
- * `admin.bitacora.accion`, por eso va en snake_case y en español.
+ * Los valores van en snake_case y en espanol para que la bitacora los pueda
+ * guardar tal cual cuando se defina donde se guarda.
  */
 
 export const EVENTOS = Object.freeze({

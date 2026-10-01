@@ -9,8 +9,9 @@
  * se agrega el rol aqui y su tabla en una migracion nueva, este middleware no cambia.
  *
  * RNF-10 exige que el 100 % de los intentos no autorizados quede
- * registrado: por eso se publica el evento y la bitácora lo escribe, en
- * lugar de que este middleware sepa cómo se persiste una auditoría.
+ * registrado: por eso se publica el evento en lugar de que este middleware
+ * sepa como se guarda una auditoria. Donde se guarda la bitacora sigue por
+ * definir, ver cambios-siguiente-sprint.md
  */
 
 import { NoAutorizado } from "../errores/errores-de-dominio.js";

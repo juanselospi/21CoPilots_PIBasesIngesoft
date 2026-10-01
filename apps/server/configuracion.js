@@ -6,8 +6,8 @@
  * parámetro, lo que los deja probables sin montar el entorno completo.
  *
  * Aquí solo viven los valores de infraestructura y los fijados por ley o
- * por el SRS. Los que edita el administrador (escala de niveles, monto
- * mínimo de descuento) viven en tablas de la base de datos (DD-14).
+ * por el SRS. De donde salen la escala de fidelidad y los datos del emisor
+ * sigue por definir, ver cambios-siguiente-sprint.md
  */
 
 import path from "node:path";
@@ -46,7 +46,7 @@ export const configuracion = Object.freeze({
   }),
 
   /** Valores de negocio fijados por ley o por el SRS; no son editables.
-      RES-06 — 13 % sobre el precio sin impuesto.
+      RES-06 — 13 %, es la tasa que la importacion guarda en cada producto.
       RN-04 — umbral fijo e igual para todos los productos. */
   negocio: Object.freeze({
     impuestoDeVenta: numero(process.env.IMPUESTO_DE_VENTA, 0.13),

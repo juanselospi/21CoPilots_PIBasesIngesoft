@@ -3,8 +3,7 @@
  *
  * Desacopla a quien produce un hecho de quien reacciona a él: el módulo
  * de inventario publica "se registró un movimiento" sin saber que la
- * alerta de existencias bajas (RF-16) y la bitácora de auditoría (RF-52)
- * están escuchando.
+ * alerta de existencias bajas (RF-16) esta escuchando.
  *
  * Es deliberadamente en memoria, no un broker de mensajes: con un solo
  * proceso Node, una cola externa agregaría infraestructura, despliegue y
@@ -16,14 +15,8 @@
  */
 
 export class BusDeEventos {
-  /** @type {Map<string, Array<(datos: unknown) => unknown>>} */
   #suscriptores = new Map();
 
-  /**
-   * @param {string} evento nombre tomado de EVENTOS
-   * @param {(datos: any) => unknown} manejador
-   * @returns {() => void} función para cancelar la suscripción
-   */
   suscribir(evento, manejador) {
     const manejadores = this.#suscriptores.get(evento) ?? [];
     manejadores.push(manejador);
@@ -38,16 +31,12 @@ export class BusDeEventos {
     };
   }
 
-  /**
-   * Publica un evento. Espera a todos los suscriptores, pero un fallo en
-   * uno no interrumpe a los demás ni se propaga a quien publicó.
-   */
+
+  // Publica un evento y espera a todos los suscriptores
   async publicar(evento, datos) {
     const manejadores = this.#suscriptores.get(evento) ?? [];
 
-    // El manejador se envuelve en una función asíncrona a propósito: así
-    // un suscriptor SÍNCRONO que lanza produce una promesa rechazada en
-    // vez de romper el map() antes de que allSettled pueda atraparlo.
+    // Si uno falla no afeccta a los demas
     const resultados = await Promise.allSettled(
       manejadores.map(async (manejador) => manejador(datos))
     );

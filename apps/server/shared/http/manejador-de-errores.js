@@ -21,12 +21,11 @@ const CODIGO_HTTP_POR_ERROR = {
  */
 const ERROR_DE_POSTGRES = {
   23001: { codigo: "REGISTRO_HISTORICO", mensaje: "Los registros históricos no se pueden modificar." }, // DD-16
+  23503: { codigo: "REFERENCIA_INVALIDA", mensaje: "Los datos hacen referencia a un registro que no existe o que todavía se usa." },
   23505: { codigo: "REGISTRO_DUPLICADO", mensaje: "Ya existe un registro con esos datos." },
   23514: { codigo: "RESTRICCION_VIOLADA", mensaje: "La operación viola una restricción de los datos." },
 };
 
-// La firma de 4 parámetros es la que Express usa para reconocer un
-// manejador de errores; no se puede acortar.
 export function manejadorDeErrores(error, _peticion, respuesta, _siguiente) {
   const dePostgres = ERROR_DE_POSTGRES[error?.code];
   if (dePostgres) {

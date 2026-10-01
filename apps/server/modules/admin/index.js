@@ -1,8 +1,7 @@
 /**
  * Arma el módulo de administración.
  *
- * Expone el repositorio porque lo usa el suscriptor de la bitácora, y el
- * servicio porque otros módulos le piden los parámetros de negocio.
+ * Expone el servicio porque composicion.js lo usa para saber de quien es cada cookie.
  *
  * Recibe catalogo porque la importacion del Excel guarda los productos a traves de el.
  */
@@ -48,6 +47,5 @@ export function crearModuloAdmin({
       recibirExcel: crearRecibirExcel({ tamanoMaximoMb: importacion.tamanoMaximoMb }),
     }),
     servicio,
-    repositorio,
   };
 }

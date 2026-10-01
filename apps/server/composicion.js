@@ -27,7 +27,6 @@ import { crearModuloPedidos } from "./modules/pedidos/index.js";
 import { crearModuloReportes } from "./modules/reportes/index.js";
 
 import { registrarAlertaDeExistenciasBajas } from "./modules/inventario/suscriptores/alerta-de-existencias-bajas.js";
-import { registrarBitacoraDeAuditoria } from "./modules/admin/suscriptores/bitacora-de-auditoria.js";
 
 export function componerSistema(configuracion) {
   const pool = crearPool(configuracion.baseDeDatos);
@@ -46,7 +45,6 @@ export function componerSistema(configuracion) {
 
   // Los modulos van en orden de dependencia
   // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
-  // Admin va antes que clientes porque clientes le pide los parametros de negocio
   const catalogo = crearModuloCatalogo({ pool });
 
   const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
@@ -66,11 +64,7 @@ export function componerSistema(configuracion) {
     admin.servicio.identificarPorToken(token)
   );
 
-  const clientes = crearModuloClientes({
-    pool,
-    parametrosDeNegocio: admin.servicio,
-    exigirRol,
-  });
+  const clientes = crearModuloClientes({ pool, exigirRol });
 
   const pedidos = crearModuloPedidos({
     pool,
@@ -82,14 +76,16 @@ export function componerSistema(configuracion) {
     facturacionElectronica,
   });
 
-  const reportes = crearModuloReportes({ pool, exigirRol });
+  const reportes = crearModuloReportes({
+    pool,
+    exigirRol,
+    motorDePrecios: catalogo.motorDePrecios,
+  });
 
   // Observadores del bus de eventos para registros
+  // La bitacora de auditoria no se registra hasta definir donde se guarda, ver cambios-siguiente-sprint.md
   registrarAlertaDeExistenciasBajas(busDeEventos, {
     umbral: configuracion.negocio.umbralDeExistenciasBajas,
-  });
-  registrarBitacoraDeAuditoria(busDeEventos, {
-    repositorio: admin.repositorio,
   });
 
   return {
