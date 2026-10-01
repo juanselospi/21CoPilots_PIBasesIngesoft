@@ -74,6 +74,45 @@ export class CatalogoService {
       .slice(desplazamiento, desplazamiento + limite);
   }
 
+  /**
+   * Listado del panel (RF-43): todos los productos, también los que RN-03
+   * oculta en la tienda. Los filtros por precio y disponibilidad y el
+   * orden van en memoria por la misma razón que en `listarCatalogo`: el
+   * precio se calcula, no se guarda.
+   *
+   * @returns la página pedida y el total de productos que cumplen los
+   *          filtros, antes de paginar
+   */
+  async listarParaAdministracion({
+    termino = null,
+    categoria = null,
+    proveedor = null,
+    disponibilidad = null,
+    existenciasBajas = false,
+    margenNegativo = false,
+    precioMin = null,
+    precioMax = null,
+    orden = "nombre",
+    limite,
+    desplazamiento = 0,
+  }) {
+    const productos = await this.#repositorio.listarParaAdministracion({ termino, categoria, proveedor });
+
+    const filtrados = productos
+      .map((producto) => this.#conPrecioYDisponibilidad(producto))
+      .filter((producto) => disponibilidad === null || producto.disponibilidad === disponibilidad)
+      .filter((producto) => !existenciasBajas || producto.etiquetas.includes(ETIQUETAS.EXISTENCIAS_BAJAS))
+      .filter((producto) => !margenNegativo || producto.etiquetas.includes(ETIQUETAS.MARGEN_NEGATIVO))
+      .filter((producto) => precioMin === null || producto.precioFinal >= precioMin)
+      .filter((producto) => precioMax === null || producto.precioFinal <= precioMax)
+      .sort((a, b) => ORDENES_DE_ADMINISTRACION[orden](a, b) || porSku(a, b));
+
+    return {
+      productos: filtrados.slice(desplazamiento, desplazamiento + limite),
+      total: filtrados.length,
+    };
+  }
+
   async obtenerFicha(sku) {
     const producto = await this.#repositorio.obtenerPorSku(sku);
     const ficha = producto && this.#conPrecioYDisponibilidad(producto);
@@ -122,6 +161,25 @@ export class CatalogoService {
 
 const esVisible = (producto) =>
   producto.disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE;
+
+const porSku = (a, b) => (a.sku < b.sku ? -1 : a.sku > b.sku ? 1 : 0);
+const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, "es");
+const porPrecio = (a, b) => a.precioFinal - b.precioFinal;
+const invertido = (comparar) => (a, b) => comparar(b, a);
+
+/**
+ * Valores de `orden` del listado del panel; el `-` invierte. Los
+ * empates se resuelven siempre por SKU, para que la paginación no
+ * repita ni salte productos.
+ */
+export const ORDENES_DE_ADMINISTRACION = Object.freeze({
+  nombre: porNombre,
+  "-nombre": invertido(porNombre),
+  precio: porPrecio,
+  "-precio": invertido(porPrecio),
+  existencias: (a, b) => a.existencias - b.existencias,
+  sku: porSku,
+});
 
 /**
  * Etiquetas del producto ya compuesto (con su disponibilidad). Salen
