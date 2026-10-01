@@ -16,6 +16,12 @@
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 
+/** Todo el trabajo debe ejecutarse dentro de una sola transacción. */
+
+/**
+ * Bloquea las existencias de los productos hasta el COMMIT, para que dos
+ * pedidos al mismo tiempo no vendan la misma unidad.
+ */
 export class InventarioRepository {
   #pool;
 
@@ -23,22 +29,12 @@ export class InventarioRepository {
     this.#pool = pool;
   }
 
-  /** Ejecuta el trabajo dentro de una sola transacción. */
+  // Se hace todo en esta sola transaccion
   enTransaccion(trabajo) {
     return enTransaccion(this.#pool, trabajo);
   }
 
-  /**
-   * Bloquea las existencias de los productos hasta el COMMIT, para que dos
-   * pedidos al mismo tiempo no vendan la misma unidad.
-   *
-   * Se bloquean en una sola consulta y ordenadas por producto_id. Si dos
-   * pedidos las bloquearan en distinto orden, cada uno se quedaría
-   * esperando al otro (deadlock). Hay que llamarla dentro de
-   * `enTransaccion`, con el `cliente` que esta entrega.
-   *
-   * @returns {Promise<Map<number, number>>} de producto_id a cantidad
-   */
+  // Bloquea las existnecias en orden de a que cliente se le ofrecen primero
   async bloquearExistencias(cliente, productoIds) {
     const { rows } = await cliente.query(
       `SELECT producto_id, cantidad
@@ -50,19 +46,5 @@ export class InventarioRepository {
     );
 
     return new Map(rows.map((fila) => [Number(fila.producto_id), fila.cantidad]));
-  }
-
-  /**
-   * Crea la fila de existencias en 0 de un producto nuevo. No registra
-   * movimiento porque no entra mercancía. Sin esta fila,
-   * bloquearExistencias no podría bloquear el producto al confirmar un
-   * pedido.
-   */
-  async crearExistenciaSiFalta(cliente, productoId) {
-    await cliente.query(
-      `INSERT INTO inventario.existencia (producto_id) VALUES ($1)
-       ON CONFLICT (producto_id) DO NOTHING`,
-      [productoId]
-    );
   }
 }

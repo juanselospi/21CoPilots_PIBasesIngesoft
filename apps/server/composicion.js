@@ -30,29 +30,24 @@ import { registrarAlertaDeExistenciasBajas } from "./modules/inventario/suscript
 import { registrarBitacoraDeAuditoria } from "./modules/admin/suscriptores/bitacora-de-auditoria.js";
 
 export function componerSistema(configuracion) {
-  // Un solo pool para todo el sistema. Se pasa a cada módulo en vez de ser
-  // global, así una prueba puede usar su propia base.
   const pool = crearPool(configuracion.baseDeDatos);
   const busDeEventos = new BusDeEventos();
 
-  // Sistemas externos (por ahora simulados).
+  // Sistemas externos (por ahora solo son simulados)
   const pasarelaDePago = crearPasarelaDePago(
     configuracion.adaptadores.pasarelaDePago
   );
+
   const facturacionElectronica = crearFacturacionElectronica(
     configuracion.adaptadores.facturacionElectronica
   );
 
   const exigirRol = crearExigirRol(busDeEventos);
 
-  // Los módulos van en orden de dependencia. catalogo e inventario van
-  // antes que admin porque la importación del Excel guarda productos y
-  // existencias a través de ellos. admin va antes que clientes porque
-  // clientes le pide los parámetros de negocio.
-  const catalogo = crearModuloCatalogo({
-    pool,
-    negocio: configuracion.negocio,
-  });
+  // Los modulos van en orden de dependencia
+  // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
+  // Admin va antes que clientes porque clientes le pide los parametros de negocio
+  const catalogo = crearModuloCatalogo({ pool });
 
   const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
 
@@ -63,12 +58,10 @@ export function componerSistema(configuracion) {
     sesion: configuracion.sesion,
     importacion: configuracion.importacion,
     catalogo,
-    inventario,
     negocio: configuracion.negocio,
   });
 
-  // Las sesiones son de admin, así que admin es quien dice de quién es
-  // cada cookie.
+  // Las sesiones son del admin, por eso admin es quien dice de quien es cada cookie
   const identificarUsuario = crearIdentificarUsuario((token) =>
     admin.servicio.identificarPorToken(token)
   );
@@ -91,7 +84,7 @@ export function componerSistema(configuracion) {
 
   const reportes = crearModuloReportes({ pool, exigirRol });
 
-  // Observadores del bus de eventos.
+  // Observadores del bus de eventos para registros
   registrarAlertaDeExistenciasBajas(busDeEventos, {
     umbral: configuracion.negocio.umbralDeExistenciasBajas,
   });

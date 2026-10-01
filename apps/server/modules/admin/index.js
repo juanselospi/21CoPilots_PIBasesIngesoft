@@ -4,8 +4,7 @@
  * Expone el repositorio porque lo usa el suscriptor de la bitácora, y el
  * servicio porque otros módulos le piden los parámetros de negocio.
  *
- * Recibe catálogo e inventario porque la importación del Excel guarda
- * los productos y sus existencias a través de ellos.
+ * Recibe catalogo porque la importacion del Excel guarda los productos a traves de el.
  */
 
 import { AdminRepository } from "./admin.repository.js";
@@ -23,21 +22,12 @@ export function crearModuloAdmin({
   sesion,
   importacion,
   catalogo,
-  inventario,
   negocio,
 }) {
   const repositorio = new AdminRepository({ pool });
 
-  // Un producto nuevo nace con existencia en 0: la hoja no trae cantidades
-  // y el inventario se carga después. Todo en la misma transacción.
-  const guardarProducto = async (cliente, producto) => {
-    const guardado = await catalogo.guardarProductoPorSku(cliente, producto);
-    if (guardado.insertado) await inventario.crearExistenciaSiFalta(cliente, guardado.id);
-    return guardado;
-  };
-
   const importacionDeExcel = new ImportacionDeExcel({
-    guardarProducto,
+    guardarProducto: catalogo.guardarProductoPorSku,
     enTransaccion: (trabajo) => enTransaccion(pool, trabajo),
     impuestoDeVenta: negocio.impuestoDeVenta,
   });

@@ -15,12 +15,7 @@ export function crearModuloInventario({ pool, busDeEventos, exigirRol }) {
 
   return {
     rutas: crearRutasDeInventario(controlador, { exigirRol }),
-    // Los pedidos descuentan existencias a través de este servicio y no
-    // con SQL propio, así todos los canales de venta usan el mismo inventario.
+    // Los pedidos descuentan existencias a través de este servicio y no con SQL propio, y así todos los canales de venta usan el mismo inventario
     servicio,
-    // La importación del Excel crea la existencia en 0 de cada producto
-    // nuevo, dentro de su misma transacción.
-    crearExistenciaSiFalta: (cliente, productoId) =>
-      repositorio.crearExistenciaSiFalta(cliente, productoId),
   };
 }

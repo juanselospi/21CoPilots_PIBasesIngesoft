@@ -5,6 +5,9 @@
  * y en el mismo orden. La idea es que el administrador no tenga que
  * cambiar su hoja para importarla. Los montos están en dólares.
  *
+ * codigo_item no tiene campo porque el sistema no lo usa, solo se reconoce
+ * como encabezado para que la hoja del negocio se pueda subir tal cual.
+ *
  * Las columnas `calculada` son fórmulas del Excel. No se guardan porque
  * el precio lo calcula el motor de precios; precio_venta_con_IVA se lee
  * solo para comparar nuestro cálculo con el de la hoja.
@@ -27,8 +30,8 @@ export const TIPOS = Object.freeze({
 });
 
 export const COLUMNAS = Object.freeze([
-  { encabezado: "codigo_item", campo: "codigoItem", tipo: TIPOS.TEXTO, obligatoria: true,
-    ayuda: "Código interno del ítem, por ejemplo PS5-001. El prefijo indica la subcategoría." },
+  { encabezado: "codigo_item", campo: null, tipo: TIPOS.TEXTO, obligatoria: false,
+    ayuda: "Código interno del ítem, por ejemplo PS5-001. El sistema no lo usa." },
   { encabezado: "familia", campo: "familia", tipo: TIPOS.TEXTO, obligatoria: true,
     ayuda: "Categoría del producto: Video Juegos, Legos, Trading Cards." },
   { encabezado: "codigo_sku", campo: "codigoSku", tipo: TIPOS.TEXTO, obligatoria: true,
@@ -57,7 +60,7 @@ export const COLUMNAS = Object.freeze([
     ayuda: "Link de la imagen del producto." },
 ]);
 
-/** Para comparar encabezados sin importar mayúsculas, tildes ni espacios. */
+// Normaliza para comparar encabezados sin importar mayusculas, tildes ni espacios
 export const normalizarEncabezado = (texto) =>
   String(texto ?? "")
     .normalize("NFD")

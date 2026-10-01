@@ -19,16 +19,6 @@ import { COLUMNAS, TIPOS, normalizarEncabezado } from "./columnas.js";
 // El encabezado no siempre está en la fila 1; a veces hay un título arriba.
 const FILAS_DONDE_BUSCAR_ENCABEZADO = 10;
 
-// TEMPORAL: la hoja no trae subcategoría y el PO todavía no decide de
-// dónde sale. Mientras tanto la sacamos del prefijo del codigo_item.
-const SUBCATEGORIA_POR_PREFIJO = Object.freeze({
-  PS5: "PlayStation 5",
-  NSW: "Nintendo Switch",
-  LEG: "LEGO",
-  PKM: "Pokémon",
-  YGO: "Yu-Gi-Oh!",
-});
-
 // Tamaños de las columnas de catalogo.producto. Se validan aquí para que
 // una fila mala se rechace sola y no haga fallar el guardado de todas.
 const LIMITES = Object.freeze({
@@ -47,7 +37,7 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
 
   /**
    * @param {object} dependencias
-   * @param {(cliente, producto: object) => Promise<{insertado: boolean}>} dependencias.guardarProducto
+   * @param {(cliente, producto: object) => Promise<{sku: string, insertado: boolean}>} dependencias.guardarProducto
    *        inserta o actualiza el producto por SKU
    * @param {(trabajo: (cliente) => Promise<any>) => Promise<any>} dependencias.enTransaccion
    * @param {number} dependencias.impuestoDeVenta como proporción: 0.13
@@ -116,13 +106,6 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
     exigirTexto(motivos, fila.familia, "familia", LIMITES.categoria);
     exigirTexto(motivos, fila.nombre, "descripcion_corta", LIMITES.nombre);
 
-    if (!fila.codigoItem) {
-      motivos.push("Falta el codigo_item (de su prefijo sale la subcategoría).");
-    } else if (!subcategoriaDe(fila.codigoItem)) {
-      const esperados = Object.keys(SUBCATEGORIA_POR_PREFIJO).join(", ");
-      motivos.push(`El codigo_item ${fila.codigoItem} no tiene un prefijo conocido (${esperados}).`);
-    }
-
     exigirNumero(motivos, fila.costo, "costo_usd", { minimo: 0, maximo: LIMITES.costo });
     exigirNumero(motivos, fila.porcentajeImportacion, "%_costo_importacion", {
       minimo: 0,
@@ -154,17 +137,18 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
 
   // Contrapedido y proveedor no vienen en la hoja. No los mandamos para
   // no pisar lo que el administrador haya cambiado a mano.
+  // La tasa siempre es la del sistema porque validarFila rechaza otro %_IVA.
   mapearFila(fila) {
     return {
       sku: normalizarSku(fila.codigoSku),
       nombre: fila.nombre,
       descripcion: fila.descripcion,
       categoria: fila.familia,
-      subcategoria: subcategoriaDe(fila.codigoItem),
       imagenUrl: fila.imagenUrl,
       costoItem: fila.costo,
       porcentajeImportacion: fila.porcentajeImportacion,
       margenGanancia: fila.margenGanancia,
+      tasaImpuesto: this.#porcentajeIva,
     };
   }
 
@@ -291,11 +275,6 @@ function aPorcentaje(valor, formato = "") {
 }
 
 const normalizarSku = (codigo) => (codigo ? String(codigo).trim().toUpperCase() : "");
-
-function subcategoriaDe(codigoItem) {
-  const prefijo = String(codigoItem ?? "").split("-")[0].trim().toUpperCase();
-  return SUBCATEGORIA_POR_PREFIJO[prefijo] ?? null;
-}
 
 function exigirTexto(motivos, valor, columna, maximo) {
   if (!valor) motivos.push(`Falta ${columna}.`);

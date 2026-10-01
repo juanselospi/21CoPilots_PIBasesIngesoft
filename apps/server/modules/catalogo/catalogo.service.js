@@ -15,6 +15,27 @@ export const DISPONIBILIDAD = Object.freeze({
   NO_DISPONIBLE: "no_disponible",
 });
 
+
+/**
+ * Catálogo público con precio final y disponibilidad (RF-10, RF-11).
+ * Con ~195 SKU (RNF-02) filtrar y paginar en memoria es suficiente; si
+ * el catálogo crece, la paginación baja al repositorio.
+ */
+
+ /** Ficha de producto (RF-12). */
+
+ /** RN-03: si no es visible, para el público es como si no existiera. */
+
+/**
+ * Compone el producto con su precio calculado y su disponibilidad.
+ * El precio nunca se lee de una columna: se calcula, para que un cambio
+ * de margen o de impuesto se refleje sin recalcular tabla alguna (DD-13).
+ */
+
+/** RN-03 — un producto sin existencias que no admite contrapedido no se muestra. */
+
+/** RF-07, RF-08, RN-03 — devolver los tres estados posibles. */
+
 export class CatalogoService {
   #repositorio;
   #motorDePrecios;
@@ -24,13 +45,8 @@ export class CatalogoService {
     this.#motorDePrecios = motorDePrecios;
   }
 
-  /**
-   * Catálogo público con precio final y disponibilidad (RF-10, RF-11).
-   * Con ~195 SKU (RNF-02) filtrar y paginar en memoria es suficiente; si
-   * el catálogo crece, la paginación baja al repositorio.
-   */
-  async listarCatalogo({ categoriaId, termino, limite, desplazamiento }) {
-    const productos = await this.#repositorio.listarActivos({ categoriaId, termino });
+  async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
+    const productos = await this.#repositorio.listar({ categoria, termino });
 
     return productos
       .map((producto) => this.#conPrecioYDisponibilidad(producto))
@@ -38,14 +54,12 @@ export class CatalogoService {
       .slice(desplazamiento, desplazamiento + limite);
   }
 
-  /** Ficha de producto (RF-12). */
-  async obtenerFicha(productoId) {
-    const producto = await this.#repositorio.obtenerPorId(productoId);
+  async obtenerFicha(sku) {
+    const producto = await this.#repositorio.obtenerPorSku(sku);
     const ficha = producto && this.#conPrecioYDisponibilidad(producto);
 
-    // RN-03: si no es visible, para el público es como si no existiera.
     if (!ficha || !esVisible(ficha)) {
-      throw new RecursoNoEncontrado("el producto", productoId);
+      throw new RecursoNoEncontrado("el producto", sku);
     }
 
     return ficha;
@@ -55,11 +69,6 @@ export class CatalogoService {
     return this.#repositorio.listarCategorias();
   }
 
-  /**
-   * Compone el producto con su precio calculado y su disponibilidad.
-   * El precio nunca se lee de una columna: se calcula, para que un cambio
-   * de margen o de impuesto se refleje sin recalcular tabla alguna (DD-13).
-   */
   #conPrecioYDisponibilidad(producto) {
     const { precioFinal, desglose } = this.#motorDePrecios.calcular(producto);
 
@@ -72,13 +81,10 @@ export class CatalogoService {
   }
 }
 
-/** RN-03 — un producto sin existencias que no admite contrapedido no se muestra. */
 const esVisible = (producto) =>
   producto.disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE;
 
-/** RF-07, RF-08, RN-03 — los tres estados posibles. */
 function determinarDisponibilidad(producto) {
-  if (producto.estado === "descontinuado") return DISPONIBILIDAD.NO_DISPONIBLE; // RF-18
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;
   if (producto.admiteContrapedido) return DISPONIBILIDAD.POR_CONTRAPEDIDO;
   return DISPONIBILIDAD.NO_DISPONIBLE;
