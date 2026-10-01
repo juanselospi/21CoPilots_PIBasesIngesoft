@@ -45,7 +45,7 @@ export function componerSistema(configuracion) {
 
   // Los modulos van en orden de dependencia
   // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
-  const catalogo = crearModuloCatalogo({ pool });
+  const catalogo = crearModuloCatalogo({ pool, exigirRol });
 
   const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
 
