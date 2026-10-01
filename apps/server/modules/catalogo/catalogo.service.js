@@ -69,8 +69,22 @@ export class CatalogoService {
     return ficha;
   }
 
+  /**
+   * Categorías con la cantidad de productos que ve el público. Solo se
+   * cuentan los visibles, así una categoría con todos sus productos
+   * ocultos no aparece en la tienda (RN-03).
+   */
   async listarCategorias() {
-    return this.#repositorio.listarCategorias();
+    const productos = await this.#repositorio.listar();
+
+    const cantidades = new Map();
+    for (const { categoria } of productos.filter(esVisible)) {
+      cantidades.set(categoria, (cantidades.get(categoria) ?? 0) + 1);
+    }
+
+    return [...cantidades]
+      .map(([nombre, cantidadDeProductos]) => ({ nombre, cantidadDeProductos }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
   /**
@@ -102,8 +116,9 @@ export class CatalogoService {
   }
 }
 
+// Sirve para el producto tal como sale del repositorio o ya compuesto
 const esVisible = (producto) =>
-  producto.disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE;
+  determinarDisponibilidad(producto) !== DISPONIBILIDAD.NO_DISPONIBLE;
 
 function determinarDisponibilidad(producto) {
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;

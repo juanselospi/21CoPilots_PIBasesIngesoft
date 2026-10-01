@@ -69,3 +69,44 @@ test("no guarda nada si los datos no son válidos", async () => {
   await assert.rejects(servicio.crearProducto({ ...pkm001, sku: "" }), EntradaInvalida);
   assert.equal(productos.size, 0);
 });
+
+// Catálogo falso para las categorías: un producto se ve si tiene
+// existencias o admite contrapedido (RN-03).
+function crearServicioConProductos(productos) {
+  const repositorio = { listar: async () => productos };
+  return new CatalogoService({ repositorio, motorDePrecios });
+}
+
+const producto = (sku, categoria, existencias, admiteContrapedido = false) => ({
+  ...pkm001,
+  sku,
+  categoria,
+  existencias,
+  admiteContrapedido,
+  tasaImpuesto: 13,
+});
+
+test("RN-03: las categorías solo cuentan los productos visibles", async () => {
+  const servicio = crearServicioConProductos([
+    producto("LEG-001", "Legos", 3),
+    producto("LEG-002", "Legos", 0, true),
+    producto("LEG-003", "Legos", 0),
+    producto("PKM-001", "Trading Cards", 1),
+  ]);
+
+  assert.deepEqual(await servicio.listarCategorias(), [
+    { nombre: "Legos", cantidadDeProductos: 2 },
+    { nombre: "Trading Cards", cantidadDeProductos: 1 },
+  ]);
+});
+
+test("RN-03: una categoría con todos sus productos ocultos no aparece", async () => {
+  const servicio = crearServicioConProductos([
+    producto("FUN-003", "Coleccionables", 0),
+    producto("NSW-001", "Video Juegos", 2),
+  ]);
+
+  assert.deepEqual(await servicio.listarCategorias(), [
+    { nombre: "Video Juegos", cantidadDeProductos: 1 },
+  ]);
+});
