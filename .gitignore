@@ -12,6 +12,9 @@ apps/server/dist/
 .env.local
 .env.*.local
 
+# Excel real del cliente (costos y márgenes): se comparte por Drive/Teams, nunca por Git
+database/datos-cliente/
+
 # Logs and temporals
 *.log
 npm-debug.log*

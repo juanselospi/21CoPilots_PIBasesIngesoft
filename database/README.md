@@ -264,6 +264,7 @@ Quien **todavía no hizo merge** renombra la suya a `010_…`, corre `npm run db
 | Agregué datos de prueba nuevos | `npm run db:seed` (o `db:reset`) |
 | Quiero comprobar que las restricciones funcionan | `npm run db:test` |
 | Necesito una BD sin datos de prueba | `npm run db:reset -- --solo-referencia` |
+| Quiero la BD con el catálogo real del cliente | `npm run db:cliente` (ver § 6) |
 | Voy a entregar / cambió el esquema | `npm run db:dump` |
 
 `db:reset` **solo** corre contra `localhost`; si su `.env` apunta a otro servidor, se
@@ -296,7 +297,7 @@ foránea, `23001` registro de solo inserción.
 | Necesidad | Solución |
 |---|---|
 | Todos necesitan los mismos productos de prueba | Agréguelos a `database/semillas/demo/` vía PR. |
-| Probar con los datos **reales** del cliente (Excel de ~195 SKU) | **No se suben al repositorio** (tiene costos, márgenes y proveedores). Guarde el Excel fuera del repositorio, compártalo por Drive/Teams y cárguelo con la importación (RF-57). |
+| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57) y le da 1 unidad de existencia a cada producto importado. |
 | Demo del sprint | En la laptop de quien presenta: `npm run db:reset`, para partir de un estado conocido. |
 | Ambiente compartido de staging (opcional, sprints futuros) | Un PostgreSQL alojado al que **solo** se le aplican cambios con `npm run db:migrate` y `npm run db:seed -- --solo-referencia`, usando otro `.env`. Nunca se desarrolla contra él. |
 
@@ -381,6 +382,7 @@ npm run db:migrate   # aplicar migraciones pendientes
 npm run db:status    # ver qué migraciones están aplicadas
 npm run db:reset     # borrar todo y reconstruir (migraciones + semillas)
 npm run db:seed      # recargar solo las semillas
+npm run db:cliente   # BD con el catálogo real del cliente (servidor corriendo)
 npm run db:test      # correr las pruebas SQL
 npm run db:new -- descripcion   # crear la siguiente migración
 npm run db:dump      # regenerar database/schema.sql
