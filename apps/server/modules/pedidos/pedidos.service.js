@@ -1,6 +1,15 @@
 /**
  * CAPA DE DOMINIO — Carrito y pedidos.
  *
+ * PENDIENTE: adaptar al EER corregido antes de implementar (ver cambios-siguiente-sprint.md):
+ *   - confirmar es una transaccion que bloquea el stock de catalogo.producto ordenado por sku,
+ *     lo descuenta, pasa el carrito a convertido con fecha_cierre (un CHECK pide las dos),
+ *     inserta el pedido y el historial con numero_cambio 1 y estado colocado
+ *   - el precio queda fijado en agrega al agregar al carrito, el motor se usa ahi
+ *   - un pedido siempre nace de un carrito, una venta presencial tambien necesita uno
+ *   - el pago necesita que el pedido ya exista
+ *   - el descuento sale de pedidos.oferta (codigo_oferta del pedido)
+ *
  * POR IMPLEMENTAR
  *   RF-21..RF-24  Carrito persistente; no exceder existencias salvo
  *                 contrapedido (RN-13); se conserva indefinidamente (RN-14)
@@ -22,9 +31,7 @@
  *     este archivo (RNF-20, Bridge § 5.2).
  *   · Si el cobro o la factura no están disponibles, el pedido igual se
  *     registra y el inventario igual se mueve (RNF-06).
- *   · El precio se calcula con `motorDePrecios`, y el descuento con la
- *     estrategia que entrega `clientes.obtenerEstrategiaDeDescuento()`:
- *     no reimplementar ninguna de las dos.
+ *   · El precio se calcula con `motorDePrecios`, no reimplementarlo.
  */
 
 export class PedidosService {

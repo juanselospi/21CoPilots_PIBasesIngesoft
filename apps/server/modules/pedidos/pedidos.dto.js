@@ -1,6 +1,8 @@
 /**
  * DTO + Mapper de carrito y pedidos.
  *
+ * PENDIENTE: el pedido sale con numCarrito en lugar de id, y su estado viene del historial.
+ *
  * RNF-09: por estos objetos no puede circular ningún dato de tarjeta. Del
  * cobro solo sale la referencia devuelta por la pasarela y su estado.
  *

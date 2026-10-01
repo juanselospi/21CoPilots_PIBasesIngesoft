@@ -1,6 +1,10 @@
 /**
  * CAPA DE PERSISTENCIA — Repositorio de reportes.
  *
+ * PENDIENTE: las vistas reales de la migracion 008 son v_venta_por_producto, v_existencias,
+ * v_pedidos_por_cliente, v_registro_mercancia y v_estado_pedido. v_venta_por_linea y
+ * v_historico_costos no existen, y RN-06 sigue por definir (ver cambios-siguiente-sprint.md).
+ *
  * Solo lectura: consulta las vistas del esquema `reportes` (migración
  * 008) y nunca escribe ni corrige datos (§ 9.3).
  *

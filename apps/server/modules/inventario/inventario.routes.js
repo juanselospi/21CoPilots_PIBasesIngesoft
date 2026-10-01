@@ -2,6 +2,10 @@
  * Rutas de inventario. Todas son administrativas: ninguna se expone sin
  * pasar antes por `exigirRol` (Chain of Responsibility, § 6.1).
  *
+ * PENDIENTE: el producto se identifica por sku, entonces la ruta de descontinuar seria
+ * /productos/:sku/descontinuar. Como se descontinua un producto (RF-18) sigue por definir,
+ * ver cambios-siguiente-sprint.md
+ *
  * Rutas previstas — confirmar el contrato con el equipo antes de fijarlo:
  *   POST   /ingresos              RF-13, RF-14
  *   POST   /ventas-externas       RF-17

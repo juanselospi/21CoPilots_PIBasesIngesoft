@@ -1,6 +1,10 @@
 /**
  * Rutas de carrito y pedidos.
  *
+ * PENDIENTE: el carrito pertenece al cliente (pedidos.carrito.correo_cliente), no a usuario_id.
+ * El pedido se identifica por el num_carrito del cliente de la sesion, entonces /:id pasa a
+ * /:numCarrito, y una linea del carrito se identifica por sku (DELETE /carrito/lineas/:sku).
+ *
  * El carrito pertenece a una cuenta (`pedidos.carrito.usuario_id`), así
  * que tanto el carrito como el pedido exigen sesión (RN-14, RF-24).
  *

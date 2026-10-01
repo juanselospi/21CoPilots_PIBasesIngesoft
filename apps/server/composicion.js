@@ -83,7 +83,7 @@ export function componerSistema(configuracion) {
   });
 
   // Observadores del bus de eventos para registros
-  // La bitacora de auditoria no se registra hasta definir donde se guarda, ver cambios-siguiente-sprint.md
+  // No hay suscriptor de bitacora hasta definir donde se guarda, ver cambios-siguiente-sprint.md
   registrarAlertaDeExistenciasBajas(busDeEventos, {
     umbral: configuracion.negocio.umbralDeExistenciasBajas,
   });

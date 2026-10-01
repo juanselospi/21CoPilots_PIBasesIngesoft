@@ -19,7 +19,6 @@ export function registrarAlertaDeExistenciasBajas(busDeEventos, { umbral }) {
       if (movimiento.existenciasResultantes > umbral) return;
 
       await busDeEventos.publicar(EVENTOS.EXISTENCIAS_BAJAS, {
-        productoId: movimiento.productoId,
         sku: movimiento.sku,
         existencias: movimiento.existenciasResultantes,
         umbral,

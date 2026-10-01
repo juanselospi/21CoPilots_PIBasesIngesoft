@@ -15,7 +15,7 @@ export function crearModuloClientes({ pool, exigirRol }) {
 
   return {
     rutas: crearRutasDeClientes(controlador, { exigirSesion, exigirRol }),
-    // Pedidos lo usa para obtener la estrategia de descuento al confirmar.
+    // Pedidos lo va a usar al confirmar un pedido
     servicio,
   };
 }
