@@ -48,9 +48,10 @@
   background: #1e293b;
 }
 
+/* Las columnas se ajustan a la cantidad de categorías que mande el servidor */
 .home-featured-categories {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
 }
 
@@ -113,7 +114,6 @@
   gap: 24px;
 }
 
-/* Avisos de carga, error y catálogo vacío en lugar de los productos */
 .home-status {
   box-sizing: border-box;
   padding: 32px 24px;
