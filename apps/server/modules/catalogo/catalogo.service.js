@@ -6,7 +6,11 @@
  * puede pasarle un repositorio falso y verificar RN-03 sin base de datos.
  */
 
-import { RecursoNoEncontrado } from "../../shared/errores/errores-de-dominio.js";
+import {
+  RecursoNoEncontrado,
+  ReglaDeNegocioViolada,
+} from "../../shared/errores/errores-de-dominio.js";
+import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -67,6 +71,23 @@ export class CatalogoService {
 
   async listarCategorias() {
     return this.#repositorio.listarCategorias();
+  }
+
+  /**
+   * Registra un producto nuevo desde el panel. El código tiene que ser
+   * único: si ya existe, no se guarda nada (RF-01). Nace con stock en 0.
+   *
+   * @returns el producto guardado, con su precio calculado
+   */
+  async crearProducto(datos) {
+    const producto = validarProductoNuevo(datos);
+
+    const sku = await this.#repositorio.crear(producto);
+    if (sku === null) {
+      throw new ReglaDeNegocioViolada(`Ya existe un producto con el código ${producto.sku}.`, "RF-01");
+    }
+
+    return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(sku));
   }
 
   #conPrecioYDisponibilidad(producto) {

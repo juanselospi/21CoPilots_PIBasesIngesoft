@@ -82,6 +82,39 @@ export class CatalogoRepository {
     return rows[0] ? aProducto(rows[0]) : null;
   }
 
+  /**
+   * Registra un producto nuevo desde el panel. Devuelve su SKU, o null si
+   * ya existe otro con ese código. Con ON CONFLICT DO NOTHING la base
+   * decide sola, así dos registros al mismo tiempo no pueden duplicarlo.
+   *
+   * El stock y la tasa de impuesto quedan con sus valores por defecto
+   * (0 y 13 %), y costo_total no se manda porque es una columna generada.
+   */
+  async crear(producto) {
+    const { rows } = await this.#pool.query(
+      `INSERT INTO catalogo.producto
+              (sku, nombre, descripcion, categoria, proveedor, imagen,
+               item, importacion, margen_ganancia, contrapedido)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (sku) DO NOTHING
+       RETURNING sku`,
+      [
+        producto.sku,
+        producto.nombre,
+        producto.descripcion,
+        producto.categoria,
+        producto.proveedor,
+        producto.imagenUrl,
+        producto.costoItem,
+        producto.porcentajeImportacion,
+        producto.margenGanancia,
+        producto.admiteContrapedido,
+      ]
+    );
+
+    return rows[0]?.sku ?? null;
+  }
+
   async listarCategorias() {
     const { rows } = await this.#pool.query(
       `SELECT categoria AS nombre,

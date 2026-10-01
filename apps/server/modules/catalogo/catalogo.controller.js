@@ -7,7 +7,7 @@
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
-import { aProductoPublico, aCategoriaPublica } from "./catalogo.dto.js";
+import { aProductoPublico, aProductoAdministrativo, aCategoriaPublica } from "./catalogo.dto.js";
 
 const LIMITE_POR_DEFECTO = 24;
 const LIMITE_MAXIMO = 48;
@@ -42,6 +42,13 @@ export class CatalogoController {
   listarCategorias = async (_peticion, respuesta) => {
     const categorias = await this.#servicio.listarCategorias();
     respuesta.json({ datos: categorias.map(aCategoriaPublica) });
+  };
+
+  // POST /productos, solo administrador. Responde 201 con el producto, su
+  // costo y el desglose del precio, para que el panel no lo pida otra vez.
+  crear = async (peticion, respuesta) => {
+    const producto = await this.#servicio.crearProducto(peticion.body ?? {});
+    respuesta.status(201).json({ datos: aProductoAdministrativo(producto) });
   };
 }
 
