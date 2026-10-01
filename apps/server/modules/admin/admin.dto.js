@@ -13,7 +13,6 @@ import { NOMBRE_DEL_REPORTE, TIPO_DEL_REPORTE } from "./importacion/reporte-de-r
 
 /** Usuario sin credenciales. */
 export const aUsuario = (usuario) => ({
-  id: usuario.id,
   correo: usuario.correo,
   nombre: usuario.nombre,
   rol: usuario.rol,
@@ -23,7 +22,7 @@ export const aUsuario = (usuario) => ({
  * Resumen de una importación del Excel. De cada fila rechazada sale solo
  * el número de fila, el código y los motivos, no la fila completa.
  *
- * `reporte` es el Excel de filas rechazadas, o null si no hubo rechazos.
+ * `reporte` es el Excel de filas rechazadas, o debe ser null si no hubo rechazos.
  */
 export const aResultadoDeImportacion = (resultado, reporte = null) => ({
   leidas: resultado.leidas,

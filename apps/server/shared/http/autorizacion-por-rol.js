@@ -4,9 +4,9 @@
  * Fábrica de middlewares: `exigirRol(ROLES.ADMINISTRADOR)` devuelve el
  * eslabón que protege una ruta (Chain of Responsibility, § 6.1).
  *
- * Los roles son los que admite `admin.usuario.rol`. Si el cliente aprueba
- * las cuentas de empleado (§ 16), se agrega el rol aquí y en una migración
- * nueva; este middleware no cambia.
+ * El rol no es una columna: sale de la tabla donde este el correo del usuario,
+ * admin.administrador o clientes.cliente. Si se aprueban las cuentas de empleado
+ * se agrega el rol aqui y su tabla en una migracion nueva, este middleware no cambia.
  *
  * RNF-10 exige que el 100 % de los intentos no autorizados quede
  * registrado: por eso se publica el evento y la bitácora lo escribe, en
@@ -34,7 +34,7 @@ export function crearExigirRol(busDeEventos) {
       const ruta = `${peticion.method} ${peticion.originalUrl}`;
 
       await busDeEventos.publicar(EVENTOS.ACCESO_DENEGADO, {
-        usuarioId: usuario?.id ?? null,
+        correoUsuario: usuario?.correo ?? null,
         entidad: "ruta",
         entidadId: ruta.slice(0, 100),
         valorNuevo: { rol: usuario?.rol ?? "anonimo" },

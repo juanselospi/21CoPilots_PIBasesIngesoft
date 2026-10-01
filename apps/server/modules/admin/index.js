@@ -44,7 +44,7 @@ export function crearModuloAdmin({
   const servicio = new AdminService({
     repositorio,
     busDeEventos,
-    duracionSesionHoras: sesion.duracionHoras,
+    duracionSesionMinutos: sesion.duracionMinutos,
     importacionDeExcel,
   });
   const controlador = new AdminController({
