@@ -46,7 +46,7 @@ Debe terminar con `✔ BD reconstruida desde cero.`
 npm run db:test
 ```
 
-Debe terminar con `✔ 53 prueba(s) aprobada(s).`
+Debe terminar con `✔ 86 prueba(s) aprobada(s).`
 
 Listo: la base de datos está corriendo.
 
@@ -70,7 +70,7 @@ O desde la terminal, dentro de `database/`:
 npm run db:psql
 ```
 
-Pruebe con `SELECT sku, existencias FROM reportes.v_existencias;` y salga con `\q`.
+Pruebe con `SELECT sku, stock FROM reportes.v_existencias;` y salga con `\q`.
 
 **Usuarios de prueba de la aplicación:** `admin@dchobbies.test` / `Admin123!` y
 `cliente@correo.test` / `Cliente123!`.

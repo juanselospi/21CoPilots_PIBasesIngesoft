@@ -1,78 +1,96 @@
 -- =====================================================================
 -- 008 — Módulo reportes: vistas de solo lectura
 --
--- Las vistas reúnen datos de varios módulos para los reportes (EP-06).
--- No calculan precios de venta: eso lo hace el motor de precios del dominio
--- (DD-13). El rango de fechas (RF-47) se aplica con WHERE sobre la fecha.
+-- Reúnen datos de varios módulos para los reportes (EP-06) y exponen los
+-- atributos derivados del EER que no se guardan (estado del pedido y montos
+-- de la factura). No calculan precios de venta de productos: eso lo hace el
+-- motor de precios del dominio (DD-13). El rango de fechas (RF-47) se aplica
+-- con WHERE sobre la fecha.
 -- =====================================================================
 
--- RF-44: base del reporte de ventas por producto y por familia, de todos
--- los canales (RN-05). Un pedido cancelado no cuenta como venta.
+-- Atributo derivado "Estado pedido": el del último cambio del historial
+CREATE VIEW reportes.v_estado_pedido AS
+SELECT DISTINCT ON (h.correo_cliente, h.num_carrito)
+       h.correo_cliente,
+       h.num_carrito,
+       h.estado,
+       h.fecha AS fecha_estado
+FROM   pedidos.historial_estado h
+ORDER  BY h.correo_cliente, h.num_carrito, h.numero_cambio DESC;
+
+-- RF-44: ventas por producto y por categoría, de las líneas de los carritos
+-- que se convirtieron en pedido. Un pedido cancelado no cuenta como venta.
 -- monto es sin impuesto.
-CREATE VIEW reportes.v_venta_por_linea AS
-SELECT pe.id                           AS pedido_id,
-       pe.colocado_en,
-       pe.canal,
-       pe.cliente_id,
-       p.id                            AS producto_id,
+CREATE VIEW reportes.v_venta_por_producto AS
+SELECT pe.correo_cliente,
+       pe.num_carrito,
+       pe.fecha_pedido_realizado,
        p.sku,
-       p.nombre                        AS producto,
-       c.id                            AS categoria_id,
-       c.nombre                        AS categoria,
-       s.id                            AS subcategoria_id,
-       s.nombre                        AS subcategoria,
-       lp.cantidad,
-       lp.precio_unitario,
-       lp.cantidad * lp.precio_unitario AS monto
-FROM   pedidos.linea_pedido lp
-JOIN   pedidos.pedido        pe ON pe.id = lp.pedido_id
-JOIN   catalogo.producto     p  ON p.id  = lp.producto_id
-JOIN   catalogo.subcategoria s  ON s.id  = p.subcategoria_id
-JOIN   catalogo.categoria    c  ON c.id  = s.categoria_id
-WHERE  pe.estado <> 'cancelado';
+       p.nombre                                     AS producto,
+       p.categoria,
+       a.cantidad_solicitada                        AS cantidad,
+       a.precio_unitario,
+       a.tasa_impuesto_aplicada,
+       a.cantidad_solicitada * a.precio_unitario    AS monto
+FROM   pedidos.pedido  pe
+JOIN   pedidos.agrega  a  ON a.correo_cliente = pe.correo_cliente
+                         AND a.num_carrito    = pe.num_carrito
+JOIN   catalogo.producto p ON p.sku = a.sku
+LEFT   JOIN reportes.v_estado_pedido ep ON ep.correo_cliente = pe.correo_cliente
+                                       AND ep.num_carrito    = pe.num_carrito
+WHERE  ep.estado IS DISTINCT FROM 'cancelado';
 
 -- RF-45: existencias vigentes con las entradas del precio. El servicio de
 -- reportes calcula el precio de venta con el motor de precios.
 CREATE VIEW reportes.v_existencias AS
-SELECT p.id                     AS producto_id,
-       p.sku,
-       p.nombre,
-       p.estado,
-       c.nombre                 AS categoria,
-       s.nombre                 AS subcategoria,
-       coalesce(e.cantidad, 0)  AS existencias,
-       p.costo_item,
-       p.porcentaje_importacion,
-       p.margen_ganancia,
-       p.admite_contrapedido
-FROM   catalogo.producto        p
-JOIN   catalogo.subcategoria    s ON s.id = p.subcategoria_id
-JOIN   catalogo.categoria       c ON c.id = s.categoria_id
-LEFT   JOIN inventario.existencia e ON e.producto_id = p.id;
+SELECT sku,
+       nombre,
+       categoria,
+       stock,
+       item,
+       importacion,
+       costo_total,
+       margen_ganancia,
+       tasa_impuesto,
+       contrapedido
+FROM   catalogo.producto;
 
--- RF-46: pedidos de cada cliente con fecha, monto y estado
+-- RF-46: pedidos de cada cliente con fecha, montos y estado. Subtotal e
+-- impuesto son los atributos derivados de la factura, calculados de las
+-- líneas del pedido. El descuento de la oferta lo calcula el dominio.
 CREATE VIEW reportes.v_pedidos_por_cliente AS
-SELECT cl.id          AS cliente_id,
-       cl.nombre      AS cliente,
+SELECT pe.correo_cliente,
+       u.nombre                AS cliente,
        cl.cedula,
-       pe.id          AS pedido_id,
-       pe.colocado_en,
-       pe.canal,
-       pe.total,
-       pe.estado,
-       pe.estado_pago
+       pe.num_carrito,
+       pe.fecha_pedido_realizado,
+       pe.fecha_entrega,
+       pe.modalidad_entrega,
+       pe.codigo_oferta,
+       lineas.subtotal,
+       lineas.impuesto,
+       pe.costo_entrega,
+       ep.estado
 FROM   pedidos.pedido   pe
-JOIN   clientes.cliente cl ON cl.id = pe.cliente_id;
+JOIN   clientes.cliente cl ON cl.correo_usuario = pe.correo_cliente
+JOIN   admin.usuario    u  ON u.correo          = pe.correo_cliente
+JOIN   LATERAL (
+       SELECT coalesce(sum(a.cantidad_solicitada * a.precio_unitario), 0) AS subtotal,
+              coalesce(sum(a.cantidad_solicitada * a.precio_unitario
+                           * a.tasa_impuesto_aplicada / 100), 0)          AS impuesto
+       FROM   pedidos.agrega a
+       WHERE  a.correo_cliente = pe.correo_cliente
+         AND  a.num_carrito    = pe.num_carrito
+       ) lineas ON TRUE
+LEFT   JOIN reportes.v_estado_pedido ep ON ep.correo_cliente = pe.correo_cliente
+                                       AND ep.num_carrito    = pe.num_carrito;
 
--- RN-06, RF-14: histórico de costos de compra de cada producto
-CREATE VIEW reportes.v_historico_costos AS
-SELECT m.producto_id,
-       p.sku,
+-- RF-13, RF-19: registro de mercancía de cada producto
+CREATE VIEW reportes.v_registro_mercancia AS
+SELECT pa.sku,
        p.nombre,
-       m.registrado_en,
-       m.tipo,
-       m.cantidad,
-       m.costo_unitario
-FROM   inventario.movimiento m
-JOIN   catalogo.producto     p ON p.id = m.producto_id
-WHERE  m.costo_unitario IS NOT NULL;
+       pa.fecha,
+       pa.cantidad,
+       pa.correo_administrador
+FROM   inventario.producto_administra pa
+JOIN   catalogo.producto              p ON p.sku = pa.sku;
