@@ -19,6 +19,16 @@ export const DISPONIBILIDAD = Object.freeze({
   NO_DISPONIBLE: "no_disponible",
 });
 
+/** Avisos que el panel dibuja junto al producto (RF-43). */
+export const ETIQUETAS = Object.freeze({
+  CONTRAPEDIDO: "contrapedido",
+  MARGEN_NEGATIVO: "margen_negativo",
+  EXISTENCIAS_BAJAS: "existencias_bajas",
+  OCULTO_EN_TIENDA: "oculto_en_tienda",
+});
+
+const UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO = 2;
+
 
 /**
  * Catálogo público con precio final y disponibilidad (RF-10, RF-11).
@@ -43,10 +53,16 @@ export const DISPONIBILIDAD = Object.freeze({
 export class CatalogoService {
   #repositorio;
   #motorDePrecios;
+  #umbralDeExistenciasBajas;
 
-  constructor({ repositorio, motorDePrecios }) {
+  constructor({
+    repositorio,
+    motorDePrecios,
+    umbralDeExistenciasBajas = UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO,
+  }) {
     this.#repositorio = repositorio;
     this.#motorDePrecios = motorDePrecios;
+    this.#umbralDeExistenciasBajas = umbralDeExistenciasBajas;
   }
 
   async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
@@ -92,18 +108,36 @@ export class CatalogoService {
 
   #conPrecioYDisponibilidad(producto) {
     const { precioFinal, desglose } = this.#motorDePrecios.calcular(producto);
+    const disponibilidad = determinarDisponibilidad(producto);
 
     return {
       ...producto,
       precioFinal,
       desglosePrecio: desglose,
-      disponibilidad: determinarDisponibilidad(producto),
+      disponibilidad,
+      etiquetas: calcularEtiquetas({ ...producto, disponibilidad }, this.#umbralDeExistenciasBajas),
     };
   }
 }
 
 const esVisible = (producto) =>
   producto.disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE;
+
+/**
+ * Etiquetas del producto ya compuesto (con su disponibilidad). Salen
+ * siempre en este orden y solo las que aplican. Las calcula el servidor
+ * porque dependen de reglas de negocio; el panel solo las dibuja.
+ */
+export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
+  const etiquetas = [];
+
+  if (producto.admiteContrapedido) etiquetas.push(ETIQUETAS.CONTRAPEDIDO);
+  if (producto.margenGanancia < 0) etiquetas.push(ETIQUETAS.MARGEN_NEGATIVO);
+  if (producto.existencias <= umbralDeExistenciasBajas) etiquetas.push(ETIQUETAS.EXISTENCIAS_BAJAS);
+  if (producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE) etiquetas.push(ETIQUETAS.OCULTO_EN_TIENDA);
+
+  return etiquetas;
+}
 
 function determinarDisponibilidad(producto) {
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { CatalogoService } from "./catalogo.service.js";
+import { CatalogoService, calcularEtiquetas } from "./catalogo.service.js";
 import { MotorDePrecios } from "./precio/motor-de-precios.js";
 import { ImportacionPorAranceles } from "./precio/pasos/importacion-por-aranceles.js";
 import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
@@ -68,4 +68,67 @@ test("no guarda nada si los datos no son válidos", async () => {
 
   await assert.rejects(servicio.crearProducto({ ...pkm001, sku: "" }), EntradaInvalida);
   assert.equal(productos.size, 0);
+});
+
+// Producto ya compuesto, sin ninguna etiqueta: con existencias de sobra,
+// margen positivo y sin contrapedido.
+const sinEtiquetas = {
+  sku: "PKM-001",
+  admiteContrapedido: false,
+  margenGanancia: 25,
+  existencias: 40,
+  disponibilidad: "en_existencia",
+};
+
+test("un producto sin nada que avisar no lleva etiquetas", () => {
+  assert.deepEqual(calcularEtiquetas(sinEtiquetas, 2), []);
+});
+
+test("etiqueta 'contrapedido' si el producto admite contrapedido", () => {
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, admiteContrapedido: true }, 2), ["contrapedido"]);
+});
+
+test("RF-43: etiqueta 'margen_negativo' solo si el margen es menor que 0", () => {
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, margenGanancia: -10 }, 2), ["margen_negativo"]);
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, margenGanancia: 0 }, 2), []);
+});
+
+test("etiqueta 'existencias_bajas' en el umbral o por debajo", () => {
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, existencias: 2 }, 2), ["existencias_bajas"]);
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, existencias: 3 }, 2), []);
+  assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, existencias: 3 }, 5), ["existencias_bajas"]);
+});
+
+test("RN-03: etiqueta 'oculto_en_tienda' si el producto no está disponible", () => {
+  const oculto = { ...sinEtiquetas, existencias: 0, disponibilidad: "no_disponible" };
+
+  assert.deepEqual(calcularEtiquetas(oculto, 2), ["existencias_bajas", "oculto_en_tienda"]);
+});
+
+test("las etiquetas salen siempre en el mismo orden", () => {
+  // No es un caso real (con contrapedido el producto no queda oculto):
+  // solo comprueba el orden cuando aplican las cuatro.
+  const conTodas = {
+    ...sinEtiquetas,
+    admiteContrapedido: true,
+    margenGanancia: -10,
+    existencias: 0,
+    disponibilidad: "no_disponible",
+  };
+
+  assert.deepEqual(calcularEtiquetas(conTodas, 2), [
+    "contrapedido",
+    "margen_negativo",
+    "existencias_bajas",
+    "oculto_en_tienda",
+  ]);
+});
+
+test("el producto recién registrado trae sus etiquetas", async () => {
+  const { servicio } = crearServicio();
+
+  // Nace con stock 0 y sin contrapedido.
+  const producto = await servicio.crearProducto(pkm001);
+
+  assert.deepEqual(producto.etiquetas, ["existencias_bajas", "oculto_en_tienda"]);
 });

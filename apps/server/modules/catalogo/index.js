@@ -15,7 +15,7 @@ import { ImportacionPorAranceles } from "./precio/pasos/importacion-por-arancele
 import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 
-export function crearModuloCatalogo({ pool, exigirRol }) {
+export function crearModuloCatalogo({ pool, exigirRol, umbralDeExistenciasBajas }) {
   // El orden de estos pasos es la fórmula del precio. Coincide con la que
   // usa el Excel del negocio: costo, más importación, más margen, más IVA.
   const motorDePrecios = new MotorDePrecios([
@@ -25,7 +25,7 @@ export function crearModuloCatalogo({ pool, exigirRol }) {
   ]);
 
   const repositorio = new CatalogoRepository({ pool });
-  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+  const servicio = new CatalogoService({ repositorio, motorDePrecios, umbralDeExistenciasBajas });
   const controlador = new CatalogoController({ servicio });
 
   return {
