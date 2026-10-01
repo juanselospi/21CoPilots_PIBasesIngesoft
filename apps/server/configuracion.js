@@ -6,8 +6,8 @@
  * parámetro, lo que los deja probables sin montar el entorno completo.
  *
  * Aquí solo viven los valores de infraestructura y los fijados por ley o
- * por el SRS. Los que edita el administrador (escala de niveles, monto
- * mínimo de descuento) viven en tablas de la base de datos (DD-14).
+ * por el SRS. De donde salen la escala de fidelidad y los datos del emisor
+ * sigue por definir, ver cambios-siguiente-sprint.md
  */
 
 import path from "node:path";
@@ -36,7 +36,7 @@ export const configuracion = Object.freeze({
 
   /** RF-53 — cookie de sesión; `Secure` solo en producción (HTTPS). */
   sesion: Object.freeze({
-    duracionHoras: numero(process.env.DURACION_SESION_HORAS, 8),
+    duracionMinutos: numero(process.env.DURACION_SESION_MINUTOS, 25),
     cookieSegura: process.env.NODE_ENV === "production",
   }),
 
@@ -45,11 +45,11 @@ export const configuracion = Object.freeze({
     tamanoMaximoMb: numero(process.env.IMPORTACION_TAMANO_MAXIMO_MB, 5),
   }),
 
-  /** Valores de negocio fijados por ley o por el SRS; no son editables. */
+  /** Valores de negocio fijados por ley o por el SRS; no son editables.
+      RES-06 — 13 %, es la tasa que la importacion guarda en cada producto.
+      RN-04 — umbral fijo e igual para todos los productos. */
   negocio: Object.freeze({
-    /** RES-06 — 13 % sobre el precio sin impuesto. */
     impuestoDeVenta: numero(process.env.IMPUESTO_DE_VENTA, 0.13),
-    /** RN-04 — umbral fijo e igual para todos los productos. */
     umbralDeExistenciasBajas: numero(process.env.UMBRAL_EXISTENCIAS_BAJAS, 2),
   }),
 

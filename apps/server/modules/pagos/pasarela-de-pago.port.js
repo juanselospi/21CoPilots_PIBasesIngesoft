@@ -1,6 +1,14 @@
 /**
  * INTERFAZ — Pasarela de pago (la "abstracción" del Bridge, § 5.2).
  *
+ * PENDIENTE: adaptar al EER corregido antes de implementar (ver cambios-siguiente-sprint.md):
+ *   - la tabla es pagos.pago y no intento_pago, la referencia es num_referencia (llave primaria)
+ *   - SolicitudDeCobro usa { correoCliente, numCarrito } del pedido en lugar de pedidoId y
+ *     carritoId, porque el pago necesita que el pedido ya exista
+ *   - el CHECK de estado_pago solo admite pendiente, aprobado y rechazado, no_disponible se
+ *     guarda como pendiente
+ *   - un pago sin referencia todavia no se puede guardar, en este sprint se asume que siempre hay una
+ *
  * RNF-20: "la lógica de pedidos no debe referenciar directamente ninguna
  * implementación concreta de pago". Este archivo es ese contrato. El
  * módulo de pedidos solo conoce estos métodos; cuál adaptador se usa lo

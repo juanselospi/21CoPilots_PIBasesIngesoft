@@ -27,7 +27,7 @@ async function levantarServidor({ tamanoMaximoMb = 5, servicio = servicioConRech
   const aplicacion = express();
   aplicacion.use((peticion, _respuesta, siguiente) => {
     const rol = peticion.get("x-rol");
-    peticion.usuario = rol ? { id: 1, rol } : null;
+    peticion.usuario = rol ? { correo: "admin@dchobbies.test", rol } : null;
     siguiente();
   });
   aplicacion.use(
@@ -147,3 +147,5 @@ test("el administrador descarga la plantilla; un cliente no", async (t) => {
   assert.deepEqual(Buffer.from(await comoAdmin.arrayBuffer()), plantilla);
   assert.equal(comoCliente.status, 403);
 });
+
+// Test de casos de importación del excel hecho con la ayuda de Claude

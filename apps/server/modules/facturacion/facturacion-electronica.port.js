@@ -1,6 +1,14 @@
 /**
  * INTERFAZ — Facturación electrónica (la "abstracción" del Bridge, § 5.2).
  *
+ * PENDIENTE: facturacion.factura solo tiene num_factura, fecha_emision y num_referencia del pago
+ * (ver cambios-siguiente-sprint.md):
+ *   - la factura se liga al pago y no al pedido, SolicitudDeFactura usa numReferencia en lugar
+ *     de pedidoId
+ *   - no hay columna estado, solo se guarda una factura emitida con num_factura = consecutivo
+ *   - los datos del emisor salian de admin.parametro_negocio, que ya no existe, sigue por definir
+ *   - la cedula del receptor sale de clientes.cliente.cedula
+ *
  * Segundo contrato exigido por RNF-20. La factura debe contener los datos
  * fiscales de la sociedad y la cédula física o jurídica del cliente
  * (RN-18, RES-04, RNF-18), aunque su emisión sea un placeholder.

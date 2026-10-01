@@ -53,12 +53,10 @@ test("RF-16 / RN-04: la alerta salta al llegar al umbral de dos unidades", async
   bus.suscribir(EVENTOS.EXISTENCIAS_BAJAS, (datos) => alertas.push(datos));
 
   await bus.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, {
-    productoId: 1,
     sku: "SKU-1",
     existenciasResultantes: 3,
   });
   await bus.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, {
-    productoId: 1,
     sku: "SKU-1",
     existenciasResultantes: 2,
   });

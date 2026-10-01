@@ -1,6 +1,9 @@
 /**
  * ADAPTADOR NULO (Null Object) — la pasarela no responde.
  *
+ * PENDIENTE: num_referencia es obligatoria, asi que un intento sin referencia todavia no se
+ * puede guardar (ver cambios-siguiente-sprint.md).
+ *
  * Existe para satisfacer RNF-06: el 100 % de las operaciones de
  * inventario y de registro de ventas debe completarse aunque los
  * componentes placeholder de pago y facturación estén caídos.

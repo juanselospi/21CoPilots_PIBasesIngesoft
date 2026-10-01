@@ -1,6 +1,14 @@
 /**
  * CAPA DE DOMINIO — Clientes y niveles de fidelidad.
  *
+ * PENDIENTE: adaptar al EER corregido antes de implementar (ver cambios-siguiente-sprint.md):
+ *   - el descuento ahora sale de una oferta de pedidos.oferta: aplica si esta vigente
+ *     (fecha_inicio a fecha_fin), el monto llega a monto_minimo y el nivel del cliente es
+ *     al menos nivel_fidelidad_minimo. La estrategia de descuento se hace desde cero,
+ *     la anterior (porcentaje por nivel) se borro porque el modelo ya no la soporta
+ *   - la escala que convierte num_compras en nivel sigue por definir
+ *   - RF-38 y version_terminos_vigente no tienen donde guardarse
+ *
  * POR IMPLEMENTAR
  *   RF-32, RF-33  Registro del cliente en su primera compra (RN-07)
  *   RF-34         Cálculo del nivel por recompra (RN-08)
@@ -17,28 +25,10 @@
  *     cualquier repositorio.
  */
 
-import { DescuentoPorNivel } from "./descuentos/estrategia-de-descuento.js";
-
 export class ClientesService {
   #repositorio;
-  #parametrosDeNegocio;
 
-  constructor({ repositorio, parametrosDeNegocio }) {
+  constructor({ repositorio }) {
     this.#repositorio = repositorio;
-    this.#parametrosDeNegocio = parametrosDeNegocio;
-  }
-
-  /**
-   * Construye la estrategia con los valores vigentes en las tablas. Se
-   * arma en cada uso, así un cambio del administrador aplica de inmediato
-   * sin reiniciar el servidor (aprobado #10, DD-14).
-   */
-  async obtenerEstrategiaDeDescuento() {
-    const [escala, montoMinimo] = await Promise.all([
-      this.#repositorio.listarNivelesDeFidelidad(),
-      this.#parametrosDeNegocio.obtenerNumero("monto_minimo_descuento"),
-    ]);
-
-    return new DescuentoPorNivel({ escala, montoMinimo });
   }
 }

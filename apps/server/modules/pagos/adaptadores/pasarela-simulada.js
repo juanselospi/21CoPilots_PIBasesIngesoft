@@ -1,6 +1,9 @@
 /**
  * ADAPTADOR — pasarela simulada (RES-03, RF-39, RF-40).
  *
+ * PENDIENTE: la referencia ahora es pagos.pago.num_referencia, que es la llave primaria.
+ * Contra entrega devuelve referencia null y eso todavia no se puede guardar (ver cambios-siguiente-sprint.md).
+ *
  * Implementa la interfaz completa con datos ficticios: el flujo de compra
  * se construye y se prueba entero, y la integración productiva queda como
  * trabajo posterior sin tocar la lógica de pedidos (§ 5.1).

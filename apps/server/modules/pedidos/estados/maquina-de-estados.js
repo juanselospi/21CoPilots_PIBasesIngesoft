@@ -1,6 +1,9 @@
 /**
  * Máquina de estados del pedido (State, variante tabular, § 6.4).
  *
+ * PENDIENTE: el CHECK de los estados ahora esta en pedidos.historial_estado.estado y no en
+ * pedidos.pedido.estado. Los valores siguen coincidiendo con esta tabla.
+ *
  * RF-26 define los estados y RF-28 agrega la cancelación. RN-15 permite
  * cancelar solo hasta antes del despacho.
  *

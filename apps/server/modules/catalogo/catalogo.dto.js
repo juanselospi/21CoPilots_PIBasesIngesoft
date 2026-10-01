@@ -13,13 +13,11 @@
 
 /** Vista pública: visitante y cliente (RF-10, RF-12). */
 export const aProductoPublico = (producto) => ({
-  id: producto.id,
   sku: producto.sku,
   nombre: producto.nombre,
   descripcion: producto.descripcion,
   imagenUrl: producto.imagenUrl,
   categoria: producto.categoria,
-  subcategoria: producto.subcategoria,
   precioFinal: producto.precioFinal,
   moneda: "CRC",
   disponibilidad: producto.disponibilidad,
@@ -32,22 +30,16 @@ export const aProductoPublico = (producto) => ({
  */
 export const aProductoAdministrativo = (producto) => ({
   ...aProductoPublico(producto),
-  estado: producto.estado,
   costoItem: producto.costoItem,
   porcentajeImportacion: producto.porcentajeImportacion,
   margenGanancia: producto.margenGanancia,
+  tasaImpuesto: producto.tasaImpuesto,
   existencias: producto.existencias,
   desglosePrecio: producto.desglosePrecio,
 });
 
-/** Categoría con sus subcategorías, para la barra de categorías de Inicio. */
+/** Categoria para la barra de categorias de Inicio, se filtra por su nombre. */
 export const aCategoriaPublica = (categoria) => ({
-  id: categoria.id,
   nombre: categoria.nombre,
   cantidadDeProductos: categoria.cantidadDeProductos,
-  subcategorias: categoria.subcategorias.map((subcategoria) => ({
-    id: subcategoria.id,
-    nombre: subcategoria.nombre,
-    cantidadDeProductos: subcategoria.cantidadDeProductos,
-  })),
 });

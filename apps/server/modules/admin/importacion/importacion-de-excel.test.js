@@ -110,7 +110,6 @@ test("lee una fila real: porcentajes, fórmulas e hipervínculo", async () => {
 
   assert.deepEqual(fila, {
     linea: 2,
-    codigoItem: "PS5-001",
     familia: "Video Juegos",
     codigoSku: "PS5-WAJH-ZX6C",
     descripcion: GOD_OF_WAR.descripcion,
@@ -211,8 +210,6 @@ const CASOS_INVALIDOS = [
   ["codigo_sku demasiado largo", { codigo_sku: "X".repeat(51) }, /supera los 50/],
   ["familia vacía", { familia: null }, /Falta familia/],
   ["descripcion_corta vacía", { descripcion_corta: null }, /Falta descripcion_corta/],
-  ["codigo_item vacío", { codigo_item: null }, /Falta el codigo_item/],
-  ["prefijo de codigo_item desconocido", { codigo_item: "XBX-001" }, /prefijo conocido/],
   ["costo no numérico", { costo_usd: "abc" }, /costo_usd no es un número/],
   ["costo vacío", { costo_usd: null }, /Falta costo_usd/],
   ["costo negativo", { costo_usd: -1 }, /costo_usd no puede ser menor que 0/],
@@ -232,6 +229,10 @@ for (const [caso, cambios, esperado] of CASOS_INVALIDOS) {
     );
   });
 }
+
+test("codigo_item es opcional porque el sistema no lo usa", async () => {
+  assert.deepEqual(await motivosDe(conCambios(GOD_OF_WAR, { codigo_item: null })), []);
+});
 
 test("RN-02: acepta margen negativo mayor que -100 %", async () => {
   assert.deepEqual(await motivosDe(conCambios(GOD_OF_WAR, { "%_margen_ganancia": -0.1 })), []);
@@ -274,14 +275,13 @@ test("RF-58: importa las válidas, rechaza las inválidas e informa el total", a
     nombre: "God of War Ragnarök (PS5)",
     descripcion: GOD_OF_WAR.descripcion,
     categoria: "Video Juegos",
-    subcategoria: "PlayStation 5",
     imagenUrl: URL_IMAGEN,
     costoItem: 49.99,
     porcentajeImportacion: 20,
     margenGanancia: 20,
+    tasaImpuesto: 13,
   });
   assert.equal(guardados[1].sku, "LEG-WL42-XHGA");
-  assert.equal(guardados[1].subcategoria, "LEGO");
 });
 
 test("RF-59: reimportar la misma hoja actualiza y no crea productos", async () => {
@@ -315,3 +315,5 @@ test("SCRUM-30: la plantilla versionada se importa sin rechazos", async () => {
   assert.equal(resultado.importadas, 1);
   assert.equal(guardados[0].sku, "PS5-WAJH-ZX6C");
 });
+
+// Test de casos de importación del excel hecho con la ayuda de Claude

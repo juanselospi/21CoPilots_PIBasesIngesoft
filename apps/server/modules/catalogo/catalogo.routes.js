@@ -10,7 +10,7 @@ export function crearRutasDeCatalogo(controlador) {
   const rutas = Router();
 
   rutas.get("/productos", asincrono(controlador.listar));
-  rutas.get("/productos/:id", asincrono(controlador.obtenerFicha));
+  rutas.get("/productos/:sku", asincrono(controlador.obtenerFicha));
   rutas.get("/categorias", asincrono(controlador.listarCategorias));
 
   return rutas;

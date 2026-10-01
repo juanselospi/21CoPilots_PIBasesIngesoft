@@ -24,7 +24,7 @@ export class CatalogoController {
     const porPagina = leerEntero(limite, "limite", { minimo: 1, maximo: LIMITE_MAXIMO }) ?? LIMITE_POR_DEFECTO;
 
     const productos = await this.#servicio.listarCatalogo({
-      categoriaId: leerEntero(categoria, "categoria", { minimo: 1 }),
+      categoria: categoria?.trim() || null,
       termino: q?.trim() || null,
       limite: porPagina,
       desplazamiento: (leerEntero(pagina, "pagina", { minimo: 0 }) ?? 0) * porPagina,
@@ -34,8 +34,8 @@ export class CatalogoController {
   };
 
   obtenerFicha = async (peticion, respuesta) => {
-    const id = leerEntero(peticion.params.id, "id", { minimo: 1 });
-    const producto = await this.#servicio.obtenerFicha(id);
+    const sku = peticion.params.sku.trim().toUpperCase();
+    const producto = await this.#servicio.obtenerFicha(sku);
     respuesta.json({ datos: aProductoPublico(producto) });
   };
 
@@ -45,7 +45,7 @@ export class CatalogoController {
   };
 }
 
-/** Lee un entero opcional de la petición; `null` si no viene. */
+// Lee un entero opcional de la peticion y null si no viene
 function leerEntero(valor, campo, { minimo, maximo = Number.MAX_SAFE_INTEGER }) {
   if (valor === undefined || valor === "") return null;
 

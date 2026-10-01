@@ -18,8 +18,10 @@
 
 export class ReportesService {
   #repositorio;
+  #motorDePrecios;
 
-  constructor({ repositorio }) {
+  constructor({ repositorio, motorDePrecios }) {
     this.#repositorio = repositorio;
+    this.#motorDePrecios = motorDePrecios;
   }
 }

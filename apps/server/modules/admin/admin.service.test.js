@@ -6,23 +6,19 @@ import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { hashearToken } from "./seguridad/tokens-de-sesion.js";
 import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";
 
-/** Repositorio en memoria con un administrador y un cliente inactivo. */
+/** Repositorio en memoria con un administrador y un usuario que no es administrador ni cliente. */
 async function crearRepositorioFalso() {
   const usuarios = [
     {
-      id: 1,
       correo: "admin@dchobbies.test",
       nombre: "Administración",
       rol: "administrador",
-      activo: true,
       contrasenaHash: await hashearContrasena("Admin123!"),
     },
     {
-      id: 2,
-      correo: "inactivo@correo.test",
-      nombre: "Cuenta inactiva",
-      rol: "cliente",
-      activo: false,
+      correo: "sinrol@correo.test",
+      nombre: "Usuario sin rol",
+      rol: null,
       contrasenaHash: await hashearContrasena("Cliente123!"),
     },
   ];
@@ -31,34 +27,35 @@ async function crearRepositorioFalso() {
   return {
     sesiones,
     async buscarUsuarioPorCorreo(correo) {
-      return usuarios.find((u) => u.correo === correo.toLowerCase()) ?? null;
+      return usuarios.find((u) => u.correo === correo) ?? null;
     },
     async crearSesion(sesion) {
       sesiones.push(sesion);
     },
     async buscarUsuarioPorSesion(tokenHash) {
       const sesion = sesiones.find((s) => s.tokenHash === tokenHash);
-      const usuario = usuarios.find((u) => u.id === sesion?.usuarioId);
-      return usuario ? { id: usuario.id, rol: usuario.rol } : null;
+      const usuario = usuarios.find((u) => u.correo === sesion?.correoUsuario);
+      return usuario ? { correo: usuario.correo, rol: usuario.rol } : null;
     },
   };
 }
 
 test("RF-53: con credenciales válidas abre una sesión y devuelve el rol", async () => {
   const repositorio = await crearRepositorioFalso();
-  const servicio = new AdminService({ repositorio, duracionSesionHoras: 8 });
+  const servicio = new AdminService({ repositorio, duracionSesionMinutos: 25 });
 
   const { token, venceEn, usuario } = await servicio.iniciarSesion({
-    correo: "Admin@DCHobbies.test",
+    correo: "  Admin@DCHobbies.test ",
     contrasena: "Admin123!",
   });
 
   assert.equal(usuario.rol, "administrador");
+  assert.equal(repositorio.sesiones[0].correoUsuario, "admin@dchobbies.test");
   assert.equal(usuario.contrasenaHash, undefined);
   assert.equal(repositorio.sesiones.length, 1);
 
-  const horas = (venceEn - Date.now()) / (60 * 60 * 1000);
-  assert.ok(horas > 7.9 && horas <= 8);
+  const minutos = (venceEn - Date.now()) / (60 * 1000);
+  assert.ok(minutos > 24.9 && minutos <= 25);
 
   assert.ok(token);
 });
@@ -98,14 +95,15 @@ test("un correo inexistente da el mismo error que una contraseña incorrecta", a
   );
 });
 
-test("una cuenta inactiva no puede iniciar sesión", async () => {
+test("un usuario que no es administrador ni cliente no puede iniciar sesión", async () => {
   const repositorio = await crearRepositorioFalso();
   const servicio = new AdminService({ repositorio });
 
   await assert.rejects(
-    servicio.iniciarSesion({ correo: "inactivo@correo.test", contrasena: "Cliente123!" }),
+    servicio.iniciarSesion({ correo: "sinrol@correo.test", contrasena: "Cliente123!" }),
     CredencialesInvalidas
   );
+  assert.equal(repositorio.sesiones.length, 0);
 });
 
 test("identifica al usuario a partir del token de la cookie", async () => {
@@ -118,9 +116,11 @@ test("identifica al usuario a partir del token de la cookie", async () => {
   });
 
   assert.deepEqual(await servicio.identificarPorToken(token), {
-    id: 1,
+    correo: "admin@dchobbies.test",
     rol: "administrador",
   });
   assert.equal(await servicio.identificarPorToken("token-inventado"), null);
   assert.equal(await servicio.identificarPorToken(undefined), null);
 });
+
+// Test de los servicios del administrador hecho con la ayuda de Claude
