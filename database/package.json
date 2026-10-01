@@ -12,6 +12,7 @@
     "db:status": "node scripts/migrate.js --status",
     "db:seed": "node scripts/seed.js",
     "db:reset": "node scripts/reset.js",
+    "db:cliente": "node scripts/cargar-cliente.js",
     "db:test": "node scripts/probar.js",
     "db:psql": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"'",
     "db:dump": "node scripts/dump.js",
