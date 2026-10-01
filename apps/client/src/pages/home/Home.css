@@ -48,9 +48,10 @@
   background: #1e293b;
 }
 
+/* Las columnas se ajustan a la cantidad de categorías que mande el servidor */
 .home-featured-categories {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
 }
 
@@ -111,6 +112,39 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
+}
+
+.home-status {
+  box-sizing: border-box;
+  padding: 32px 24px;
+  border-radius: 8px;
+  background: #f1f3f6;
+  color: #4b5563;
+  text-align: center;
+}
+
+.home-status-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.home-status-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: #334155;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.home-status-button:hover {
+  background: #1e293b;
 }
 
 .home-info {

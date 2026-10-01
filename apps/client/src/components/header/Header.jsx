@@ -1,8 +1,7 @@
 import { Link } from 'react-router'
 import './Header.css'
-import { categories } from '../../data/categories.js'
 
-function Header() {
+function Header({ categories }) {
     return (
         <header className='header'>
             <div className='header-top'>

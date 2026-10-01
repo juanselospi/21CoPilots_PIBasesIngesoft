@@ -1,8 +1,7 @@
 import { Link } from 'react-router'
 import './Footer.css'
-import { categories } from '../../data/categories.js'
 
-function Footer() {
+function Footer({ categories }) {
     return (
         <footer className='footer'>
             <div className='footer-column'>
