@@ -30,12 +30,14 @@ export const aProductoPublico = (producto) => ({
  */
 export const aProductoAdministrativo = (producto) => ({
   ...aProductoPublico(producto),
+  proveedor: producto.proveedor,
   costoItem: producto.costoItem,
   porcentajeImportacion: producto.porcentajeImportacion,
   margenGanancia: producto.margenGanancia,
   tasaImpuesto: producto.tasaImpuesto,
   existencias: producto.existencias,
   desglosePrecio: producto.desglosePrecio,
+  etiquetas: producto.etiquetas ?? [],
 });
 
 /** Categoria para la barra de categorias de Inicio, se filtra por su nombre. */
