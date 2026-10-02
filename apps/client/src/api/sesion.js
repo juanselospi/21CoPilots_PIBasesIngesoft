@@ -1,6 +1,8 @@
 // Llamadas al servidor para la sesión del usuario.
 // Van a /api, que Vite reenvía al servidor, así la cookie queda en el mismo origen.
 
+import { ErrorHttp, pedir } from './clienteHttp.js'
+
 const messagesByStatus = {
     400: 'Escriba su correo y contraseña.',
     401: 'Correo o contraseña incorrectos.',
@@ -33,4 +35,14 @@ export async function logIn(correo, contrasena) {
     }
 
     return body.datos
+}
+
+// Devuelve el usuario de la cookie: { correo, nombre, rol }, o null si no hay sesion.
+export async function getSession({ signal } = {}) {
+    try {
+        return await pedir('/api/admin/sesion', { signal })
+    } catch (error) {
+        if (error instanceof ErrorHttp && error.estado === 401) return null
+        throw error
+    }
 }

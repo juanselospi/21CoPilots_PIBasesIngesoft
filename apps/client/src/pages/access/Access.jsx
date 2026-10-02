@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import './Access.css'
 import { logIn } from '../../api/sesion.js'
+import { useSesion } from '../../hooks/useSesion.js'
 
 const ADMIN_ROLE = 'administrador'
 
@@ -37,6 +38,7 @@ function Access() {
 
 function LogInForm() {
     const navigate = useNavigate()
+    const { recargar: reloadSession } = useSesion()
     const [correo, setCorreo] = useState('')
     const [contrasena, setContrasena] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -55,6 +57,7 @@ function LogInForm() {
         setError(null)
         try {
             const usuario = await logIn(correo.trim(), contrasena)
+            reloadSession()
             navigate(usuario.rol === ADMIN_ROLE ? '/admin/productos' : '/', { replace: true })
         } catch (logInError) {
             setError(logInError.message)
