@@ -9,9 +9,39 @@ import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import { EntradaInvalida, ReglaDeNegocioViolada } from "../../shared/errores/errores-de-dominio.js";
 
 // Servicio falso: PKM-001 ya existe, un código vacío es inválido y el
-// resto se registra.
+// resto se registra. El listado del panel devuelve siempre el producto
+// oculto y guarda los filtros que le llegaron.
+const fun003 = {
+  sku: "FUN-003",
+  nombre: "Funko Pop! edición limitada convención",
+  descripcion: "Sin existencias y sin contrapedido.",
+  imagenUrl: null,
+  categoria: "Coleccionables",
+  proveedor: "Importadora Pop",
+  precioFinal: 27289.5,
+  disponibilidad: "no_disponible",
+  admiteContrapedido: false,
+  costoItem: 15000,
+  porcentajeImportacion: 15,
+  margenGanancia: 40,
+  tasaImpuesto: 13,
+  existencias: 0,
+  desglosePrecio: [
+    { paso: "costo", monto: 15000 },
+    { paso: "importacion", monto: 17250 },
+    { paso: "margen", monto: 24150 },
+    { paso: "impuesto", monto: 27289.5 },
+  ],
+  etiquetas: ["existencias_bajas", "oculto_en_tienda"],
+};
+const filtrosDelPanel = [];
+
 const servicio = {
   listarCatalogo: async () => [],
+  listarParaAdministracion: async (filtros) => {
+    filtrosDelPanel.push(filtros);
+    return { productos: [fun003], total: 14 };
+  },
   crearProducto: async ({ sku }) => {
     if (!sku) throw new EntradaInvalida("El código es obligatorio.", ["sku"]);
     if (sku === "PKM-001") throw new ReglaDeNegocioViolada("Ya existe un producto con el código PKM-001.", "RF-01");
@@ -39,7 +69,13 @@ async function levantarServidor() {
   const servidor = aplicacion.listen(0);
   await new Promise((resolver) => servidor.once("listening", resolver));
   const url = `http://localhost:${servidor.address().port}/api/catalogo/productos`;
-  return { url, cerrar: () => new Promise((resolver) => servidor.close(resolver)) };
+  const urlDelPanel = `http://localhost:${servidor.address().port}/api/catalogo/admin/productos`;
+  return { url, urlDelPanel, cerrar: () => new Promise((resolver) => servidor.close(resolver)) };
+}
+
+async function listarEnElPanel(url, rol) {
+  const respuesta = await fetch(url, { headers: rol ? { "x-rol": rol } : {} });
+  return { estado: respuesta.status, cuerpo: await respuesta.json() };
 }
 
 async function registrar(url, producto, rol) {
@@ -96,4 +132,79 @@ test("las consultas del catálogo siguen siendo públicas", async (t) => {
   t.after(cerrar);
 
   assert.equal((await fetch(url)).status, 200);
+});
+
+test("el listado del panel responde 401 sin sesión y 403 a un cliente", async (t) => {
+  const { urlDelPanel, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  assert.equal((await listarEnElPanel(urlDelPanel)).estado, 401);
+
+  const { estado, cuerpo } = await listarEnElPanel(urlDelPanel, ROLES.CLIENTE);
+  assert.equal(estado, 403);
+  assert.equal(cuerpo.datos, undefined);
+});
+
+test("el administrador ve el listado del panel con costo, desglose, etiquetas y total", async (t) => {
+  const { urlDelPanel, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await listarEnElPanel(urlDelPanel, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.meta, { total: 14, pagina: 0, limite: 24 });
+  for (const producto of cuerpo.datos) {
+    assert.equal(typeof producto.costoItem, "number");
+    assert.equal(producto.desglosePrecio.length, 4);
+  }
+  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "CRC" });
+});
+
+test("el listado del panel le pasa al servicio los filtros de la consulta", async (t) => {
+  const { urlDelPanel, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  filtrosDelPanel.length = 0;
+
+  const consulta =
+    "?q=%20pkm%20&categoria=Juguetes&proveedor=Games%20Import&disponibilidad=no_disponible" +
+    "&existenciasBajas=true&margenNegativo=false&precioMin=5000&precioMax=9000.5&orden=-precio&limite=48&pagina=2";
+  const { estado, cuerpo } = await listarEnElPanel(urlDelPanel + consulta, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.meta, { total: 14, pagina: 2, limite: 48 });
+  assert.deepEqual(filtrosDelPanel, [
+    {
+      termino: "pkm",
+      categoria: "Juguetes",
+      proveedor: "Games Import",
+      disponibilidad: "no_disponible",
+      existenciasBajas: true,
+      margenNegativo: false,
+      precioMin: 5000,
+      precioMax: 9000.5,
+      orden: "-precio",
+      limite: 48,
+      desplazamiento: 96,
+    },
+  ]);
+});
+
+test("un parámetro inválido en el listado del panel responde 400 con los campos a corregir", async (t) => {
+  const { urlDelPanel, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await listarEnElPanel(`${urlDelPanel}?orden=fecha&limite=10`, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 400);
+  assert.equal(cuerpo.error.codigo, "ENTRADA_INVALIDA");
+  assert.deepEqual(cuerpo.error.detalles.campos, ["orden", "limite"]);
+});
+
+test("el producto registrado sale con etiquetas aunque el servicio no las mande", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { cuerpo } = await registrar(url, { sku: "NUEVO-1" }, ROLES.ADMINISTRADOR);
+
+  assert.deepEqual(cuerpo.datos.etiquetas, []);
 });

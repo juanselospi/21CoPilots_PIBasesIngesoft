@@ -1,7 +1,34 @@
 /**
  * Rutas del catálogo. Las de consulta son públicas, porque el visitante
  * navega el catálogo sin iniciar sesión (RF-10, RF-11, RF-12). Las que
- * cambian productos son solo para el administrador.
+ * cambian productos son solo para el administrador, igual que el listado
+ * del panel, que muestra costos y márgenes.
+ *
+ *   GET /admin/productos              solo administrador (RF-43)
+ *
+ *     Todos los productos, también los ocultos en la tienda, con costo,
+ *     margen, existencias, desglose del precio y etiquetas. Parámetros,
+ *     todos opcionales:
+ *
+ *       q                 busca en el nombre o en el SKU
+ *       categoria         igualdad exacta
+ *       proveedor         igualdad exacta
+ *       disponibilidad    en_existencia | por_contrapedido | no_disponible
+ *       existenciasBajas  true | false; false es lo mismo que no mandarlo
+ *       margenNegativo    true | false; false es lo mismo que no mandarlo
+ *       precioMin         sobre el precio final, inclusive
+ *       precioMax         sobre el precio final, inclusive
+ *       orden             nombre (por defecto) | -nombre | precio | -precio
+ *                         | existencias | sku; los empates van por SKU
+ *       limite            24 (por defecto) | 48 | 96
+ *       pagina            desde 0
+ *
+ *     200  { datos: [producto], meta: { total, pagina, limite } }
+ *          `total` cuenta los productos que cumplen los filtros, antes
+ *          de paginar
+ *     400  un parámetro inválido; `detalles.campos` dice cuáles
+ *     401  sin sesión
+ *     403  con sesión de otro rol
  */
 
 import { Router } from "express";
@@ -17,6 +44,7 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
   rutas.get("/productos/:sku", asincrono(controlador.obtenerFicha));
   rutas.get("/categorias", asincrono(controlador.listarCategorias));
 
+  rutas.get("/admin/productos", ...soloAdministrador, asincrono(controlador.listarParaAdministracion));
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
 
   return rutas;

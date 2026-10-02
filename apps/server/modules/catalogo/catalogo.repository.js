@@ -23,7 +23,8 @@ const COLUMNAS_DE_PRODUCTO = `
        p.tasa_impuesto,
        p.contrapedido,
        p.stock,
-       p.categoria`;
+       p.categoria,
+       p.proveedor`;
 
 
 
@@ -64,6 +65,27 @@ export class CatalogoRepository {
           AND ($2::text IS NULL OR p.nombre ILIKE '%' || $2 || '%')
         ORDER BY p.nombre`,
       [categoria, termino]
+    );
+
+    return rows.map(aProducto);
+  }
+
+  /**
+   * Productos para el panel del administrador. El término busca en el
+   * nombre o en el SKU, porque el administrador suele buscar por código.
+   * Los filtros que dependen del precio o de la disponibilidad los aplica
+   * el servicio, que es quien los calcula.
+   */
+  async listarParaAdministracion({ termino = null, categoria = null, proveedor = null } = {}) {
+    const { rows } = await this.#pool.query(
+      `SELECT ${COLUMNAS_DE_PRODUCTO}
+         FROM catalogo.producto p
+        WHERE ($1::text IS NULL OR p.nombre ILIKE '%' || $1 || '%'
+                                OR p.sku ILIKE '%' || $1 || '%')
+          AND ($2::text IS NULL OR p.categoria = $2)
+          AND ($3::text IS NULL OR p.proveedor = $3)
+        ORDER BY p.nombre`,
+      [termino, categoria, proveedor]
     );
 
     return rows.map(aProducto);
@@ -160,4 +182,5 @@ const aProducto = (fila) => ({
   admiteContrapedido: fila.contrapedido,
   existencias: fila.stock,
   categoria: fila.categoria,
+  proveedor: fila.proveedor,
 });

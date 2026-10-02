@@ -8,6 +8,7 @@
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import { aProductoPublico, aProductoAdministrativo, aCategoriaPublica } from "./catalogo.dto.js";
+import { validarConsultaAdministrativa } from "./validar-consulta-administrativa.js";
 
 const LIMITE_POR_DEFECTO = 24;
 const LIMITE_MAXIMO = 48;
@@ -42,6 +43,23 @@ export class CatalogoController {
   listarCategorias = async (_peticion, respuesta) => {
     const categorias = await this.#servicio.listarCategorias();
     respuesta.json({ datos: categorias.map(aCategoriaPublica) });
+  };
+
+  // GET /admin/productos, solo administrador. A diferencia del listado
+  // público, trae los productos ocultos, los costos y el total, para que
+  // el panel pueda mostrar "195 productos · mostrando 1–24".
+  listarParaAdministracion = async (peticion, respuesta) => {
+    const { pagina, ...filtros } = validarConsultaAdministrativa(peticion.query);
+
+    const { productos, total } = await this.#servicio.listarParaAdministracion({
+      ...filtros,
+      desplazamiento: pagina * filtros.limite,
+    });
+
+    respuesta.json({
+      datos: productos.map(aProductoAdministrativo),
+      meta: { total, pagina, limite: filtros.limite },
+    });
   };
 
   // POST /productos, solo administrador. Responde 201 con el producto, su
