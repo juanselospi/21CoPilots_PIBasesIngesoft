@@ -6,7 +6,11 @@ import { crearRutasDeCatalogo } from "./catalogo.routes.js";
 import { CatalogoController } from "./catalogo.controller.js";
 import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
-import { EntradaInvalida, ReglaDeNegocioViolada } from "../../shared/errores/errores-de-dominio.js";
+import {
+  EntradaInvalida,
+  RecursoNoEncontrado,
+  ReglaDeNegocioViolada,
+} from "../../shared/errores/errores-de-dominio.js";
 
 // Servicio falso: PKM-001 ya existe, un código vacío es inválido y el
 // resto se registra. El listado del panel devuelve siempre el producto
@@ -35,6 +39,9 @@ const fun003 = {
   etiquetas: ["existencias_bajas", "oculto_en_tienda"],
 };
 const filtrosDelPanel = [];
+// Editar el precio: NO-EXISTE no existe, `precioFinal` no se acepta y el
+// resto responde con el precio recalculado. Guarda los SKU que le llegaron.
+const skusEditados = [];
 
 const servicio = {
   listarCatalogo: async () => [],
@@ -46,6 +53,27 @@ const servicio = {
     if (!sku) throw new EntradaInvalida("El código es obligatorio.", ["sku"]);
     if (sku === "PKM-001") throw new ReglaDeNegocioViolada("Ya existe un producto con el código PKM-001.", "RF-01");
     return { sku, nombre: "Nuevo", categoria: "Trading Cards", precioFinal: 169.5, costoItem: 100, existencias: 0 };
+  },
+  actualizarPrecio: async (sku, datos) => {
+    skusEditados.push(sku);
+    if ("precioFinal" in datos) throw new EntradaInvalida("No se aceptan: precioFinal.", ["precioFinal"]);
+    if (sku === "NO-EXISTE") throw new RecursoNoEncontrado("el producto", sku);
+    return {
+      sku,
+      nombre: "Sobre Pokémon TCG Escarlata y Púrpura",
+      costoItem: 1000,
+      porcentajeImportacion: 20,
+      margenGanancia: 25,
+      tasaImpuesto: 13,
+      precioFinal: 1695,
+      desglosePrecio: [
+        { paso: "costo", monto: 1000 },
+        { paso: "importacion", monto: 1200 },
+        { paso: "margen", monto: 1500 },
+        { paso: "impuesto", monto: 1695 },
+      ],
+      etiquetas: [],
+    };
   },
 };
 
@@ -75,6 +103,15 @@ async function levantarServidor() {
 
 async function listarEnElPanel(url, rol) {
   const respuesta = await fetch(url, { headers: rol ? { "x-rol": rol } : {} });
+  return { estado: respuesta.status, cuerpo: await respuesta.json() };
+}
+
+async function editarPrecio(url, sku, cambios, rol) {
+  const respuesta = await fetch(`${url}/${sku}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+    body: JSON.stringify(cambios),
+  });
   return { estado: respuesta.status, cuerpo: await respuesta.json() };
 }
 
@@ -207,4 +244,61 @@ test("el producto registrado sale con etiquetas aunque el servicio no las mande"
   const { cuerpo } = await registrar(url, { sku: "NUEVO-1" }, ROLES.ADMINISTRADOR);
 
   assert.deepEqual(cuerpo.datos.etiquetas, []);
+});
+
+const nuevoPrecio = { costoItem: 1000, porcentajeImportacion: 20, margenGanancia: 25 };
+
+test("editar el precio responde 401 sin sesión y 403 a un cliente", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  assert.equal((await editarPrecio(url, "PKM-001", nuevoPrecio)).estado, 401);
+  assert.equal((await editarPrecio(url, "PKM-001", nuevoPrecio, ROLES.CLIENTE)).estado, 403);
+});
+
+test("el administrador edita el precio y recibe 200 con el precio recalculado", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await editarPrecio(url, "PKM-001", nuevoPrecio, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 200);
+  assert.equal(cuerpo.datos.precioFinal, 1695);
+  assert.equal(cuerpo.datos.costoItem, 1000);
+  assert.deepEqual(
+    cuerpo.datos.desglosePrecio.map(({ monto }) => monto),
+    [1000, 1200, 1500, 1695]
+  );
+});
+
+test("un cuerpo inválido al editar el precio responde 400 con los campos a corregir", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await editarPrecio(url, "PKM-001", { precioFinal: 5000 }, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 400);
+  assert.deepEqual(cuerpo.error.detalles.campos, ["precioFinal"]);
+});
+
+test("editar el precio de un SKU que no existe responde 404", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await editarPrecio(url, "NO-EXISTE", nuevoPrecio, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 404);
+  assert.equal(cuerpo.error.codigo, "RECURSO_NO_ENCONTRADO");
+});
+
+test("el SKU de la URL se normaliza antes de editar el precio", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  skusEditados.length = 0;
+
+  const { estado, cuerpo } = await editarPrecio(url, "pkm-001", nuevoPrecio, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 200);
+  assert.deepEqual(skusEditados, ["PKM-001"]);
+  assert.equal(cuerpo.datos.sku, "PKM-001");
 });

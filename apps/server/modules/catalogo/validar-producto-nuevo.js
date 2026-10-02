@@ -7,6 +7,7 @@
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
 
 const LIMITES = Object.freeze({
   sku: 50,
@@ -14,8 +15,6 @@ const LIMITES = Object.freeze({
   categoria: 100,
   proveedor: 150,
   imagenUrl: 500,
-  costo: 9_999_999_999.99, // NUMERIC(12,2)
-  porcentaje: 9_999.99, //    NUMERIC(6,2)
 });
 
 /**
@@ -45,22 +44,17 @@ export function validarProductoNuevo(datos = {}) {
   else if (categoria.length > LIMITES.categoria) anotar("categoria", `La categoría no puede pasar de ${LIMITES.categoria} caracteres.`);
 
   const costoItem = numero(datos.costoItem);
-  if (costoItem === null) anotar("costoItem", "El costo es obligatorio.");
-  else if (Number.isNaN(costoItem)) anotar("costoItem", "El costo tiene que ser un número.");
-  else if (costoItem < 0) anotar("costoItem", "El costo no puede ser negativo.");
-  else if (costoItem > LIMITES.costo) anotar("costoItem", "El costo es demasiado grande.");
+  const problemaDeCosto = problemaDelCosto(costoItem);
+  if (problemaDeCosto) anotar("costoItem", problemaDeCosto);
 
+  // Al crear, importación y margen son opcionales y valen 0 si no vienen.
   const porcentajeImportacion = numero(datos.porcentajeImportacion) ?? 0;
-  if (Number.isNaN(porcentajeImportacion) || porcentajeImportacion < 0 || porcentajeImportacion > LIMITES.porcentaje) {
-    anotar("porcentajeImportacion", "El porcentaje de importación tiene que ser un número de 0 o más.");
-  }
+  const problemaDeImportacion = problemaDeLaImportacion(porcentajeImportacion);
+  if (problemaDeImportacion) anotar("porcentajeImportacion", problemaDeImportacion);
 
-  // El margen puede ser negativo (liquidaciones), pero con -100 % el
-  // producto quedaría gratis.
   const margenGanancia = numero(datos.margenGanancia) ?? 0;
-  if (Number.isNaN(margenGanancia) || margenGanancia <= -100 || margenGanancia > LIMITES.porcentaje) {
-    anotar("margenGanancia", "El margen tiene que ser un número mayor que -100 %.");
-  }
+  const problemaDeMargen = problemaDelMargen(margenGanancia);
+  if (problemaDeMargen) anotar("margenGanancia", problemaDeMargen);
 
   if (datos.admiteContrapedido !== undefined && typeof datos.admiteContrapedido !== "boolean") {
     anotar("admiteContrapedido", "Indique si el producto admite contrapedido.");
@@ -98,18 +92,6 @@ export function validarProductoNuevo(datos = {}) {
 function texto(valor) {
   if (typeof valor !== "string") return null;
   return valor.trim() || null;
-}
-
-/**
- * Los formularios mandan los números como texto ("12.5"). Devuelve null
- * si no viene y NaN si viene algo que no es número.
- */
-function numero(valor) {
-  if (valor === undefined || valor === null) return null;
-  if (typeof valor === "number") return valor;
-  if (typeof valor !== "string") return NaN;
-  // Number("  ") da 0; un campo en blanco cuenta como que no vino.
-  return valor.trim() === "" ? null : Number(valor);
 }
 
 function esUrlWeb(valor) {

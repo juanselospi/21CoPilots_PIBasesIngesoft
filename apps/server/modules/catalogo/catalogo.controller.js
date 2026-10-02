@@ -68,6 +68,15 @@ export class CatalogoController {
     const producto = await this.#servicio.crearProducto(peticion.body ?? {});
     respuesta.status(201).json({ datos: aProductoAdministrativo(producto) });
   };
+
+  // PATCH /productos/:sku, solo administrador. Responde 200 con el
+  // producto y su precio recalculado, para que el modal muestre el
+  // resultado sin pedirlo otra vez.
+  actualizarPrecio = async (peticion, respuesta) => {
+    const sku = peticion.params.sku.trim().toUpperCase();
+    const producto = await this.#servicio.actualizarPrecio(sku, peticion.body);
+    respuesta.json({ datos: aProductoAdministrativo(producto) });
+  };
 }
 
 // Lee un entero opcional de la peticion y null si no viene
