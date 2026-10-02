@@ -29,6 +29,33 @@
  *     400  un parámetro inválido; `detalles.campos` dice cuáles
  *     401  sin sesión
  *     403  con sesión de otro rol
+ *
+ *   PATCH /productos/:sku             solo administrador (RF-01, RN-02)
+ *
+ *     Cambia el costo, la importación o el margen de un producto, también
+ *     de uno oculto en la tienda. El SKU de la URL se normaliza
+ *     (mayúsculas, sin espacios). Cuerpo JSON con uno, dos o los tres
+ *     campos; lo que no venga se queda como está:
+ *
+ *       costoItem              colones, 0 o más
+ *       porcentajeImportacion  0 o más
+ *       margenGanancia         mayor que -100
+ *
+ *     Se aceptan como número o como texto ("12.5"). Un campo que viene
+ *     vacío (null o "") es un error: para no cambiarlo, no se manda.
+ *     Cualquier otra clave, incluidos los precios derivados, se rechaza.
+ *
+ *     200  { datos: producto } con el precio recalculado. Los campos
+ *          derivados del modal "Editar precio" están en:
+ *            Costo total          paso `importacion` de `desglosePrecio`
+ *            Precio sin impuesto  paso `margen` de `desglosePrecio`
+ *            Precio final         `precioFinal`
+ *     400  cuerpo vacío, sin ninguno de los tres campos, con un valor
+ *          inválido o con claves no permitidas; `detalles.campos` dice
+ *          cuáles
+ *     401  sin sesión
+ *     403  con sesión de otro rol
+ *     404  el SKU no existe
  */
 
 import { Router } from "express";
@@ -46,6 +73,7 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
 
   rutas.get("/admin/productos", ...soloAdministrador, asincrono(controlador.listarParaAdministracion));
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
+  rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizarPrecio));
 
   return rutas;
 }
