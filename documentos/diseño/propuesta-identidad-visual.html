@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DC Hobbies · Identidad visual</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Bungee&family=Nunito+Sans:wght@400;600;700;800&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Bangers&family=Lexend:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: muestrario en una columna; cada seccion es una lamina del libro de marca y la vista previa es la tienda a escala */
+:root {
+  --bg: #F2F4F8;
+  --panel: #FFFFFF;
+  --ink: #131A2B;
+  --ink-2: #4D576E;
+  --line: #D7DDE8;
+  --sel: #131A2B;
+  --sel-ink: #FFFFFF;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1320; --panel: #161D2D; --ink: #E7EBF3; --ink-2: #A2ACC1; --line: #2A3448;
+    --sel: #E7EBF3; --sel-ink: #0E1320; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1320; --panel: #161D2D; --ink: #E7EBF3; --ink-2: #A2ACC1; --line: #2A3448;
+  --sel: #E7EBF3; --sel-ink: #0E1320; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 17px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 24px; padding-block: 48px 72px; display: grid; gap: 72px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; letter-spacing: -0.01em; }
+p { max-width: 68ch; }
+.ic { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid #4C8DFF; outline-offset: 2px; }
+
+/* Portada */
+.portada { display: grid; gap: 20px; }
+.eyebrow { font-family: var(--f-mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.portada h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.02; font-weight: 800; }
+.meta { font-size: 15px; color: var(--ink-2); }
+.lead { font-size: 19px; }
+.decidir { display: flex; flex-wrap: wrap; gap: 10px; }
+.decidir span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); font-size: 15px; font-weight: 600; }
+.decidir b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sel); color: var(--sel-ink); font-size: 13px; }
+.indice { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 15px; }
+.indice a { color: var(--ink); text-underline-offset: 3px; }
+
+/* Encabezado de seccion */
+.sec { display: grid; gap: 28px; }
+.sec-head { display: grid; gap: 10px; border-top: 2px solid var(--ink); padding-top: 16px; }
+.sec-head .eyebrow { color: var(--ink-2); }
+.sec-head h2 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight: 750; }
+.sub { font-size: 20px; font-weight: 700; font-family: var(--f-display); }
+
+/* Leyenda de roles */
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px 24px; font-size: 15px; color: var(--ink-2); }
+.roles b { color: var(--ink); font-weight: 700; }
+
+/* Tarjetas de paleta */
+.paletas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.paleta { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.paleta.recomendada { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.pal-head { display: flex; gap: 12px; align-items: start; justify-content: space-between; }
+.pal-head h3 { font-size: 24px; line-height: 1.15; }
+.pal-letra { font-family: var(--f-mono); font-size: 13px; color: var(--ink-2); }
+.insp { font-size: 15px; color: var(--ink-2); }
+.tag { flex: none; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--sel); color: var(--sel-ink); }
+.muestras { display: grid; gap: 4px; border-radius: 12px; overflow: hidden; }
+.muestra { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 12px; cursor: pointer; background: var(--c); color: var(--t); min-height: 58px; align-content: center; }
+.muestra:first-child { min-height: 112px; align-content: end; }
+.muestra:focus-visible { outline: 3px solid #4C8DFF; outline-offset: -3px; }
+.muestra .rol { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85; grid-column: 1 / -1; }
+.muestra .nom { font-weight: 700; font-size: 16px; }
+.muestra .hex { font-family: var(--f-mono); font-size: 13px; text-align: right; }
+.muestra .con { font-size: 12px; grid-column: 1 / -1; opacity: 0.9; }
+.muestra:hover .hex::after { content: " · copiar"; }
+.rueda-fila { display: flex; gap: 14px; align-items: center; }
+.rueda { position: relative; width: 76px; height: 76px; flex: none; border-radius: 50%;
+  background: conic-gradient(hsl(0 75% 58%), hsl(60 85% 55%), hsl(120 55% 48%), hsl(180 60% 45%), hsl(240 70% 60%), hsl(300 60% 55%), hsl(360 75% 58%)); }
+.rueda::before { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: var(--panel); }
+.rueda i { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--c); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--ink);
+  transform: rotate(var(--h)) translateY(-31px); }
+.rel { font-size: 15px; }
+.rel b { display: block; font-size: 16px; }
+.notas { display: grid; gap: 10px; font-size: 15px; }
+.notas p b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.probar { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--ink); background: transparent; cursor: pointer; font-weight: 600; font-size: 15px; }
+.probar:hover { background: var(--sel); color: var(--sel-ink); }
+
+/* Neutros y estados */
+.base { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.bloque { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.neutros { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.neutros .muestra { min-height: 92px; align-content: end; grid-template-columns: 1fr; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.neutros .muestra .hex { text-align: left; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.osc-fila { display: grid; gap: 6px; }
+.osc-fila .m-etq { display: flex; align-items: center; gap: 6px; }
+.osc-fila .m-etq .ic { width: 14px; height: 14px; }
+.muestras-osc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: #0B1120; }
+.muestras-osc .muestra { min-height: 0; border-radius: 8px; padding: 8px 10px; }
+.muestras-osc .muestra .rol { display: none; }
+.muestras-osc .muestra .nom { font-size: 14px; }
+.muestras-osc .muestra .hex { font-size: 12px; }
+.estado-osc { display: grid; gap: 8px; padding: 12px; border-radius: 10px; background: #141C2E; }
+.estado-osc .m-etq { color: #9AA6BF; }
+.regla { font-size: 15px; color: var(--ink-2); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 13px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.chip .ic { width: 14px; height: 14px; stroke-width: 2.25; }
+.chip.ok { background: #DCFCE7; color: #15803D; }
+.chip.aviso { background: #FEF3C7; color: #A16207; }
+.chip.error { background: #FEE2E2; color: #B91C1C; }
+.chip.info { background: #DBEAFE; color: #1D4ED8; }
+.chip.neutro { background: #EEF2F7; color: #475569; }
+
+/* Controles de la vista previa */
+.controles { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); padding-block: 12px; margin-block: -12px; border-bottom: 1px solid var(--line); }
+.seg button .ic { width: 16px; height: 16px; vertical-align: -3px; margin-right: 4px; }
+.grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.grupo > span { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 3px; background: var(--panel); gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; border-radius: 7px; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--sel); color: var(--sel-ink); }
+
+/* Vista previa de la tienda: usa los colores de la marca, no los de esta pagina */
+.mock { --sup: #FFFFFF; --txt: #1A2233; --txt2: #5A6478; --borde: #D9DFEA; --fondo: #F5F7FB;
+  --p-txt: var(--p); --titulo: var(--noche); --barra: var(--noche);
+  background: var(--fondo); color: var(--txt); font-family: var(--mb); font-size: 15px; line-height: 1.45;
+  border-radius: 16px; overflow: hidden; border: 1px solid var(--line); color-scheme: light; }
+.mock[data-paleta="a"] { --p: #1652C5; --noche: #0E1F4D; --acento: #D7263D; --acento-t: #FFFFFF; --dest: #FFC531; --tinte: #E8EFFC; }
+.mock[data-paleta="b"] { --p: #2457D6; --noche: #0F1E45; --acento: #F47B20; --acento-t: #0F1E45; --dest: #7CC4FF; --tinte: #EAF0FD; }
+.mock[data-paleta="c"] { --p: #0A76AD; --noche: #0B2B3C; --acento: #F2B630; --acento-t: #0B2B3C; --dest: #8EDCF7; --tinte: #E3F5FC; }
+/* Modo oscuro: grises oscuros comunes y un azul mas claro para textos e iconos */
+.mock[data-modo="oscuro"] { --sup: #141C2E; --txt: #E6EBF5; --txt2: #9AA6BF; --borde: #27324A; --fondo: #0B1120; --titulo: #F1F4FA; color-scheme: dark; }
+.mock[data-modo="oscuro"][data-paleta="a"] { --p-txt: #7DA7FF; --tinte: #1A2B52; --barra: #0E1F4D; }
+.mock[data-modo="oscuro"][data-paleta="b"] { --p-txt: #8AB0FF; --tinte: #1B2B57; --barra: #0F1E45; }
+.mock[data-modo="oscuro"][data-paleta="c"] { --p-txt: #6FD0F5; --tinte: #0E3345; --barra: #0B2B3C; }
+[data-modo="oscuro"] .chip.ok { background: #12341F; color: #6EE7A0; }
+[data-modo="oscuro"] .chip.aviso { background: #3A2A08; color: #FCD34D; }
+[data-modo="oscuro"] .chip.error { background: #3B1218; color: #FCA5A5; }
+[data-modo="oscuro"] .chip.info { background: #172A55; color: #93B4FF; }
+[data-modo="oscuro"] .chip.neutro { background: #232C3F; color: #B6C0D3; }
+.mock[data-tipo="1"] { --md: "Bungee", "Arial Black", sans-serif; --mdw: 400; --mdt: 0.01em; --mb: "Nunito Sans", "Segoe UI", sans-serif; }
+.mock[data-tipo="2"] { --md: "Chakra Petch", "Arial Narrow", sans-serif; --mdw: 700; --mdt: 0; --mb: "IBM Plex Sans", "Segoe UI", sans-serif; }
+.mock[data-tipo="3"] { --md: "Bangers", Impact, sans-serif; --mdw: 400; --mdt: 0.05em; --mb: "Lexend", "Segoe UI", sans-serif; }
+.mock .ic { width: 18px; height: 18px; }
+.m-disp { font-family: var(--md); font-weight: var(--mdw); letter-spacing: var(--mdt); }
+.m-header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 20px; background: var(--sup); border-bottom: 1px solid var(--borde); }
+.m-logo { display: grid; line-height: 1; color: var(--p-txt); }
+.m-logo strong { font-size: 24px; font-weight: var(--mdw); }
+.m-logo small { font-family: var(--mb); font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: var(--txt2); margin-top: 4px; }
+.m-buscar { flex: 1 1 240px; display: flex; border: 1.5px solid var(--borde); border-radius: 10px; overflow: hidden; background: var(--sup); }
+.m-buscar span { flex: 1; padding: 8px 12px; color: var(--txt2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-buscar b { display: grid; place-items: center; width: 44px; background: var(--p); color: #FFFFFF; }
+.m-acciones { display: flex; align-items: center; gap: 16px; font-weight: 600; }
+.m-carrito { position: relative; display: inline-flex; gap: 6px; align-items: center; padding: 7px 12px; border: 1.5px solid var(--borde); border-radius: 10px; }
+.m-carrito em { position: absolute; top: -8px; right: -8px; font-style: normal; font-size: 11px; font-weight: 800; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; background: var(--acento); color: var(--acento-t); }
+.m-nav { display: flex; gap: 26px; padding: 10px 20px; background: var(--barra); color: #FFFFFF; font-weight: 600; font-size: 14px; overflow-x: auto; white-space: nowrap; }
+.m-nav span:last-child { color: var(--dest); }
+.m-cuerpo { display: grid; gap: 26px; padding: 22px 20px 26px; }
+.m-hero { border-radius: 14px; padding: 44px 24px; text-align: center; color: #FFFFFF; display: grid; gap: 12px; justify-items: center;
+  background: radial-gradient(color-mix(in srgb, var(--dest) 38%, transparent) 1.3px, transparent 1.8px) 0 0 / 14px 14px, var(--p); }
+.m-hero h3 { font-family: var(--md); font-weight: var(--mdw); letter-spacing: var(--mdt); font-size: clamp(26px, 4.4vw, 42px); line-height: 1.1; max-width: 22ch; }
+.m-hero h3 span { color: var(--dest); }
+.m-hero p { color: #FFFFFF; opacity: 0.92; max-width: 52ch; }
+.m-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 11px 20px; border-radius: 10px; background: var(--acento); color: var(--acento-t); font-weight: 800; }
+.m-cats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.m-cat { background: var(--sup); border: 1px solid var(--borde); border-radius: 12px; padding: 16px 10px; display: grid; justify-items: center; gap: 8px; font-weight: 700; text-align: center; }
+.m-cat i { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--tinte); color: var(--p-txt); }
+.m-cat i .ic { width: 24px; height: 24px; }
+.m-seccion { display: grid; gap: 12px; }
+.m-tit { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.m-tit h4 { margin: 0; font-family: var(--md); font-weight: var(--mdw); letter-spacing: var(--mdt); font-size: 22px; color: var(--titulo); }
+.m-tit a { color: var(--p-txt); font-weight: 700; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+.m-flechas { display: flex; gap: 8px; }
+.m-flechas button { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; border: 1.5px solid var(--borde); background: var(--sup); color: var(--txt); cursor: pointer; }
+.m-flechas button:hover { border-color: var(--p-txt); color: var(--p-txt); }
+.m-carrusel { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 1fr); gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; padding-bottom: 4px; }
+.m-carrusel > * { scroll-snap-align: start; }
+.m-carrusel .m-btn { font-size: 13px; white-space: nowrap; gap: 6px; padding-inline: 6px; }
+.m-carrusel .m-btn .ic { width: 16px; height: 16px; }
+.m-prod { background: var(--sup); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+.m-img { aspect-ratio: 4 / 3; display: grid; place-items: center; background: var(--tinte); color: var(--p-txt); }
+.m-img .ic { width: 52px; height: 52px; stroke-width: 1.5; opacity: 0.6; }
+.m-img.vacia { background: var(--fondo); border-bottom: 1.5px dashed var(--borde); color: var(--txt2); gap: 4px; align-content: center; font-size: 12px; }
+.m-img.vacia .ic { width: 28px; height: 28px; opacity: 0.8; }
+.m-info { padding: 12px; display: grid; gap: 4px; align-content: start; }
+.m-info .n { font-weight: 600; min-height: 2.9em; }
+.m-info .pr { font-size: 21px; font-weight: 800; color: var(--titulo); font-variant-numeric: tabular-nums; }
+.m-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.m-mini { background: var(--sup); border: 1px solid var(--borde); border-radius: 12px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+.m-mini .m-img { aspect-ratio: 16 / 10; }
+.m-mini .m-img .ic { width: 40px; height: 40px; }
+.m-mini-info { padding: 10px 12px 12px; display: grid; gap: 6px; align-content: start; }
+.m-mini-info .n { font-weight: 600; font-size: 14px; }
+.m-mini-info div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
+.m-mini-info .pr { font-weight: 800; font-size: 17px; color: var(--titulo); font-variant-numeric: tabular-nums; }
+.m-info .imp { font-size: 12px; color: var(--txt2); }
+.m-info .chip { justify-self: start; margin: 4px 0 8px; }
+.m-btn { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 9px; border-radius: 9px; background: var(--acento); color: var(--acento-t); font-weight: 800; font-size: 14px; }
+.m-beneficios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; background: var(--sup); border-top: 1px solid var(--borde); padding: 18px 20px; }
+.m-ben { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.m-ben i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--tinte); color: var(--p-txt); flex: none; }
+.m-ben b { display: block; font-size: 14px; }
+.m-ben small { color: var(--txt2); font-size: 12px; }
+.m-pie { background: var(--barra); color: #C9D2E6; padding: 24px 20px 18px; display: grid; gap: 20px; font-size: 13px; }
+.m-pie-cols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 24px; }
+.m-pie-cols div { display: grid; gap: 4px; align-content: start; }
+.m-pie b { color: #FFFFFF; font-size: 14px; }
+.m-pie-fin { border-top: 1px solid rgba(255, 255, 255, 0.14); padding-top: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; color: #9FAAC2; font-size: 12px; }
+.m-pie .m-logo { color: #FFFFFF; }
+.m-pie .m-logo strong { font-size: 16px; }
+
+/* Vista previa del panel */
+.m-panel { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 300px; }
+.m-lado { background: var(--sup); border-right: 1px solid var(--borde); padding: 16px 10px; display: grid; gap: 2px; align-content: start; }
+.m-lado .m-logo { padding: 0 8px 14px; }
+.m-lado .m-logo strong { font-size: 18px; }
+.m-item { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 8px; color: var(--txt2); font-weight: 600; font-size: 14px; }
+.m-item.activo { background: var(--tinte); color: var(--p-txt); box-shadow: inset 3px 0 0 var(--p-txt); }
+.m-main { padding: 18px 20px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.m-main-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.m-main-head h4 { margin: 0; font-family: var(--md); font-weight: var(--mdw); letter-spacing: var(--mdt); font-size: 24px; color: var(--titulo); }
+.m-btn-p { display: inline-flex; gap: 6px; align-items: center; padding: 8px 14px; border-radius: 9px; background: var(--p); color: #FFFFFF; font-weight: 700; font-size: 14px; }
+.m-filas { background: var(--sup); border: 1px solid var(--borde); border-radius: 12px; overflow-x: auto; }
+.m-fila { display: grid; grid-template-columns: 76px minmax(110px, 1fr) 96px 120px 90px; gap: 10px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--borde); font-size: 14px; min-width: 540px; }
+.m-fila:first-child { border-top: 0; }
+.m-fila code { font-family: "IBM Plex Mono", monospace; font-weight: 600; color: var(--titulo); }
+.m-fila .f { color: var(--txt2); }
+.m-fila .t { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.m-etq { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 700; }
+
+/* Tipografia */
+.tipos { display: grid; gap: 16px; }
+.tipo { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 28px; }
+.tipo.recomendada { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.tipo-info { display: grid; gap: 10px; align-content: start; }
+.tipo-info h3 { font-size: 24px; }
+.caras { font-family: var(--f-mono); font-size: 14px; color: var(--ink-2); }
+.esp { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.esp .marca { font-size: clamp(32px, 5vw, 52px); line-height: 1; overflow-wrap: anywhere; }
+.esp .h { font-size: 26px; line-height: 1.15; }
+.esp .cuerpo { font-size: 16px; color: var(--ink-2); max-width: 60ch; }
+.esp .precio { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; font-size: 16px; }
+.esp .precio b { font-size: 24px; font-variant-numeric: tabular-nums; }
+.esp .precio code { font-family: var(--f-mono); font-size: 14px; color: var(--ink-2); }
+.t1 .d { font-family: "Bungee", "Arial Black", sans-serif; font-weight: 400; }
+.t1 .b { font-family: "Nunito Sans", "Segoe UI", sans-serif; }
+.t2 .d { font-family: "Chakra Petch", "Arial Narrow", sans-serif; font-weight: 700; }
+.t2 .b { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; }
+.t3 .d { font-family: "Bangers", Impact, sans-serif; font-weight: 400; letter-spacing: 0.05em; }
+.t3 .b { font-family: "Lexend", "Segoe UI", sans-serif; }
+.escala-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.escala { width: 100%; border-collapse: collapse; font-size: 15px; min-width: 560px; }
+.escala th, .escala td { text-align: left; padding: 10px 16px; border-top: 1px solid var(--line); vertical-align: baseline; }
+.escala thead th { border-top: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+.escala td:nth-child(2) { font-family: var(--f-mono); font-size: 13px; white-space: nowrap; }
+.reglas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 28px; padding: 0; margin: 0; list-style: none; font-size: 15px; }
+.reglas li { display: flex; gap: 10px; }
+.reglas li .ic { margin-top: 3px; color: var(--ink-2); }
+
+/* Iconos */
+.ico-grupos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.ico-grupo { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.ico-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; }
+.ico { display: grid; justify-items: center; gap: 6px; padding: 12px 4px 8px; border-radius: 10px; text-align: center; font-size: 13px; line-height: 1.25; }
+.ico .ic { width: 24px; height: 24px; }
+.ico code { font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); overflow-wrap: anywhere; }
+.tamanos { display: flex; flex-wrap: wrap; align-items: end; gap: 24px; }
+.tamanos div { display: grid; justify-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.tamanos .circ { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #EAF0FD; color: #2457D6; }
+
+/* Cierre */
+.preguntas { counter-reset: q; display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; }
+.preguntas li { counter-increment: q; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.preguntas li::before { content: counter(q); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--sel); color: var(--sel-ink); font-weight: 700; font-family: var(--f-mono); }
+.preguntas b { display: block; font-size: 17px; }
+.preguntas span { color: var(--ink-2); font-size: 15px; }
+.pie { font-size: 14px; color: var(--ink-2); display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--sel); color: var(--sel-ink); padding: 9px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+
+@media (max-width: 920px) {
+  .paletas { grid-template-columns: 1fr; }
+  .base, .ico-grupos { grid-template-columns: 1fr; }
+  .tipo { grid-template-columns: 1fr; gap: 16px; }
+}
+@media (max-width: 640px) {
+  .wrap { padding-inline: 16px; padding-block: 32px 56px; gap: 56px; }
+  .neutros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .m-cats, .m-grid4, .m-pie-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m-carrusel { grid-auto-columns: minmax(170px, 72%); }
+  .m-beneficios { grid-template-columns: 1fr; }
+  .m-cuerpo { padding-inline: 14px; }
+  .m-acciones .m-login { display: none; }
+  .m-panel { grid-template-columns: 1fr; }
+  .m-lado { grid-auto-flow: column; grid-auto-columns: max-content; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--borde); padding: 10px; }
+  .m-lado .m-logo { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mock, .mock * { transition: background-color .25s ease, color .25s ease; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-arrow-up-down" viewBox="0 0 24 24"><path d="m21 16-4 4-4-4" /><path d="M17 20V4" /><path d="m3 8 4-4 4 4" /><path d="M7 4v16" /></symbol><symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m16 9-5.5 5.5L8 12" /></symbol><symbol id="i-circle-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></symbol><symbol id="i-clipboard-list" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol><symbol id="i-credit-card" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /><path d="M6 14h2" /></symbol><symbol id="i-file-spreadsheet" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M8 13h2" /><path d="M14 13h2" /><path d="M8 17h2" /><path d="M14 17h2" /></symbol><symbol id="i-gamepad-2" viewBox="0 0 24 24"><line x1="6" x2="10" y1="11" y2="11" /><line x1="8" x2="8" y1="9" y2="13" /><line x1="15" x2="15.01" y1="12" y2="12" /><line x1="18" x2="18.01" y1="10" y2="10" /><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z" /></symbol><symbol id="i-gem" viewBox="0 0 24 24"><path d="M10.5 3 8 9l4 13 4-13-2.5-6" /><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z" /><path d="M2 9h20" /></symbol><symbol id="i-image-off" viewBox="0 0 24 24"><line x1="2" x2="22" y1="2" y2="22" /><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83" /><line x1="13.5" x2="6" y1="13.5" y2="21" /><line x1="18" x2="21" y1="12" y2="15" /><path d="M3.59 3.59A1.99 1.99 0 0 0 3 5v14a2 2 0 0 0 2 2h14c.55 0 1.052-.22 1.41-.59" /><path d="M21 15V5a2 2 0 0 0-2-2H9" /></symbol><symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></symbol><symbol id="i-layout-dashboard" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1" /><rect width="7" height="5" x="14" y="3" rx="1" /><rect width="7" height="9" x="14" y="12" rx="1" /><rect width="7" height="5" x="3" y="16" rx="1" /></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></symbol><symbol id="i-mail" viewBox="0 0 24 24"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" /></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></symbol><symbol id="i-package-check" viewBox="0 0 24 24"><path d="M12 22V12" /><path d="m16 17 2 2 4-4" /><path d="M21 11.127V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.729l7 4a2 2 0 0 0 2 .001l1.32-.753" /><path d="M3.29 7 12 12l8.71-5" /><path d="m7.5 4.27 8.997 5.148" /></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z" /><path d="M12 22V12" /><polyline points="3.29 7 12 12 20.71 7" /><path d="m7.5 4.27 9 5.15" /></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="M12 5v14" /></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M12 17V7" /><path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8" /><path d="M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z" /></symbol><symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" /></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" /></symbol><symbol id="i-shopping-cart" viewBox="0 0 24 24"><path d="m2.05 2.05 1.099-.028a1 1 0 0 1 1.008.815l2.69 14.347A1 1 0 0 0 7.83 18H18" /><path d="M4.563 5h16.435a1 1 0 0 1 .981 1.204l-1.026 6.226A2 2 0 0 1 18.962 14H6.25" /><circle cx="18" cy="20" r="2" /><circle cx="8" cy="20" r="2" /></symbol><symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><path d="M10 5H3" /><path d="M12 19H3" /><path d="M14 3v4" /><path d="M16 17v4" /><path d="M21 12h-9" /><path d="M21 19h-5" /><path d="M21 5h-7" /><path d="M8 10v4" /><path d="M8 12H3" /></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></symbol><symbol id="i-toy-brick" viewBox="0 0 24 24"><rect width="18" height="12" x="3" y="8" rx="1" /><path d="M10 8V5c0-.6-.4-1-1-1H6a1 1 0 0 0-1 1v3" /><path d="M19 8V5c0-.6-.4-1-1-1h-3a1 1 0 0 0-1 1v3" /></symbol><symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></symbol><symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></symbol><symbol id="i-user-round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 0 0-16 0" /></symbol><symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" /></symbol><symbol id="i-warehouse" viewBox="0 0 24 24"><path d="M18 21V10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v11" /><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 1.132-1.803l7.95-3.974a2 2 0 0 1 1.837 0l7.948 3.974A2 2 0 0 1 22 8z" /><path d="M6 13h12" /><path d="M6 17h12" /></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></symbol></svg>
+
+<main class="wrap">
+
+  <header class="portada">
+    <p class="eyebrow">DC Hobbies · Cultura Geek Online</p>
+    <h1>Propuesta de identidad visual</h1>
+    <p class="meta">Versión 0.1 para revisar con el cliente · 1 de octubre de 2026 · Equipo Twenty One CoPilots</p>
+    <p class="lead">Este es el primer paso del libro de marca de la tienda: color, tipografía e íconos. Partimos de lo que nos pidió: el azul como color principal, acompañado de colores complementarios. Proponemos tres caminos de color y tres combinaciones de letra, y todos se pueden probar sobre la página de inicio de los wireframes.</p>
+    <div class="decidir" aria-label="Lo que le pedimos elegir">
+      <span><b>1</b>Una paleta de color</span>
+      <span><b>2</b>Una combinación de letra</span>
+      <span><b>3</b>El estilo de los íconos</span>
+      <span><b>4</b>Si quiere modo oscuro</span>
+    </div>
+    <nav class="indice" aria-label="Secciones">
+      <a href="#color">Color</a><a href="#vista">Vista previa</a><a href="#tipografia">Tipografía</a><a href="#iconos">Íconos</a><a href="#decidir">Para decidir</a>
+    </nav>
+  </header>
+
+  <section class="sec" id="color">
+    <div class="sec-head">
+      <p class="eyebrow">01 · Color</p>
+      <h2>Tres caminos con el azul como base</h2>
+      <p>En la rueda de color, el complementario del azul es el naranja: queda justo al frente. Por eso dos propuestas combinan el azul con un tono cálido, naranja o dorado. La tercera usa la tríada del cómic clásico: azul, rojo y amarillo. Cada paleta toma como punto de partida los colores de un personaje con azul, sin usar su nombre, logo ni imagen en la tienda.</p>
+    </div>
+
+    <div class="roles">
+      <p><b>Principal.</b> Encabezado, enlaces y botones del panel.</p>
+      <p><b>Acento.</b> Botón de compra, carrito y ofertas.</p>
+      <p><b>Destacado.</b> Detalles de la portada.</p>
+      <p><b>Oscuro.</b> Barra de categorías, pie de página y títulos.</p>
+      <p><b>Fondo suave.</b> Secciones y círculos de íconos.</p>
+    </div>
+
+    <div class="paletas">
+      <article class="paleta">
+        <div class="pal-head"><div><p class="pal-letra">Propuesta A</p><h3>Cómic clásico</h3><p class="insp">Inspirada en Superman</p></div></div>
+        <div class="muestras"><button type="button" class="muestra" data-hex="#1652C5" style="--c:#1652C5;--t:#FFFFFF" aria-label="Azul héroe #1652C5, copiar"><span class="rol">Principal</span><span class="nom">Azul héroe</span><span class="hex">#1652C5</span><span class="con">Texto blanco 6,9:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#D7263D" style="--c:#D7263D;--t:#FFFFFF" aria-label="Rojo capa #D7263D, copiar"><span class="rol">Acento</span><span class="nom">Rojo capa</span><span class="hex">#D7263D</span><span class="con">Texto blanco 5,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#FFC531" style="--c:#FFC531;--t:#0E1F4D" aria-label="Amarillo escudo #FFC531, copiar"><span class="rol">Destacado</span><span class="nom">Amarillo escudo</span><span class="hex">#FFC531</span><span class="con">Texto oscuro 10,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#0E1F4D" style="--c:#0E1F4D;--t:#FFFFFF" aria-label="Azul noche #0E1F4D, copiar"><span class="rol">Oscuro</span><span class="nom">Azul noche</span><span class="hex">#0E1F4D</span><span class="con">Texto blanco 15,9:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#E8EFFC" style="--c:#E8EFFC;--t:#0E1F4D" aria-label="Azul nube #E8EFFC, copiar"><span class="rol">Fondo suave</span><span class="nom">Azul nube</span><span class="hex">#E8EFFC</span><span class="con">Texto oscuro 13,8:1 · apto para texto</span></button></div>
+        <div class="osc-fila"><p class="m-etq"><svg class="ic"><use href="#i-moon"/></svg>En modo oscuro cambian</p><div class="muestras-osc"><button type="button" class="muestra" data-hex="#7DA7FF" style="--c:#7DA7FF;--t:#0B1120" aria-label="Azul para texto #7DA7FF, copiar"><span class="nom">Azul para texto</span><span class="hex">#7DA7FF</span><span class="con">Sobre superficie 7,2:1</span></button><button type="button" class="muestra" data-hex="#1A2B52" style="--c:#1A2B52;--t:#FFFFFF" aria-label="Fondo suave #1A2B52, copiar"><span class="nom">Fondo suave</span><span class="hex">#1A2B52</span><span class="con">Con ícono azul 5,9:1</span></button></div></div>
+        <div class="rueda-fila"><div class="rueda" aria-hidden="true"><i style="--c:#1652C5;--h:219deg" title="Azul héroe"></i><i style="--c:#D7263D;--h:352deg" title="Rojo capa"></i><i style="--c:#FFC531;--h:43deg" title="Amarillo escudo"></i></div><p class="rel"><b>Tríada de primarios</b>Azul, rojo y amarillo, repartidos en la rueda.</p></div>
+        <div class="notas"><p><b>Transmite</b>El superhéroe de cómic de toda la vida. Muy reconocible y con mucha energía.</p><p><b>Cuidado</b>No es complementaria en sentido estricto. El rojo se parece al de los errores y cancelaciones, así que se reserva para el botón de compra.</p></div>
+        <button type="button" class="probar" data-v="a">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+      </article>
+      <article class="paleta recomendada">
+        <div class="pal-head"><div><p class="pal-letra">Propuesta B</p><h3>Shōnen</h3><p class="insp">Inspirada en Goku (Dragon Ball)</p></div><span class="tag">Recomendada</span></div>
+        <div class="muestras"><button type="button" class="muestra" data-hex="#2457D6" style="--c:#2457D6;--t:#FFFFFF" aria-label="Azul saiyajin #2457D6, copiar"><span class="rol">Principal</span><span class="nom">Azul saiyajin</span><span class="hex">#2457D6</span><span class="con">Texto blanco 6,2:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#F47B20" style="--c:#F47B20;--t:#0F1E45" aria-label="Naranja gi #F47B20, copiar"><span class="rol">Acento</span><span class="nom">Naranja gi</span><span class="hex">#F47B20</span><span class="con">Texto oscuro 6,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#7CC4FF" style="--c:#7CC4FF;--t:#0F1E45" aria-label="Azul ki #7CC4FF, copiar"><span class="rol">Destacado</span><span class="nom">Azul ki</span><span class="hex">#7CC4FF</span><span class="con">Texto oscuro 8,7:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#0F1E45" style="--c:#0F1E45;--t:#FFFFFF" aria-label="Azul noche #0F1E45, copiar"><span class="rol">Oscuro</span><span class="nom">Azul noche</span><span class="hex">#0F1E45</span><span class="con">Texto blanco 16,3:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#EAF0FD" style="--c:#EAF0FD;--t:#0F1E45" aria-label="Azul nube #EAF0FD, copiar"><span class="rol">Fondo suave</span><span class="nom">Azul nube</span><span class="hex">#EAF0FD</span><span class="con">Texto oscuro 14,2:1 · apto para texto</span></button></div>
+        <div class="osc-fila"><p class="m-etq"><svg class="ic"><use href="#i-moon"/></svg>En modo oscuro cambian</p><div class="muestras-osc"><button type="button" class="muestra" data-hex="#8AB0FF" style="--c:#8AB0FF;--t:#0B1120" aria-label="Azul para texto #8AB0FF, copiar"><span class="nom">Azul para texto</span><span class="hex">#8AB0FF</span><span class="con">Sobre superficie 7,9:1</span></button><button type="button" class="muestra" data-hex="#1B2B57" style="--c:#1B2B57;--t:#FFFFFF" aria-label="Fondo suave #1B2B57, copiar"><span class="nom">Fondo suave</span><span class="hex">#1B2B57</span><span class="con">Con ícono azul 6,4:1</span></button></div></div>
+        <div class="rueda-fila"><div class="rueda" aria-hidden="true"><i style="--c:#2457D6;--h:223deg" title="Azul saiyajin"></i><i style="--c:#F47B20;--h:26deg" title="Naranja gi"></i><i style="--c:#7CC4FF;--h:207deg" title="Azul ki"></i></div><p class="rel"><b>Complementarios</b>Azul y naranja, uno frente al otro en la rueda.</p></div>
+        <div class="notas"><p><b>Transmite</b>Anime de acción y aventura. El naranja del botón de compra recuerda a Amazon, que es la referencia de los wireframes.</p><p><b>Cuidado</b>Sobre el naranja la letra va en azul noche; con letra blanca no se lee bien.</p></div>
+        <button type="button" class="probar" data-v="b">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+      </article>
+      <article class="paleta">
+        <div class="pal-head"><div><p class="pal-letra">Propuesta C</p><h3>Slime</h3><p class="insp">Inspirada en Rimuru Tempest (Tensura)</p></div></div>
+        <div class="muestras"><button type="button" class="muestra" data-hex="#0A76AD" style="--c:#0A76AD;--t:#FFFFFF" aria-label="Azul slime #0A76AD, copiar"><span class="rol">Principal</span><span class="nom">Azul slime</span><span class="hex">#0A76AD</span><span class="con">Texto blanco 5,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#F2B630" style="--c:#F2B630;--t:#0B2B3C" aria-label="Dorado #F2B630, copiar"><span class="rol">Acento</span><span class="nom">Dorado</span><span class="hex">#F2B630</span><span class="con">Texto oscuro 8,1:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#8EDCF7" style="--c:#8EDCF7;--t:#0B2B3C" aria-label="Celeste #8EDCF7, copiar"><span class="rol">Destacado</span><span class="nom">Celeste</span><span class="hex">#8EDCF7</span><span class="con">Texto oscuro 9,6:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#0B2B3C" style="--c:#0B2B3C;--t:#FFFFFF" aria-label="Azul abismo #0B2B3C, copiar"><span class="rol">Oscuro</span><span class="nom">Azul abismo</span><span class="hex">#0B2B3C</span><span class="con">Texto blanco 14,7:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#E3F5FC" style="--c:#E3F5FC;--t:#0B2B3C" aria-label="Celeste claro #E3F5FC, copiar"><span class="rol">Fondo suave</span><span class="nom">Celeste claro</span><span class="hex">#E3F5FC</span><span class="con">Texto oscuro 13,1:1 · apto para texto</span></button></div>
+        <div class="osc-fila"><p class="m-etq"><svg class="ic"><use href="#i-moon"/></svg>En modo oscuro cambian</p><div class="muestras-osc"><button type="button" class="muestra" data-hex="#6FD0F5" style="--c:#6FD0F5;--t:#0B1120" aria-label="Azul para texto #6FD0F5, copiar"><span class="nom">Azul para texto</span><span class="hex">#6FD0F5</span><span class="con">Sobre superficie 9,7:1</span></button><button type="button" class="muestra" data-hex="#0E3345" style="--c:#0E3345;--t:#FFFFFF" aria-label="Fondo suave #0E3345, copiar"><span class="nom">Fondo suave</span><span class="hex">#0E3345</span><span class="con">Con ícono azul 7,6:1</span></button></div></div>
+        <div class="rueda-fila"><div class="rueda" aria-hidden="true"><i style="--c:#0A76AD;--h:200deg" title="Azul slime"></i><i style="--c:#F2B630;--h:41deg" title="Dorado"></i><i style="--c:#8EDCF7;--h:195deg" title="Celeste"></i></div><p class="rel"><b>Casi complementarios</b>Azul cielo y dorado, casi opuestos en la rueda.</p></div>
+        <div class="notas"><p><b>Transmite</b>La más fresca y amable. Combina con peluches y juguetes y se siente más tranquila.</p><p><b>Cuidado</b>El dorado no sirve para texto sobre blanco; solo como fondo de botones e insignias, con letra oscura.</p></div>
+        <button type="button" class="probar" data-v="c">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+      </article>
+    </div>
+
+    <div class="base">
+      <div class="bloque">
+        <h3 class="sub">Grises (iguales en las tres)</h3>
+        <p class="m-etq">Modo claro</p>
+        <div class="neutros"><button type="button" class="muestra" data-hex="#1A2233" style="--c:#1A2233;--t:#FFFFFF" aria-label="Tinta #1A2233, copiar"><span class="nom">Tinta</span><span class="hex">#1A2233</span><span class="con">Texto blanco 15,9:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#5A6478" style="--c:#5A6478;--t:#FFFFFF" aria-label="Pizarra #5A6478, copiar"><span class="nom">Pizarra</span><span class="hex">#5A6478</span><span class="con">Texto blanco 6,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#D9DFEA" style="--c:#D9DFEA;--t:#1A2233" aria-label="Borde #D9DFEA, copiar"><span class="nom">Borde</span><span class="hex">#D9DFEA</span><span class="con">Texto oscuro 11,9:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#F5F7FB" style="--c:#F5F7FB;--t:#1A2233" aria-label="Fondo #F5F7FB, copiar"><span class="nom">Fondo</span><span class="hex">#F5F7FB</span><span class="con">Texto oscuro 14,8:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#FFFFFF" style="--c:#FFFFFF;--t:#1A2233" aria-label="Blanco #FFFFFF, copiar"><span class="nom">Blanco</span><span class="hex">#FFFFFF</span><span class="con">Texto oscuro 15,9:1 · apto para texto</span></button></div>
+        <p class="m-etq">Modo oscuro</p>
+        <div class="neutros"><button type="button" class="muestra" data-hex="#0B1120" style="--c:#0B1120;--t:#FFFFFF" aria-label="Fondo #0B1120, copiar"><span class="nom">Fondo</span><span class="hex">#0B1120</span><span class="con">Texto blanco 18,8:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#141C2E" style="--c:#141C2E;--t:#FFFFFF" aria-label="Superficie #141C2E, copiar"><span class="nom">Superficie</span><span class="hex">#141C2E</span><span class="con">Texto blanco 17,0:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#27324A" style="--c:#27324A;--t:#FFFFFF" aria-label="Borde #27324A, copiar"><span class="nom">Borde</span><span class="hex">#27324A</span><span class="con">Texto blanco 12,8:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#9AA6BF" style="--c:#9AA6BF;--t:#0B1120" aria-label="Texto suave #9AA6BF, copiar"><span class="nom">Texto suave</span><span class="hex">#9AA6BF</span><span class="con">Texto oscuro 7,7:1 · apto para texto</span></button><button type="button" class="muestra" data-hex="#E6EBF5" style="--c:#E6EBF5;--t:#0B1120" aria-label="Texto #E6EBF5, copiar"><span class="nom">Texto</span><span class="hex">#E6EBF5</span><span class="con">Texto oscuro 15,8:1 · apto para texto</span></button></div>
+        <p class="regla">Son grises con un toque de azul, para que combinen con cualquiera de las tres paletas. En modo claro el texto largo va en Tinta sobre blanco. En modo oscuro el fondo es casi negro y el texto casi blanco, nunca blanco puro, para que no canse la vista.</p>
+      </div>
+      <div class="bloque">
+        <h3 class="sub">Colores de estado (iguales en las tres)</h3>
+        <p class="m-etq">Estados del pedido</p>
+        <div class="chips">
+          <span class="chip neutro"><svg class="ic"><use href="#i-clock"/></svg>Colocado</span>
+          <span class="chip info"><svg class="ic"><use href="#i-package-check"/></svg>Procesado</span>
+          <span class="chip aviso"><svg class="ic"><use href="#i-truck"/></svg>En tránsito</span>
+          <span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>Finalizado</span>
+          <span class="chip error"><svg class="ic"><use href="#i-circle-x"/></svg>Cancelado</span>
+        </div>
+        <p class="m-etq">Semáforo de existencias</p>
+        <div class="chips">
+          <span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span>
+          <span class="chip aviso"><svg class="ic"><use href="#i-triangle-alert"/></svg>Quedan 2 o menos</span>
+          <span class="chip neutro"><svg class="ic"><use href="#i-circle-x"/></svg>Sin existencias</span>
+        </div>
+        <div class="estado-osc" data-modo="oscuro">
+          <p class="m-etq">En modo oscuro</p>
+          <div class="chips">
+            <span class="chip neutro"><svg class="ic"><use href="#i-clock"/></svg>Colocado</span>
+            <span class="chip info"><svg class="ic"><use href="#i-package-check"/></svg>Procesado</span>
+            <span class="chip aviso"><svg class="ic"><use href="#i-truck"/></svg>En tránsito</span>
+            <span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>Finalizado</span>
+            <span class="chip error"><svg class="ic"><use href="#i-circle-x"/></svg>Cancelado</span>
+          </div>
+        </div>
+        <p class="regla">Un estado siempre lleva palabra e ícono, nunca solo color. Así no se confunde con el color de la marca (el naranja de la propuesta B se parece al ámbar de «En tránsito») y lo pueden leer personas con daltonismo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="vista">
+    <div class="sec-head">
+      <p class="eyebrow">02 · Vista previa</p>
+      <h2>Así se vería la tienda</h2>
+      <p>La página de inicio completa y el panel de pedidos de los wireframes, con datos de ejemplo. Cambie la paleta, la letra y el modo para comparar. La barra de opciones lo acompaña mientras baja por la página.</p>
+    </div>
+
+    <div class="controles">
+      <div class="grupo"><span>Paleta</span>
+        <div class="seg" id="seg-paleta">
+          <button type="button" data-v="a" aria-pressed="false">A · Cómic clásico</button>
+          <button type="button" data-v="b" aria-pressed="true">B · Shōnen</button>
+          <button type="button" data-v="c" aria-pressed="false">C · Slime</button>
+        </div>
+      </div>
+      <div class="grupo"><span>Letra</span>
+        <div class="seg" id="seg-tipo">
+          <button type="button" data-v="1" aria-pressed="true">1 · Rótulo</button>
+          <button type="button" data-v="2" aria-pressed="false">2 · Consola</button>
+          <button type="button" data-v="3" aria-pressed="false">3 · Viñeta</button>
+        </div>
+      </div>
+      <div class="grupo"><span>Modo</span>
+        <div class="seg" id="seg-modo">
+          <button type="button" data-v="claro" aria-pressed="true"><svg class="ic"><use href="#i-sun"/></svg>Claro</button>
+          <button type="button" data-v="oscuro" aria-pressed="false"><svg class="ic"><use href="#i-moon"/></svg>Oscuro</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="m-etq">Página de inicio</p>
+    <div class="mock" data-paleta="b" data-tipo="1" data-modo="claro">
+      <div class="m-header">
+        <div class="m-logo m-disp"><strong>DC Hobbies</strong><small>CULTURA GEEK</small></div>
+        <div class="m-buscar"><span>Buscar en la tienda…</span><b><svg class="ic"><use href="#i-search"/></svg></b></div>
+        <div class="m-acciones">
+          <span class="m-login">Iniciar sesión</span>
+          <span class="m-carrito"><svg class="ic"><use href="#i-shopping-cart"/></svg>Carrito<em>2</em></span>
+        </div>
+      </div>
+      <div class="m-nav"><span>Coleccionables</span><span>Juguetes</span><span>Videojuegos</span><span>TCG</span><span>Ver todo</span></div>
+      <div class="m-cuerpo">
+        <div class="m-hero">
+          <h3>Tu tienda de <span>cultura geek</span></h3>
+          <p>Coleccionables, juguetes, videojuegos y cartas TCG, con entregas en todo el GAM.</p>
+          <span class="m-cta">Ver catálogo<svg class="ic"><use href="#i-chevron-right"/></svg></span>
+        </div>
+        <div class="m-cats">
+          <div class="m-cat"><i><svg class="ic"><use href="#i-gem"/></svg></i>Coleccionables</div>
+          <div class="m-cat"><i><svg class="ic"><use href="#i-toy-brick"/></svg></i>Juguetes</div>
+          <div class="m-cat"><i><svg class="ic"><use href="#i-gamepad-2"/></svg></i>Videojuegos</div>
+          <div class="m-cat"><i><svg class="ic"><use href="#i-layers"/></svg></i>TCG</div>
+        </div>
+        <div class="m-seccion"><div class="m-tit"><h4>Recién llegados</h4><div class="m-flechas"><button type="button" data-carrusel="llegados" data-dir="-1" aria-label="Anteriores"><svg class="ic"><use href="#i-chevron-left"/></svg></button><button type="button" data-carrusel="llegados" data-dir="1" aria-label="Siguientes"><svg class="ic"><use href="#i-chevron-right"/></svg></button></div></div><div class="m-carrusel" id="llegados"><div class="m-prod"><div class="m-img"><svg class="ic"><use href="#i-gem"/></svg></div><div class="m-info"><span class="n">Figura Pikachu edición 25 aniversario</span><span class="pr">₡ 24 850</span><span class="imp">impuesto incluido</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span><span class="m-btn"><svg class="ic"><use href="#i-shopping-cart"/></svg>Agregar al carrito</span></div></div><div class="m-prod"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-info"><span class="n">Set de construcción nave espacial</span><span class="pr">₡ 61 000</span><span class="imp">impuesto incluido</span><span class="chip aviso"><svg class="ic"><use href="#i-clock"/></svg>Por contrapedido</span><span class="m-btn"><svg class="ic"><use href="#i-shopping-cart"/></svg>Agregar al carrito</span></div></div><div class="m-prod"><div class="m-img"><svg class="ic"><use href="#i-gamepad-2"/></svg></div><div class="m-info"><span class="n">Control inalámbrico edición especial</span><span class="pr">₡ 32 400</span><span class="imp">impuesto incluido</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span><span class="m-btn"><svg class="ic"><use href="#i-shopping-cart"/></svg>Agregar al carrito</span></div></div><div class="m-prod"><div class="m-img vacia"><svg class="ic"><use href="#i-image-off"/></svg>Sin imagen</div><div class="m-info"><span class="n">Sobre de expansión TCG</span><span class="pr">₡ 4 500</span><span class="imp">impuesto incluido</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span><span class="m-btn"><svg class="ic"><use href="#i-shopping-cart"/></svg>Agregar al carrito</span></div></div><div class="m-prod"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-info"><span class="n">Peluche dragón 30 cm</span><span class="pr">₡ 12 900</span><span class="imp">impuesto incluido</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span><span class="m-btn"><svg class="ic"><use href="#i-shopping-cart"/></svg>Agregar al carrito</span></div></div></div></div>
+        <div class="m-seccion"><div class="m-tit"><h4>Coleccionables</h4><a>Ver todo<svg class="ic"><use href="#i-chevron-right"/></svg></a></div><div class="m-grid4"><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gem"/></svg></div><div class="m-mini-info"><span class="n">Figura articulada</span><div><span class="pr">₡ 18 500</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gem"/></svg></div><div class="m-mini-info"><span class="n">Estatua de resina</span><div><span class="pr">₡ 89 000</span><span class="chip aviso"><svg class="ic"><use href="#i-clock"/></svg>Por contrapedido</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gem"/></svg></div><div class="m-mini-info"><span class="n">Figura edición limitada</span><div><span class="pr">₡ 45 900</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gem"/></svg></div><div class="m-mini-info"><span class="n">Réplica de espada</span><div><span class="pr">₡ 52 000</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div></div></div>
+        <div class="m-seccion"><div class="m-tit"><h4>Juguetes</h4><a>Ver todo<svg class="ic"><use href="#i-chevron-right"/></svg></a></div><div class="m-grid4"><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-mini-info"><span class="n">Set de bloques</span><div><span class="pr">₡ 15 900</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-mini-info"><span class="n">Auto a escala</span><div><span class="pr">₡ 9 800</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-mini-info"><span class="n">Peluche dragón 30 cm</span><div><span class="pr">₡ 12 900</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-toy-brick"/></svg></div><div class="m-mini-info"><span class="n">Rompecabezas 1000 piezas</span><div><span class="pr">₡ 11 500</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div></div></div>
+        <div class="m-seccion"><div class="m-tit"><h4>Videojuegos</h4><a>Ver todo<svg class="ic"><use href="#i-chevron-right"/></svg></a></div><div class="m-grid4"><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gamepad-2"/></svg></div><div class="m-mini-info"><span class="n">Control inalámbrico edición especial</span><div><span class="pr">₡ 32 400</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gamepad-2"/></svg></div><div class="m-mini-info"><span class="n">Juego de aventura para consola</span><div><span class="pr">₡ 32 000</span><span class="chip aviso"><svg class="ic"><use href="#i-clock"/></svg>Por contrapedido</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gamepad-2"/></svg></div><div class="m-mini-info"><span class="n">Audífonos con micrófono</span><div><span class="pr">₡ 27 500</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-gamepad-2"/></svg></div><div class="m-mini-info"><span class="n">Base de carga doble</span><div><span class="pr">₡ 14 900</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div></div></div>
+        <div class="m-seccion"><div class="m-tit"><h4>TCG</h4><a>Ver todo<svg class="ic"><use href="#i-chevron-right"/></svg></a></div><div class="m-grid4"><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-layers"/></svg></div><div class="m-mini-info"><span class="n">Sobre de expansión</span><div><span class="pr">₡ 4 500</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-layers"/></svg></div><div class="m-mini-info"><span class="n">Caja de 36 sobres</span><div><span class="pr">₡ 98 000</span><span class="chip aviso"><svg class="ic"><use href="#i-clock"/></svg>Por contrapedido</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-layers"/></svg></div><div class="m-mini-info"><span class="n">Carta suelta holográfica</span><div><span class="pr">₡ 4 500</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div><div class="m-mini"><div class="m-img"><svg class="ic"><use href="#i-layers"/></svg></div><div class="m-mini-info"><span class="n">Fundas protectoras (100)</span><div><span class="pr">₡ 3 900</span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>En existencia</span></div></div></div></div></div>
+      </div>
+      <div class="m-beneficios">
+        <div class="m-ben"><i><svg class="ic"><use href="#i-truck"/></svg></i><div><b>Entregas en el GAM</b><small>Mensajero, Uber Flash, Correos de CR</small></div></div>
+        <div class="m-ben"><i><svg class="ic"><use href="#i-credit-card"/></svg></i><div><b>Varias formas de pago</b><small>Por adelantado o contra entrega</small></div></div>
+        <div class="m-ben"><i><svg class="ic"><use href="#i-mail"/></svg></i><div><b>Escríbenos</b><small>Consultas al correo del negocio</small></div></div>
+      </div>
+      <div class="m-pie">
+        <div class="m-pie-cols">
+          <div><b>Categorías</b><span>Coleccionables · Juguetes</span><span>Videojuegos · TCG</span></div>
+          <div><b>Contacto</b><span>correo@negocio.com</span></div>
+          <div><b>Términos</b><span>Términos y condiciones</span></div>
+          <div><b>Admin</b><span>Acceso administrador</span></div>
+        </div>
+        <div class="m-pie-fin"><span class="m-logo m-disp"><strong>DC Hobbies</strong></span><span>© 2026 DC Hobbies · Cultura Geek Online</span></div>
+      </div>
+    </div>
+
+    <p class="m-etq">Panel del administrador</p>
+    <div class="mock" data-paleta="b" data-tipo="1" data-modo="claro">
+      <div class="m-panel">
+        <div class="m-lado">
+          <div class="m-logo m-disp"><strong>DC Hobbies</strong><small>PANEL</small></div>
+          <span class="m-item"><svg class="ic"><use href="#i-layout-dashboard"/></svg>Inicio</span>
+          <span class="m-item"><svg class="ic"><use href="#i-package"/></svg>Productos</span>
+          <span class="m-item"><svg class="ic"><use href="#i-warehouse"/></svg>Inventario</span>
+          <span class="m-item"><svg class="ic"><use href="#i-receipt"/></svg>Ventas</span>
+          <span class="m-item activo"><svg class="ic"><use href="#i-clipboard-list"/></svg>Pedidos</span>
+          <span class="m-item"><svg class="ic"><use href="#i-users"/></svg>Clientes</span>
+          <span class="m-item"><svg class="ic"><use href="#i-chart-column"/></svg>Reportes</span>
+          <span class="m-item"><svg class="ic"><use href="#i-settings"/></svg>Configuración</span>
+        </div>
+        <div class="m-main">
+          <div class="m-main-head"><h4>Pedidos</h4><span class="m-btn-p"><svg class="ic"><use href="#i-sliders-horizontal"/></svg>Filtros (1)</span></div>
+          <div class="m-filas">
+            <div class="m-fila"><code>#P-1041</code><span>Carlos Rojas</span><span class="f">22 set 2026</span><span><span class="chip aviso"><svg class="ic"><use href="#i-truck"/></svg>En tránsito</span></span><span class="t">₡ 33 750</span></div>
+            <div class="m-fila"><code>#P-1038</code><span>María Jiménez</span><span class="f">21 set 2026</span><span><span class="chip info"><svg class="ic"><use href="#i-package-check"/></svg>Procesado</span></span><span class="t">₡ 89 000</span></div>
+            <div class="m-fila"><code>#P-0987</code><span>Carlos Rojas</span><span class="f">14 ago 2026</span><span><span class="chip ok"><svg class="ic"><use href="#i-circle-check"/></svg>Finalizado</span></span><span class="t">₡ 18 200</span></div>
+            <div class="m-fila"><code>#P-0855</code><span>Luis Vargas</span><span class="f">11 jun 2026</span><span><span class="chip error"><svg class="ic"><use href="#i-circle-x"/></svg>Cancelado</span></span><span class="t">₡ 12 000</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="tipografia">
+    <div class="sec-head">
+      <p class="eyebrow">03 · Tipografía</p>
+      <h2>Una letra con carácter y otra para leer</h2>
+      <p>Cada combinación usa dos letras: una con personalidad para el logo y los títulos, y otra sencilla para todo lo demás (nombres de producto, precios, formularios). Todas son gratuitas, de Google Fonts, y todas incluyen el símbolo del colón ₡; lo revisamos una por una porque muchas fuentes populares no lo traen.</p>
+    </div>
+    <div class="tipos">
+      <article class="tipo t1 recomendada">
+        <div class="tipo-info">
+          <div class="pal-head"><h3>1 · Rótulo</h3><span class="tag">Recomendada</span></div>
+          <p class="caras">Bungee + Nunito Sans</p>
+          <p>Letra de letrero de arcade y de tienda de barrio. Las mayúsculas de Bungee le dan cara de marca al logo; Nunito Sans es redondeada y se lee muy bien en las fichas de producto.</p>
+          <button type="button" class="probar" data-tipo="1">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+        </div>
+        <div class="esp">
+          <p class="marca d">DC HOBBIES</p>
+          <p class="h d">Recién llegados</p>
+          <p class="cuerpo b">Figura Pikachu edición 25 aniversario. Pintada a mano, con base coleccionable y caja original.</p>
+          <p class="precio b"><b>₡ 24 850</b><span>impuesto incluido</span><code>PKM-001</code></p>
+        </div>
+      </article>
+      <article class="tipo t2">
+        <div class="tipo-info">
+          <div class="pal-head"><h3>2 · Consola</h3></div>
+          <p class="caras">Chakra Petch + IBM Plex Sans</p>
+          <p>Cortes rectos, como los menús de un videojuego. Es la más técnica y seria; encaja bien con la sección de videojuegos y con el panel del administrador.</p>
+          <button type="button" class="probar" data-tipo="2">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+        </div>
+        <div class="esp">
+          <p class="marca d">DC HOBBIES</p>
+          <p class="h d">Recién llegados</p>
+          <p class="cuerpo b">Control inalámbrico edición especial. Compatible con consola y computadora, batería recargable.</p>
+          <p class="precio b"><b>₡ 32 400</b><span>impuesto incluido</span><code>VID-007</code></p>
+        </div>
+      </article>
+      <article class="tipo t3">
+        <div class="tipo-info">
+          <div class="pal-head"><h3>3 · Viñeta</h3></div>
+          <p class="caras">Bangers + Lexend</p>
+          <p>La letra de los globos de cómic. Es muy expresiva, así que va solo en el logo y en títulos grandes. Lexend fue diseñada para leerse con facilidad.</p>
+          <button type="button" class="probar" data-tipo="3">Probar en la vista previa<svg class="ic"><use href="#i-chevron-right"/></svg></button>
+        </div>
+        <div class="esp">
+          <p class="marca d">DC HOBBIES</p>
+          <p class="h d">Recién llegados</p>
+          <p class="cuerpo b">Sobre de expansión TCG. Diez cartas por sobre, con al menos una carta rara o mejor.</p>
+          <p class="precio b"><b>₡ 4 500</b><span>impuesto incluido</span><code>TCG-013</code></p>
+        </div>
+      </article>
+    </div>
+
+    <h3 class="sub">Tamaños (para cualquier combinación)</h3>
+    <div class="escala-wrap">
+      <table class="escala">
+        <thead><tr><th>Uso</th><th>Tamaño</th><th>Letra</th><th>Ejemplo en la tienda</th></tr></thead>
+        <tbody>
+          <tr><td>Título de portada</td><td>40 px</td><td>De marca</td><td>Tu tienda de cultura geek</td></tr>
+          <tr><td>Título de sección</td><td>28 px</td><td>De marca</td><td>Recién llegados, Coleccionables</td></tr>
+          <tr><td>Nombre de producto</td><td>16 px · semibold</td><td>De texto</td><td>Peluche dragón 30 cm</td></tr>
+          <tr><td>Precio</td><td>20 px · negrita</td><td>De texto</td><td>₡ 12 900</td></tr>
+          <tr><td>Texto general</td><td>16 px</td><td>De texto</td><td>Descripciones, formularios, términos</td></tr>
+          <tr><td>Etiqueta</td><td>12 px · mayúsculas</td><td>De texto</td><td>DATOS DEL CLIENTE, NIVEL DE FIDELIDAD</td></tr>
+          <tr><td>Códigos</td><td>14 px</td><td>IBM Plex Mono</td><td>PKM-001 · #P-1041</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="reglas">
+      <li><svg class="ic"><use href="#i-circle-check"/></svg><span>La letra de marca solo va en el logo y en títulos. Nunca en párrafos ni en botones pequeños.</span></li>
+      <li><svg class="ic"><use href="#i-circle-check"/></svg><span>Los precios van con la letra de texto, en negrita y con espacio entre miles: ₡ 24 850.</span></li>
+      <li><svg class="ic"><use href="#i-circle-check"/></svg><span>Los códigos de producto y de pedido van en letra de ancho fijo, para que se lean igual en tablas.</span></li>
+    </ul>
+  </section>
+
+  <section class="sec" id="iconos">
+    <div class="sec-head">
+      <p class="eyebrow">04 · Íconos</p>
+      <h2>Íconos de línea, simples y redondeados</h2>
+      <p>Proponemos la colección Lucide: es gratuita, de código abierto y tiene más de mil íconos con el mismo estilo, así que cualquier pantalla nueva tendrá su ícono sin mezclar estilos. Todos se dibujan con una línea de 2 px y esquinas redondeadas, y toman el color del texto que los acompaña.</p>
+    </div>
+    <div class="ico-grupos">
+      <div class="ico-grupo"><h3 class="sub">Tienda</h3><div class="ico-grid"><div class="ico"><svg class="ic"><use href="#i-search"/></svg><span>Buscar</span><code>search</code></div><div class="ico"><svg class="ic"><use href="#i-shopping-cart"/></svg><span>Carrito</span><code>shopping-cart</code></div><div class="ico"><svg class="ic"><use href="#i-user-round"/></svg><span>Mi cuenta</span><code>user-round</code></div><div class="ico"><svg class="ic"><use href="#i-truck"/></svg><span>Envío</span><code>truck</code></div><div class="ico"><svg class="ic"><use href="#i-credit-card"/></svg><span>Pago</span><code>credit-card</code></div><div class="ico"><svg class="ic"><use href="#i-mail"/></svg><span>Correo</span><code>mail</code></div></div></div><div class="ico-grupo"><h3 class="sub">Categorías</h3><div class="ico-grid"><div class="ico"><svg class="ic"><use href="#i-gem"/></svg><span>Coleccionables</span><code>gem</code></div><div class="ico"><svg class="ic"><use href="#i-toy-brick"/></svg><span>Juguetes</span><code>toy-brick</code></div><div class="ico"><svg class="ic"><use href="#i-gamepad-2"/></svg><span>Videojuegos</span><code>gamepad-2</code></div><div class="ico"><svg class="ic"><use href="#i-layers"/></svg><span>TCG</span><code>layers</code></div></div></div><div class="ico-grupo"><h3 class="sub">Panel del administrador</h3><div class="ico-grid"><div class="ico"><svg class="ic"><use href="#i-layout-dashboard"/></svg><span>Inicio</span><code>layout-dashboard</code></div><div class="ico"><svg class="ic"><use href="#i-package"/></svg><span>Productos</span><code>package</code></div><div class="ico"><svg class="ic"><use href="#i-warehouse"/></svg><span>Inventario</span><code>warehouse</code></div><div class="ico"><svg class="ic"><use href="#i-receipt"/></svg><span>Ventas</span><code>receipt</code></div><div class="ico"><svg class="ic"><use href="#i-clipboard-list"/></svg><span>Pedidos</span><code>clipboard-list</code></div><div class="ico"><svg class="ic"><use href="#i-users"/></svg><span>Clientes</span><code>users</code></div><div class="ico"><svg class="ic"><use href="#i-chart-column"/></svg><span>Reportes</span><code>chart-column</code></div><div class="ico"><svg class="ic"><use href="#i-settings"/></svg><span>Configuración</span><code>settings</code></div></div></div><div class="ico-grupo"><h3 class="sub">Estados y acciones</h3><div class="ico-grid"><div class="ico"><svg class="ic"><use href="#i-clock"/></svg><span>Colocado</span><code>clock</code></div><div class="ico"><svg class="ic"><use href="#i-package-check"/></svg><span>Procesado</span><code>package-check</code></div><div class="ico"><svg class="ic"><use href="#i-circle-check"/></svg><span>Finalizado</span><code>circle-check</code></div><div class="ico"><svg class="ic"><use href="#i-circle-x"/></svg><span>Cancelado</span><code>circle-x</code></div><div class="ico"><svg class="ic"><use href="#i-triangle-alert"/></svg><span>Alerta</span><code>triangle-alert</code></div><div class="ico"><svg class="ic"><use href="#i-lock"/></svg><span>Fijo por regla</span><code>lock</code></div><div class="ico"><svg class="ic"><use href="#i-star"/></svg><span>Nivel de cliente</span><code>star</code></div><div class="ico"><svg class="ic"><use href="#i-sliders-horizontal"/></svg><span>Filtros</span><code>sliders-horizontal</code></div><div class="ico"><svg class="ic"><use href="#i-arrow-up-down"/></svg><span>Ordenar</span><code>arrow-up-down</code></div><div class="ico"><svg class="ic"><use href="#i-plus"/></svg><span>Agregar</span><code>plus</code></div><div class="ico"><svg class="ic"><use href="#i-pencil"/></svg><span>Editar</span><code>pencil</code></div><div class="ico"><svg class="ic"><use href="#i-file-spreadsheet"/></svg><span>Cargar Excel</span><code>file-spreadsheet</code></div></div></div>
+    </div>
+    <div class="bloque">
+      <h3 class="sub">Tamaños de uso</h3>
+      <div class="tamanos">
+        <div><svg class="ic" style="width:16px;height:16px"><use href="#i-shopping-cart"/></svg>16 px · etiquetas</div>
+        <div><svg class="ic" style="width:20px;height:20px"><use href="#i-shopping-cart"/></svg>20 px · botones y menú</div>
+        <div><svg class="ic" style="width:24px;height:24px"><use href="#i-shopping-cart"/></svg>24 px · encabezado</div>
+        <div><span class="circ"><svg class="ic" style="width:26px;height:26px"><use href="#i-gamepad-2"/></svg></span>En círculo · categorías</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="decidir">
+    <div class="sec-head">
+      <p class="eyebrow">05 · Para decidir</p>
+      <h2>Lo que necesitamos de usted</h2>
+      <p>Nuestra recomendación es la paleta B con la letra Rótulo: es la única pareja de complementarios exactos (azul y naranja), y el botón de compra naranja sigue la referencia de Amazon que usamos en los wireframes. Igual se pueden mezclar piezas de distintas propuestas.</p>
+    </div>
+    <ol class="preguntas">
+      <li><div><b>¿Cuál paleta prefiere?</b><span>A, B o C, o una mezcla (por ejemplo, el azul de una con el acento de otra).</span></div></li>
+      <li><div><b>¿Cuál combinación de letra?</b><span>1 Rótulo, 2 Consola o 3 Viñeta.</span></div></li>
+      <li><div><b>¿Le gustan los íconos de línea?</b><span>Si los prefiere más llenos o más gruesos, Lucide permite engrosar la línea sin cambiar de colección.</span></div></li>
+      <li><div><b>¿Quiere que la tienda tenga modo oscuro?</b><span>Se activaría solo cuando el celular o la computadora del visitante esté en modo oscuro. Ya está diseñado para las tres paletas; implementarlo suma algo de trabajo en cada pantalla.</span></div></li>
+      <li><div><b>¿La tienda ya usa algún logo o colores?</b><span>Por ejemplo, en redes sociales, rótulos o bolsas. Si existen, partimos de ahí para que el sitio se reconozca.</span></div></li>
+    </ol>
+    <div class="pie">
+      <p>Después de su elección seguimos con el resto del libro de marca: logo, tono de los textos y reglas para las fotos de producto. Luego lo aplicamos al sitio.</p>
+      <p>Íconos: Lucide v1.49.0 (licencia ISC). Fuentes: Google Fonts (licencia SIL Open Font). Los personajes mencionados son solo referencia de color y pertenecen a sus dueños.</p>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+// Opciones de la vista previa: cada grupo cambia un atributo en las dos maquetas
+const mocks = document.querySelectorAll('.mock');
+const GRUPOS = { paleta: 'seg-paleta', tipo: 'seg-tipo', modo: 'seg-modo' };
+const estado = { paleta: 'b', tipo: '1', modo: 'claro' };
+
+// Recuerda la ultima eleccion para que no se pierda al recargar (Live Server recarga al guardar)
+try {
+  const guardado = JSON.parse(localStorage.getItem('dch-vista') || '{}');
+  for (const k in estado) if (guardado[k]) estado[k] = guardado[k];
+} catch (e) {}
+
+function aplicar(clave, valor) {
+  estado[clave] = valor;
+  document.querySelectorAll('#' + GRUPOS[clave] + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === valor)));
+  mocks.forEach(m => m.setAttribute('data-' + clave, valor));
+  try { localStorage.setItem('dch-vista', JSON.stringify(estado)); } catch (e) {}
+}
+for (const clave in GRUPOS) {
+  document.querySelectorAll('#' + GRUPOS[clave] + ' button').forEach(b => b.addEventListener('click', () => aplicar(clave, b.dataset.v)));
+  aplicar(clave, estado[clave]);
+}
+
+// Botones "Probar en la vista previa" de las paletas y de la tipografia
+function irAVista() {
+  const suave = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('vista').scrollIntoView({ behavior: suave ? 'smooth' : 'auto' });
+}
+document.querySelectorAll('.probar').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.v) aplicar('paleta', b.dataset.v);
+  if (b.dataset.tipo) aplicar('tipo', b.dataset.tipo);
+  irAVista();
+}));
+
+// Flechas del carrusel de recien llegados
+document.querySelectorAll('[data-carrusel]').forEach(b => b.addEventListener('click', () => {
+  const pista = document.getElementById(b.dataset.carrusel);
+  pista.scrollBy({ left: Number(b.dataset.dir) * pista.clientWidth * 0.8, behavior: 'smooth' });
+}));
+
+// Copia el codigo del color al tocar una muestra
+const toast = document.getElementById('toast');
+let timer;
+function avisar(texto) {
+  toast.textContent = texto;
+  toast.hidden = false;
+  clearTimeout(timer);
+  timer = setTimeout(() => { toast.hidden = true; }, 1600);
+}
+document.querySelectorAll('.muestra').forEach(m => m.addEventListener('click', () => {
+  const hex = m.dataset.hex;
+  const p = navigator.clipboard && navigator.clipboard.writeText(hex);
+  if (p) p.then(() => avisar('Copiado ' + hex), () => avisar(hex));
+  else avisar(hex);
+}));
+</script>
+</body>
+</html>

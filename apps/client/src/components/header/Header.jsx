@@ -1,7 +1,15 @@
 import { Link } from 'react-router'
 import './Header.css'
 
-function Header({ categories }) {
+const ADMIN_ROLE = 'administrador'
+
+// Iniciales para el circulo del usuario: "Juan Loaiza" -> "JL".
+const toInitials = (nombre) =>
+    nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((parte) => parte[0].toUpperCase()).join('')
+
+// `user` es el usuario de la sesion o null. Mientras `loadingSession` no se muestra
+// ni el usuario ni el enlace de iniciar sesion para que no cambie de golpe.
+function Header({ categories, user, loadingSession }) {
     return (
         <header className='header'>
             <div className='header-top'>
@@ -12,7 +20,15 @@ function Header({ categories }) {
                     <button type='submit'>Buscar</button>
                 </form>
 
-                <Link to='/acceso'>Iniciar sesión</Link>
+                {user?.rol === ADMIN_ROLE && <Link to='/admin/productos'>Panel</Link>}
+                {!loadingSession && (user ? (
+                    <span className='header-user'>
+                        <span className='header-user-initials' aria-hidden='true'>{toInitials(user.nombre)}</span>
+                        Hola, {user.nombre.split(/\s+/)[0]}
+                    </span>
+                ) : (
+                    <Link to='/acceso'>Iniciar sesión</Link>
+                ))}
                 <a href='#'>Carrito (0)</a>
             </div>
 

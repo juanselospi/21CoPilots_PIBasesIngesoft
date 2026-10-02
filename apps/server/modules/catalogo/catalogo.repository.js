@@ -35,8 +35,6 @@ const COLUMNAS_DE_PRODUCTO = `
 
 /** Ficha de un producto por su SKU, que tiene que venir normalizado. */
 
-/** Categorias con la cantidad de productos de cada una. */
-
 /**
  * Guarda un producto de la importación: lo crea si el SKU no existe y lo
  * actualiza si ya existe, así reimportar la misma hoja no duplica nada
@@ -135,21 +133,6 @@ export class CatalogoRepository {
     );
 
     return rows[0]?.sku ?? null;
-  }
-
-  async listarCategorias() {
-    const { rows } = await this.#pool.query(
-      `SELECT categoria AS nombre,
-              COUNT(*)::int AS cantidad_de_productos
-         FROM catalogo.producto
-        GROUP BY categoria
-        ORDER BY categoria`
-    );
-
-    return rows.map((fila) => ({
-      nombre: fila.nombre,
-      cantidadDeProductos: fila.cantidad_de_productos,
-    }));
   }
 
   async guardarPorSku(cliente, producto) {

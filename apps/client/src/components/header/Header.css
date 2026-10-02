@@ -68,6 +68,27 @@
   border-radius: 6px;
 }
 
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.header-user-initials {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #334155;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .header-categories {
   display: flex;
   gap: 32px;

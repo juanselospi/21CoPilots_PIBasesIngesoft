@@ -30,8 +30,7 @@ const infoItems = [
 // se los pasa ya traducidos a ProductCard, que solo los muestra.
 function Home() {
     // Las categorías las pide StoreLayout una sola vez y las comparte
-    const { categorias } = useOutletContext()
-    const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
+    const { categorias, categoryNames } = useOutletContext()
 
     // TODO: el servidor todavía no manda la fecha de llegada; mientras se
     // decide de dónde sale, se muestran los primeros del catálogo.
