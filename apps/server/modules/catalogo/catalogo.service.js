@@ -11,6 +11,7 @@ import {
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
 import { validarProductoNuevo } from "./validar-producto-nuevo.js";
+import { validarCambiosDePrecio } from "./validar-cambios-de-precio.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -157,6 +158,34 @@ export class CatalogoService {
     }
 
     return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(sku));
+  }
+
+  /**
+   * Cambia el costo, la importación o el margen de un producto desde el
+   * modal "Editar precio" del panel (RF-01). Lo que no venga se queda como
+   * está. El precio no se guarda: se vuelve a calcular con el motor de
+   * precios (RF-03, RF-04, RF-05), y el margen puede ser negativo pero
+   * mayor que -100 % (RN-02).
+   *
+   * Se busca con `obtenerPorSku` y no con `obtenerFicha`, porque el
+   * administrador también edita los productos que RN-03 oculta en la tienda.
+   *
+   * No cambia el historial: las líneas de carritos y pedidos
+   * (`pedidos.agrega`) guardan su propio precio unitario y tasa de
+   * impuesto, así que el precio nuevo solo afecta lo que se agregue desde
+   * ahora.
+   *
+   * @returns el producto actualizado, con su precio recalculado
+   */
+  async actualizarPrecio(sku, datos) {
+    const cambios = validarCambiosDePrecio(datos);
+
+    const actualizado = await this.#repositorio.actualizarPrecio(sku, cambios);
+    if (actualizado === null) {
+      throw new RecursoNoEncontrado("el producto", sku);
+    }
+
+    return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(actualizado));
   }
 
   #conPrecioYDisponibilidad(producto) {

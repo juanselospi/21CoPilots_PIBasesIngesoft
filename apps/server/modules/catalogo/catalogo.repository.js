@@ -135,6 +135,30 @@ export class CatalogoRepository {
     return rows[0]?.sku ?? null;
   }
 
+  /**
+   * Cambia el costo, la importación y el margen de un producto. Un campo
+   * que llega como null se queda como está: COALESCE deja el valor actual.
+   * Los null explícitos ya los rechaza la validacion, así que null aquí
+   * solo significa que el valor "no vino".
+   *
+   * costo_total no se manda porque es una columna generada.
+   *
+   * @returns el SKU, o null si no existe el producto
+   */
+  async actualizarPrecio(sku, { costoItem = null, porcentajeImportacion = null, margenGanancia = null }) {
+    const { rows } = await this.#pool.query(
+      `UPDATE catalogo.producto
+          SET item            = COALESCE($2, item),
+              importacion     = COALESCE($3, importacion),
+              margen_ganancia = COALESCE($4, margen_ganancia)
+        WHERE sku = $1
+       RETURNING sku`,
+      [sku, costoItem, porcentajeImportacion, margenGanancia]
+    );
+
+    return rows[0]?.sku ?? null;
+  }
+
   async guardarPorSku(cliente, producto) {
     const { rows } = await cliente.query(
       `INSERT INTO catalogo.producto

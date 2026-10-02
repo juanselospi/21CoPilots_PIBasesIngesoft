@@ -6,7 +6,11 @@ import { MotorDePrecios } from "./precio/motor-de-precios.js";
 import { ImportacionPorAranceles } from "./precio/pasos/importacion-por-aranceles.js";
 import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
-import { EntradaInvalida, ReglaDeNegocioViolada } from "../../shared/errores/errores-de-dominio.js";
+import {
+  EntradaInvalida,
+  RecursoNoEncontrado,
+  ReglaDeNegocioViolada,
+} from "../../shared/errores/errores-de-dominio.js";
 
 const motorDePrecios = new MotorDePrecios([
   new ImportacionPorAranceles(),
@@ -27,6 +31,15 @@ function crearServicio() {
       return producto.sku;
     },
     obtenerPorSku: async (sku) => productos.get(sku) ?? null,
+    // Como el COALESCE del SQL: lo que no viene se queda como está.
+    actualizarPrecio: async (sku, cambios) => {
+      const producto = productos.get(sku);
+      if (!producto) return null;
+      for (const [campo, valor] of Object.entries(cambios)) {
+        if (valor !== null && valor !== undefined) producto[campo] = valor;
+      }
+      return sku;
+    },
   };
 
   return { servicio: new CatalogoService({ repositorio, motorDePrecios }), productos };
@@ -68,6 +81,73 @@ test("no guarda nada si los datos no son válidos", async () => {
 
   await assert.rejects(servicio.crearProducto({ ...pkm001, sku: "" }), EntradaInvalida);
   assert.equal(productos.size, 0);
+});
+
+test("RF-03, RF-04, RF-05: con costo 1000, importación 20 y margen 25 el precio final es 1695", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarPrecio("PKM-001", {
+    costoItem: 1000,
+    porcentajeImportacion: 20,
+    margenGanancia: 25,
+  });
+
+  assert.equal(producto.precioFinal, 1695);
+  assert.deepEqual(producto.desglosePrecio, [
+    { paso: "costo", monto: 1000 },
+    { paso: "importacion", monto: 1200 },
+    { paso: "margen", monto: 1500 },
+    { paso: "impuesto", monto: 1695 },
+  ]);
+});
+
+test("un cambio parcial conserva los otros dos campos", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarPrecio("PKM-001", { margenGanancia: "30" });
+
+  assert.equal(producto.costoItem, 100);
+  assert.equal(producto.porcentajeImportacion, 20);
+  assert.equal(producto.margenGanancia, 30);
+  assert.equal(productos.get("PKM-001").margenGanancia, 30);
+});
+
+test("editar el precio de un SKU que no existe da RecursoNoEncontrado", async () => {
+  const { servicio } = crearServicio();
+
+  await assert.rejects(servicio.actualizarPrecio("NO-EXISTE", { costoItem: 1000 }), RecursoNoEncontrado);
+});
+
+test("no cambia nada si los cambios no son válidos", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await assert.rejects(servicio.actualizarPrecio("PKM-001", { costoItem: -1, margenGanancia: 30 }), EntradaInvalida);
+  assert.equal(productos.get("PKM-001").costoItem, 100);
+  assert.equal(productos.get("PKM-001").margenGanancia, 25);
+});
+
+test("RN-03: el administrador sí puede editar un producto oculto en la tienda", async () => {
+  const { servicio } = crearServicio();
+  // Nace con stock 0 y sin contrapedido: la tienda no lo muestra.
+  await servicio.crearProducto(pkm001);
+  await assert.rejects(servicio.obtenerFicha("PKM-001"), RecursoNoEncontrado);
+
+  const producto = await servicio.actualizarPrecio("PKM-001", { costoItem: 1000 });
+
+  assert.equal(producto.disponibilidad, "no_disponible");
+  assert.equal(producto.costoItem, 1000);
+});
+
+test("RN-02: un margen negativo válido agrega la etiqueta 'margen_negativo'", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarPrecio("PKM-001", { margenGanancia: -10 });
+
+  assert.ok(producto.etiquetas.includes("margen_negativo"));
 });
 
 // Producto ya compuesto, sin ninguna etiqueta: con existencias de sobra,
