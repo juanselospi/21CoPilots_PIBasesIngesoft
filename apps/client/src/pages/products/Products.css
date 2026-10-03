@@ -183,12 +183,14 @@
   background: #fff;
 }
 
-/* Espacio gris para la imagen, con proporción fija */
+/* Imagen del producto con proporción fija; si no hay, un espacio gris con "Sin imagen" */
 .products-card-image {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
   aspect-ratio: 16 / 10;
+  object-fit: cover;
   background: #e5e7eb;
   color: #9ca3af;
   font-size: 13px;

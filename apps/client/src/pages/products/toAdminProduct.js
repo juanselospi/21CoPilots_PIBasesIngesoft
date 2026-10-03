@@ -29,12 +29,13 @@ const montoDelPaso = (desglosePrecio, paso) =>
 
 // Producto del servidor → datos para la tarjeta, la tabla y los modales
 export const toAdminProduct = ({
-    sku, nombre, categoria, precioFinal, existencias, etiquetas = [],
+    sku, nombre, categoria, imagenUrl, precioFinal, existencias, etiquetas = [],
     costoItem, porcentajeImportacion, margenGanancia, tasaImpuesto, desglosePrecio,
 }) => ({
     sku,
     name: nombre,
     category: categoria,
+    image: imagenUrl,
     price: precioFinal,
     stock: existencias,
     labels: etiquetas.map((etiqueta) => ({ key: etiqueta, text: labelByEtiqueta[etiqueta] ?? etiqueta })),

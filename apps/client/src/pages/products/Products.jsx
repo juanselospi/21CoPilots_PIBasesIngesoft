@@ -268,7 +268,11 @@ function Products() {
                         <section className='products-grid'>
                             {products.map((product) => (
                                 <article key={product.sku} className='products-card'>
-                                    <div className='products-card-image'>imagen</div>
+                                    {product.image ? (
+                                        <img className='products-card-image' src={product.image} alt={product.name} />
+                                    ) : (
+                                        <div className='products-card-image'>Sin imagen</div>
+                                    )}
                                     <div className='products-card-body'>
                                         <p className='products-card-sku'>{product.sku}</p>
                                         <h3 className='products-card-name'>{product.name}</h3>
