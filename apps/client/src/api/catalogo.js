@@ -45,3 +45,9 @@ export function listarParaAdministracion(
 export function actualizarPrecio(sku, cambios, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }
+
+// Registra un producto nuevo; el código no se puede repetir (RF-01).
+// Devuelve el producto guardado con su precio calculado.
+export function crearProducto(producto, { signal } = {}) {
+    return pedir('/api/catalogo/productos', { metodo: 'POST', cuerpo: producto, signal })
+}

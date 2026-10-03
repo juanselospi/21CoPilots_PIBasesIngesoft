@@ -1,8 +1,9 @@
-/* Estilos del modal "Editar precio" (ProductEditModal.jsx) */
+/* Estilos de los formularios de producto: "Editar precio" (EditPrice.jsx)
+   y "Agregar producto" (AddProduct.jsx) */
 
 /* Fondo oscuro semitransparente que cubre toda la pantalla y centra el modal.
    Al hacer clic sobre él se cierra el modal. */
-.product-edit-overlay {
+.product-form-overlay {
   position: fixed;
   inset: 0;
   z-index: 10;
@@ -15,7 +16,7 @@
 
 /* Tarjeta blanca del modal (el <form> con role="dialog").
    color-scheme: light evita que el navegador oscurezca los inputs en modo oscuro. */
-.product-edit-modal {
+.product-form-modal {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -33,29 +34,29 @@
 }
 
 /* Encabezado: título y datos del producto a la izquierda, botón de cerrar a la derecha */
-.product-edit-header {
+.product-form-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
 }
 
-/* Título "Editar precio" */
-.product-edit-header h2 {
+/* Título del modal */
+.product-form-header h2 {
   margin: 0;
   color: #1f2937;
   font-size: 20px;
   font-weight: 700;
 }
 
-/* Subtítulo con el SKU y el nombre del producto */
-.product-edit-header p {
+/* Subtítulo debajo del título (ej. código y nombre del producto) */
+.product-form-header p {
   color: #6b7280;
   font-size: 13px;
 }
 
 /* Botón "✕" para cerrar el modal, sin borde ni fondo */
-.product-edit-close {
+.product-form-close {
   padding: 4px 8px;
   border: none;
   background: none;
@@ -66,7 +67,7 @@
 
 /* Cada campo del formulario (<label>): etiqueta, input y mensaje de error apilados.
    También lo usa el bloque bloqueado del impuesto de venta. */
-.product-edit-field {
+.product-form-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -74,7 +75,7 @@
 }
 
 /* Caja con borde que agrupa el input y su unidad (₡ o %) en una sola fila */
-.product-edit-input {
+.product-form-input {
   display: flex;
   align-items: center;
   border: 1px solid #d1d5db;
@@ -83,8 +84,8 @@
 }
 
 /* Input numérico: ocupa el espacio disponible y no tiene borde propio,
-   el borde lo pone la caja contenedora (.product-edit-input) */
-.product-edit-input input {
+   el borde lo pone la caja contenedora (.product-form-input) */
+.product-form-input input {
   flex: 1;
   min-width: 0;
   padding: 10px 12px;
@@ -96,13 +97,13 @@
 }
 
 /* Unidad a la derecha del input (₡ para costo, % para importación y margen) */
-.product-edit-input span {
+.product-form-input span {
   padding: 0 12px;
   color: #6b7280;
 }
 
 /* Campo de solo lectura con fondo gris: el impuesto de venta */
-.product-edit-locked {
+.product-form-locked {
   padding: 12px;
   border-radius: 6px;
   background: #f1f3f6;
@@ -110,13 +111,13 @@
 
 /* Texto de ayuda dentro del campo bloqueado (ej. de dónde sale el valor).
    Actualmente el JSX no incluye un <p> ahí; se aplicaría si se agrega. */
-.product-edit-locked p {
+.product-form-locked p {
   color: #6b7280;
   font-size: 12px;
 }
 
 /* Sección de valores derivados (costo total, precio sin impuesto, precio final) */
-.product-edit-derived {
+.product-form-derived {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -126,26 +127,26 @@
 }
 
 /* Cada fila derivada: nombre a la izquierda y valor a la derecha */
-.product-edit-derived div {
+.product-form-derived div {
   display: flex;
   justify-content: space-between;
   gap: 12px;
 }
 
 /* Valor de la fila derivada en gris  */
-.product-edit-derived div span:last-child {
+.product-form-derived div span:last-child {
   color: #9ca3af;
 }
 
 /* Pie del modal: botones Cancelar y Guardar alineados a la derecha */
-.product-edit-actions {
+.product-form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
 }
 
 /* Botón secundario (Cancelar): fondo blanco con borde gris */
-.product-edit-button {
+.product-form-button {
   padding: 10px 18px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -156,45 +157,45 @@
   cursor: pointer;
 }
 
-.product-edit-button:hover {
+.product-form-button:hover {
   background: #f1f3f6;
 }
 
-/* Botón principal (Guardar): se combina con .product-edit-button y lo rellena de oscuro */
-.product-edit-button-primary {
+/* Botón principal (Guardar): se combina con .product-form-button y lo rellena de oscuro */
+.product-form-button-primary {
   border-color: #334155;
   background: #334155;
   color: #fff;
 }
 
-.product-edit-button-primary:hover {
+.product-form-button-primary:hover {
   background: #1e293b;
 }
 
 /* Marca en rojo el borde de la caja cuando su input tiene un valor inválido */
-.product-edit-input:has(input[aria-invalid='true']) {
+.product-form-input:has(input[aria-invalid='true']) {
   border-color: #dc2626;
 }
 
 /* Mensaje de error debajo del campo inválido */
-.product-edit-error {
+.product-form-error {
   color: #dc2626;
   font-size: 12px;
 }
 
 /* Botones e inputs mientras se guarda, y "Guardar" sin cambios */
-.product-edit-button:disabled,
-.product-edit-close:disabled {
+.product-form-button:disabled,
+.product-form-close:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-.product-edit-button-primary:disabled:hover {
+.product-form-button-primary:disabled:hover {
   background: #334155;
 }
 
 /* Aviso de error del servidor al guardar */
-.product-edit-alert {
+.product-form-alert {
   margin: 0;
   padding: 10px 12px;
   border-radius: 6px;
@@ -203,12 +204,63 @@
   font-size: 13px;
 }
 
-/* Aviso de que el precio se guardó */
-.product-edit-success {
+/* Aviso de que se guardó */
+.product-form-success {
   margin: 0;
   padding: 10px 12px;
   border-radius: 6px;
   background: #f0fdf4;
   color: #15803d;
   font-size: 13px;
+}
+
+/* Solo "Agregar producto" */
+
+/* Más ancho que el de editar precio porque tiene más campos */
+.product-form-wide {
+  max-width: 560px;
+}
+
+/* Texto "(opcional)" junto a la etiqueta del campo */
+.product-form-optional {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Descripción: mismo aspecto que los inputs y solo crece hacia abajo */
+.product-form-input textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: #1f2937;
+  font: inherit;
+  resize: vertical;
+}
+
+/* Costo, importación y margen en una fila */
+.product-form-prices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Casilla de contrapedido con su texto al lado */
+.product-form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2937;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* En pantallas angostas los precios van uno debajo del otro */
+@media (max-width: 520px) {
+  .product-form-prices {
+    grid-template-columns: 1fr;
+  }
 }
