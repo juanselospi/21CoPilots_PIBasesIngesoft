@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import './Header.css'
+import { catalogPath } from '../../routes.js'
 
 const ADMIN_ROLE = 'administrador'
 
@@ -34,9 +35,9 @@ function Header({ categories, user, loadingSession }) {
 
             <nav className='header-categories'>
                 {categories.map((category) => (
-                    <a key={category} href='#'>{category}</a>
+                    <Link key={category} to={catalogPath(category)}>{category}</Link>
                 ))}
-                <a href='#'>Ver todo</a>
+                <Link to={catalogPath()}>Ver todo</Link>
             </nav>
         </header>
     )

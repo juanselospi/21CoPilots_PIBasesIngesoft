@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import './Footer.css'
+import { catalogPath } from '../../routes.js'
 
 function Footer({ categories }) {
     return (
@@ -9,7 +10,7 @@ function Footer({ categories }) {
                 <ul className='footer-categories'>
                     {categories.map((category) => (
                         <li key={category}>
-                            <a href='#'>{category}</a>
+                            <Link to={catalogPath(category)}>{category}</Link>
                         </li>
                     ))}
                 </ul>
