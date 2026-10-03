@@ -1,31 +1,6 @@
 import { useEffect, useState } from 'react'
-import './ProductEditModal.css'
-
-// Campos de precio de SCRUM-23. Los derivados los calcula el motor de precios del
-// servidor (RF-03, RF-04, RF-05); el cliente no replica la fórmula.
-const editableFields = [
-    { key: 'costoItem', label: 'Costo del ítem', unit: '₡', allowNegative: false },
-    { key: 'importacionPct', label: 'Importación', unit: '%', allowNegative: false },
-    // RN-02, RF-43: admite margen negativo, pero mayor que -100 %
-    { key: 'margenPct', label: 'Margen', unit: '%', allowNegative: true },
-]
-
-// Solo dígitos y hasta 2 decimales; el signo negativo únicamente donde se permite
-const positiveNumber = /^\d*(\.\d{0,2})?$/
-const signedNumber = /^-?\d*(\.\d{0,2})?$/
-
-const validate = (values) => {
-    const errors = {}
-    for (const { key } of editableFields) {
-        if (values[key] === '' || Number.isNaN(Number(values[key])) || values[key] === '-' || values[key] === '.') {
-            errors[key] = 'Ingrese un número válido.'
-        }
-    }
-    if (!errors.margenPct && Number(values.margenPct) <= -100) {
-        errors.margenPct = 'El margen debe ser mayor que -100 %.'
-    }
-    return errors
-}
+import './ProductForm.css'
+import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
 
 const derivedFields = [
     { key: 'costoTotal', label: 'Costo total' },
@@ -35,12 +10,12 @@ const derivedFields = [
 
 // Valores iniciales de los inputs (como texto)
 const valuesOf = (product) => Object.fromEntries(
-    editableFields.map(({ key }) => [key, product[key] === null || product[key] === undefined ? '' : String(product[key])])
+    priceFields.map(({ key }) => [key, product[key] === null || product[key] === undefined ? '' : String(product[key])])
 )
 
 // Modal "Editar precio" (RF-01). No llama a la API: usa `onSave`, que devuelve
 // { product } si se guardó o { error, fields } si el servidor lo rechazó.
-function ProductEditModal({ product, formatPrice, onClose, onSave }) {
+function EditPrice({ product, formatPrice, onClose, onSave }) {
     // Producto tal como está guardado ahora
     const [saved, setSaved] = useState(product)
     const [values, setValues] = useState(() => valuesOf(product))
@@ -50,7 +25,7 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
     const [justSaved, setJustSaved] = useState(false)
 
     // Campos que el usuario cambió; solo esos se envían
-    const changedFields = editableFields
+    const changedFields = priceFields
         .map(({ key }) => key)
         .filter((key) => values[key] === '' || Number(values[key]) !== saved[key])
     const hasChanges = changedFields.length > 0
@@ -61,9 +36,8 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
     }
 
     const handleChange = (key, allowNegative, input) => {
-        const value = input.replace(',', '.')
-        const pattern = allowNegative ? signedNumber : positiveNumber
-        if (pattern.test(value)) {
+        const value = readPriceInput(input, allowNegative)
+        if (value !== null) {
             setValues({ ...values, [key]: value })
             setErrors({ ...errors, [key]: undefined })
             setSaveError(null)
@@ -79,7 +53,7 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        const foundErrors = validate(values)
+        const foundErrors = validatePrices(values)
         setErrors(foundErrors)
         if (Object.keys(foundErrors).length > 0 || !hasChanges) return
 
@@ -99,29 +73,29 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
     }
 
     return (
-        <div className='product-edit-overlay' onClick={close}>
+        <div className='product-form-overlay' onClick={close}>
             <form
-                className='product-edit-modal'
+                className='product-form-modal'
                 role='dialog'
                 aria-modal='true'
-                aria-labelledby='product-edit-title'
+                aria-labelledby='edit-price-title'
                 onClick={(event) => event.stopPropagation()}
                 onSubmit={handleSubmit}
             >
-                <header className='product-edit-header'>
+                <header className='product-form-header'>
                     <div>
-                        <h2 id='product-edit-title'>Editar precio</h2>
+                        <h2 id='edit-price-title'>Editar precio</h2>
                         <p>{saved.sku} · {saved.name}</p>
                     </div>
-                    <button type='button' className='product-edit-close' aria-label='Cerrar' disabled={saving} onClick={close}>
+                    <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
                         ✕
                     </button>
                 </header>
 
-                {editableFields.map(({ key, label, unit, allowNegative }) => (
-                    <label key={key} className='product-edit-field'>
+                {priceFields.map(({ key, label, unit, allowNegative }) => (
+                    <label key={key} className='product-form-field'>
                         <span>{label}</span>
-                        <div className='product-edit-input'>
+                        <div className='product-form-input'>
                             <input
                                 type='text'
                                 inputMode='decimal'
@@ -133,16 +107,16 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
                             />
                             <span>{unit}</span>
                         </div>
-                        {errors[key] && <p className='product-edit-error'>{errors[key]}</p>}
+                        {errors[key] && <p className='product-form-error'>{errors[key]}</p>}
                     </label>
                 ))}
 
-                <div className='product-edit-field product-edit-locked'>
+                <div className='product-form-field product-form-locked'>
                     <span>Impuesto de venta</span>
                     <strong>{saved.taxRate} %</strong>
                 </div>
 
-                <section className='product-edit-derived'>
+                <section className='product-form-derived'>
                     {/* TODO: vista previa con el motor de precios del servidor (SCRUM-28) */}
                     {derivedFields.map(({ key, label }) => {
                         const amount = saved.breakdown?.[key]
@@ -155,16 +129,16 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
                     })}
                 </section>
 
-                {saveError && <p className='product-edit-alert' role='alert'>{saveError}</p>}
-                {justSaved && <p className='product-edit-success' role='status'>Precio actualizado.</p>}
+                {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
+                {justSaved && <p className='product-form-success' role='status'>Precio actualizado.</p>}
 
-                <footer className='product-edit-actions'>
-                    <button type='button' className='product-edit-button' disabled={saving} onClick={close}>
+                <footer className='product-form-actions'>
+                    <button type='button' className='product-form-button' disabled={saving} onClick={close}>
                         {justSaved ? 'Cerrar' : 'Cancelar'}
                     </button>
                     <button
                         type='submit'
-                        className='product-edit-button product-edit-button-primary'
+                        className='product-form-button product-form-button-primary'
                         disabled={saving || !hasChanges}
                     >
                         {saving ? 'Guardando…' : 'Guardar'}
@@ -175,4 +149,4 @@ function ProductEditModal({ product, formatPrice, onClose, onSave }) {
     )
 }
 
-export default ProductEditModal
+export default EditPrice

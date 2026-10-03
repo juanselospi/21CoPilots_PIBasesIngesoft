@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import './Products.css'
-import ProductEditModal from '../../components/product-edit-modal/ProductEditModal.jsx'
-import { actualizarPrecio } from '../../api/catalogo.js'
+import AddProduct from '../../components/product-form/AddProduct.jsx'
+import EditPrice from '../../components/product-form/EditPrice.jsx'
+import { actualizarPrecio, crearProducto } from '../../api/catalogo.js'
+import { useCategorias } from '../../hooks/useCategorias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
-import { toAdminProduct, toModalFields, toPriceChanges } from './toAdminProduct.js'
+import { toAdminProduct, toModalFields, toServerFields } from './toAdminProduct.js'
 
 const priceFormat = new Intl.NumberFormat('es-CR', {
     style: 'currency',
@@ -38,7 +40,7 @@ const visiblePages = (current, count) => {
     return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }
 
-// Página de productos del panel (RF-43): busca, ordena, pagina y edita precios.
+// Página de productos del panel (RF-43): busca, ordena, pagina, agrega productos y edita precios.
 function Products() {
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -47,6 +49,7 @@ function Products() {
     const [pageSize, setPageSize] = useState(pageSizes[0])
     const [page, setPage] = useState(0)
     const [editingProduct, setEditingProduct] = useState(null)
+    const [creating, setCreating] = useState(false)
 
     // Busca después de la pausa y vuelve a la primera página
     useEffect(() => {
@@ -63,6 +66,10 @@ function Products() {
     const pageCount = Math.ceil(total / pageSize)
     const firstShown = page * pageSize + 1
     const lastShown = page * pageSize + products.length
+
+    // Categorías que ya existen, como sugerencias al agregar un producto
+    const categorias = useCategorias()
+    const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
 
     const changeSort = (value) => {
         setSort(value)
@@ -84,11 +91,27 @@ function Products() {
     // Le devuelve al modal el producto actualizado o el error.
     const handleSave = async (sku, values) => {
         try {
-            const actualizado = await actualizarPrecio(sku, toPriceChanges(values))
+            const actualizado = await actualizarPrecio(sku, toServerFields(values))
             listado.recargar()
             return { product: toAdminProduct(actualizado) }
         } catch (error) {
             return { error: error.message, fields: toModalFields(error.detalles?.campos ?? []) }
+        }
+    }
+
+    // Registra el producto nuevo (RF-01) y recarga el listado.
+    // Le devuelve al modal el producto creado o el error.
+    const handleCreate = async (values) => {
+        try {
+            const creado = await crearProducto(toServerFields(values))
+            listado.recargar()
+            return { product: toAdminProduct(creado) }
+        } catch (error) {
+            // Código repetido: el servidor no indica el campo, pero siempre es el código
+            const fields = error.codigo === 'REGLA_DE_NEGOCIO_VIOLADA'
+                ? ['sku']
+                : toModalFields(error.detalles?.campos ?? [])
+            return { error: error.message, fields }
         }
     }
 
@@ -99,7 +122,11 @@ function Products() {
                 <h1>Productos</h1>
                 <div className='products-actions'>
                     <ImportExcel onImported={listado.recargar} />
-                    <button type='button' className='products-button products-button-primary'>
+                    <button
+                        type='button'
+                        className='products-button products-button-primary'
+                        onClick={() => setCreating(true)}
+                    >
                         + Agregar producto
                     </button>
                 </div>
@@ -241,11 +268,20 @@ function Products() {
             </section>
 
             {editingProduct && (
-                <ProductEditModal
+                <EditPrice
                     product={editingProduct}
                     formatPrice={priceFormat.format}
                     onClose={() => setEditingProduct(null)}
                     onSave={handleSave}
+                />
+            )}
+
+            {creating && (
+                <AddProduct
+                    categories={categoryNames}
+                    formatPrice={priceFormat.format}
+                    onClose={() => setCreating(false)}
+                    onCreate={handleCreate}
                 />
             )}
         </main>

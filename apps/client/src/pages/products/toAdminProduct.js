@@ -1,8 +1,15 @@
 // Traduce los productos del panel (RF-43) entre el formato del servidor
-// y el que usan la tarjeta y el modal de editar precio.
+// y el que usan la tarjeta y los modales de agregar y editar producto.
 
-// Nombre del campo en el modal → nombre en el servidor
+// Nombre del campo en los modales → nombre en el servidor
 const serverFieldByModalField = {
+    sku: 'sku',
+    name: 'nombre',
+    category: 'categoria',
+    supplier: 'proveedor',
+    description: 'descripcion',
+    imageUrl: 'imagenUrl',
+    backorder: 'admiteContrapedido',
     costoItem: 'costoItem',
     importacionPct: 'porcentajeImportacion',
     margenPct: 'margenGanancia',
@@ -31,9 +38,13 @@ export const toAdminProduct = ({
     },
 })
 
-// Cambios del modal → cuerpo que espera el servidor al guardar el precio
-export const toPriceChanges = (values) =>
-    Object.fromEntries(Object.entries(values).map(([field, value]) => [serverFieldByModalField[field], value]))
+// Valores de un modal → cuerpo que espera el servidor. Los campos vacíos no se envían.
+export const toServerFields = (values) =>
+    Object.fromEntries(
+        Object.entries(values)
+            .filter(([, value]) => value !== '')
+            .map(([field, value]) => [serverFieldByModalField[field], value]),
+    )
 
 // Campos con error que reporta el servidor → campos del modal
 export const toModalFields = (serverFields = []) =>
