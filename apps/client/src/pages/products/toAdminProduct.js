@@ -1,5 +1,5 @@
 // Traduce los productos del panel (RF-43) entre el formato del servidor
-// y el que usan la tarjeta y los modales de agregar y editar producto.
+// y el que usan la tarjeta, la tabla y los modales de agregar y editar producto.
 
 // Nombre del campo en los modales → nombre en el servidor
 const serverFieldByModalField = {
@@ -15,18 +15,29 @@ const serverFieldByModalField = {
     margenPct: 'margenGanancia',
 }
 
+// Texto de cada etiqueta que calcula el servidor (RF-43)
+const labelByEtiqueta = {
+    contrapedido: 'Por contrapedido',
+    margen_negativo: 'Margen negativo',
+    existencias_bajas: 'Existencias bajas',
+    oculto_en_tienda: 'Oculto en la tienda',
+}
+
 // Busca el monto de un paso del desglose del precio (costo, importacion, margen, impuesto)
 const montoDelPaso = (desglosePrecio, paso) =>
     desglosePrecio?.find((linea) => linea.paso === paso)?.monto ?? null
 
-// Producto del servidor → datos para la tarjeta y el modal
+// Producto del servidor → datos para la tarjeta, la tabla y los modales
 export const toAdminProduct = ({
-    sku, nombre, categoria, precioFinal, costoItem, porcentajeImportacion, margenGanancia, tasaImpuesto, desglosePrecio,
+    sku, nombre, categoria, precioFinal, existencias, etiquetas = [],
+    costoItem, porcentajeImportacion, margenGanancia, tasaImpuesto, desglosePrecio,
 }) => ({
     sku,
     name: nombre,
     category: categoria,
     price: precioFinal,
+    stock: existencias,
+    labels: etiquetas.map((etiqueta) => ({ key: etiqueta, text: labelByEtiqueta[etiqueta] ?? etiqueta })),
     costoItem,
     importacionPct: porcentajeImportacion,
     margenPct: margenGanancia,

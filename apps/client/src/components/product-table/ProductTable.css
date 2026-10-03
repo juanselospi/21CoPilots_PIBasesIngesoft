@@ -1,0 +1,116 @@
+/* Estilos de la vista de tabla del panel (ProductTable.jsx) */
+
+/* Caja con borde; en pantallas angostas la tabla se desplaza de lado */
+.product-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #1f2937;
+  font-size: 14px;
+  text-align: left;
+}
+
+/* Encabezado gris con texto pequeño */
+.product-table th {
+  padding: 12px 16px;
+  border-bottom: 1px solid #d1d5db;
+  background: #f1f3f6;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Celdas separadas por una línea */
+.product-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.product-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.product-table tbody tr:hover {
+  background: #f8f9fb;
+}
+
+/* Código en gris y sin cortar */
+.product-table-sku {
+  color: #6b7280;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Precio y existencias alineados a la derecha */
+.product-table-number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Texto solo para lectores de pantalla (encabezado de la columna de botones) */
+.product-table-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Etiquetas en fila; bajan de línea si no caben */
+.product-table-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Etiqueta redondeada; el color depende del tipo */
+.product-table-label {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.product-table-label-contrapedido {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.product-table-label-margen_negativo {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.product-table-label-existencias_bajas {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+/* oculto_en_tienda usa el gris de la etiqueta base */
+
+/* Botón "Editar" de cada fila */
+.product-table-button {
+  padding: 6px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.product-table-button:hover {
+  background: #f1f3f6;
+}
