@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import './Products.css'
-import { products } from '../../data/products.js'
 import ProductEditModal from '../../components/product-edit-modal/ProductEditModal.jsx'
+import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
+import { toAdminProduct } from './toAdminProduct.js'
 
 const priceFormat = new Intl.NumberFormat('es-CR', {
     style: 'currency',
@@ -10,34 +11,77 @@ const priceFormat = new Intl.NumberFormat('es-CR', {
     maximumFractionDigits: 0,
 })
 
-// TODO: poblar desde el panel de filtros y quitar los valores de ejemplo
-const activeFilters = ['Coleccionables', 'Existencias bajas']
-
+// Las claves son las que acepta el servidor en `orden` (RF-43)
 const sortOptions = [
-    { value: 'name-asc', label: 'Nombre A–Z' },
-    { value: 'name-desc', label: 'Nombre Z–A' },
-    { value: 'price', label: 'Precio' },
-    { value: 'stock', label: 'Existencias (menor a mayor)' },
-    { value: 'recent', label: 'Agregado recientemente' },
+    { value: 'nombre', label: 'Nombre A–Z' },
+    { value: '-nombre', label: 'Nombre Z–A' },
+    { value: 'precio', label: 'Precio (menor a mayor)' },
+    { value: '-precio', label: 'Precio (mayor a menor)' },
+    { value: 'existencias', label: 'Existencias (menor a mayor)' },
     { value: 'sku', label: 'Código' },
 ]
 
+// Los únicos tamaños de página que acepta el servidor
 const pageSizes = [24, 48, 96]
+
+// Espera a que el usuario deje de escribir antes de buscar
+const SEARCH_DELAY_MS = 300
+
+// Cuántos números de página se muestran a la vez
+const PAGE_WINDOW = 5
 
 // TODO: leer de la configuración del negocio que entregue la API (RES-06)
 const taxRate = 13
 
+// Números de página alrededor de la actual; empiezan en 0 como en el servidor
+const visiblePages = (current, count) => {
+    const first = Math.max(0, Math.min(current - Math.floor(PAGE_WINDOW / 2), count - PAGE_WINDOW))
+    const last = Math.min(count - 1, first + PAGE_WINDOW - 1)
+    return Array.from({ length: last - first + 1 }, (_, index) => first + index)
+}
+
+// Listado del panel (RF-43). Es el contenedor: pide los productos al servidor
+// con la búsqueda, el orden y la página, y los pasa traducidos a la tarjeta.
 function Products() {
     const [search, setSearch] = useState('')
+    const [query, setQuery] = useState('')
     const [view, setView] = useState('grid')
-    const [sort, setSort] = useState('name-asc')
+    const [sort, setSort] = useState(sortOptions[0].value)
     const [pageSize, setPageSize] = useState(pageSizes[0])
+    const [page, setPage] = useState(0)
     const [editingProduct, setEditingProduct] = useState(null)
 
-    const term = search.trim().toLowerCase()
-    const visibleProducts = products.filter(({ name, sku }) =>
-        name.toLowerCase().includes(term) || sku.toLowerCase().includes(term)
-    )
+    // Una búsqueda nueva vuelve a la primera página
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setQuery(search.trim())
+            setPage(0)
+        }, SEARCH_DELAY_MS)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    const listado = useListadoAdministrativo({ q: query, orden: sort, limite: pageSize, pagina: page })
+    const products = listado.datos?.datos.map(toAdminProduct) ?? []
+    const total = listado.datos?.meta.total ?? 0
+    const pageCount = Math.ceil(total / pageSize)
+    const firstShown = page * pageSize + 1
+    const lastShown = page * pageSize + products.length
+
+    const changeSort = (value) => {
+        setSort(value)
+        setPage(0)
+    }
+
+    const changePageSize = (value) => {
+        setPageSize(value)
+        setPage(0)
+    }
+
+    const clearSearch = () => {
+        setSearch('')
+        setQuery('')
+        setPage(0)
+    }
 
     // TODO: enviar los cambios a la API; el servidor recalcula el precio (RF-51)
     const handleSave = () => setEditingProduct(null)
@@ -48,7 +92,7 @@ function Products() {
             <section className='products-header'>
                 <h1>Productos</h1>
                 <div className='products-actions'>
-                    <ImportExcel />
+                    <ImportExcel onImported={listado.recargar} />
                     <button type='button' className='products-button products-button-primary'>
                         + Agregar producto
                     </button>
@@ -64,8 +108,9 @@ function Products() {
             />
 
             <section className='products-toolbar'>
+                {/* TODO: panel de filtros (categoría, disponibilidad, existencias bajas, margen negativo, precio) */}
                 <button type='button' className='products-button'>
-                    Filtros ({activeFilters.length})
+                    Filtros
                 </button>
 
                 <div className='products-view-toggle'>
@@ -88,7 +133,7 @@ function Products() {
                 <select
                     className='products-sort'
                     value={sort}
-                    onChange={(event) => setSort(event.target.value)}
+                    onChange={(event) => changeSort(event.target.value)}
                 >
                     {sortOptions.map(({ value, label }) => (
                         <option key={value} value={value}>Ordenar: {label}</option>
@@ -96,67 +141,92 @@ function Products() {
                 </select>
             </section>
 
-            {activeFilters.length > 0 && (
-                <section className='products-active-filters'>
-                    {activeFilters.map((filter) => (
-                        <span key={filter} className='products-filter-tag'>
-                            {filter}
-                            <button type='button' aria-label={`Quitar filtro ${filter}`}>✕</button>
-                        </span>
-                    ))}
-                    <button type='button' className='products-clear-filters'>Limpiar filtros</button>
-                </section>
-            )}
-
-            <p className='products-count'>
-                {visibleProducts.length} productos · mostrando 1–{Math.min(pageSize, visibleProducts.length)}
-            </p>
-
-            {visibleProducts.length === 0 ? (
-                <section className='products-empty'>
-                    <h2>No hay productos que coincidan</h2>
-                    <p>Pruebe con otros filtros o con otro término de búsqueda.</p>
-                    <button type='button' className='products-button' onClick={() => setSearch('')}>
-                        Limpiar filtros
+            {listado.cargando ? (
+                <p className='products-status' role='status'>Cargando productos…</p>
+            ) : listado.error ? (
+                <div className='products-status products-status-error' role='alert'>
+                    <p>{listado.error}</p>
+                    <button type='button' className='products-status-button' onClick={listado.recargar}>
+                        Reintentar
                     </button>
-                </section>
-            ) : view === 'grid' ? (
-                // TODO: extraer la tarjeta administrativa a components/ (código, semáforo, etiquetas, "Ingresar mercancía")
-                <section className='products-grid'>
-                    {visibleProducts.map((product) => (
-                        <article key={product.sku} className='products-card'>
-                            <div className='products-card-image'>imagen</div>
-                            <div className='products-card-body'>
-                                <p className='products-card-sku'>{product.sku}</p>
-                                <h3 className='products-card-name'>{product.name}</h3>
-                                <p className='products-card-category'>{product.category}</p>
-                                <p className='products-card-price'>{priceFormat.format(product.price)}</p>
-                                <button
-                                    type='button'
-                                    className='products-button'
-                                    onClick={() => setEditingProduct(product)}
-                                >
-                                    Editar
-                                </button>
-                            </div>
-                        </article>
-                    ))}
-                </section>
+                </div>
+            ) : products.length === 0 ? (
+                query ? (
+                    <section className='products-empty'>
+                        <h2>No hay productos que coincidan</h2>
+                        <p>Pruebe con otro término de búsqueda.</p>
+                        <button type='button' className='products-button' onClick={clearSearch}>
+                            Limpiar búsqueda
+                        </button>
+                    </section>
+                ) : (
+                    <section className='products-empty'>
+                        <h2>Todavía no hay productos</h2>
+                        <p>Cárguelos desde un Excel o agréguelos uno por uno.</p>
+                    </section>
+                )
             ) : (
-                // TODO: vista de tabla (Código · Nombre · Categoría · Precio · Existencias · Etiquetas)
-                <section className='products-table-placeholder'>Vista de tabla pendiente</section>
+                <>
+                    <p className='products-count'>
+                        {total} productos · mostrando {firstShown}–{lastShown}
+                    </p>
+
+                    {view === 'grid' ? (
+                        // TODO: extraer la tarjeta administrativa a components/ (código, semáforo, etiquetas, "Ingresar mercancía")
+                        <section className='products-grid'>
+                            {products.map((product) => (
+                                <article key={product.sku} className='products-card'>
+                                    <div className='products-card-image'>imagen</div>
+                                    <div className='products-card-body'>
+                                        <p className='products-card-sku'>{product.sku}</p>
+                                        <h3 className='products-card-name'>{product.name}</h3>
+                                        <p className='products-card-category'>{product.category}</p>
+                                        <p className='products-card-price'>{priceFormat.format(product.price)}</p>
+                                        <button
+                                            type='button'
+                                            className='products-button'
+                                            onClick={() => setEditingProduct(product)}
+                                        >
+                                            Editar
+                                        </button>
+                                    </div>
+                                </article>
+                            ))}
+                        </section>
+                    ) : (
+                        // TODO: vista de tabla (Código · Nombre · Categoría · Precio · Existencias · Etiquetas)
+                        <section className='products-table-placeholder'>Vista de tabla pendiente</section>
+                    )}
+                </>
             )}
 
             <section className='products-pagination'>
-                {/* TODO: paginación real a partir de pageSize */}
-                <button type='button'>‹ Anterior</button>
-                <button type='button' className='active'>1</button>
-                <button type='button'>Siguiente ›</button>
+                {pageCount > 1 && (
+                    <>
+                        <button type='button' disabled={page === 0} onClick={() => setPage(page - 1)}>
+                            ‹ Anterior
+                        </button>
+                        {visiblePages(page, pageCount).map((number) => (
+                            <button
+                                key={number}
+                                type='button'
+                                className={number === page ? 'active' : ''}
+                                aria-current={number === page ? 'page' : undefined}
+                                onClick={() => setPage(number)}
+                            >
+                                {number + 1}
+                            </button>
+                        ))}
+                        <button type='button' disabled={page >= pageCount - 1} onClick={() => setPage(page + 1)}>
+                            Siguiente ›
+                        </button>
+                    </>
+                )}
 
                 <select
                     className='products-page-size'
                     value={pageSize}
-                    onChange={(event) => setPageSize(Number(event.target.value))}
+                    onChange={(event) => changePageSize(Number(event.target.value))}
                 >
                     {pageSizes.map((size) => (
                         <option key={size} value={size}>{size} por página</option>
