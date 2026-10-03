@@ -22,22 +22,24 @@
   display: block;
   width: 100%;
   aspect-ratio: 5 / 4;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
   object-fit: cover;
-  background: #e5e7eb;
+  background: var(--color-tinte);
 }
 
 .product-detail-no-image {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 6px;
   box-sizing: border-box;
   border-style: dashed;
-  border-color: #9ca3af;
-  background: #f1f3f6;
-  color: #9ca3af;
-  font-size: 14px;
+  border-width: 1.5px;
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 .product-detail-info {
@@ -47,59 +49,37 @@
   gap: 16px;
 }
 
+/* El nombre del producto va en la letra de texto: Bungee es solo para titulos cortos */
 .product-detail-name {
   margin: 0;
-  color: #111827;
-  font-size: clamp(24px, 4vw, 32px);
-  font-weight: 700;
+  font-family: var(--fuente-texto);
+  font-size: var(--texto-seccion);
+  font-weight: 800;
   line-height: 1.25;
 }
 
 .product-detail-price {
   margin: 0;
-  color: #111827;
-  font-size: 28px;
-  font-weight: 700;
+  color: var(--color-titulo);
+  font-size: var(--texto-seccion);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .product-detail-tax {
   margin: 4px 0 0;
-  color: #6b7280;
-  font-size: 13px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
-.product-detail-availability {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.product-detail-availability::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.product-detail-availability.in-stock {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.product-detail-availability.backorder {
-  background: #fef3c7;
-  color: #b45309;
+.product-detail-info .chip {
+  font-size: var(--texto-pequeno);
 }
 
 .product-detail-description {
   margin: 0;
-  color: #374151;
-  font-size: 16px;
+  color: var(--color-texto);
+  font-size: var(--texto-general);
   line-height: 1.6;
   white-space: pre-line;
 }
@@ -111,9 +91,10 @@
   gap: 16px;
   box-sizing: border-box;
   padding: 32px 24px;
-  border-radius: 8px;
-  background: #f1f3f6;
-  color: #4b5563;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
   text-align: center;
 }
 
@@ -122,28 +103,30 @@
 }
 
 .product-detail-status a {
-  color: #1f2937;
-  font-weight: 500;
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
 .product-detail-status-error {
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .product-detail-status-button {
   padding: 10px 24px;
   border: none;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .product-detail-status-button:hover {
-  background: #1e293b;
+  background: var(--color-principal-hover);
 }
 
 @media (max-width: 768px) {

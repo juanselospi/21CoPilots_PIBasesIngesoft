@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
+import { ImageOff } from 'lucide-react'
 import './ProductCard.css'
-import { priceFormat, availabilityLabels } from './productFormat.js'
+import AvailabilityChip from './AvailabilityChip.jsx'
+import { priceFormat } from './productFormat.js'
 
 // La imagen y el nombre llevan a `to`, la tarjeta entera no es un enlace
 // porque adentro tiene el boton de agregar al carrito cuya funcionalidad
@@ -14,7 +16,7 @@ function ProductCard({ product, to, compact = false }) {
                 {image ? (
                     <img className='product-card-image' src={image} alt={name} />
                 ) : (
-                    <div className='product-card-image product-card-no-image'>Sin imagen</div>
+                    <div className='product-card-image product-card-no-image'><ImageOff size={28} />Sin imagen</div>
                 )}
             </Link>
 
@@ -29,9 +31,7 @@ function ProductCard({ product, to, compact = false }) {
                         {!compact && <p className='product-card-tax'>impuesto incluido</p>}
                     </div>
 
-                    <span className={`product-card-availability ${availability}`}>
-                        {availabilityLabels[availability]}
-                    </span>
+                    <AvailabilityChip availability={availability} />
                 </div>
 
                 {!compact && (

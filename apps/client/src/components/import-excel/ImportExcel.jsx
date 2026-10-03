@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { FileSpreadsheet, X } from 'lucide-react'
 import './ImportExcel.css'
 import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 
@@ -15,7 +16,7 @@ function ImportExcel({ onImported }) {
     return (
         <>
             <button type='button' className='products-button' onClick={() => setOpen(true)}>
-                Cargar Excel
+                <FileSpreadsheet size={20} />Cargar Excel
             </button>
             {open && <ImportExcelModal onClose={() => setOpen(false)} onImported={onImported} />}
         </>
@@ -107,7 +108,7 @@ function ImportExcelModal({ onClose, onImported }) {
                         onClick={close}
                         disabled={uploading}
                     >
-                        ✕
+                        <X size={20} />
                     </button>
                 </header>
 
@@ -210,7 +211,7 @@ function ImportSummary({ result, reportUrl }) {
                                 {rechazadas.map(({ fila, codigoSku, motivos }) => (
                                     <tr key={fila}>
                                         <td>{fila}</td>
-                                        <td>{codigoSku ?? '(vacío)'}</td>
+                                        <td className='codigo'>{codigoSku ?? '(vacío)'}</td>
                                         <td>
                                             {motivos.map((motivo) => (
                                                 <span key={motivo}>{motivo}</span>

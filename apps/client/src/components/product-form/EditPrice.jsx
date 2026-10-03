@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
 
@@ -88,7 +89,7 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
                         <p>{saved.sku} · {saved.name}</p>
                     </div>
                     <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
-                        ✕
+                        <X size={20} />
                     </button>
                 </header>
 

@@ -1,4 +1,15 @@
+import { Clock, EyeOff, Pencil, Tag, TrendingDown, TriangleAlert } from 'lucide-react'
 import './ProductTable.css'
+
+// Color e icono de cada etiqueta que calcula el servidor; una etiqueta nueva sale en gris
+const chipByLabel = {
+    contrapedido: { className: 'chip chip-info', Icon: Clock },
+    margen_negativo: { className: 'chip chip-error', Icon: TrendingDown },
+    existencias_bajas: { className: 'chip chip-aviso', Icon: TriangleAlert },
+    oculto_en_tienda: { className: 'chip', Icon: EyeOff },
+}
+
+const defaultChip = { className: 'chip', Icon: Tag }
 
 // Vista de tabla del listado de productos del panel (RF-43).
 // Solo muestra lo que recibe; "Editar" avisa con `onEdit`.
@@ -20,18 +31,22 @@ function ProductTable({ products, formatPrice, onEdit }) {
                 <tbody>
                     {products.map((product) => (
                         <tr key={product.sku}>
-                            <td className='product-table-sku'>{product.sku}</td>
+                            <td className='product-table-sku codigo'>{product.sku}</td>
                             <td>{product.name}</td>
                             <td>{product.category}</td>
                             <td className='product-table-number'>{formatPrice(product.price)}</td>
                             <td className='product-table-number'>{product.stock}</td>
                             <td>
                                 <div className='product-table-labels'>
-                                    {product.labels.map(({ key, text }) => (
-                                        <span key={key} className={`product-table-label product-table-label-${key}`}>
-                                            {text}
-                                        </span>
-                                    ))}
+                                    {product.labels.map(({ key, text }) => {
+                                        const { className, Icon } = chipByLabel[key] ?? defaultChip
+                                        return (
+                                            <span key={key} className={className}>
+                                                <Icon size={16} />
+                                                {text}
+                                            </span>
+                                        )
+                                    })}
                                 </div>
                             </td>
                             <td>
@@ -41,7 +56,7 @@ function ProductTable({ products, formatPrice, onEdit }) {
                                     aria-label={`Editar precio de ${product.name}`}
                                     onClick={() => onEdit(product)}
                                 >
-                                    Editar
+                                    <Pencil size={16} />Editar
                                 </button>
                             </td>
                         </tr>

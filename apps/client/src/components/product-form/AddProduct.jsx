@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
 
@@ -102,7 +103,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                             <p>{created.sku} · {created.name}</p>
                         </div>
                         <button type='button' className='product-form-close' aria-label='Cerrar' onClick={close}>
-                            ✕
+                            <X size={20} />
                         </button>
                     </header>
 
@@ -137,7 +138,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                         <p>El precio final lo calcula el sistema al guardar.</p>
                     </div>
                     <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
-                        ✕
+                        <X size={20} />
                     </button>
                 </header>
 

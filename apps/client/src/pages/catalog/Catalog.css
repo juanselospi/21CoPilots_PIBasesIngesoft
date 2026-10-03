@@ -13,9 +13,7 @@
 }
 
 .catalog-title {
-  color: #111827;
-  font-size: clamp(24px, 4vw, 32px);
-  font-weight: 700;
+  font-size: clamp(24px, 4vw, var(--texto-seccion));
 }
 
 .catalog-products {
@@ -31,35 +29,38 @@
   gap: 16px;
   box-sizing: border-box;
   padding: 32px 24px;
-  border-radius: 8px;
-  background: #f1f3f6;
-  color: #4b5563;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
   text-align: center;
 }
 
 .catalog-status a {
-  color: #1f2937;
-  font-weight: 500;
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
 .catalog-status-error {
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .catalog-status-button {
   padding: 10px 24px;
   border: none;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .catalog-status-button:hover {
-  background: #1e293b;
+  background: var(--color-principal-hover);
 }
 
 @media (max-width: 1024px) {

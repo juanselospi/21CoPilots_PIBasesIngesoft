@@ -6,35 +6,44 @@
   flex-direction: column;
   gap: 16px;
   padding: 32px 24px;
-  background: #f8f9fb;
+  background: var(--color-fondo);
   text-align: left;
 }
 
 /* Botón base de la página: fondo blanco con borde gris */
 .products-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   padding: 10px 18px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2937;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .products-button:hover {
-  background: #f1f3f6;
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
 }
 
-/* Variante principal del botón (ej. "Nuevo producto"): fondo oscuro y texto blanco */
+/* Variante principal del botón (ej. "Nuevo producto"): azul principal y texto blanco */
 .products-button-primary {
-  border-color: #334155;
-  background: #334155;
-  color: #fff;
+  border-color: var(--color-principal);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+  font-weight: 700;
 }
 
 .products-button-primary:hover {
-  background: #1e293b;
+  border-color: var(--color-principal-hover);
+  background: var(--color-principal-hover);
+  color: var(--color-sobre-principal);
 }
 
 /* Encabezado */
@@ -45,14 +54,12 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-borde);
 }
 
 .products-header h1 {
   margin: 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: var(--texto-seccion);
 }
 
 /* Grupo de botones de acción del encabezado */
@@ -66,12 +73,10 @@
 /* Campo de búsqueda de productos */
 .products-search {
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2937;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
 }
 
 /* Fila con filtros, cambio de vista y orden */
@@ -86,41 +91,41 @@
   display: flex;
   margin-left: auto;
   padding: 3px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
 }
 
 .products-view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background: none;
-  color: #6b7280;
+  color: var(--color-texto-suave);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
   cursor: pointer;
 }
 
 /* Resalta la vista seleccionada */
 .products-view-toggle button.active {
-  background: #e5e7eb;
-  color: #1f2937;
-  font-weight: 600;
+  background: var(--color-tinte);
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
-/* Selects de orden y de cantidad por página.
-   color-scheme: light evita que el navegador oscurezca el menú en modo oscuro. */
+/* Selects de orden y de cantidad por página */
 .products-sort,
 .products-page-size {
   padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2937;
-  color-scheme: light;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
 }
 
 /* Filtros activos */
@@ -138,30 +143,36 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #fff;
-  color: #1f2937;
-  font-size: 13px;
+  padding: 4px 8px 4px 12px;
+  border-radius: var(--radio-pastilla);
+  background: var(--color-tinte);
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
 }
 
 /* Botones de texto sin fondo: quitar un filtro y "Limpiar filtros" */
 .products-filter-tag button,
 .products-clear-filters {
+  display: inline-flex;
   padding: 0;
   border: none;
   background: none;
-  color: #1f2937;
+  color: inherit;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--texto-pequeno);
   cursor: pointer;
+}
+
+.products-clear-filters {
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
 /* Texto con la cantidad de productos encontrados */
 .products-count {
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 /* Cuadrícula */
@@ -178,22 +189,24 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
 }
 
 /* Imagen del producto con proporción fija; si no hay, un espacio gris con "Sin imagen" */
 .products-card-image {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 4px;
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
-  background: #e5e7eb;
-  color: #9ca3af;
-  font-size: 13px;
+  background: var(--color-tinte);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
 /* Datos del producto; ocupa el alto restante para alinear las tarjetas */
@@ -206,9 +219,7 @@
 }
 
 .products-card-sku {
-  color: #6b7280;
-  font-size: 12px;
-  font-weight: 600;
+  color: var(--color-texto-suave);
 }
 
 /* Nombre del producto, recortado a 2 líneas con "..." */
@@ -216,9 +227,9 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: #1f2937;
-  font-size: 15px;
-  font-weight: 500;
+  color: var(--color-texto);
+  font-size: var(--texto-producto);
+  font-weight: 600;
   line-height: 1.35;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -226,16 +237,17 @@
 }
 
 .products-card-category {
-  color: #6b7280;
-  font-size: 13px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 /* Precio destacado; el margen automático empuja el botón al fondo de la tarjeta */
 .products-card-price {
   margin-bottom: auto;
-  color: #111827;
-  font-size: 22px;
-  font-weight: 700;
+  color: var(--color-titulo);
+  font-size: var(--texto-precio);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Separación del botón dentro de la tarjeta */
@@ -252,10 +264,14 @@
   align-items: center;
   gap: 8px;
   padding: 48px 16px;
-  border: 1px dashed #d1d5db;
-  border-radius: 8px;
-  color: #6b7280;
+  border: 1.5px dashed var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  color: var(--color-texto-suave);
   text-align: center;
+}
+
+.products-empty h2 {
+  font-size: var(--texto-subtitulo);
 }
 
 /* Caja de "Cargando…" y de error con "Reintentar", igual que en Catalog.css */
@@ -266,9 +282,10 @@
   gap: 16px;
   margin: 0;
   padding: 32px 24px;
-  border-radius: 8px;
-  background: #f1f3f6;
-  color: #6b7280;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
   text-align: center;
 }
 
@@ -277,23 +294,25 @@
 }
 
 .products-status-error {
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .products-status-button {
   padding: 10px 24px;
   border: none;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .products-status-button:hover {
-  background: #1e293b;
+  background: var(--color-principal-hover);
 }
 
 /* Paginación */
@@ -305,30 +324,39 @@
   align-items: center;
   gap: 8px;
   padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-borde);
 }
 
 .products-pagination button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 8px 14px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radio-control);
   background: none;
-  color: #1f2937;
+  color: var(--color-texto);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
   cursor: pointer;
+}
+
+.products-pagination button:hover {
+  color: var(--color-enlace);
 }
 
 /* "Anterior" en la primera página y "Siguiente" en la última */
 .products-pagination button:disabled {
-  color: #9ca3af;
+  color: var(--color-texto-suave);
+  opacity: 0.6;
   cursor: default;
 }
 
 /* Resalta la página actual */
 .products-pagination button.active {
-  background: #334155;
-  color: #fff;
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
 }
 
 /* Empuja el select de cantidad por página a la derecha */
