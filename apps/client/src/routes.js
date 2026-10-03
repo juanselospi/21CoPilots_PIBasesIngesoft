@@ -3,3 +3,8 @@
 export function catalogPath(category) {
     return category ? `/catalogo/${encodeURIComponent(category)}` : '/catalogo'
 }
+
+// Ruta de la ficha de un producto, se identifica por su SKU
+export function productPath(sku) {
+    return `/producto/${encodeURIComponent(sku)}`
+}

@@ -4,6 +4,7 @@ import StoreLayout from './components/store-layout/StoreLayout.jsx'
 import AdminRoute from './components/admin-route/AdminRoute.jsx'
 import Home from './pages/home/Home.jsx'
 import Catalog from './pages/catalog/Catalog.jsx'
+import ProductDetail from './pages/product-detail/ProductDetail.jsx'
 import Products from './pages/products/Products.jsx'
 import Access from './pages/access/Access.jsx'
 
@@ -16,6 +17,7 @@ function App() {
             <Route index element={<Home />} />
             <Route path='catalogo' element={<Catalog />} />
             <Route path='catalogo/:category' element={<Catalog />} />
+            <Route path='producto/:sku' element={<ProductDetail />} />
           </Route>
           <Route path='/acceso' element={<Access />} />
           <Route path='/admin' element={<AdminRoute />}>

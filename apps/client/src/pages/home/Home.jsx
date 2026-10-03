@@ -3,7 +3,7 @@ import './Home.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { useCatalogo } from '../../hooks/useCatalogo.js'
-import { catalogPath } from '../../routes.js'
+import { catalogPath, productPath } from '../../routes.js'
 
 const infoItems = [
     { title: 'Entregas en el GAM', description: 'Mensajero, Uber Flash, Correos de CR' },
@@ -68,7 +68,7 @@ function Home() {
                         </div>
                         <div className='home-latest-products'>
                             {latestProducts.map((product) => (
-                                <ProductCard key={product.sku} product={product} />
+                                <ProductCard key={product.sku} product={product} to={productPath(product.sku)} />
                             ))}
                         </div>
                     </section>
@@ -113,7 +113,7 @@ function CategorySection({ category }) {
             </div>
             <div className='home-category-products'>
                 {datos.map(toCardProduct).map((product) => (
-                    <ProductCard key={product.sku} product={product} compact />
+                    <ProductCard key={product.sku} product={product} to={productPath(product.sku)} compact />
                 ))}
             </div>
         </section>
