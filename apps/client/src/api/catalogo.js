@@ -26,19 +26,9 @@ export function listarCategorias({ signal } = {}) {
     return pedir('/api/catalogo/categorias', { signal })
 }
 
-/**
- * Listado del panel (RF-43): todos los productos, también los que no se ven
- * en la tienda. Solo administrador; viaja con la cookie de sesión.
- *
- * Devuelve { datos, meta: { total, pagina, limite } }. Cada producto trae lo
- * del catálogo público más proveedor, costoItem, porcentajeImportacion,
- * margenGanancia, tasaImpuesto, existencias, desglosePrecio y etiquetas.
- *
- * Filtros opcionales: `q` (nombre o código), `categoria`, `proveedor`,
- * `disponibilidad`, `existenciasBajas`, `margenNegativo`, `precioMin`,
- * `precioMax`. Orden: `nombre`, `-nombre`, `precio`, `-precio`,
- * `existencias` o `sku`. `limite` es 24, 48 o 96 y `pagina` empieza en 0.
- */
+// Productos del panel de administración, incluidos los ocultos en la tienda (RF-43).
+// Devuelve { datos, meta } donde meta trae el total para paginar.
+// Todos los filtros son opcionales; `pagina` empieza en 0.
 export function listarParaAdministracion(
     { q, categoria, proveedor, disponibilidad, existenciasBajas, margenNegativo, precioMin, precioMax, orden, limite, pagina } = {},
     { signal } = {},
@@ -48,4 +38,10 @@ export function listarParaAdministracion(
         signal,
         conMeta: true,
     })
+}
+
+// Guarda el costo, la importación o el margen de un producto (RF-01).
+// El servidor recalcula el precio y devuelve el producto actualizado.
+export function actualizarPrecio(sku, cambios, { signal } = {}) {
+    return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }

@@ -181,3 +181,34 @@
   color: #dc2626;
   font-size: 12px;
 }
+
+/* Botones e inputs mientras se guarda, y "Guardar" sin cambios */
+.product-edit-button:disabled,
+.product-edit-close:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.product-edit-button-primary:disabled:hover {
+  background: #334155;
+}
+
+/* Aviso de error del servidor al guardar */
+.product-edit-alert {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+/* Aviso de que el precio se guardó */
+.product-edit-success {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 13px;
+}

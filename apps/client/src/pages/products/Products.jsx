@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import './Products.css'
 import ProductEditModal from '../../components/product-edit-modal/ProductEditModal.jsx'
+import { actualizarPrecio } from '../../api/catalogo.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
-import { toAdminProduct } from './toAdminProduct.js'
+import { toAdminProduct, toModalFields, toPriceChanges } from './toAdminProduct.js'
 
 const priceFormat = new Intl.NumberFormat('es-CR', {
     style: 'currency',
@@ -11,7 +12,7 @@ const priceFormat = new Intl.NumberFormat('es-CR', {
     maximumFractionDigits: 0,
 })
 
-// Las claves son las que acepta el servidor en `orden` (RF-43)
+// Opciones de orden; el value es lo que entiende el servidor (RF-43)
 const sortOptions = [
     { value: 'nombre', label: 'Nombre A–Z' },
     { value: '-nombre', label: 'Nombre Z–A' },
@@ -21,27 +22,23 @@ const sortOptions = [
     { value: 'sku', label: 'Código' },
 ]
 
-// Los únicos tamaños de página que acepta el servidor
+// Tamaños de página que acepta el servidor
 const pageSizes = [24, 48, 96]
 
-// Espera a que el usuario deje de escribir antes de buscar
+// Espera para buscar hasta que el usuario deje de escribir
 const SEARCH_DELAY_MS = 300
 
 // Cuántos números de página se muestran a la vez
 const PAGE_WINDOW = 5
 
-// TODO: leer de la configuración del negocio que entregue la API (RES-06)
-const taxRate = 13
-
-// Números de página alrededor de la actual; empiezan en 0 como en el servidor
+// Números de página que se muestran alrededor de la actual (empiezan en 0)
 const visiblePages = (current, count) => {
     const first = Math.max(0, Math.min(current - Math.floor(PAGE_WINDOW / 2), count - PAGE_WINDOW))
     const last = Math.min(count - 1, first + PAGE_WINDOW - 1)
     return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }
 
-// Listado del panel (RF-43). Es el contenedor: pide los productos al servidor
-// con la búsqueda, el orden y la página, y los pasa traducidos a la tarjeta.
+// Página de productos del panel (RF-43): busca, ordena, pagina y edita precios.
 function Products() {
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -51,7 +48,7 @@ function Products() {
     const [page, setPage] = useState(0)
     const [editingProduct, setEditingProduct] = useState(null)
 
-    // Una búsqueda nueva vuelve a la primera página
+    // Busca después de la pausa y vuelve a la primera página
     useEffect(() => {
         const timer = setTimeout(() => {
             setQuery(search.trim())
@@ -83,8 +80,17 @@ function Products() {
         setPage(0)
     }
 
-    // TODO: enviar los cambios a la API; el servidor recalcula el precio (RF-51)
-    const handleSave = () => setEditingProduct(null)
+    // Guarda el precio (RF-01) y recarga el listado.
+    // Le devuelve al modal el producto actualizado o el error.
+    const handleSave = async (sku, values) => {
+        try {
+            const actualizado = await actualizarPrecio(sku, toPriceChanges(values))
+            listado.recargar()
+            return { product: toAdminProduct(actualizado) }
+        } catch (error) {
+            return { error: error.message, fields: toModalFields(error.detalles?.campos ?? []) }
+        }
+    }
 
     return (
         <main className='products'>
@@ -237,7 +243,7 @@ function Products() {
             {editingProduct && (
                 <ProductEditModal
                     product={editingProduct}
-                    taxRate={taxRate}
+                    formatPrice={priceFormat.format}
                     onClose={() => setEditingProduct(null)}
                     onSave={handleSave}
                 />
