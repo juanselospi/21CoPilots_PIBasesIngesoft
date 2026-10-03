@@ -243,9 +243,8 @@
 
 /* Estados */
 
-/* Caja con borde punteado para "sin resultados" y la vista de tabla pendiente */
-.products-empty,
-.products-table-placeholder {
+/* Caja con borde punteado para "sin resultados" */
+.products-empty {
   display: flex;
   flex-direction: column;
   align-items: center;

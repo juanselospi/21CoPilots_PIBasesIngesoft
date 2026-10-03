@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
+import ProductTable from '../../components/product-table/ProductTable.jsx'
 import { activeFilterTags, emptyFilters } from '../../components/product-filters/productFilters.js'
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
@@ -290,8 +291,11 @@ function Products() {
                             ))}
                         </section>
                     ) : (
-                        // TODO: vista de tabla (Código · Nombre · Categoría · Precio · Existencias · Etiquetas)
-                        <section className='products-table-placeholder'>Vista de tabla pendiente</section>
+                        <ProductTable
+                            products={products}
+                            formatPrice={priceFormat.format}
+                            onEdit={setEditingProduct}
+                        />
                     )}
                 </>
             )}
