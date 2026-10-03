@@ -6,9 +6,10 @@ const availabilityByDisponibilidad = {
 }
 
 // Pasa el producto del catálogo a las props de ProductCard.
-export const toCardProduct = ({ sku, nombre, categoria, precioFinal, imagenUrl, disponibilidad }) => ({
+export const toCardProduct = ({ sku, nombre, descripcion, categoria, precioFinal, imagenUrl, disponibilidad }) => ({
     sku,
     name: nombre,
+    description: descripcion,
     category: categoria,
     price: precioFinal,
     image: imagenUrl,

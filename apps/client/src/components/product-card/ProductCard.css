@@ -8,7 +8,18 @@
   text-align: left;
 }
 
+.product-card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-card-name .product-card-link:hover {
+  text-decoration: underline;
+}
+
 .product-card-image {
+  display: block;
   width: 100%;
   aspect-ratio: 5 / 4;
   object-fit: cover;

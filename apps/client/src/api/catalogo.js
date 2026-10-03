@@ -15,6 +15,12 @@ export function listarProductos({ categoria, q, limite, pagina } = {}, { signal 
     return pedir('/api/catalogo/productos', { parametros: { categoria, q, limite, pagina }, signal })
 }
 
+// Devuelve la ficha de un producto visible, con los mismos campos que el listado.
+// Si no existe o esta oculto el servidor responde 404
+export function obtenerProducto(sku, { signal } = {}) {
+    return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { signal })
+}
+
 // Devuelve las categorías: { nombre, cantidadDeProductos }.
 export function listarCategorias({ signal } = {}) {
     return pedir('/api/catalogo/categorias', { signal })

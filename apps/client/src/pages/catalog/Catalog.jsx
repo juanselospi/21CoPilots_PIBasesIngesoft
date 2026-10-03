@@ -4,7 +4,7 @@ import './Catalog.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { useCatalogo } from '../../hooks/useCatalogo.js'
-import { catalogPath } from '../../routes.js'
+import { catalogPath, productPath } from '../../routes.js'
 
 // Es el maximo que acepta el servidor -> la paginacion queda pendiente en otro sprint
 const PRODUCT_LIMIT = 48
@@ -51,7 +51,7 @@ function Catalog() {
             ) : (
                 <section className='catalog-section catalog-products'>
                     {products.map((product) => (
-                        <ProductCard key={product.sku} product={product} />
+                        <ProductCard key={product.sku} product={product} to={productPath(product.sku)} />
                     ))}
                 </section>
             )}
