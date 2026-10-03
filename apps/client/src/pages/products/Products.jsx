@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
+import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
+import { activeFilterTags, emptyFilters } from '../../components/product-filters/productFilters.js'
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
 import EditPrice from '../../components/product-form/EditPrice.jsx'
@@ -40,7 +42,7 @@ const visiblePages = (current, count) => {
     return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }
 
-// Página de productos del panel (RF-43): busca, ordena, pagina, agrega productos y edita precios.
+// Página de productos del panel (RF-43): busca, filtra, ordena, pagina, agrega productos y edita precios.
 function Products() {
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -48,6 +50,8 @@ function Products() {
     const [sort, setSort] = useState(sortOptions[0].value)
     const [pageSize, setPageSize] = useState(pageSizes[0])
     const [page, setPage] = useState(0)
+    const [filters, setFilters] = useState(emptyFilters)
+    const [showFilters, setShowFilters] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [creating, setCreating] = useState(false)
 
@@ -60,16 +64,27 @@ function Products() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const listado = useListadoAdministrativo({ q: query, orden: sort, limite: pageSize, pagina: page })
+    // Las casillas sin marcar no se envían
+    const listado = useListadoAdministrativo({
+        q: query,
+        orden: sort,
+        limite: pageSize,
+        pagina: page,
+        ...filters,
+        existenciasBajas: filters.existenciasBajas || undefined,
+        margenNegativo: filters.margenNegativo || undefined,
+    })
     const products = listado.datos?.datos.map(toAdminProduct) ?? []
     const total = listado.datos?.meta.total ?? 0
     const pageCount = Math.ceil(total / pageSize)
     const firstShown = page * pageSize + 1
     const lastShown = page * pageSize + products.length
 
-    // Categorías que ya existen, como sugerencias al agregar un producto
+    // Categorías que ya existen: opciones del filtro y sugerencias al agregar un producto
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
+
+    const filterTags = activeFilterTags(filters, priceFormat.format)
 
     const changeSort = (value) => {
         setSort(value)
@@ -85,6 +100,27 @@ function Products() {
         setSearch('')
         setQuery('')
         setPage(0)
+    }
+
+    const applyFilters = (next) => {
+        setFilters(next)
+        setPage(0)
+        setShowFilters(false)
+    }
+
+    const removeFilter = (key) => {
+        setFilters({ ...filters, [key]: emptyFilters[key] })
+        setPage(0)
+    }
+
+    const clearFilters = () => {
+        setFilters(emptyFilters)
+        setPage(0)
+    }
+
+    const clearSearchAndFilters = () => {
+        clearSearch()
+        clearFilters()
     }
 
     // Guarda el precio (RF-01) y recarga el listado.
@@ -141,9 +177,13 @@ function Products() {
             />
 
             <section className='products-toolbar'>
-                {/* TODO: panel de filtros (categoría, disponibilidad, existencias bajas, margen negativo, precio) */}
-                <button type='button' className='products-button'>
-                    Filtros
+                <button
+                    type='button'
+                    className='products-button'
+                    aria-expanded={showFilters}
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    Filtros{filterTags.length > 0 && ` (${filterTags.length})`}
                 </button>
 
                 <div className='products-view-toggle'>
@@ -174,6 +214,29 @@ function Products() {
                 </select>
             </section>
 
+            {/* key: si cambian los filtros aplicados, el panel arranca de nuevo con ellos */}
+            {showFilters && (
+                <ProductFilters
+                    key={JSON.stringify(filters)}
+                    filters={filters}
+                    categories={categoryNames}
+                    onApply={applyFilters}
+                    onClose={() => setShowFilters(false)}
+                />
+            )}
+
+            {filterTags.length > 0 && (
+                <section className='products-active-filters'>
+                    {filterTags.map(({ key, label }) => (
+                        <span key={key} className='products-filter-tag'>
+                            {label}
+                            <button type='button' aria-label={`Quitar filtro ${label}`} onClick={() => removeFilter(key)}>✕</button>
+                        </span>
+                    ))}
+                    <button type='button' className='products-clear-filters' onClick={clearFilters}>Limpiar filtros</button>
+                </section>
+            )}
+
             {listado.cargando ? (
                 <p className='products-status' role='status'>Cargando productos…</p>
             ) : listado.error ? (
@@ -184,12 +247,12 @@ function Products() {
                     </button>
                 </div>
             ) : products.length === 0 ? (
-                query ? (
+                query || filterTags.length > 0 ? (
                     <section className='products-empty'>
                         <h2>No hay productos que coincidan</h2>
-                        <p>Pruebe con otro término de búsqueda.</p>
-                        <button type='button' className='products-button' onClick={clearSearch}>
-                            Limpiar búsqueda
+                        <p>Pruebe con otra búsqueda o quite algunos filtros.</p>
+                        <button type='button' className='products-button' onClick={clearSearchAndFilters}>
+                            Limpiar búsqueda y filtros
                         </button>
                     </section>
                 ) : (
