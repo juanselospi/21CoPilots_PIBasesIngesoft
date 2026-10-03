@@ -1,7 +1,7 @@
 // Campos de precio que comparten los modales de agregar y editar producto (SCRUM-23).
 // Los precios derivados los calcula el servidor (RF-03, RF-04, RF-05).
 export const priceFields = [
-    { key: 'costoItem', label: 'Costo del ítem', unit: '₡', allowNegative: false },
+    { key: 'costoItem', label: 'Costo del ítem', unit: '$', allowNegative: false },
     { key: 'importacionPct', label: 'Importación', unit: '%', allowNegative: false },
     // RN-02, RF-43: admite margen negativo, pero mayor que -100 %
     { key: 'margenPct', label: 'Margen', unit: '%', allowNegative: true },

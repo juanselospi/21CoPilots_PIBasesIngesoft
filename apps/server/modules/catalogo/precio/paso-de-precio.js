@@ -16,7 +16,7 @@ export class PasoDePrecio {
   }
 
   /**
-   * @param {number} monto monto acumulado hasta este paso, en colones
+   * @param {number} monto monto acumulado hasta este paso, en dólares
    * @param {Object} producto datos del producto (costo, importación, margen)
    * @returns {number} monto resultante
    */

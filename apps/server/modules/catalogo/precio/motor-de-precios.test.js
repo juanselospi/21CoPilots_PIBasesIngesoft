@@ -40,7 +40,7 @@ test("RN-02: un margen negativo vende por debajo del costo", () => {
 });
 
 // Los tres ejemplos de documentos/diseño/formula-precio.md
-test("₡100 con 20 % de importación y 25 % de margen da ₡169,50", () => {
+test("$100 con 20 % de importación y 25 % de margen da $169,50", () => {
   const { precioFinal, desglose } = motor.calcular({
     costoItem: 100,
     porcentajeImportacion: 20,
@@ -52,7 +52,7 @@ test("₡100 con 20 % de importación y 25 % de margen da ₡169,50", () => {
   assert.deepEqual(desglose.map((paso) => paso.monto), [100, 120, 150, 169.5]);
 });
 
-test("un margen de -10 % sobre el mismo producto da ₡122,04", () => {
+test("un margen de -10 % sobre el mismo producto da $122,04", () => {
   const { precioFinal } = motor.calcular({
     costoItem: 100,
     porcentajeImportacion: 20,

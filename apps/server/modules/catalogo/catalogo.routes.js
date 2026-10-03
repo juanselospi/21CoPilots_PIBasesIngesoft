@@ -37,7 +37,7 @@
  *     (mayúsculas, sin espacios). Cuerpo JSON con uno, dos o los tres
  *     campos; lo que no venga se queda como está:
  *
- *       costoItem              colones, 0 o más
+ *       costoItem              dólares, 0 o más
  *       porcentajeImportacion  0 o más
  *       margenGanancia         mayor que -100
  *

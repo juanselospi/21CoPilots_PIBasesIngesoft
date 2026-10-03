@@ -194,7 +194,7 @@ test("el administrador ve el listado del panel con costo, desglose, etiquetas y 
     assert.equal(typeof producto.costoItem, "number");
     assert.equal(producto.desglosePrecio.length, 4);
   }
-  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "CRC" });
+  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "USD" });
 });
 
 test("el listado del panel le pasa al servicio los filtros de la consulta", async (t) => {

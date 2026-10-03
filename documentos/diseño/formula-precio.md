@@ -13,15 +13,15 @@ El precio de venta de un producto se obtiene en tres pasos, siempre en este orde
 | 2 | Al costo total se le suma el margen de ganancia | Precio sin impuesto |
 | 3 | Al precio sin impuesto se le suma el 13 % de impuesto de venta | Precio final |
 
-**Ejemplo:** un producto que cuesta ₡100, con 20 % de importación y 25 % de margen.
+**Ejemplo:** un producto que cuesta $100, con 20 % de importación y 25 % de margen.
 
 | Paso | Cálculo | Resultado |
 |---|---|---|
-| Costo total | 100 + 20 % | ₡120,00 |
-| Precio sin impuesto | 120 + 25 % | ₡150,00 |
-| Precio final | 150 + 13 % | **₡169,50** |
+| Costo total | 100 + 20 % | $120,00 |
+| Precio sin impuesto | 120 + 25 % | $150,00 |
+| Precio final | 150 + 13 % | **$169,50** |
 
-El impuesto cobrado es la diferencia entre los dos últimos: ₡19,50.
+El impuesto cobrado es la diferencia entre los dos últimos: $19,50.
 
 ## 2. Datos que usa la fórmula
 
@@ -38,16 +38,16 @@ sistema se ingresan y se muestran como porcentaje; el resultado es el mismo.
 ## 3. Margen de ganancia
 
 El margen se calcula **sobre el costo total**, no sobre el precio de venta. Un margen
-de 25 % sobre un costo de ₡120 da ₡150. Así lo hace el Excel del cliente.
+de 25 % sobre un costo de $120 da $150. Así lo hace el Excel del cliente.
 
 **Margen negativo.** Se permite para productos en liquidación o defectuosos, que se
 venden por debajo de su costo. Con el mismo producto del ejemplo y un margen de −10 %:
 
 | Paso | Cálculo | Resultado |
 |---|---|---|
-| Costo total | 100 + 20 % | ₡120,00 |
-| Precio sin impuesto | 120 − 10 % | ₡108,00 |
-| Precio final | 108 + 13 % | **₡122,04** |
+| Costo total | 100 + 20 % | $120,00 |
+| Precio sin impuesto | 120 − 10 % | $108,00 |
+| Precio final | 108 + 13 % | **$122,04** |
 
 El margen no puede llegar a −100 %, porque el producto quedaría gratis o con precio
 negativo.
@@ -57,15 +57,15 @@ negativo.
 Los montos se muestran con **2 decimales**, pero el sistema calcula con el valor
 exacto y redondea solo lo que se muestra. Es lo mismo que hace el Excel del cliente.
 
-Ejemplo real del Excel: costo ₡49,99, importación 20 %, margen 20 %.
+Ejemplo real del Excel: costo $49,99, importación 20 %, margen 20 %.
 
 | Paso | Valor exacto | Se muestra |
 |---|---|---|
-| Costo total | 59,988 | ₡59,99 |
-| Precio sin impuesto | 71,9856 | ₡71,99 |
-| Precio final | 81,343728 | **₡81,34** |
+| Costo total | 59,988 | $59,99 |
+| Precio sin impuesto | 71,9856 | $71,99 |
+| Precio final | 81,343728 | **$81,34** |
 
-Si se redondeara en cada paso, el precio final daría ₡81,35 y no coincidiría con el
+Si se redondeara en cada paso, el precio final daría $81,35 y no coincidiría con el
 Excel.
 
 ## 5. Lo que la fórmula no incluye

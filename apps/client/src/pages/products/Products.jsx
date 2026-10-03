@@ -9,13 +9,8 @@ import EditPrice from '../../components/product-form/EditPrice.jsx'
 import { actualizarPrecio, crearProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
+import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toModalFields, toServerFields } from './toAdminProduct.js'
-
-const priceFormat = new Intl.NumberFormat('es-CR', {
-    style: 'currency',
-    currency: 'CRC',
-    maximumFractionDigits: 0,
-})
 
 // Opciones de orden; el value es lo que entiende el servidor (RF-43)
 const sortOptions = [
