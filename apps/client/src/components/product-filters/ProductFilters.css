@@ -1,0 +1,108 @@
+/* Estilos del panel de filtros (ProductFilters.jsx) */
+
+/* Caja blanca debajo de la barra de herramientas.
+   color-scheme: light evita que el navegador oscurezca los campos en modo oscuro. */
+.product-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  color-scheme: light;
+  text-align: left;
+}
+
+/* Selects y precios en columnas; bajan de línea si no caben */
+.product-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+/* Etiqueta arriba y campo abajo */
+.product-filters-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.product-filters-field select,
+.product-filters-field input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+}
+
+/* Borde rojo en los precios cuando el rango no es válido */
+.product-filters-field input[aria-invalid='true'] {
+  border-color: #dc2626;
+}
+
+/* Casillas de existencias bajas y margen negativo */
+.product-filters-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 14px;
+}
+
+.product-filters-checks label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Mensaje de error del rango de precios */
+.product-filters-error {
+  margin: 0;
+  color: #dc2626;
+  font-size: 13px;
+}
+
+/* Botones alineados a la derecha; "Quitar todos" queda a la izquierda */
+.product-filters-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.product-filters-button {
+  padding: 10px 18px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.product-filters-button:hover {
+  background: #f1f3f6;
+}
+
+/* Botón principal (Aplicar) */
+.product-filters-button-primary {
+  border-color: #334155;
+  background: #334155;
+  color: #fff;
+}
+
+.product-filters-button-primary:hover {
+  background: #1e293b;
+}
+
+/* Botón de texto sin borde (Quitar todos) */
+.product-filters-link {
+  margin-right: auto;
+  border: none;
+  background: none;
+}
