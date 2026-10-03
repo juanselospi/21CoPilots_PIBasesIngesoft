@@ -1,0 +1,66 @@
+/* Piezas que se repiten en varias pantallas */
+
+/* Chip de estado: siempre lleva palabra e icono, nunca solo el color */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: var(--radio-pastilla);
+  background: var(--estado-neutro-fondo);
+  color: var(--estado-neutro-texto);
+  font-size: var(--texto-etiqueta);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip-ok {
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+}
+
+.chip-aviso {
+  background: var(--estado-aviso-fondo);
+  color: var(--estado-aviso-texto);
+}
+
+.chip-error {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+.chip-info {
+  background: var(--estado-info-fondo);
+  color: var(--estado-info-texto);
+}
+
+/* Codigos de producto y de pedido en letra de ancho fijo */
+.codigo {
+  font-family: var(--fuente-codigo);
+  font-size: var(--texto-codigo);
+  font-weight: 500;
+}
+
+/* Logo provisional: el nombre de la tienda en la letra de marca */
+.logo {
+  display: inline-grid;
+  line-height: 1;
+  color: var(--color-enlace);
+  text-decoration: none;
+}
+
+.logo strong {
+  font-family: var(--fuente-marca);
+  font-size: var(--texto-logo);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.logo small {
+  margin-top: 4px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-lema);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}

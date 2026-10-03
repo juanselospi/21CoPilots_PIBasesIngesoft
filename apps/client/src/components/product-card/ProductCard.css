@@ -2,9 +2,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
   text-align: left;
 }
 
@@ -15,6 +15,7 @@
 }
 
 .product-card-name .product-card-link:hover {
+  color: var(--color-enlace);
   text-decoration: underline;
 }
 
@@ -23,7 +24,7 @@
   width: 100%;
   aspect-ratio: 5 / 4;
   object-fit: cover;
-  background: #e5e7eb;
+  background: var(--color-tinte);
 }
 
 .product-card-compact .product-card-image {
@@ -32,13 +33,15 @@
 
 .product-card-no-image {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 4px;
   box-sizing: border-box;
-  border-bottom: 1px dashed #9ca3af;
-  background: #f1f3f6;
-  color: #9ca3af;
-  font-size: 13px;
+  border-bottom: 1.5px dashed var(--color-borde);
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
 .product-card-body {
@@ -51,9 +54,9 @@
 
 .product-card-name {
   margin: 0;
-  color: #1f2937;
-  font-size: 15px;
-  font-weight: 500;
+  color: var(--color-texto);
+  font-size: var(--texto-producto);
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -74,60 +77,35 @@
 
 .product-card-price {
   margin: 0;
-  color: #111827;
-  font-size: 20px;
-  font-weight: 700;
+  color: var(--color-titulo);
+  font-size: var(--texto-precio);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .product-card-compact .product-card-price {
-  font-size: 17px;
+  font-size: var(--texto-producto);
 }
 
 .product-card-tax {
   margin: 0;
-  color: #6b7280;
-  font-size: 12px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
-.product-card-availability {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.product-card-availability::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.product-card-availability.in-stock {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.product-card-availability.backorder {
-  background: #fef3c7;
-  color: #b45309;
-}
-
+/* Boton de compra en el acento: dorado con letra oscura */
 .product-card-button {
   padding: 10px;
   border: none;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-acento);
+  color: var(--color-sobre-acento);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 800;
   cursor: pointer;
 }
 
 .product-card-button:hover {
-  background: #1e293b;
+  background: var(--color-acento-hover);
 }

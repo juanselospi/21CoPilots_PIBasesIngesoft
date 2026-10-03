@@ -3,34 +3,36 @@
 /* Caja con borde; en pantallas angostas la tabla se desplaza de lado */
 .product-table-wrapper {
   overflow-x: auto;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
 }
 
 .product-table {
   width: 100%;
   border-collapse: collapse;
-  color: #1f2937;
-  font-size: 14px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
   text-align: left;
 }
 
-/* Encabezado gris con texto pequeño */
+/* Encabezado con etiquetas pequenas en mayusculas */
 .product-table th {
   padding: 12px 16px;
-  border-bottom: 1px solid #d1d5db;
-  background: #f1f3f6;
-  color: #6b7280;
-  font-size: 13px;
-  font-weight: 600;
+  border-bottom: 1px solid var(--color-borde);
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 /* Celdas separadas por una línea */
 .product-table td {
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-borde);
   vertical-align: middle;
 }
 
@@ -39,18 +41,18 @@
 }
 
 .product-table tbody tr:hover {
-  background: #f8f9fb;
+  background: var(--color-tinte);
 }
 
 /* Código en gris y sin cortar */
 .product-table-sku {
-  color: #6b7280;
-  font-weight: 600;
+  color: var(--color-texto-suave);
   white-space: nowrap;
 }
 
 /* Precio y existencias alineados a la derecha */
 .product-table-number {
+  font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
 }
@@ -72,45 +74,23 @@
   gap: 6px;
 }
 
-/* Etiqueta redondeada; el color depende del tipo */
-.product-table-label {
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  color: #374151;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.product-table-label-contrapedido {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.product-table-label-margen_negativo {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.product-table-label-existencias_bajas {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-/* oculto_en_tienda usa el gris de la etiqueta base */
-
 /* Botón "Editar" de cada fila */
 .product-table-button {
-  padding: 6px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2937;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .product-table-button:hover {
-  background: #f1f3f6;
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
 }

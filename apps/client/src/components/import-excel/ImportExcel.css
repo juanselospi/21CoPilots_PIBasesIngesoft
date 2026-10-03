@@ -9,7 +9,7 @@
   justify-content: center;
   align-items: center;
   padding: 16px;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--color-overlay);
 }
 
 .import-excel-modal {
@@ -21,9 +21,9 @@
   max-height: 100%;
   padding: 24px;
   overflow-y: auto;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f2937;
+  border-radius: var(--radio-modal);
+  background: var(--color-superficie);
+  color: var(--color-texto);
   text-align: left;
 }
 
@@ -35,23 +35,32 @@
 }
 
 .import-excel-header h2 {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--texto-subtitulo);
+}
+
+.import-excel-header p {
+  margin-top: 4px;
 }
 
 .import-excel-header p,
 .import-excel-hint {
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 .import-excel-close {
-  padding: 4px 8px;
+  display: flex;
+  padding: 4px;
   border: none;
+  border-radius: var(--radio-control);
   background: none;
-  color: #6b7280;
-  font-size: 16px;
+  color: var(--color-texto-suave);
   cursor: pointer;
+}
+
+.import-excel-close:hover {
+  background: var(--color-tinte);
+  color: var(--color-enlace);
 }
 
 .import-excel-form,
@@ -59,38 +68,40 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
 }
 
 .import-excel-hint a,
 .import-excel-report {
-  color: #334155;
-  font-weight: 600;
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
 .import-excel-file {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  font-weight: 600;
 }
 
 .import-excel-file input {
   padding: 10px;
-  border: 1px dashed #d1d5db;
-  border-radius: 6px;
-  background: #f8f9fb;
+  border: 1.5px dashed var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-fondo);
   font: inherit;
+  font-weight: 400;
 }
 
 .import-excel-error {
   padding: 10px 12px;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .import-excel-ok {
-  color: #15803d;
+  color: var(--estado-ok-texto);
 }
 
 .import-excel-actions {
@@ -115,52 +126,62 @@
 
 .import-excel-counts div {
   padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
   text-align: center;
 }
 
 .import-excel-counts dt {
-  color: #6b7280;
-  font-size: 13px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .import-excel-counts dd {
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+  color: var(--color-titulo);
+  font-size: var(--texto-seccion);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .import-excel-count-rejected dd {
-  color: #b91c1c;
+  color: var(--estado-error-texto);
 }
 
 /* Tabla de filas rechazadas; si son muchas, se desplaza dentro del modal */
 .import-excel-table-wrapper {
   max-height: 240px;
   overflow-y: auto;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
 }
 
 .import-excel-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--texto-pequeno);
 }
 
 .import-excel-table th,
 .import-excel-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-borde);
   vertical-align: top;
 }
 
 .import-excel-table th {
   position: sticky;
   top: 0;
-  background: #f8f9fb;
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-align: left;
+  text-transform: uppercase;
 }
 
 /* Un motivo por línea */

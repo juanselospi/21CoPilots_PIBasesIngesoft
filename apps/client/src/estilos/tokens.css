@@ -1,0 +1,100 @@
+/* Variables de la identidad visual (documentos/diseño/propuesta-identidad-visual.html):
+   paleta C · Slime, letra 1 · Rotulo y modo oscuro automatico.
+   Es el unico archivo con colores escritos a mano, los demas usan estas variables */
+
+:root {
+  /* Paleta C · Slime */
+  --color-principal: #0A76AD;
+  --color-acento: #F2B630;
+  --color-destacado: #8EDCF7;
+  --color-oscuro: #0B2B3C;
+  --color-tinte: #E3F5FC;
+
+  /* Azul para textos, enlaces e iconos; en modo oscuro se aclara */
+  --color-enlace: var(--color-principal);
+
+  /* El dorado no sirve para texto: solo de fondo y siempre con letra oscura */
+  --color-sobre-acento: var(--color-oscuro);
+  --color-sobre-principal: #FFFFFF;
+
+  --color-principal-hover: color-mix(in srgb, var(--color-principal) 80%, var(--color-oscuro));
+  --color-acento-hover: color-mix(in srgb, var(--color-acento) 85%, var(--color-oscuro));
+
+  /* Grises comunes a las tres paletas */
+  --color-texto: #1A2233;
+  --color-texto-suave: #5A6478;
+  --color-borde: #D9DFEA;
+  --color-fondo: #F5F7FB;
+  --color-superficie: #FFFFFF;
+  --color-titulo: var(--color-oscuro);
+
+  /* Textos sobre la barra de categorias y el pie, que son azul oscuro en los dos modos */
+  --color-sobre-oscuro: #FFFFFF;
+  --color-sobre-oscuro-suave: color-mix(in srgb, var(--color-sobre-oscuro) 75%, var(--color-oscuro));
+
+  --color-overlay: color-mix(in srgb, var(--color-oscuro) 55%, transparent);
+  --sombra: 0 8px 24px color-mix(in srgb, var(--color-oscuro) 10%, transparent);
+
+  /* Colores de estado; siempre van con palabra e icono, nunca solo el color */
+  --estado-ok-fondo: #DCFCE7;
+  --estado-ok-texto: #15803D;
+  --estado-aviso-fondo: #FEF3C7;
+  --estado-aviso-texto: #A16207;
+  --estado-error-fondo: #FEE2E2;
+  --estado-error-texto: #B91C1C;
+  --estado-info-fondo: #DBEAFE;
+  --estado-info-texto: #1D4ED8;
+  --estado-neutro-fondo: #EEF2F7;
+  --estado-neutro-texto: #475569;
+
+  /* Letra 1 · Rotulo: Bungee solo en el logo y los titulos */
+  --fuente-marca: 'Bungee', 'Arial Black', sans-serif;
+  --fuente-texto: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif;
+  --fuente-codigo: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Tamanos de la tabla de la propuesta */
+  --texto-portada: 40px;
+  --texto-seccion: 28px;
+  --texto-subtitulo: 20px;
+  --texto-precio: 20px;
+  --texto-producto: 16px;
+  --texto-general: 16px;
+  --texto-pequeno: 14px;
+  --texto-codigo: 14px;
+  --texto-etiqueta: 12px;
+  --texto-logo: 24px;
+  --texto-lema: 10px;
+
+  --radio-control: 8px;
+  --radio-tarjeta: 12px;
+  --radio-modal: 16px;
+  --radio-pastilla: 999px;
+}
+
+/* Modo oscuro: cambian el azul para texto, el fondo suave y los grises */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-enlace: #6FD0F5;
+    --color-tinte: #0E3345;
+
+    --color-texto: #E6EBF5;
+    --color-texto-suave: #9AA6BF;
+    --color-borde: #27324A;
+    --color-fondo: #0B1120;
+    --color-superficie: #141C2E;
+    --color-titulo: var(--color-texto);
+
+    --sombra: none;
+
+    --estado-ok-fondo: #12341F;
+    --estado-ok-texto: #6EE7A0;
+    --estado-aviso-fondo: #3A2A08;
+    --estado-aviso-texto: #FCD34D;
+    --estado-error-fondo: #3B1218;
+    --estado-error-texto: #FCA5A5;
+    --estado-info-fondo: #172A55;
+    --estado-info-texto: #93B4FF;
+    --estado-neutro-fondo: #232C3F;
+    --estado-neutro-texto: #B6C0D3;
+  }
+}

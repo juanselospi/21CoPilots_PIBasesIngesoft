@@ -12,40 +12,45 @@
   margin-inline: auto;
 }
 
+/* Portada en el azul principal con el punteado de comic en el color destacado */
 .home-banner {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   padding: 72px 24px;
-  border-radius: 12px;
-  background: #e5e7eb;
+  border-radius: var(--radio-tarjeta);
+  background:
+    radial-gradient(color-mix(in srgb, var(--color-destacado) 38%, transparent) 1.3px, transparent 1.8px) 0 0 / 14px 14px,
+    var(--color-principal);
+  color: var(--color-sobre-principal);
   text-align: center;
 }
 
 .home-banner h1 {
-  color: #111827;
-  font-size: clamp(28px, 5vw, 44px);
-  line-height: 1.15;
+  max-width: 22ch;
+  color: var(--color-sobre-principal);
+  font-size: clamp(28px, 5vw, var(--texto-portada));
 }
 
 .home-banner p {
-  color: #4b5563;
-  font-size: 18px;
+  font-size: var(--texto-general);
+  opacity: 0.92;
 }
 
+/* Boton de la portada en el acento: dorado con letra oscura */
 .home-banner-button {
   margin-top: 20px;
   padding: 12px 28px;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
-  font-weight: 500;
+  border-radius: var(--radio-control);
+  background: var(--color-acento);
+  color: var(--color-sobre-acento);
+  font-weight: 800;
   text-decoration: none;
 }
 
 .home-banner-button:hover {
-  background: #1e293b;
+  background: var(--color-acento-hover);
 }
 
 /* Las columnas se ajustan a la cantidad de categorías que mande el servidor */
@@ -61,22 +66,26 @@
   align-items: center;
   gap: 12px;
   padding: 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  color: #1f2937;
-  font-weight: 600;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font-weight: 700;
   text-decoration: none;
 }
 
 .home-category-card:hover {
-  border-color: #334155;
+  border-color: var(--color-enlace);
 }
 
 .home-category-icon {
+  display: grid;
+  place-items: center;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: var(--color-tinte);
+  color: var(--color-enlace);
 }
 
 .home-section-header {
@@ -87,14 +96,16 @@
 }
 
 .home-section-title {
-  color: #111827;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: var(--texto-seccion);
 }
 
 .home-section-header a {
-  color: #1f2937;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -117,9 +128,10 @@
 .home-status {
   box-sizing: border-box;
   padding: 32px 24px;
-  border-radius: 8px;
-  background: #f1f3f6;
-  color: #4b5563;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
   text-align: center;
 }
 
@@ -128,28 +140,31 @@
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .home-status-button {
   padding: 10px 24px;
   border: none;
-  border-radius: 6px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .home-status-button:hover {
-  background: #1e293b;
+  background: var(--color-principal-hover);
 }
 
 .home-info {
   padding: 32px 0;
-  background: #f1f3f6;
+  border-top: 1px solid var(--color-borde);
+  background: var(--color-superficie);
 }
 
 .home-info-items {
@@ -165,23 +180,25 @@
 }
 
 .home-info-icon {
+  display: grid;
   flex-shrink: 0;
+  place-items: center;
   width: 44px;
   height: 44px;
-  border: 1px solid #d1d5db;
   border-radius: 50%;
-  background: #fff;
+  background: var(--color-tinte);
+  color: var(--color-enlace);
 }
 
 .home-info-item h3 {
-  color: #1f2937;
-  font-size: 16px;
-  font-weight: 600;
+  color: var(--color-texto);
+  font-size: var(--texto-general);
+  font-weight: 700;
 }
 
 .home-info-item p {
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 @media (max-width: 1024px) {

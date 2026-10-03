@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { Link, useParams } from 'react-router'
+import { ImageOff } from 'lucide-react'
 import './ProductDetail.css'
+import AvailabilityChip from '../../components/product-card/AvailabilityChip.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
-import { priceFormat, availabilityLabels } from '../../components/product-card/productFormat.js'
+import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useProducto } from '../../hooks/useProducto.js'
 import { catalogPath } from '../../routes.js'
 
@@ -58,7 +60,7 @@ function ProductDetail() {
                 {image ? (
                     <img className='product-detail-image' src={image} alt={name} />
                 ) : (
-                    <div className='product-detail-image product-detail-no-image'>Sin imagen</div>
+                    <div className='product-detail-image product-detail-no-image'><ImageOff size={40} />Sin imagen</div>
                 )}
 
                 <div className='product-detail-info'>
@@ -69,9 +71,7 @@ function ProductDetail() {
                         <p className='product-detail-tax'>impuesto incluido</p>
                     </div>
 
-                    <span className={`product-detail-availability ${availability}`}>
-                        {availabilityLabels[availability]}
-                    </span>
+                    <AvailabilityChip availability={availability} />
 
                     {description && <p className='product-detail-description'>{description}</p>}
                 </div>

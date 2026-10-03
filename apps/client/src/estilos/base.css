@@ -1,0 +1,75 @@
+/* Estilos generales de todas las paginas: reinicio, letra, colores de fondo y titulos */
+
+:root {
+  font-family: var(--fuente-texto);
+  font-size: var(--texto-general);
+  line-height: 1.5;
+  color: var(--color-texto);
+  background: var(--color-fondo);
+  color-scheme: light dark;
+  accent-color: var(--color-principal);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/* Bungee solo tiene un grosor, por eso los titulos van en 400 */
+h1,
+h2 {
+  color: var(--color-titulo);
+  font-family: var(--fuente-marca);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-texto-suave);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-enlace);
+  outline-offset: 2px;
+}
+
+/* Los iconos de Lucide no se encogen dentro de botones y enlaces en fila */
+.lucide {
+  flex: none;
+}

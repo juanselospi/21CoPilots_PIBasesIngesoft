@@ -11,11 +11,10 @@
   justify-content: center;
   align-items: center;
   padding: 16px;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--color-overlay);
 }
 
-/* Tarjeta blanca del modal (el <form> con role="dialog").
-   color-scheme: light evita que el navegador oscurezca los inputs en modo oscuro. */
+/* Tarjeta del modal (el <form> con role="dialog") */
 .product-form-modal {
   display: flex;
   flex-direction: column;
@@ -26,10 +25,9 @@
   max-height: 100%;
   padding: 24px;
   overflow-y: auto;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f2937;
-  color-scheme: light;
+  border-radius: var(--radio-modal);
+  background: var(--color-superficie);
+  color: var(--color-texto);
   text-align: left;
 }
 
@@ -44,25 +42,30 @@
 /* Título del modal */
 .product-form-header h2 {
   margin: 0;
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--texto-subtitulo);
 }
 
 /* Subtítulo debajo del título (ej. código y nombre del producto) */
 .product-form-header p {
-  color: #6b7280;
-  font-size: 13px;
+  margin-top: 4px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
-/* Botón "✕" para cerrar el modal, sin borde ni fondo */
+/* Botón con la X para cerrar el modal, sin borde ni fondo */
 .product-form-close {
-  padding: 4px 8px;
+  display: flex;
+  padding: 4px;
   border: none;
+  border-radius: var(--radio-control);
   background: none;
-  color: #6b7280;
-  font-size: 16px;
+  color: var(--color-texto-suave);
   cursor: pointer;
+}
+
+.product-form-close:hover {
+  background: var(--color-tinte);
+  color: var(--color-enlace);
 }
 
 /* Cada campo del formulario (<label>): etiqueta, input y mensaje de error apilados.
@@ -71,16 +74,22 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
 }
 
 /* Caja con borde que agrupa el input y su unidad ($ o %) en una sola fila */
 .product-form-input {
   display: flex;
   align-items: center;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  font-weight: 400;
+}
+
+.product-form-input:focus-within {
+  border-color: var(--color-enlace);
 }
 
 /* Input numérico: ocupa el espacio disponible y no tiene borde propio,
@@ -90,30 +99,29 @@
   min-width: 0;
   padding: 10px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radio-control);
   background: none;
-  color: #1f2937;
   font: inherit;
 }
 
 /* Unidad a la derecha del input ($ para costo, % para importación y margen) */
 .product-form-input span {
   padding: 0 12px;
-  color: #6b7280;
+  color: var(--color-texto-suave);
 }
 
 /* Campo de solo lectura con fondo gris: el impuesto de venta */
 .product-form-locked {
   padding: 12px;
-  border-radius: 6px;
-  background: #f1f3f6;
+  border-radius: var(--radio-control);
+  background: var(--color-fondo);
 }
 
 /* Texto de ayuda dentro del campo bloqueado (ej. de dónde sale el valor).
    Actualmente el JSX no incluye un <p> ahí; se aplicaría si se agrega. */
 .product-form-locked p {
-  color: #6b7280;
-  font-size: 12px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
 /* Sección de valores derivados (costo total, precio sin impuesto, precio final) */
@@ -122,8 +130,8 @@
   flex-direction: column;
   gap: 8px;
   padding-top: 12px;
-  border-top: 1px solid #e5e7eb;
-  font-size: 14px;
+  border-top: 1px solid var(--color-borde);
+  font-size: var(--texto-pequeno);
 }
 
 /* Cada fila derivada: nombre a la izquierda y valor a la derecha */
@@ -135,7 +143,8 @@
 
 /* Valor de la fila derivada en gris  */
 .product-form-derived div span:last-child {
-  color: #9ca3af;
+  color: var(--color-texto-suave);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Pie del modal: botones Cancelar y Guardar alineados a la derecha */
@@ -148,39 +157,44 @@
 /* Botón secundario (Cancelar): fondo blanco con borde gris */
 .product-form-button {
   padding: 10px 18px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #1f2937;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .product-form-button:hover {
-  background: #f1f3f6;
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
 }
 
-/* Botón principal (Guardar): se combina con .product-form-button y lo rellena de oscuro */
+/* Botón principal (Guardar): se combina con .product-form-button y lo rellena de azul */
 .product-form-button-primary {
-  border-color: #334155;
-  background: #334155;
-  color: #fff;
+  border-color: var(--color-principal);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+  font-weight: 700;
 }
 
 .product-form-button-primary:hover {
-  background: #1e293b;
+  border-color: var(--color-principal-hover);
+  background: var(--color-principal-hover);
+  color: var(--color-sobre-principal);
 }
 
 /* Marca en rojo el borde de la caja cuando su input tiene un valor inválido */
 .product-form-input:has(input[aria-invalid='true']) {
-  border-color: #dc2626;
+  border-color: var(--estado-error-texto);
 }
 
 /* Mensaje de error debajo del campo inválido */
 .product-form-error {
-  color: #dc2626;
-  font-size: 12px;
+  color: var(--estado-error-texto);
+  font-size: var(--texto-etiqueta);
 }
 
 /* Botones e inputs mientras se guarda, y "Guardar" sin cambios */
@@ -191,27 +205,28 @@
 }
 
 .product-form-button-primary:disabled:hover {
-  background: #334155;
+  border-color: var(--color-principal);
+  background: var(--color-principal);
 }
 
 /* Aviso de error del servidor al guardar */
 .product-form-alert {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 13px;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+  font-size: var(--texto-pequeno);
 }
 
 /* Aviso de que se guardó */
 .product-form-success {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 6px;
-  background: #f0fdf4;
-  color: #15803d;
-  font-size: 13px;
+  border-radius: var(--radio-control);
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+  font-size: var(--texto-pequeno);
 }
 
 /* Solo "Agregar producto" */
@@ -223,8 +238,8 @@
 
 /* Texto "(opcional)" junto a la etiqueta del campo */
 .product-form-optional {
-  color: #9ca3af;
-  font-size: 12px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
   font-weight: 400;
 }
 
@@ -234,9 +249,8 @@
   min-width: 0;
   padding: 10px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radio-control);
   background: none;
-  color: #1f2937;
   font: inherit;
   resize: vertical;
 }
@@ -253,8 +267,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #1f2937;
-  font-size: 14px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
   cursor: pointer;
 }
 

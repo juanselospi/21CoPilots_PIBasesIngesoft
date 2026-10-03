@@ -4,25 +4,25 @@
   gap: 32px;
   margin-top: auto;
   padding: 40px 48px 56px;
-  background: #334155;
+  background: var(--color-oscuro);
   text-align: left;
 }
 
 .footer-column h3 {
   margin: 0 0 12px;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  color: var(--color-sobre-oscuro);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
 }
 
 .footer-column a {
-  color: #cbd5e1;
-  font-size: 14px;
+  color: var(--color-sobre-oscuro-suave);
+  font-size: var(--texto-pequeno);
   text-decoration: none;
 }
 
 .footer-column a:hover {
-  color: #fff;
+  color: var(--color-sobre-oscuro);
   text-decoration: underline;
 }
 

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { ChevronLeft, ChevronRight, Eye, EyeOff, ShoppingCart } from 'lucide-react'
 import './Access.css'
+import Logo from '../../components/logo/Logo.jsx'
 import { logIn } from '../../api/sesion.js'
 import { useSesion } from '../../hooks/useSesion.js'
 
@@ -13,9 +15,9 @@ function Access() {
     return (
         <div className='access'>
             <header className='access-topbar'>
-                <Link to='/' className='access-logo'>LOGO</Link>
-                <Link to='/' className='access-back'>‹ Volver a la tienda</Link>
-                <a href='#' className='access-cart'>Carrito (0)</a>
+                <Link to='/' className='access-logo'><Logo /></Link>
+                <Link to='/' className='access-back'><ChevronLeft size={20} />Volver a la tienda</Link>
+                <a href='#' className='access-cart'><ShoppingCart size={20} />Carrito (0)</a>
             </header>
 
             <main className='access-main'>
@@ -110,11 +112,7 @@ function LogInForm() {
                         aria-pressed={showPassword}
                         onClick={() => setShowPassword((visible) => !visible)}
                     >
-                        <svg viewBox='0 0 24 24' width='20' height='20' aria-hidden='true'>
-                            <path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z' />
-                            <circle cx='12' cy='12' r='3' />
-                            {showPassword && <path d='M4 4l16 16' />}
-                        </svg>
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
             </div>
@@ -127,7 +125,7 @@ function LogInForm() {
                 <p>
                     ¿Primera vez aquí?{' '}
                     <button type='button' className='access-link' disabled title='Disponible próximamente'>
-                        Crear cuenta →
+                        Crear cuenta<ChevronRight size={16} />
                     </button>
                 </p>
                 <p className='access-note'>Tu carrito se conserva al iniciar sesión.</p>

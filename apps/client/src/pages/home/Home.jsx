@@ -1,4 +1,5 @@
 import { Link, useOutletContext } from 'react-router'
+import { ChevronRight, CreditCard, Gamepad2, Gem, Layers, Mail, Tag, ToyBrick, Truck } from 'lucide-react'
 import './Home.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
@@ -6,10 +7,23 @@ import { useCatalogo } from '../../hooks/useCatalogo.js'
 import { catalogPath, productPath } from '../../routes.js'
 
 const infoItems = [
-    { title: 'Entregas en el GAM', description: 'Mensajero, Uber Flash, Correos de CR' },
-    { title: 'Varias formas de pago', description: 'Por adelantado o contra entrega' },
-    { title: 'Escríbenos', description: 'Consultas al correo del negocio' },
+    { title: 'Entregas en el GAM', description: 'Mensajero, Uber Flash, Correos de CR', Icon: Truck },
+    { title: 'Varias formas de pago', description: 'Por adelantado o contra entrega', Icon: CreditCard },
+    { title: 'Escríbenos', description: 'Consultas al correo del negocio', Icon: Mail },
 ]
+
+// Las categorias vienen del servidor, asi que el icono se busca por una parte del nombre
+const categoryIcons = [
+    { match: 'coleccionable', Icon: Gem },
+    { match: 'juguete', Icon: ToyBrick },
+    { match: 'lego', Icon: ToyBrick },
+    { match: 'videojuego', Icon: Gamepad2 },
+    { match: 'tcg', Icon: Layers },
+    { match: 'trading', Icon: Layers },
+]
+
+const categoryIcon = (category) =>
+    categoryIcons.find(({ match }) => category.toLowerCase().includes(match))?.Icon ?? Tag
 
 // Página de Inicio. Es el contenedor: pide los productos al servidor y
 // se los pasa ya traducidos a ProductCard, que solo los muestra.
@@ -54,12 +68,15 @@ function Home() {
             ) : (
                 <>
                     <section className='home-section home-featured-categories'>
-                        {categoryNames.map((category) => (
-                            <Link key={category} to={catalogPath(category)} className='home-category-card'>
-                                <span className='home-category-icon' />
-                                {category}
-                            </Link>
-                        ))}
+                        {categoryNames.map((category) => {
+                            const Icon = categoryIcon(category)
+                            return (
+                                <Link key={category} to={catalogPath(category)} className='home-category-card'>
+                                    <span className='home-category-icon'><Icon size={24} /></span>
+                                    {category}
+                                </Link>
+                            )
+                        })}
                     </section>
 
                     <section className='home-section'>
@@ -81,12 +98,12 @@ function Home() {
 
             <section className='home-info'>
                 <div className='home-section home-info-items'>
-                    {infoItems.map((item) => (
-                        <div key={item.title} className='home-info-item'>
-                            <span className='home-info-icon' />
+                    {infoItems.map(({ title, description, Icon }) => (
+                        <div key={title} className='home-info-item'>
+                            <span className='home-info-icon'><Icon size={20} /></span>
                             <div>
-                                <h3>{item.title}</h3>
-                                <p>{item.description}</p>
+                                <h3>{title}</h3>
+                                <p>{description}</p>
                             </div>
                         </div>
                     ))}
@@ -109,7 +126,7 @@ function CategorySection({ category }) {
         <section className='home-section'>
             <div className='home-section-header'>
                 <h2 className='home-section-title'>{category}</h2>
-                <Link to={catalogPath(category)}>Ver todo →</Link>
+                <Link to={catalogPath(category)}>Ver todo<ChevronRight size={16} /></Link>
             </div>
             <div className='home-category-products'>
                 {datos.map(toCardProduct).map((product) => (

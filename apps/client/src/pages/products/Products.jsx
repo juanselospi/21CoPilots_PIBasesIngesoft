@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, X } from 'lucide-react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
@@ -159,7 +160,7 @@ function Products() {
                         className='products-button products-button-primary'
                         onClick={() => setCreating(true)}
                     >
-                        + Agregar producto
+                        <Plus size={20} />Agregar producto
                     </button>
                 </div>
             </section>
@@ -179,6 +180,7 @@ function Products() {
                     aria-expanded={showFilters}
                     onClick={() => setShowFilters(!showFilters)}
                 >
+                    <SlidersHorizontal size={20} />
                     Filtros{filterTags.length > 0 && ` (${filterTags.length})`}
                 </button>
 
@@ -188,14 +190,14 @@ function Products() {
                         className={view === 'grid' ? 'active' : ''}
                         onClick={() => setView('grid')}
                     >
-                        Cuadrícula
+                        <LayoutGrid size={16} />Cuadrícula
                     </button>
                     <button
                         type='button'
                         className={view === 'table' ? 'active' : ''}
                         onClick={() => setView('table')}
                     >
-                        Tabla
+                        <List size={16} />Tabla
                     </button>
                 </div>
 
@@ -226,7 +228,7 @@ function Products() {
                     {filterTags.map(({ key, label }) => (
                         <span key={key} className='products-filter-tag'>
                             {label}
-                            <button type='button' aria-label={`Quitar filtro ${label}`} onClick={() => removeFilter(key)}>✕</button>
+                            <button type='button' aria-label={`Quitar filtro ${label}`} onClick={() => removeFilter(key)}><X size={16} /></button>
                         </span>
                     ))}
                     <button type='button' className='products-clear-filters' onClick={clearFilters}>Limpiar filtros</button>
@@ -271,10 +273,10 @@ function Products() {
                                     {product.image ? (
                                         <img className='products-card-image' src={product.image} alt={product.name} />
                                     ) : (
-                                        <div className='products-card-image'>Sin imagen</div>
+                                        <div className='products-card-image'><ImageOff size={28} />Sin imagen</div>
                                     )}
                                     <div className='products-card-body'>
-                                        <p className='products-card-sku'>{product.sku}</p>
+                                        <p className='products-card-sku codigo'>{product.sku}</p>
                                         <h3 className='products-card-name'>{product.name}</h3>
                                         <p className='products-card-category'>{product.category}</p>
                                         <p className='products-card-price'>{priceFormat.format(product.price)}</p>
@@ -283,7 +285,7 @@ function Products() {
                                             className='products-button'
                                             onClick={() => setEditingProduct(product)}
                                         >
-                                            Editar
+                                            <Pencil size={16} />Editar
                                         </button>
                                     </div>
                                 </article>
@@ -303,7 +305,7 @@ function Products() {
                 {pageCount > 1 && (
                     <>
                         <button type='button' disabled={page === 0} onClick={() => setPage(page - 1)}>
-                            ‹ Anterior
+                            <ChevronLeft size={16} />Anterior
                         </button>
                         {visiblePages(page, pageCount).map((number) => (
                             <button
@@ -317,7 +319,7 @@ function Products() {
                             </button>
                         ))}
                         <button type='button' disabled={page >= pageCount - 1} onClick={() => setPage(page + 1)}>
-                            Siguiente ›
+                            Siguiente<ChevronRight size={16} />
                         </button>
                     </>
                 )}

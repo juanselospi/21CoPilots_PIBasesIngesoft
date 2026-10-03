@@ -2,7 +2,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  background: #f8f9fb;
+  background: var(--color-fondo);
   text-align: left;
 }
 
@@ -10,39 +10,40 @@
   display: flex;
   align-items: center;
   gap: 32px;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--color-borde);
+  background: var(--color-superficie);
 }
 
 .access-logo {
-  padding: 8px 32px;
-  border-radius: 6px;
-  background: #e5e7eb;
-  color: #475569;
-  font-weight: 600;
   text-decoration: none;
 }
 
-.access-back {
-  color: #1f2937;
-  font-size: 15px;
+.access-back,
+.access-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-texto);
+  font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .access-back:hover {
+  color: var(--color-enlace);
   text-decoration: underline;
 }
 
 .access-cart {
   margin-left: auto;
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  color: #1f2937;
-  font-size: 15px;
-  text-decoration: none;
-  white-space: nowrap;
+  padding: 8px 14px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.access-cart:hover {
+  color: var(--color-enlace);
 }
 
 .access-main {
@@ -57,15 +58,15 @@
   width: 100%;
   max-width: 440px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 8%);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-modal);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
 }
 
 .access-tabs {
   display: flex;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-borde);
 }
 
 .access-tab {
@@ -74,16 +75,16 @@
   border: none;
   border-bottom: 3px solid transparent;
   background: none;
-  color: #64748b;
+  color: var(--color-texto-suave);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--texto-general);
   cursor: pointer;
 }
 
 .access-tab-active {
-  border-bottom-color: #334155;
-  color: #1f2937;
-  font-weight: 600;
+  border-bottom-color: var(--color-enlace);
+  color: var(--color-enlace);
+  font-weight: 700;
 }
 
 .access-tab:disabled {
@@ -98,30 +99,28 @@
 }
 
 .access-heading h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: var(--texto-subtitulo);
 }
 
 .access-heading p {
-  margin-top: 4px;
-  color: #64748b;
+  margin-top: 8px;
+  color: var(--color-texto-suave);
 }
 
 .access-error {
   padding: 12px 14px;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
 }
 
 .access-field {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1f2937;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
 }
 
 .access-field-label {
@@ -133,21 +132,20 @@
 .access-field input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  color: #1f2937;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--texto-general);
   font-weight: 400;
 }
 
 .access-field input:focus {
-  outline: 2px solid #334155;
+  outline: 2px solid var(--color-enlace);
   outline-offset: -1px;
 }
 
 .access-field input[aria-invalid='true'] {
-  border-color: #dc2626;
+  border-color: var(--estado-error-texto);
 }
 
 .access-password {
@@ -166,49 +164,49 @@
   padding: 6px;
   border: none;
   background: none;
-  color: #64748b;
+  color: var(--color-texto-suave);
   cursor: pointer;
   transform: translateY(-50%);
 }
 
-.access-password-toggle svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.access-password-toggle:hover {
+  color: var(--color-enlace);
 }
 
 .access-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   padding: 0;
   border: none;
   background: none;
-  color: #1f2937;
+  color: var(--color-enlace);
   font: inherit;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  vertical-align: middle;
   cursor: pointer;
 }
 
 .access-link:disabled {
-  color: #94a3b8;
+  color: var(--color-texto-suave);
   cursor: not-allowed;
 }
 
 .access-submit {
   padding: 14px;
   border: none;
-  border-radius: 8px;
-  background: #334155;
-  color: #fff;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
   font: inherit;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: var(--texto-general);
+  font-weight: 700;
   cursor: pointer;
 }
 
 .access-submit:hover {
-  background: #1e293b;
+  background: var(--color-principal-hover);
 }
 
 .access-submit:disabled {
@@ -221,24 +219,20 @@
   flex-direction: column;
   gap: 16px;
   padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-borde);
+  color: var(--color-texto);
   text-align: center;
-  color: #1f2937;
 }
 
 .access-note {
-  color: #94a3b8;
-  font-size: 13px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 @media (max-width: 640px) {
   .access-topbar {
     gap: 16px;
     padding: 12px 16px;
-  }
-
-  .access-logo {
-    padding: 8px 20px;
   }
 
   .access-main {
