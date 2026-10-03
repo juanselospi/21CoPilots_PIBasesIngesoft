@@ -18,11 +18,13 @@ export class ErrorHttp extends Error {
  * Hace la petición y devuelve el campo `datos` de la respuesta.
  * - `parametros` va en la consulta; los valores vacíos no viajan.
  * - `cuerpo` se envía como JSON, o tal cual si es un FormData.
+ * - `conMeta` devuelve { datos, meta }, para las listas paginadas que traen
+ *   el total en `meta`.
  * Si algo sale mal lanza un Error con un mensaje para mostrar tal cual; si el
  * servidor respondió con error, es un ErrorHttp. Si se cancela con `signal`,
  * deja pasar el AbortError para que quien pidió sepa que no es un fallo.
  */
-export async function pedir(ruta, { metodo = 'GET', parametros, cuerpo, signal } = {}) {
+export async function pedir(ruta, { metodo = 'GET', parametros, cuerpo, signal, conMeta = false } = {}) {
     const opciones = { method: metodo, signal }
     if (cuerpo instanceof FormData) {
         opciones.body = cuerpo
@@ -48,7 +50,7 @@ export async function pedir(ruta, { metodo = 'GET', parametros, cuerpo, signal }
         })
     }
 
-    return contenido?.datos
+    return conMeta ? { datos: contenido?.datos, meta: contenido?.meta } : contenido?.datos
 }
 
 function conParametros(ruta, parametros = {}) {

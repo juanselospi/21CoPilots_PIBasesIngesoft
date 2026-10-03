@@ -7,8 +7,9 @@ import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 const MAX_SIZE_MB = 5
 
 // Botón "Cargar Excel" del encabezado de Productos. Maneja su propio estado
-// para que la página solo tenga que ponerlo.
-function ImportExcel() {
+// para que la página solo tenga que ponerlo. `onImported` avisa que entraron
+// productos, para que la página recargue su listado.
+function ImportExcel({ onImported }) {
     const [open, setOpen] = useState(false)
 
     return (
@@ -16,12 +17,12 @@ function ImportExcel() {
             <button type='button' className='products-button' onClick={() => setOpen(true)}>
                 Cargar Excel
             </button>
-            {open && <ImportExcelModal onClose={() => setOpen(false)} />}
+            {open && <ImportExcelModal onClose={() => setOpen(false)} onImported={onImported} />}
         </>
     )
 }
 
-function ImportExcelModal({ onClose }) {
+function ImportExcelModal({ onClose, onImported }) {
     const [file, setFile] = useState(null)
     const [error, setError] = useState(null)
     const [uploading, setUploading] = useState(false)
@@ -71,6 +72,7 @@ function ImportExcelModal({ onClose }) {
         setError(null)
         try {
             setResult(await importProducts(file))
+            onImported?.()
         } catch (importError) {
             setError(importError.message)
         } finally {

@@ -257,6 +257,44 @@
   text-align: center;
 }
 
+/* Caja de "Cargando…" y de error con "Reintentar", igual que en Catalog.css */
+.products-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 32px 24px;
+  border-radius: 8px;
+  background: #f1f3f6;
+  color: #6b7280;
+  text-align: center;
+}
+
+.products-status p {
+  margin: 0;
+}
+
+.products-status-error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.products-status-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  background: #334155;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.products-status-button:hover {
+  background: #1e293b;
+}
+
 /* Paginación */
 
 /* Botones de página centrados, separados por una línea superior */
@@ -278,6 +316,12 @@
   font: inherit;
   font-size: 14px;
   cursor: pointer;
+}
+
+/* "Anterior" en la primera página y "Siguiente" en la última */
+.products-pagination button:disabled {
+  color: #9ca3af;
+  cursor: default;
 }
 
 /* Resalta la página actual */
