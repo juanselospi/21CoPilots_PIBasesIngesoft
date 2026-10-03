@@ -74,7 +74,7 @@
   font-size: 14px;
 }
 
-/* Caja con borde que agrupa el input y su unidad (₡ o %) en una sola fila */
+/* Caja con borde que agrupa el input y su unidad ($ o %) en una sola fila */
 .product-form-input {
   display: flex;
   align-items: center;
@@ -96,7 +96,7 @@
   font: inherit;
 }
 
-/* Unidad a la derecha del input (₡ para costo, % para importación y margen) */
+/* Unidad a la derecha del input ($ para costo, % para importación y margen) */
 .product-form-input span {
   padding: 0 12px;
   color: #6b7280;

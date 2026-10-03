@@ -29,7 +29,7 @@ esquemas sí se permiten.
 | `reportes` | vistas `v_venta_por_linea`, `v_existencias`, `v_pedidos_por_cliente`, `v_historico_costos` | `008_reportes.sql` |
 
 Convenciones: nombres en español, `snake_case` y sin tildes; llaves primarias
-numéricas (`GENERATED ALWAYS AS IDENTITY`); montos en `NUMERIC(12,2)` colones;
+numéricas (`GENERATED ALWAYS AS IDENTITY`); montos en `NUMERIC(12,2)` dólares;
 fechas en `TIMESTAMPTZ`; restricciones con nombre (`ck_…`, `ux_…`, `ix_…`, `fk_…`)
 para que el servidor pueda traducir cada error a un mensaje de negocio.
 

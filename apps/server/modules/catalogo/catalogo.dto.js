@@ -19,7 +19,7 @@ export const aProductoPublico = (producto) => ({
   imagenUrl: producto.imagenUrl,
   categoria: producto.categoria,
   precioFinal: producto.precioFinal,
-  moneda: "CRC",
+  moneda: "USD",
   disponibilidad: producto.disponibilidad,
   admiteContrapedido: producto.admiteContrapedido,
 });
