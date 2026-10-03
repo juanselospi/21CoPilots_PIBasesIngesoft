@@ -1,24 +1,9 @@
-import { useOutletContext } from 'react-router'
+import { Link, useOutletContext } from 'react-router'
 import './Home.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
+import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { useCatalogo } from '../../hooks/useCatalogo.js'
-
-// El público solo recibe estos dos estados: los no disponibles el
-// servidor no los manda (RF-07, RF-08, RN-03).
-const availabilityByDisponibilidad = {
-    en_existencia: 'in-stock',
-    por_contrapedido: 'backorder',
-}
-
-// Pasa el producto del catálogo a las props de ProductCard (arquitectura.md § 10.1).
-const toCardProduct = ({ sku, nombre, categoria, precioFinal, imagenUrl, disponibilidad }) => ({
-    sku,
-    name: nombre,
-    category: categoria,
-    price: precioFinal,
-    image: imagenUrl,
-    availability: availabilityByDisponibilidad[disponibilidad],
-})
+import { catalogPath } from '../../routes.js'
 
 const infoItems = [
     { title: 'Entregas en el GAM', description: 'Mensajero, Uber Flash, Correos de CR' },
@@ -50,7 +35,7 @@ function Home() {
             <section className='home-section home-banner'>
                 <h1>DC Hobbies: Cultura Geek Online</h1>
                 <p>Video Juegos, Legos y Trading Cards.</p>
-                <a href='#' className='home-banner-button'>Ver catálogo</a>
+                <Link to={catalogPath()} className='home-banner-button'>Ver catálogo</Link>
             </section>
 
             {/* Mientras llegan los datos, si falla la petición o si el catálogo
@@ -70,10 +55,10 @@ function Home() {
                 <>
                     <section className='home-section home-featured-categories'>
                         {categoryNames.map((category) => (
-                            <a key={category} href='#' className='home-category-card'>
+                            <Link key={category} to={catalogPath(category)} className='home-category-card'>
                                 <span className='home-category-icon' />
                                 {category}
-                            </a>
+                            </Link>
                         ))}
                     </section>
 
@@ -124,7 +109,7 @@ function CategorySection({ category }) {
         <section className='home-section'>
             <div className='home-section-header'>
                 <h2 className='home-section-title'>{category}</h2>
-                <a href='#'>Ver todo →</a>
+                <Link to={catalogPath(category)}>Ver todo →</Link>
             </div>
             <div className='home-category-products'>
                 {datos.map(toCardProduct).map((product) => (
