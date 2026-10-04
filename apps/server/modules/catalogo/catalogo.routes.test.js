@@ -54,7 +54,7 @@ const servicio = {
     if (sku === "PKM-001") throw new ReglaDeNegocioViolada("Ya existe un producto con el código PKM-001.", "RF-01");
     return { sku, nombre: "Nuevo", categoria: "Trading Cards", precioFinal: 169.5, costoItem: 100, existencias: 0 };
   },
-  actualizarPrecio: async (sku, datos) => {
+  actualizarProducto: async (sku, datos) => {
     skusEditados.push(sku);
     if ("precioFinal" in datos) throw new EntradaInvalida("No se aceptan: precioFinal.", ["precioFinal"]);
     if (sku === "NO-EXISTE") throw new RecursoNoEncontrado("el producto", sku);

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
+import StockFields from './StockFields.jsx'
+import { validateStock } from './stockInput.js'
 
 const CATEGORY_LIST_ID = 'add-product-categories'
 
@@ -27,10 +29,11 @@ const emptyProduct = {
     costoItem: '',
     importacionPct: '',
     margenPct: '',
+    stock: '',
     backorder: false,
 }
 
-// Modal "Agregar producto". No llama a la API: usa `onCreate`, que devuelve
+// No llama a la API: usa `onCreate`, que devuelve
 // { product } si se guardó o { error, fields } si el servidor lo rechazó.
 function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     const [values, setValues] = useState(emptyProduct)
@@ -63,7 +66,8 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        const foundErrors = validatePrices(values, optionalPrices)
+        // Las existencias son opcionales: si quedan vacías el producto nace con 0
+        const foundErrors = { ...validatePrices(values, optionalPrices), ...validateStock(values, true) }
         setErrors(foundErrors)
         if (Object.keys(foundErrors).length > 0) return
 
@@ -108,7 +112,8 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                     </header>
 
                     <p className='product-form-success' role='status'>
-                        Se guardó con precio final de {formatPrice(created.price)} y 0 existencias.
+                        Se guardó con precio final de {formatPrice(created.price)} y{' '}
+                        {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
                     </p>
 
                     <footer className='product-form-actions'>
@@ -202,16 +207,14 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                     ))}
                 </section>
 
-                {/* RN-03: sin existencias, solo se muestra en la tienda si admite contrapedido */}
-                <label className='product-form-check'>
-                    <input
-                        type='checkbox'
-                        disabled={saving}
-                        checked={values.backorder}
-                        onChange={(event) => setField('backorder', event.target.checked)}
-                    />
-                    <span>Admite contrapedido (se puede vender sin existencias)</span>
-                </label>
+                <StockFields
+                    stock={values.stock}
+                    backorder={values.backorder}
+                    error={errors.stock}
+                    disabled={saving}
+                    optional
+                    onChange={setField}
+                />
 
                 {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
 

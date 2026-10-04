@@ -30,8 +30,16 @@ test("acepta un producto válido y completa los valores por defecto", () => {
     descripcion: null,
     proveedor: null,
     imagenUrl: null,
+    existencias: 0,
     admiteContrapedido: false,
   });
+});
+
+test("acepta existencias y contrapedido al crear", () => {
+  const producto = validarProductoNuevo({ ...valido, existencias: "5", admiteContrapedido: true });
+
+  assert.equal(producto.existencias, 5);
+  assert.equal(producto.admiteContrapedido, true);
 });
 
 test("RF-01: guarda el código en mayúsculas y sin espacios", () => {
@@ -68,6 +76,9 @@ const CASOS_INVALIDOS = [
   ["costo negativo", { costoItem: -1 }, "costoItem"],
   ["importación negativa", { porcentajeImportacion: -5 }, "porcentajeImportacion"],
   ["margen de -100 %", { margenGanancia: -100 }, "margenGanancia"],
+  ["existencias negativas", { existencias: -1 }, "existencias"],
+  ["existencias con decimales", { existencias: "2.5" }, "existencias"],
+  ["existencias que no son número", { existencias: "muchas" }, "existencias"],
   ["contrapedido que no es sí o no", { admiteContrapedido: "sí" }, "admiteContrapedido"],
   ["imagen que no es una dirección web", { imagenUrl: "foto.png" }, "imagenUrl"],
 ];

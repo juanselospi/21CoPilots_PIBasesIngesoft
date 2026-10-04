@@ -107,15 +107,15 @@ export class CatalogoRepository {
    * ya existe otro con ese código. Con ON CONFLICT DO NOTHING la base
    * decide sola, así dos registros al mismo tiempo no pueden duplicarlo.
    *
-   * El stock y la tasa de impuesto quedan con sus valores por defecto
-   * (0 y 13 %), y costo_total no se manda porque es una columna generada.
+   * La tasa de impuesto queda con su valor por defecto (13 %), y
+   * costo_total no se manda porque es una columna generada.
    */
   async crear(producto) {
     const { rows } = await this.#pool.query(
       `INSERT INTO catalogo.producto
               (sku, nombre, descripcion, categoria, proveedor, imagen,
-               item, importacion, margen_ganancia, contrapedido)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+               item, importacion, margen_ganancia, contrapedido, stock)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (sku) DO NOTHING
        RETURNING sku`,
       [
@@ -129,6 +129,7 @@ export class CatalogoRepository {
         producto.porcentajeImportacion,
         producto.margenGanancia,
         producto.admiteContrapedido,
+        producto.existencias,
       ]
     );
 
@@ -136,24 +137,33 @@ export class CatalogoRepository {
   }
 
   /**
-   * Cambia el costo, la importación y el margen de un producto. Un campo
-   * que llega como null se queda como está: COALESCE deja el valor actual.
-   * Los null explícitos ya los rechaza la validacion, así que null aquí
-   * solo significa que el valor "no vino".
+   * Cambia el precio (costo, importación y margen), el stock o el
+   * contrapedido de un producto.
    *
    * costo_total no se manda porque es una columna generada.
    *
    * @returns el SKU, o null si no existe el producto
    */
-  async actualizarPrecio(sku, { costoItem = null, porcentajeImportacion = null, margenGanancia = null }) {
+  async actualizar(
+    sku,
+    {
+      costoItem = null,
+      porcentajeImportacion = null,
+      margenGanancia = null,
+      existencias = null,
+      admiteContrapedido = null,
+    }
+  ) {
     const { rows } = await this.#pool.query(
       `UPDATE catalogo.producto
           SET item            = COALESCE($2, item),
               importacion     = COALESCE($3, importacion),
-              margen_ganancia = COALESCE($4, margen_ganancia)
+              margen_ganancia = COALESCE($4, margen_ganancia),
+              stock           = COALESCE($5, stock),
+              contrapedido    = COALESCE($6, contrapedido)
         WHERE sku = $1
        RETURNING sku`,
-      [sku, costoItem, porcentajeImportacion, margenGanancia]
+      [sku, costoItem, porcentajeImportacion, margenGanancia, existencias, admiteContrapedido]
     );
 
     return rows[0]?.sku ?? null;

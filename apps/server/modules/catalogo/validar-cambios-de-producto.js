@@ -1,34 +1,37 @@
 /**
- * Revisa y normaliza los cambios de precio de un producto que llegan del
- * modal "Editar precio" del panel.
- *
- * Es una actualización parcial: se puede mandar uno, dos o los tres
- * campos, y lo que no venga se queda como está. Un campo que viene vacío
- * es un error, no "dejarlo igual": para no cambiarlo, no se manda.
- *
- * Cualquier otra clave se rechaza. Los precios derivados (costo total,
- * precio sin impuesto, precio final) los calcula el motor de precios, y
- * los demás datos del producto no se editan aquí.
- *
- * Usa las mismas reglas que el registro (reglas-de-precio.js) y, como
- * validar-producto-nuevo.js, junta todos los problemas en un solo error.
+ * Revisa y normaliza los cambios de un producto que llegan del modal
+ * "Editar producto"
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
+import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
+
+// El contrapedido llega como true o false, no como texto
+const sinConvertir = (valor) => valor ?? null;
 
 const CAMPOS = Object.freeze({
-  costoItem: { siVieneVacio: "El costo es obligatorio.", problemaCon: problemaDelCosto },
-  porcentajeImportacion: { siVieneVacio: "El porcentaje de importación es obligatorio.", problemaCon: problemaDeLaImportacion },
-  margenGanancia: { siVieneVacio: "El margen es obligatorio.", problemaCon: problemaDelMargen },
+  costoItem: { leer: numero, siVieneVacio: "El costo es obligatorio.", problemaCon: problemaDelCosto },
+  porcentajeImportacion: {
+    leer: numero,
+    siVieneVacio: "El porcentaje de importación es obligatorio.",
+    problemaCon: problemaDeLaImportacion,
+  },
+  margenGanancia: { leer: numero, siVieneVacio: "El margen es obligatorio.", problemaCon: problemaDelMargen },
+  existencias: { leer: numero, siVieneVacio: "Las existencias son obligatorias.", problemaCon: problemaDeLasExistencias },
+  admiteContrapedido: {
+    leer: sinConvertir,
+    siVieneVacio: "Indique si el producto admite contrapedido.",
+    problemaCon: problemaDelContrapedido,
+  },
 });
 const NOMBRES_DE_CAMPOS = Object.keys(CAMPOS);
 
 /**
- * @returns solo los campos que vinieron, ya convertidos a número
+ * @returns solo los campos que vinieron, ya convertidos
  * @throws {EntradaInvalida} con la lista de campos que tienen problemas
  */
-export function validarCambiosDePrecio(datos) {
+export function validarCambiosDeProducto(datos) {
   if (datos === null || typeof datos !== "object" || Array.isArray(datos)) {
     throw new EntradaInvalida(`Mande un objeto con ${NOMBRES_DE_CAMPOS.join(", ")}.`);
   }
@@ -52,10 +55,10 @@ export function validarCambiosDePrecio(datos) {
   }
 
   const cambios = {};
-  for (const [campo, { siVieneVacio, problemaCon }] of Object.entries(CAMPOS)) {
+  for (const [campo, { leer, siVieneVacio, problemaCon }] of Object.entries(CAMPOS)) {
     if (!Object.hasOwn(datos, campo)) continue;
 
-    const valor = numero(datos[campo]);
+    const valor = leer(datos[campo]);
     const problema = valor === null ? siVieneVacio : problemaCon(valor);
     if (problema) anotar(campo, problema);
     else cambios[campo] = valor;
