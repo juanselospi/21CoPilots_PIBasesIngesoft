@@ -4,7 +4,8 @@
 **Fuente de verdad:** las migraciones de `database/migraciones/`. El DDL completo se
 genera con `npm run db:dump` en `database/schema.sql`.
 **Documentos relacionados:** criterios de diseño en [`arquitectura.md`](arquitectura.md)
-§ 9; EER y mapeo del Sprint 0 al final de `documentos/requerimientos/sprint_0.pdf`.
+§ 9; diagrama EER actualizado en [`EER 21 CoPilots.drawio.xml`](EER%2021%20CoPilots.drawio.xml);
+EER y mapeo del Sprint 0 al final de `documentos/requerimientos/sprint_0.pdf`.
 
 Este documento cumple dos funciones que exige el curso: describir el modelo vigente
 (diccionario de datos) y registrar **qué cambió respecto al Sprint 0 y por qué** (§ 4).
@@ -13,222 +14,244 @@ Este documento cumple dos funciones que exige el curso: describir el modelo vige
 
 ## 1. Visión general
 
-La base de datos tiene un esquema de PostgreSQL por módulo del servidor (DD-11). Solo
-el repositorio del módulo dueño escribe en su esquema; las llaves foráneas entre
-esquemas sí se permiten.
+La base de datos sigue el EER del equipo, con los ajustes de § 4. Tiene un esquema de
+PostgreSQL por módulo del servidor (DD-11): solo el repositorio del módulo dueño
+escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 
 | Esquema | Tablas | Migración |
 |---|---|---|
 | `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
-| `admin` | `administrador`, `recuperacion_contrasena`, `bitacora`, `parametro_negocio` | `003_admin.sql` |
-| `catalogo` | `categoria`, `subcategoria`, `producto` | `005_catalogo.sql` |
-| `inventario` | `existencia`, `movimiento` | `006_inventario.sql` |
-| `clientes` | `nivel_fidelidad`, `cliente`, `cliente_telefono`, `consentimiento_terminos` | `004_clientes.sql` |
-| `pedidos` | `carrito`, `linea_carrito`, `pedido`, `linea_pedido`, `historial_estado` | `007_pedidos.sql` |
-| `pagos` | `intento_pago` | `008_pagos_facturacion.sql` |
+| `admin` | `administrador` | `003_admin.sql` |
+| `clientes` | `cliente`, `cliente_telefono` | `004_clientes.sql` |
+| `catalogo` | `producto` | `005_catalogo.sql` |
+| `inventario` | `producto_administra` | `006_inventario.sql` |
+| `pedidos` | `carrito`, `agrega`, `oferta`, `pedido`, `historial_estado` | `007_pedidos.sql` |
+| `pagos` | `pago` | `008_pagos_facturacion.sql` |
 | `facturacion` | `factura` | `008_pagos_facturacion.sql` |
-| `reportes` | vistas `v_venta_por_linea`, `v_existencias`, `v_pedidos_por_cliente`, `v_historico_costos` | `009_reportes.sql` |
+| `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia` | `009_reportes.sql` |
 
-Convenciones: nombres en español, `snake_case` y sin tildes; llaves primarias
-numéricas (`GENERATED ALWAYS AS IDENTITY`); montos en `NUMERIC(12,2)` dólares;
-fechas en `TIMESTAMPTZ`; restricciones con nombre (`ck_…`, `ux_…`, `ix_…`, `fk_…`)
-para que el servidor pueda traducir cada error a un mensaje de negocio.
+En total son 14 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
+las funciones de los triggers técnicos.
+
+Convenciones: nombres en español, `snake_case` y sin tildes; **llaves naturales**
+(el correo del usuario, el SKU del producto, el código de la oferta) y llaves
+compuestas heredadas en las entidades débiles; montos en `NUMERIC(12,2)` dólares;
+fechas en `TIMESTAMPTZ`; restricciones con nombre (`ck_…`, `ux_…`, `ix_…`) para que el
+servidor pueda traducir cada error a un mensaje de negocio.
 
 ```mermaid
 erDiagram
-    CATEGORIA ||--o{ SUBCATEGORIA : agrupa
-    SUBCATEGORIA ||--o{ PRODUCTO : clasifica
-    PRODUCTO ||--|| EXISTENCIA : tiene
-    PRODUCTO ||--o{ MOVIMIENTO : afecta
-    USUARIO ||--o| CLIENTE : "cuenta de"
-    CLIENTE ||--o{ CLIENTE_TELEFONO : tiene
-    CLIENTE ||--o{ CONSENTIMIENTO_TERMINOS : acepta
-    USUARIO ||--o{ CONSENTIMIENTO_TERMINOS : acepta
-    USUARIO ||--o{ RECUPERACION_CONTRASENA : solicita
-    USUARIO ||--o{ CARRITO : tiene
-    CARRITO ||--o{ LINEA_CARRITO : contiene
-    PRODUCTO ||--o{ LINEA_CARRITO : "está en"
-    CARRITO |o--o| PEDIDO : "se convierte en"
-    CLIENTE |o--o{ PEDIDO : realiza
-    USUARIO |o--o{ PEDIDO : "registra (venta externa)"
-    PEDIDO ||--|{ LINEA_PEDIDO : contiene
-    PRODUCTO ||--o{ LINEA_PEDIDO : "se vende en"
-    PEDIDO ||--|{ HISTORIAL_ESTADO : registra
-    PEDIDO |o--o{ MOVIMIENTO : origina
-    USUARIO |o--o{ MOVIMIENTO : "responde por"
-    PEDIDO |o--o{ INTENTO_PAGO : cobra
-    CARRITO |o--o{ INTENTO_PAGO : "intenta cobrar"
-    PEDIDO ||--o| FACTURA : "se factura"
-    USUARIO |o--o{ BITACORA : actúa
+    USUARIO ||--o| ADMINISTRADOR : "es (traslapada)"
+    USUARIO ||--o| CLIENTE : "es (traslapada)"
+    USUARIO ||--o{ SESION : "Necesita (RF-53)"
+    CLIENTE ||--o{ CLIENTE_TELEFONO : "Teléfonos (multivaluado)"
+    CLIENTE ||--o{ CARRITO : "Tiene (RN-14)"
+    CARRITO ||--o{ AGREGA : Agrega
+    PRODUCTO ||--o{ AGREGA : Agrega
+    CARRITO ||--o| PEDIDO : Convierte
+    OFERTA |o--o{ PEDIDO : Aplicar
+    PEDIDO ||--|{ HISTORIAL_ESTADO : "Actualiza (RF-26)"
+    PEDIDO ||--o{ PAGO : Necesita
+    PAGO ||--o| FACTURA : "Respalda (RF-41)"
+    ADMINISTRADOR ||--o{ PRODUCTO_ADMINISTRA : "Administrar (RF-13)"
+    PRODUCTO ||--o{ PRODUCTO_ADMINISTRA : Administrar
 ```
 
 ---
 
 ## 2. Diccionario de datos
 
-Se listan las columnas con significado de negocio y las restricciones relevantes. Las
-columnas `id`, `creado_en` y `actualizado_en` se omiten salvo que tengan algo
-particular. El detalle exacto está en las migraciones.
+Se listan las columnas con significado de negocio y las restricciones relevantes. El
+detalle exacto está en las migraciones.
 
-### 2.1 `usuarios` y `admin`
+### 2.1 `usuarios`
 
-`usuario` y `sesion` están en el esquema `usuarios` (M-17); el resto, en `admin`.
+`usuario` y `sesion` están en un esquema propio porque son de todos los usuarios,
+clientes incluidos (C-14). Las escribe el módulo `admin`, que es el del inicio de
+sesión.
 
 **`usuario`** — cuentas para iniciar sesión (RF-50, RF-53).
 
 | Columna | Descripción |
 |---|---|
-| `correo` | Correo de inicio de sesión. Único sin distinguir mayúsculas (`ux_usuario_correo`) |
-| `contrasena_hash` | Hash bcrypt; nunca la contraseña en texto plano (RNF-08) |
-| `rol` | `administrador` o `cliente` (RF-50). Solo puede existir un administrador (`ux_usuario_administrador_unico`, RF-49) |
-| `activo` | Permite desactivar una cuenta sin borrarla |
+| `correo` | Llave primaria. Se guarda en minúsculas y sin espacios en los extremos (`ck_usuario_correo_normalizado`) |
+| `contrasena` | Hash bcrypt; nunca la contraseña en texto plano (RNF-08) |
+| `nombre` | Nombre para mostrar; no puede estar vacío |
 
-**`sesion`** — sesiones iniciadas (RF-53). El navegador guarda el token en una cookie
-`HttpOnly`; aquí solo se guarda su hash (`token_hash`, único) junto con `usuario_id` y
-`vence_en`. Una sesión es válida si `vence_en` no ha pasado y la cuenta está activa.
+El usuario no tiene columna de rol: es administrador si su correo está en
+`admin.administrador`, cliente si está en `clientes.cliente`, o ambos (§ 2.2).
 
-**`recuperacion_contrasena`** — enlaces de restablecimiento (RF-54). Guarda el hash
-del token (`token_hash`, único), `vence_en` y `usado_en`. Un enlace es válido si
-`usado_en` es nulo y `vence_en` no ha pasado.
+**`sesion`** — sesiones iniciadas (RF-53), entidad débil de `usuario`. El navegador
+guarda el token en una cookie `HttpOnly`; aquí solo se guarda su hash (`token_hash`,
+único en `ux_sesion_token`) junto con `fecha_creacion` y `fecha_vencimiento`, que debe
+ser posterior a la creación. Una sesión es válida si `fecha_vencimiento` no ha pasado.
+Si se borra el usuario, se borran sus sesiones.
 
-**`bitacora`** — operaciones sensibles e intentos de acceso denegados (RF-52,
-RNF-10). **Solo inserción.**
+### 2.2 `admin` y `clientes`
+
+**`admin.administrador`** — especialización de `usuario` sin atributos propios. Su
+llave es `correo_usuario`. Un índice único (`ux_administrador_unico`) impide que
+exista más de una fila (RF-49).
+
+**`clientes.cliente`** — especialización de `usuario` con los datos del comprador
+(RF-33).
 
 | Columna | Descripción |
 |---|---|
-| `usuario_id` | Quién actuó; nulo en un intento anónimo |
-| `accion` | Qué pasó: `cambio_margen`, `ajuste_existencias`, `cancelacion_pedido`, `acceso_denegado`… |
-| `entidad`, `entidad_id` | Sobre qué registro |
-| `valor_anterior`, `valor_nuevo` | `JSONB` con los valores antes y después |
+| `correo_usuario` | Llave primaria y llave foránea a `usuario`: todo cliente tiene cuenta |
+| `cedula` | Obligatoria y única (`ux_cliente_cedula`), porque la factura la exige (RN-18) |
+| `direccion` | Dirección de entrega habitual; opcional |
+| `num_compras` | Contador para la escala de fidelidad (RF-34); 0 o más. El nivel no se guarda: se deriva de este número |
 
-**`parametro_negocio`** — valores de negocio editables por el administrador
-(aprobado #10). Clave–valor con descripción. Claves iniciales:
-`monto_minimo_descuento`, `emisor_razon_social`, `emisor_cedula_juridica`,
-`version_terminos_vigente`.
+En el EER, `direccion` y "Teléfonos" forman el atributo compuesto "Datos de
+contacto" del cliente.
 
-### 2.2 `catalogo`
+**`clientes.cliente_telefono`** — atributo multivaluado "Teléfonos" del EER. Llave
+`(correo_usuario, telefono)`.
 
-**`categoria`** y **`subcategoria`** — los dos niveles fijos del SRS (RF-02). Nombres
-únicos sin distinguir mayúsculas ni espacios en los extremos.
+**Especialización traslapada.** En el EER la especialización de Usuario en
+Administrador y Cliente está marcada con "O": un mismo correo puede estar en
+`administrador` y en `cliente` a la vez.
+
+### 2.3 `catalogo`
 
 **`producto`**
 
 | Columna | Descripción |
 |---|---|
-| `sku` | Código del producto. Se guarda normalizado (mayúsculas, sin espacios en los extremos) y es único (RF-01, RF-59) |
-| `costo_item` | Costo vigente para calcular el precio. El histórico está en `inventario.movimiento` |
-| `porcentaje_importacion` | Porcentaje por aranceles (RN-01). No negativo |
-| `margen_ganancia` | Porcentaje; admite negativos para liquidación (RN-02), pero mayor que -100 |
-| `admite_contrapedido` | Si puede venderse sin existencias (RN-03, RN-13) |
-| `estado` | `activo` o `descontinuado`: baja lógica, nunca se borra (RF-18) |
-| `fecha_retiro` | Retiro programado de productos de temporada (RF-09) |
+| `sku` | Llave primaria. Se guarda en mayúsculas y sin espacios en los extremos (RF-01, RF-59) |
+| `nombre`, `descripcion`, `imagen`, `proveedor` | Datos generales; el nombre no puede estar vacío |
+| `categoria` | Texto de un solo nivel, la "familia" de la hoja del cliente (RF-02). Indexada (`ix_producto_categoria`) |
+| `item` | Costo del producto en dólares; 0 o más |
+| `importacion` | Porcentaje por aranceles (RN-01); 0 o más |
+| `costo_total` | **Columna generada**: `item × (1 + importacion / 100)`. Nunca contradice a sus partes |
+| `margen_ganancia` | Porcentaje sobre el costo total; admite negativos para liquidación (RN-02), pero mayor que −100 |
+| `tasa_impuesto` | Porcentaje de impuesto de venta, 13 por defecto (RES-06); entre 0 y 100 |
+| `stock` | Existencias actuales; 0 o más (RN-13). Es la fila que se bloquea con `FOR UPDATE` al vender |
+| `contrapedido` | Si se puede pedir aunque no haya stock (RN-03, RF-23) |
 
 El **precio de venta no se guarda** (DD-13): lo calcula el motor de precios a partir
-de `costo_item`, `porcentaje_importacion`, `margen_ganancia` y el impuesto.
+de `costo_total`, `margen_ganancia` y `tasa_impuesto`
+([`formula-precio.md`](formula-precio.md)).
 
-### 2.3 `inventario`
+### 2.4 `inventario`
 
-**`existencia`** — saldo actual por producto; es la fila que se bloquea con
-`FOR UPDATE` al vender (§ 7.3 de arquitectura). `cantidad >= 0`.
-
-**`movimiento`** — libro de todos los cambios de existencias (RF-15). **Solo
-inserción** (RF-19).
+**`producto_administra`** — historial de entradas y salidas de mercancía que registra
+el administrador (RF-13, RF-15). **Solo inserción** (RF-19).
 
 | Columna | Descripción |
 |---|---|
-| `tipo` | `carga_inicial`, `ingreso`, `venta`, `cancelacion`, `ajuste`, `reposicion` |
-| `cantidad` | Con signo: positiva en `carga_inicial`, `ingreso` y `cancelacion`; negativa en `venta` y `reposicion`; cualquiera distinta de cero en `ajuste` |
-| `costo_unitario` | Obligatorio en `carga_inicial` e `ingreso`, nulo en los demás. Es el histórico de costos (RN-06, RF-14) |
-| `motivo`, `responsable_id` | Obligatorios en `ajuste` (RF-20) |
-| `pedido_id` | Obligatorio en `venta` y `cancelacion`; prohibido en entradas y ajustes; opcional en `reposicion` |
+| `sku` | Producto que entra o sale |
+| `correo_administrador` | Quién registró el movimiento; llave foránea a `admin.administrador` |
+| `fecha` | Cuándo se registró. Forma parte de la llave `(sku, correo_administrador, fecha)` |
+| `cantidad` | Con signo: positiva es una entrada y negativa una salida; nunca 0 |
 
-**Invariante:** para cada producto, `existencia.cantidad` es igual a la suma de sus
-movimientos. `npm run db:test` lo verifica.
-
-### 2.4 `clientes`
-
-**`nivel_fidelidad`** — escala editable (RN-08, RN-09): `nivel`, `compras_minimas`
-(único) y `porcentaje_descuento` (0 a 100). El nivel de un cliente no se guarda: es el
-mayor nivel cuyo `compras_minimas` no supera su `num_compras`.
-
-**`cliente`** — datos del comprador (RF-33).
-
-| Columna | Descripción |
-|---|---|
-| `usuario_id` | Cuenta de inicio de sesión, opcional: un cliente de otro canal (RF-17) o importado (RF-60) no la tiene |
-| `correo` | Correo de contacto, único |
-| `tipo_cedula`, `cedula` | `fisica` o `juridica`; la cédula es obligatoria y única (RN-18) |
-| `num_compras` | Contador para la escala de fidelidad (RF-34) |
-
-**`cliente_telefono`** — atributo multivaluado "Teléfonos" del EER.
-
-**`consentimiento_terminos`** — aceptación de términos con fecha y versión (RF-38).
-Pertenece a un usuario, a un cliente o a ambos. **Solo inserción.**
+El saldo vigente está en `catalogo.producto.stock`; esta tabla explica cómo se llegó a
+él. Un error se corrige con otro registro de signo contrario.
 
 ### 2.5 `pedidos`
 
-**`carrito`** — carrito persistente de una cuenta (RN-14, RF-24). `estado` es
-`activo` o `convertido`; solo un carrito activo por cuenta
-(`ux_carrito_activo_por_usuario`). **No guarda precios.**
-
-**`linea_carrito`** — producto y cantidad (> 0) dentro del carrito.
-
-**`pedido`**
+**`carrito`** — carrito persistente del cliente (RN-14, RF-24), entidad débil de
+`cliente`.
 
 | Columna | Descripción |
 |---|---|
-| `id` | Identificador único del pedido (RF-30) |
-| `canal` | `en_linea`, `presencial` o `redes_sociales` (RN-05, RF-17) |
-| `cliente_id` | Obligatorio en línea; opcional en otros canales |
-| `carrito_id` | Carrito de origen, si lo hay; solo en pedidos en línea |
-| `registrado_por` | Administrador que registra una venta de otro canal; obligatorio fuera de línea |
-| `estado` | `colocado`, `procesado`, `en_transito`, `finalizado` (RF-26) o `cancelado` (RF-28). Qué transición es legal lo decide el dominio |
-| `estado_pago` | `pendiente`, `pagado` o `pendiente_cobro` (contra entrega, RF-69) |
-| `modalidad_entrega` | `mensajero`, `uber_flash`, `correos_cr`, `entrega_personal` (RF-62); obligatoria en línea |
-| `direccion_entrega`, `numero_guia` | RF-31, RF-63 |
-| `subtotal`, `descuento`, `impuesto`, `costo_envio`, `total` | Copia fija de los montos al confirmar |
+| `correo_cliente`, `num_carrito` | Llave primaria; `num_carrito` es mayor que 0 |
+| `estado_carrito` | `activo` o `convertido`. Solo un carrito activo por cliente (`ux_carrito_activo_por_cliente`) |
+| `fecha_creacion`, `fecha_actualizacion` | La segunda la mantiene un trigger |
+| `fecha_cierre` | Cuándo se convirtió en pedido. Un `CHECK` exige que solo la tengan los carritos convertidos |
 
-**`linea_pedido`** — producto, `cantidad`, `cantidad_contrapedido` (entre 0 y
-`cantidad`; no descuenta existencias) y `precio_unitario` sin impuesto vigente al
-confirmar. **Solo inserción.**
+**`agrega`** — productos agregados a un carrito; son también las líneas del pedido.
+Llave `(correo_cliente, num_carrito, sku)`.
 
-**`historial_estado`** — cada transición con su fecha y quién la hizo (RF-26). **Solo
-inserción.** El estado vigente está en `pedido.estado`; el servicio escribe ambos en
-la misma transacción, y `npm run db:test` verifica que coincidan. La fecha de entrega
-es la del registro `finalizado`.
+| Columna | Descripción |
+|---|---|
+| `cantidad_solicitada` | Mayor que 0 |
+| `precio_unitario` | Precio sin impuesto, fijado al agregar (RF-25). Un cambio posterior en el costo o el margen no lo altera |
+| `tasa_impuesto_aplicada` | Tasa de impuesto que se le aplicó; entre 0 y 100 |
+
+**`oferta`** — descuentos que define el administrador (aprobado #10, RN-08, RN-09).
+
+| Columna | Descripción |
+|---|---|
+| `codigo_oferta` | Llave primaria, en mayúsculas y sin espacios en los extremos |
+| `nombre`, `descripcion` | Para mostrar |
+| `fecha_inicio`, `fecha_fin` | Vigencia; el fin no puede ser anterior al inicio |
+| `porcentaje_descuento` | Mayor que 0 y hasta 100 |
+| `monto_minimo` | Monto mínimo de compra para aplicarla; 0 o más |
+| `nivel_fidelidad_minimo` | Nivel mínimo del cliente para aplicarla; mayor que 0 |
+
+**`pedido`** — entidad débil de `carrito` (relación «Convierte», 1 a 0..1): hereda su
+llave `(correo_cliente, num_carrito)`, que identifica al pedido (RF-30).
+
+| Columna | Descripción |
+|---|---|
+| `fecha_pedido_realizado` | Cuándo se confirmó (RF-25) |
+| `fecha_entrega` | Opcional; no puede ser anterior a la del pedido |
+| `modalidad_entrega` | `mensajero`, `uber_flash`, `correos_cr` o `entrega_personal` (RF-62) |
+| `direccion` | Dirección de entrega (RF-31) |
+| `costo_entrega` | 0 o más (RF-62, RN-16) |
+| `codigo_oferta` | Oferta aplicada, si hay una |
+
+El pedido no guarda su estado ni sus montos: el estado sale del historial y los montos
+de las líneas en `agrega`.
+
+**`historial_estado`** — entidad débil de `pedido` (relación «Actualiza») con cada
+cambio de estado (RF-26). **Solo inserción.** Su llave parcial es `estado`, así que la
+llave es `(correo_cliente, num_carrito, estado)`: un pedido pasa por cada estado a lo
+sumo una vez, lo que coincide con la máquina de estados, que no tiene ciclos (RN-15).
+`estado` es `colocado`, `procesado`, `en_transito`, `finalizado` o `cancelado` (RF-28);
+qué transición es legal lo decide el dominio. `fecha` es cuándo ocurrió el cambio. El
+estado vigente es el del registro más reciente (`reportes.v_estado_pedido`).
 
 ### 2.6 `pagos` y `facturacion`
 
-**`intento_pago`** — cada intento de cobro. Se refiere a un pedido, a un carrito o a
-ambos: un pago rechazado no crea pedido (RF-39). `metodo`: `tarjeta`, `sinpe_movil`,
-`efectivo`, `datafono`, `contra_entrega`. `resultado`: `pendiente`, `aprobado`,
-`rechazado`, `no_disponible`. `resuelto_en` es la fecha de resolución (RF-40) y es
-obligatoria salvo en `pendiente`. `referencia_externa` es nula si la pasarela no
-respondió (RNF-06).
+**`pagos.pago`** — cada intento de cobro de un pedido. Un pedido puede tener varios.
 
-**`factura`** — una por pedido (RF-41). Guarda una copia de los datos fiscales del
-emisor y del receptor y de los montos (RN-18). `estado`: `pendiente`, `emitida`,
-`rechazada`; una factura emitida tiene `consecutivo` y `emitida_en`. Sus líneas son
-las de `linea_pedido`.
+| Columna | Descripción |
+|---|---|
+| `num_referencia` | Llave primaria: la referencia que devuelve la pasarela |
+| `fecha`, `monto` | El monto es 0 o más |
+| `metodo_pago` | `tarjeta`, `sinpe_movil`, `efectivo`, `datafono` o `contra_entrega` |
+| `estado_pago` | `pendiente`, `aprobado` o `rechazado` |
+| `correo_cliente`, `num_carrito` | El pedido que se cobra; tiene que existir |
+
+**`facturacion.factura`** — respalda un pago (RF-41); un pago tiene a lo sumo una
+factura (`ux_factura_pago`). Guarda `num_factura` (llave), `fecha_emision` y
+`num_referencia`. Solo se guarda una factura emitida. El subtotal, el impuesto, el
+descuento y el total se derivan de las líneas del pedido.
+
+**No existe ninguna columna para datos de tarjeta** (RNF-09).
 
 ### 2.7 `reportes`
 
 | Vista | Uso |
 |---|---|
-| `v_venta_por_linea` | Ventas de todos los canales por producto y familia, sin pedidos cancelados (RF-44). Se filtra por `colocado_en` para el rango de fechas (RF-47) |
-| `v_existencias` | Existencias vigentes con costo y entradas del precio (RF-45); el precio lo calcula el servicio |
-| `v_pedidos_por_cliente` | Pedidos de cada cliente con fecha, monto y estado (RF-46) |
-| `v_historico_costos` | Ingresos con su costo (RN-06, RF-14) |
+| `v_estado_pedido` | Estado vigente de cada pedido: el último registro de su historial (RF-26, RF-27) |
+| `v_venta_por_producto` | Ventas por producto y categoría, sin pedidos cancelados (RF-44, RF-45). Se filtra por `fecha_pedido_realizado` para el rango de fechas (RF-47) |
+| `v_existencias` | Stock de cada producto con las entradas del precio; el precio lo calcula el servicio |
+| `v_pedidos_por_cliente` | Pedidos de cada cliente con fecha, modalidad, oferta, subtotal, impuesto, costo de entrega y estado (RF-46) |
+| `v_registro_mercancia` | Entradas y salidas de mercancía con su fecha y responsable (RF-19) |
 
 ---
 
 ## 3. Qué garantiza la base de datos y qué no
 
 Según DD-10, la base de datos garantiza **integridad** y el dominio decide las
-**reglas de negocio**. En concreto, la base de datos **no** decide:
+**reglas de negocio**.
+
+Además de las restricciones de cada tabla, `npm run db:test` verifica invariantes que
+cruzan varias tablas y que por eso garantiza el servicio y no un `CHECK`:
+
+- todo pedido viene de un carrito convertido;
+- todo pedido tiene al menos un producto;
+- el historial de cada pedido empieza en `colocado` (RF-26);
+- solo se factura un pago aprobado (RF-41).
+
+La base de datos **no** decide:
 
 - qué transiciones de estado del pedido son legales (RN-15);
-- el precio de venta ni el descuento aplicable (RN-01, RN-09);
+- el precio de venta ni si una oferta aplica a un pedido (RN-01, RN-09);
 - si un producto se muestra en el catálogo (RN-03);
 - cuándo se dispara la alerta de existencias bajas (RN-04);
 - si un cliente de cierto nivel puede pagar contra entrega (RN-11).
@@ -239,63 +262,56 @@ Todo eso vive en los servicios de `apps/server/`, con sus pruebas unitarias.
 
 ## 4. Cambios respecto al Sprint 0
 
-El punto de partida es el EER y el mapeo del Sprint 0 (páginas finales del SRS) y el
-EER actualizado que tradujo el prototipo `kit-bd-21copilots_4`. Estos cambios se
-acordaron al revisar el prototipo contra el SRS y el documento de arquitectura. **El
-diagrama EER y el mapeo deben actualizarse para reflejarlos.**
+El punto de partida es el EER y el mapeo del Sprint 0 (páginas finales del SRS). La
+base de datos sigue ese EER; los cambios son los mínimos que pide algún requerimiento
+y ya están en el diagrama actualizado (`EER 21 CoPilots.drawio.xml`). Los IDs
+coinciden con los del documento del Sprint 1, § 3.2.
 
 | ID | Cambio | Justificación | Requerimientos |
 |---|---|---|---|
-| M-01 | **Usuario con llave numérica**; el correo pasa a ser un atributo único. | Con el correo como llave, cambiarlo arrastra `ON UPDATE CASCADE` por carrito, pedido y pago, y un dato personal queda como identificador en todas las tablas. | RES-05, RF-53 |
-| M-02 | La especialización Usuario → Administrador / Cliente se reemplaza por una columna `rol` en `usuario` y una entidad **Cliente con cuenta opcional**. | El administrador no tiene atributos propios. El cliente sí debe poder existir sin cuenta: compradores de otros canales y clientes importados. RF-49 se garantiza con un índice único parcial. | RF-17, RF-49, RF-50, RF-60 |
-| M-03 | Cliente agrega `nombre`, `correo` de contacto y `tipo_cedula`. | Sin cuenta, el cliente necesita sus propios datos de contacto; la factura distingue cédula física y jurídica. | RF-33, RN-18 |
-| M-04 | **Producto:** `PrecioVenta` y `PrecioImpuesto` no se guardan; tampoco `Stock`. Se agregan `estado` (baja lógica) y `fecha_retiro`. El SKU se guarda normalizado. | El precio lo calcula el motor de precios (INC-05). Las existencias pasan a `inventario.existencia`, que es la fila que se bloquea. Excluir un producto no puede borrar su historial. | RN-01, INC-05, RF-01, RF-09, RF-18, RES-07 |
-| M-05 | `Categoria` (texto libre) pasa a las tablas **Categoría** y **Subcategoría**. | El SRS pide dos niveles configurables; con texto libre no se pueden listar ni filtrar de forma confiable. (Propuesta C-01 del prototipo.) | RF-02, RF-10 |
-| M-06 | `PRODUCTO_ADMINISTRA` pasa a **Movimiento de inventario** con tipo, cantidad con signo, costo, motivo, responsable y pedido. Solo inserción. | La relación original solo registraba entradas del administrador: no cubría ventas, cancelaciones, ajustes con motivo ni reposiciones, y se podía editar. El costo de cada ingreso forma el histórico de costos. | RF-13 a RF-20, RF-42, RN-06 |
-| M-07 | **Carrito** pertenece a la cuenta, no guarda precios y tiene estados `activo` y `convertido`, con un solo carrito activo por cuenta. | El carrito se conserva indefinidamente: un precio fijado al agregar quedaría viejo. | RN-14, RF-24, RF-51 |
-| M-08 | **Pedido como entidad fuerte** con sus propias líneas (`PEDIDO_PRODUCTO` → `linea_pedido`), como en el EER del Sprint 0. Se revierte el cambio del EER actualizado que lo hacía entidad débil del carrito. Se agregan `canal`, `registrado_por`, `estado`, `estado_pago`, `numero_guia` y los montos. | Una venta presencial no tiene carrito. Las líneas del pedido deben ser inmutables y llevar el precio vigente al confirmar. El pedido necesita su propio identificador. | RF-17, RF-25, RF-30, RF-40, RF-63, RN-05 |
-| M-09 | `FechaEntrega` de Pedido se deriva del historial (registro `finalizado`). | Evita dos fuentes para el mismo dato. | RF-26 |
-| M-10 | **Historial de estado** con llave propia y `CHECK` de los estados de RF-26 más `cancelado`; registra quién hizo el cambio. Solo inserción. | Un pedido podría repetir un estado; la llave propia lo permite. Los estados quedan acotados a los del SRS. | RF-26, RF-28 |
-| M-11 | `PAGO` pasa a **Intento de pago**, que se refiere a un pedido o a un carrito, con referencia externa opcional y fecha de resolución. | Un pago rechazado no crea pedido; si la pasarela no responde no hay referencia y el intento debe registrarse igual. | RF-39, RF-40, RNF-06 |
-| M-12 | **Factura** se asocia al pedido (no al pago) y guarda una copia de los datos fiscales y de los montos. | La factura corresponde al pedido pagado; una factura emitida no puede cambiar si después cambian los datos. | RF-41, RN-18 |
-| M-13 | Se elimina **Oferta** (del EER actualizado). | Modelaba cupones (RF-66), que el SRS tiene en suspenso con prioridad W. El descuento confirmado es por nivel. | RF-66, RN-09 |
-| M-14 | Entidades nuevas: **Nivel de fidelidad**, **Parámetro de negocio**, **Bitácora**, **Recuperación de contraseña** y **Consentimiento de términos**. | Requerimientos sin representación en el EER. | RN-08, RN-09, aprobado #10, RF-38, RF-52, RF-54, RNF-10 |
-| M-15 | Un **esquema de PostgreSQL por módulo** y triggers que rechazan la modificación de registros históricos. | Alinea la base de datos con la arquitectura por módulos (DD-11) y hace verificable RF-19 (DD-16). | RF-19, RNF-19 |
-| M-16 | Entidad nueva **Sesión** (`usuarios.sesion`, migración 002). | El inicio de sesión usa una cookie con un token aleatorio; la base de datos guarda solo su hash y el vencimiento, para poder validar la sesión en cada petición sin exponer tokens si se filtra la tabla. | RF-53, RNF-08 |
-| M-17 | **Usuario** y **Sesión** van en un esquema propio, `usuarios`, en vez de `admin`, creadas en `002_usuarios.sql`. | Las cuentas y sus sesiones son de todos los usuarios, clientes incluidos. En `admin` hacían pensar que todo usuario era administrador. | RF-50, RF-53 |
+| C-01 | **Producto:** Precio Venta y Precio Impuesto ya no se guardan; los calcula el motor de precios. | Son atributos derivados. Si se guardan, quedan desactualizados cada vez que cambia el costo o el margen, y la fórmula estaba en discusión (INC-05). Con el motor solo hay un lugar que calcula el precio. | RN-01, RF-03 a RF-05, INC-05 |
+| C-02 | **Producto:** Costo Total pasa a ser una columna generada (`item × (1 + importacion / 100)`) y se agrega `tasa_impuesto` (13 % por defecto). | En el EER, Costo Total es un atributo compuesto de Item e Importación; como columna generada nunca puede contradecir a sus partes. La tasa se guarda para que cada línea del carrito fije la que se le aplicó. | RN-01, RES-06 |
+| C-03 | **Montos en dólares** en vez de colones. | El PO confirmó el 1 de octubre que la tienda maneja dólares, y la hoja del cliente trae la columna `costo_usd`. | RNF-17 |
+| C-04 | **Categoría como texto, sin subcategoría.** | El SRS (RF-02) y HU-03 hablaban de categoría y subcategoría, pero el EER del Sprint 0 ya tenía Categoría como atributo simple y la hoja real del cliente solo trae la «familia». | RF-02, RF-10 |
+| C-05 | **Carrito:** llave `(correo_cliente, num_carrito)` como entidad débil de Cliente; se agregan Estado carrito (`activo` / `convertido`) y Fecha cierre; solo un carrito activo por cliente. | El EER del Sprint 0 ya dibujaba Carrito como entidad débil («Tiene»), pero el mapeo usaba un `CarritoId` propio. También hace falta saber qué carrito ya se convirtió en pedido. | RN-14, RF-24 |
+| C-06 | **Pedido** pasa a ser entidad débil de Carrito (relación «Convierte», 1 a 0..1) y hereda su llave. Se elimina `NumeroPedido` y la tabla `PEDIDO_PRODUCTO` («Incluye»): las líneas del pedido son las de Agrega. | Todo pedido en línea nace de un carrito, y tener las mismas líneas en dos tablas era duplicar datos. Las ventas de otros canales (RF-17) también pasan por un carrito. | RF-25, RF-30, RF-17 |
+| C-07 | **Agrega** guarda Precio unitario (sin impuesto) y Tasa impuesto aplicada. | El precio que se cobra queda fijo en la línea: si después cambia el margen o el costo, los pedidos ya hechos no cambian. | RF-25, RF-51 |
+| C-08 | Entidad nueva **Oferta** (relación «Aplicar» con Pedido): vigencia, porcentaje, monto mínimo y nivel de fidelidad mínimo. | En la entrevista del 24/09 (punto 10) el cliente pidió poder ajustar los descuentos sin cambiar el sistema. Reemplaza el monto mínimo fijo de RN-09. | RN-08, RN-09, aprobado #10 |
+| C-09 | Entidad nueva **Factura** («Respalda»: un pago tiene 0 o 1 factura). Subtotal, impuestos, descuento y total son derivados. | El SRS pide factura por cada pago aprobado y el EER no la tenía. | RF-41, RN-18 |
+| C-10 | Entidad nueva **Sesión**, débil de Usuario: hash del token, fecha de creación y de vencimiento. | El inicio de sesión usa una cookie con un token aleatorio. Guardar solo su hash permite validar la sesión en cada petición sin exponer tokens si alguien lee la tabla. | RF-53, RNF-08 |
+| C-11 | **Producto_Administra** (relación «Gestiona/Administrar»): la cantidad va con signo (distinta de 0), la llave incluye la fecha y es de solo inserción. | Así sirve para entradas y salidas de mercancía, y es un historial que no se puede editar. | RF-13, RF-15, RF-19 |
+| C-12 | Entidad débil **Historial del estado** (relación «Actualiza» con Pedido): llave parcial `estado` y atributo `fecha`; `CHECK` con los estados de RF-26 más `cancelado`, solo inserción. El estado del pedido se lee de la vista `v_estado_pedido`. | El estado ya era un atributo derivado en el EER del Sprint 0; ahora queda acotado a los estados del SRS, se sabe cuándo ocurrió cada cambio y su historial no se puede alterar. | RF-26, RF-28 |
+| C-13 | **Implementación física** (no cambia el EER): un esquema de PostgreSQL por módulo, restricciones con nombre, correo y SKU normalizados, índice que permite un solo administrador, triggers de solo inserción y vistas para los reportes. | Alinea la base de datos con los módulos del servidor, hace verificables RF-19 y RF-49, y permite que el servidor traduzca cada error a un mensaje de negocio. | RF-19, RF-49, RNF-19 |
+| C-14 | **Usuario** y **Sesión** van en un esquema propio, `usuarios`, en vez de `admin`, creadas en `002_usuarios.sql`. | Las cuentas y sus sesiones son de todos los usuarios, clientes incluidos. En `admin` hacían pensar que todo usuario era administrador. | RF-50, RF-53 |
 
 ### Lo que se conservó del prototipo
 
 Las herramientas completas (migraciones con *checksum*, `reset`, `seed`, `dump`,
-`new-migration`, `docker-compose.yml` y la guía) y varias ideas de
-modelado: el índice único parcial para un solo carrito activo, el `CHECK` que liga el
-estado del carrito con su fecha de cierre, la baja lógica de productos, las tablas de
-categoría y subcategoría, el hash bcrypt de contraseñas y los productos de prueba que
+`new-migration`, `docker-compose.yml` y la guía) y varias ideas de modelado: el índice
+único parcial para un solo carrito activo, el `CHECK` que liga el estado del carrito
+con su fecha de cierre, el hash bcrypt de contraseñas y los productos de prueba que
 cubren a propósito los casos del SRS.
 
 ---
 
 ## 5. Pendientes
 
-- **Actualizar el EER y el mapeo** (`EER 21 CoPilots.drawio`) con los cambios de § 4.
-- **Fórmula de precio (INC-05):** las semillas usan la provisional de RN-01; el
-  esquema no depende de ella.
-- **Porcentajes de descuento (RN-09 a RN-11, en conflicto):** se ajustan editando
-  `clientes.nivel_fidelidad`, sin migración.
-- **Datos fiscales de la sociedad:** `admin.parametro_negocio` los tiene como
-  "POR DEFINIR".
-- **Tarifas de envío (DEP-07):** cuando se definan, se agrega una tabla en una
-  migración nueva.
+Las decisiones abiertas que afectan al modelo (referencia de un pago sin respuesta de
+la pasarela, usuarios que no son ni administrador ni cliente, bitácora, histórico de
+costos, motivo de los ajustes, aceptación de términos, escala de fidelidad, datos
+fiscales y cómo excluir un producto) están en
+[`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md). Cuando
+se decida cada una, se agrega aquí su fila en § 4.
 
 ---
 
 ## 6. Cómo registrar un cambio al modelo
 
 1. `npm run db:new -- descripcion` y escriba el SQL (nombres calificados por esquema).
-2. Agregue aquí una fila en § 4 con el siguiente ID (`M-16`, …), el cambio, la
+2. Agregue aquí una fila en § 4 con el siguiente ID (`C-15`, …), el cambio, la
    justificación y los requerimientos que lo motivan. Si cambia una tabla, actualice
    también § 2.
 3. Si la migración agrega una restricción, agregue su prueba en `database/pruebas/`.
-4. Actualice el diagrama EER y el mapeo.
+4. Actualice el diagrama EER (`EER 21 CoPilots.drawio.xml`) y el mapeo.
 5. Corra `npm run db:reset`, `npm run db:test` y `npm run db:dump`, e incluya todo en
    el mismo Pull Request.

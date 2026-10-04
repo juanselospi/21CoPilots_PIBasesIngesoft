@@ -11,6 +11,7 @@
 | 1.0 | 25 de setiembre de 2026 | Arquitectura, patrones de diseño y análisis de concurrencia, acordados en la reunión de diseño |
 | 1.1 | 26 de setiembre de 2026 | Diseño de la base de datos (§ 9), recorrido de un dato de extremo a extremo (§ 10), estructura del proyecto en `apps/` + `database/` (§ 11), decisiones DD-10 a DD-14 |
 | 1.2 | 26 de setiembre de 2026 | Estados del pedido alineados con RF-26 (§ 6.4); umbral de alerta fijo según RN-04 (§ 15); § 9 actualizado con el esquema implementado en `database/` a partir de las herramientas del prototipo `kit-bd-21copilots_4`; decisiones DD-15 a DD-17 |
+| 1.3 | 4 de octubre de 2026 | Alineado con el EER corregido del 30 de setiembre (§ 9, § 10, DD-13 a DD-17) y con lo implementado en el Sprint 1: servidor existente (§ 1, § 11), Template Method implementado (§ 6.6), candado sobre el stock del producto (§ 7.3), descuento por ofertas (§ 6.5), fórmula de precio validada (INC-05) |
 
 > **Sobre la autoría de este documento.** Las ideas y las decisiones que aquí se
 > registran son del equipo: los integrantes las expusieron, discutieron las
@@ -49,12 +50,14 @@ Este documento recoge el diseño del sistema tal como el equipo lo acordó: el p
 arquitectónico, los patrones de diseño que responden a cada problema concreto, el
 análisis de concurrencia y paralelismo, y el diseño de la base de datos.
 
-**Describe el sistema planeado, no solo el código existente.** Al momento de esta
-versión existen el esqueleto del frontend (`apps/client/`) y la base de datos
-(`database/`). El backend (`apps/server/`) lo crearán los integrantes durante los
-sprints siguiendo lo que aquí se describe. Los nombres de archivos, clases y
-fragmentos de código del backend son la estructura prevista y sirven de guía; se
-ajustarán si la implementación lo pide, y el ajuste se registrará en este documento.
+**Describe el sistema planeado, no solo el código existente.** Al cierre del Sprint 1
+existen las tres partes: la interfaz (`apps/client/`), la base de datos (`database/`)
+y el servidor (`apps/server/`). En el servidor están implementados el módulo
+`catalogo` y, en `admin`, el inicio de sesión y la importación del Excel; los demás
+módulos son esqueletos que se completan en los sprints siguientes siguiendo lo que
+aquí se describe. Los nombres de archivos, clases y fragmentos de código de esos
+módulos son la estructura prevista y sirven de guía; se ajustarán si la
+implementación lo pide, y el ajuste se registrará en este documento.
 
 Cada decisión se justifica contra un requerimiento del SRS, citado por su
 identificador (RF-xx funcional, RN-xx regla de negocio, RNF-xx no funcional, RES-xx
@@ -90,8 +93,9 @@ del SRS o de decisiones previas del equipo:
 | ~195 SKU y 50 usuarios concurrentes | RNF-02 | No hay presión de escala que justifique distribuir |
 | Equipo de 4 personas con dedicación parcial | RES-02 | Penaliza toda infraestructura adicional que haya que operar |
 | Una persona ajena debe poder desplegar con solo la documentación | RNF-21 | Penaliza los despliegues con múltiples componentes |
-| La fórmula de precio sigue en disputa | INC-05 | Exige que el cálculo sea reconfigurable sin reescritura |
-| La escala de niveles y descuentos será editable por el administrador | RN-08, RN-09, aprobado #10 | Exige que el algoritmo de descuento sea intercambiable y que sus parámetros vivan en datos |
+| La fórmula de precio se definió durante el desarrollo y puede volver a ajustarse | INC-05, [`formula-precio.md`](formula-precio.md) | Exige que el cálculo sea reconfigurable sin reescritura |
+| Los descuentos serán editables por el administrador | RN-08, RN-09, aprobado #10 | Exige que el algoritmo de descuento sea intercambiable y que sus parámetros (las ofertas) vivan en datos |
+| Los ajustes al modelo de datos del Sprint 0 deben ser mínimos y justificados | Instrucciones del Sprint 1 | La base de datos sigue el EER del equipo, corregido solo donde un requerimiento lo exige (§ 9) |
 | Stack elegido por el equipo: React + Vite, Node.js + Express, PostgreSQL | `README.md` | Fija el modelo de ejecución (§ 7) y el gestor de base de datos (§ 9) |
 
 ---
@@ -165,7 +169,7 @@ flowchart LR
     PED["pedidos<br/><i>máquina de estados</i>"]
     CLI["clientes<br/><i>niveles y descuentos</i>"]
     REP["reportes"]
-    ADM["admin<br/><i>control de acceso · bitácora</i>"]
+    ADM["admin<br/><i>sesión · importación · bitácora</i>"]
     PAG["pagos<br/><i>interfaz + adaptadores</i>"]
     FAC["facturacion<br/><i>interfaz + adaptadores</i>"]
     BUS(["bus de eventos"])
@@ -177,6 +181,7 @@ flowchart LR
     PED --> FAC
     REP --> INV
     REP --> PED
+    ADM --> CAT
     INV -.->|publica| BUS
     ADM -.->|publica| BUS
     BUS -.->|alerta RF-16| INV
@@ -184,8 +189,10 @@ flowchart LR
 ```
 
 `pedidos` es el módulo con más dependencias porque confirmar una compra toca precio,
-existencias, nivel del cliente, cobro y factura. Los módulos **no se llaman entre sí
-para notificar**: para eso publican un evento (ver § 6.2).
+existencias, nivel del cliente, cobro y factura. `admin` depende de `catalogo` porque
+la importación del Excel guarda los productos a través de su fachada (§ 9.3). Los
+módulos **no se llaman entre sí para notificar**: para eso publican un evento (ver
+§ 6.2).
 
 ### 3.3 MVC — adoptado en su variante web
 
@@ -296,12 +303,12 @@ El motor de precios se ensambla con un arreglo de pasos:
 new MotorDePrecios([
   new ImportacionPorAranceles(),
   new MargenDeGanancia(),
-  new ImpuestoDeVenta(negocio.impuestoDeVenta),
+  new ImpuestoDeVenta(),
 ])
 ```
 
 Es el candidato natural a Builder (`ConstructorDeMotor().conAranceles().conMargen()
-.conImpuesto(0.13).construir()`). Con tres pasos, el arreglo expresa el orden de forma
+.conImpuesto().construir()`). Con tres pasos, el arreglo expresa el orden de forma
 más directa que una interfaz fluida. La decisión se revisa si el número de pasos crece
 o si aparecen combinaciones inválidas que un Builder deba impedir.
 
@@ -336,7 +343,7 @@ Singleton trabajaría en contra. **Instancia única no es sinónimo de patrón S
 | **Bridge** | ✅ Adoptado | Separación entre la interfaz de pago y sus implementaciones |
 | **Facade** | ✅ Adoptado | `index.js` de cada módulo |
 | **Decorator** | ⚠️ Variante | Pipeline del motor de precios |
-| **Composite** | ❌ No adoptado | Candidato: árbol categoría → subcategoría |
+| **Composite** | ❌ No adoptado | Candidato: árbol de categorías |
 | **Proxy** | ❌ No adoptado (reservado) | Candidato: caché del catálogo (RNF-01, RNF-02) |
 
 ### 5.1 Adapter
@@ -398,8 +405,10 @@ patrón está mal aplicado.
 devuelve un resultado no aprobado y explícito. Es la realización de **Null Object**
 —patrón que no pertenece a los 23 del GoF, sino a la literatura posterior— y es lo que
 sostiene RNF-06: el pedido se registra, el inventario se actualiza y el cobro queda
-pendiente. La base de datos lo admite: un intento de pago puede registrarse sin
-referencia externa (§ 9.4).
+pendiente. En la base de datos el pago se guarda con estado `pendiente`, porque el
+`CHECK` de `pagos.pago` no tiene un estado `no_disponible` (§ 9.4). Qué número de
+referencia lleva un pago cuando la pasarela no devuelve uno está por definir (ver
+[`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md)).
 
 ### 5.3 Facade
 
@@ -424,16 +433,17 @@ costo → importación → margen → impuesto → precio final
 ```
 
 Ese desglose es lo que permite verificar RNF-17 (comparar el cálculo del sistema
-contra el cálculo manual) identificando **en cuál paso** divergen los números, y es lo
-que permitirá cerrar INC-05 cuando llegue el Excel del cliente.
+contra el cálculo manual) identificando **en cuál paso** divergen los números. Así se
+cerró INC-05: el cálculo se comparó paso a paso contra el Excel del cliente
+([`formula-precio.md`](formula-precio.md)).
 
 ### 5.5 Composite — no adoptado
 
-El árbol categoría → subcategoría → producto es el candidato evidente. No se aplica
-porque el SRS fija **exactamente dos niveles**, y Composite se justifica cuando la
-profundidad es arbitraria y el cliente debe tratar igual a hojas y compuestos. Con dos
-niveles fijos, dos tablas relacionadas (§ 9.4) son más simples y más rápidas de
-consultar.
+Un árbol de categorías es el candidato evidente. No se aplica porque la categoría es
+**un solo nivel**: un atributo de texto del producto (la "familia" de la hoja del
+cliente), sin subcategorías (§ 9.4). Composite se justifica cuando la profundidad es
+arbitraria y el cliente debe tratar igual a hojas y compuestos; con un nivel no hay
+árbol que recorrer.
 
 ### 5.6 Proxy — no adoptado, candidato identificado
 
@@ -462,8 +472,8 @@ columna (§ 9.4): si hace falta velocidad, la respuesta es la caché, no desnorm
 | **Observer** | ✅ Adoptado | Bus de eventos de dominio |
 | **Mediator** | ⚠️ Variante | Rol cumplido por el bus de eventos |
 | **State** | ⚠️ Variante tabular | Estados del pedido |
-| **Strategy** | ✅ Adoptado ×2 | Pasos de precio y descuento por nivel |
-| **Template Method** | 📋 Planificado | Importación del Excel |
+| **Strategy** | ✅ Adoptado ×2 | Pasos de precio (implementado) y descuento por oferta (📋 planificado) |
+| **Template Method** | ✅ Adoptado | Importación del Excel |
 | **Command** | ❌ No adoptado | Candidato fuerte: ajustes de inventario |
 | **Memento** | ❌ No adoptado | Sin caso real |
 | **Visitor** | ❌ No adoptado | Costo mayor que el beneficio |
@@ -476,14 +486,20 @@ la atiende o la pasa al siguiente:
 ```
 identificarUsuario → exigirSesion → exigirRol(ADMINISTRADOR) → controlador
                                                                     ↓
-                                                        manejadorDeErrores
+                                          rutaNoEncontrada → manejadorDeErrores
 ```
 
+`identificarUsuario` se monta una sola vez en `app.js` para todas las peticiones: deja
+al usuario de la cookie en la petición y nunca bloquea, porque el catálogo es público.
+`exigirSesion` y `exigirRol` se agregan en cada ruta que los necesita. Qué rutas los
+llevan está en [`matriz-permisos.md`](matriz-permisos.md) § 3.
+
 Aplicaciones concretas:
-- **RF-50**: `exigirSesion` corta la cadena si no hay sesión.
-- **RNF-10**: `exigirRol` registra el intento en la bitácora antes de cortar,
-  cumpliendo la exigencia de que el 100 % de los accesos no autorizados quede
-  documentado.
+- **RF-50**: `exigirSesion` corta la cadena si no hay sesión (401) y `exigirRol` si el
+  rol no tiene permiso (403).
+- **RNF-10**: `exigirRol` publica el evento `acceso_denegado` antes de cortar, para
+  que el 100 % de los accesos no autorizados quede documentado. El middleware no sabe
+  cómo se guarda la auditoría: eso le toca al observador de bitácora (§ 6.2).
 - El manejador de errores es el último eslabón y el único que decide códigos HTTP,
   traduciendo errores de dominio a respuestas.
 
@@ -500,6 +516,11 @@ flowchart LR
     BUS --> OBS2["Bitácora de auditoría<br/><i>observador — RF-52</i>"]
     OBS1 -->|publica<br/>EXISTENCIAS_BAJAS| BUS
 ```
+
+El observador de alertas ya está registrado en `composicion.js`. El de bitácora es
+📋 planificado: los eventos que debe registrar ya se publican, pero dónde se guarda la
+bitácora está por definir (ver
+[`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md)).
 
 Tres propiedades del diseño importan:
 
@@ -549,8 +570,10 @@ Las transiciones legales viven en una **tabla** dentro de un solo archivo del m�
 de pedidos, no repartidas en condicionales por todo el servicio. RN-15 —"cancelable
 hasta antes del despacho"— se deriva de esa misma tabla, de modo que no puede quedar
 desincronizada con las transiciones. La base de datos solo conoce **qué estados
-existen** (un `CHECK` sobre la columna); **qué transiciones son legales** es
-conocimiento exclusivo de esta tabla (§ 9.2).
+existen** (un `CHECK` sobre `pedidos.historial_estado.estado`); **qué transiciones son
+legales** es conocimiento exclusivo de esta tabla (§ 9.2). El pedido no guarda su
+estado en una columna: el estado vigente es el último registro de su historial, y se
+lee de la vista `reportes.v_estado_pedido`.
 
 **Justificación de la variante.** La forma canónica del GoF define una clase por
 estado y delega en ella el comportamiento del objeto. Hoy el estado del pedido no
@@ -586,27 +609,37 @@ classDiagram
     MotorDePrecios o-- PasoDePrecio : compone
 ```
 
-La fuerza que lo justifica es **INC-05**: la fórmula exacta sigue en disputa a la
-espera del Excel del cliente. Cuando se aclare, se reordena o se sustituye un paso sin
-reescribir el cálculo. `MargenDeGanancia` no valida el signo del porcentaje, porque
-RN-02 permite el margen negativo para liquidaciones.
+La fuerza que lo justifica es **INC-05**: la fórmula exacta estuvo en disputa hasta
+que se validó contra el Excel del cliente ([`formula-precio.md`](formula-precio.md)), y
+si vuelve a cambiar se reordena o se sustituye un paso sin reescribir el cálculo.
+`MargenDeGanancia` no valida el signo del porcentaje, porque RN-02 permite el margen
+negativo para liquidaciones. `ImpuestoDeVenta` toma la tasa de cada producto
+(`catalogo.producto.tasa_impuesto`, 13 % por RES-06), de modo que un cambio de la
+normativa se resuelve en datos y no en la clase.
 
-**b) Descuento por nivel de fidelidad.** `DescuentoPorNivel` y `SinDescuento`
-implementan el mismo contrato. La escala de niveles y el monto mínimo entran por
-constructor en vez de estar escritos en el código, porque el requerimiento aprobado
-#10 permite al administrador editarlos sin pedir un cambio al sistema. Esos valores se
-guardan en `clientes.nivel_fidelidad` y `admin.parametro_negocio` (§ 9.4), y los
-repositorios de `clientes` y `admin` los entregan al constructor.
+**b) Descuento por oferta — planificado.** El descuento sale de las ofertas que
+registra el administrador (`pedidos.oferta`, aprobado #10): cada una tiene vigencia
+por fechas, porcentaje, monto mínimo de compra y nivel de fidelidad mínimo. La
+estrategia de descuento recibe la oferta y el nivel del cliente y decide si aplica;
+`SinDescuento` es el caso de un pedido sin oferta. Los parámetros viven en la tabla y
+no en el código, así que el administrador los cambia sin pedir un cambio al sistema.
 
-### 6.6 Template Method — planificado
+### 6.6 Template Method
 
-La importación del Excel (RF-57, RF-58, RF-59) se implementará con el esqueleto fijo
-`parsear → validar fila → mapear → upsert por SKU`, dejando redefinibles los pasos que
-dependan del formato de archivo. Los requerimientos que fija el esqueleto: las filas
-válidas se importan aunque otras fallen, cada fila rechazada va a un reporte
-descargable con su motivo, y reimportar el mismo archivo actualiza en lugar de
-duplicar. Esto último se apoya en que la base de datos guarda el SKU normalizado con
-`UNIQUE (sku)`, lo que permite un `INSERT ... ON CONFLICT (sku)` directo (§ 9.4).
+La importación del Excel (RF-57, RF-58, RF-59) está implementada con este patrón.
+`PlantillaDeImportacion` fija el esqueleto `parsear → prepararContexto → validarFila →
+mapearFila → guardarFila` e `ImportacionDeExcel` redefine los pasos que dependen del
+formato `.xlsx` (leer las celdas, encontrar los encabezados y validar cada fila).
+Primero se valida el archivo completo y después las filas válidas se guardan en una
+sola transacción. Los requerimientos que fija el esqueleto: las filas válidas se
+importan aunque otras fallen, cada fila
+rechazada va a un reporte descargable con su motivo, y reimportar el mismo archivo
+actualiza en lugar de duplicar. Esto último se apoya en que el SKU normalizado es la
+llave primaria del producto, lo que permite un `INSERT ... ON CONFLICT (sku)` directo
+(§ 9.4).
+
+La importación vive en el módulo `admin`, pero guarda los productos a través de la
+fachada de `catalogo`, porque solo ese módulo escribe en su esquema (§ 9.3).
 
 ### 6.7 Command — no adoptado, candidato más fuerte
 
@@ -627,9 +660,9 @@ sprint. Queda como la primera extensión recomendada del diseño.
 
 El paralelo aparente es RN-06: el histórico de costos que no se sobrescribe. Pero
 Memento captura el estado interno de un objeto **en memoria** para restaurarlo sin
-violar su encapsulamiento; un histórico persistido es un registro de versiones (aquí,
-los movimientos de ingreso con su costo, § 9.4). Llamar Memento a un registro
-histórico sería forzar la correspondencia.
+violar su encapsulamiento; un histórico persistido es un registro de versiones en la
+base de datos. Llamar Memento a un registro histórico sería forzar la
+correspondencia.
 
 ### 6.9 Visitor — no adoptado
 
@@ -686,8 +719,8 @@ reporte pesado), debe salir del camino de la petición.
 El escenario crítico es el que **RF-30 prueba explícitamente**: dos pedidos
 confirmados de forma concurrente contra el mismo producto.
 
-El recurso compartido no es un objeto en memoria: es una **fila de la tabla
-`inventario.existencia`** (§ 9.4), y los competidores son dos transacciones de base de
+El recurso compartido no es un objeto en memoria: es la **columna `stock` de una fila
+de `catalogo.producto`** (§ 9.4), y los competidores son dos transacciones de base de
 datos. Un monitor implementado en el lenguaje no protegería nada, porque la carrera
 ocurre por debajo.
 
@@ -706,15 +739,15 @@ sequenceDiagram
 
     C1->>BD: BEGIN
     C1->>BD: SELECT ... FOR UPDATE (producto X)
-    BD-->>C1: existencias = 3 🔒 fila bloqueada
+    BD-->>C1: stock = 3 🔒 fila bloqueada
 
     C2->>BD: BEGIN
     C2->>BD: SELECT ... FOR UPDATE (producto X)
     Note over C2,BD: ⏳ espera: la fila está bloqueada
 
-    C1->>BD: UPDATE existencias = 1
+    C1->>BD: UPDATE stock = 1
     C1->>BD: COMMIT 🔓
-    BD-->>C2: existencias = 1
+    BD-->>C2: stock = 1
     Note over C2: Valida RN-13: 2 > 1 → rechaza
     C2->>BD: ROLLBACK
 ```
@@ -723,14 +756,14 @@ sequenceDiagram
 inventario quedaría en -1: se violaría RN-13 y, con ella, RES-07 (el inventario es
 único y debe ser exacto). Por eso todo descuento de existencias debe pasar por
 `enTransaccion` tomando primero el candado. Como segunda línea de defensa, la tabla
-tiene `CHECK (cantidad >= 0)`: si algún camino se saltara la validación, la base de
+tiene `CHECK (stock >= 0)`: si algún camino se saltara la validación, la base de
 datos rechaza la escritura.
 
 **Orden de bloqueo.** Un pedido con varios productos toma varios candados. Si dos
 pedidos los tomaran en distinto orden, cada uno esperaría al otro indefinidamente
 (*deadlock*). La regla acordada: los candados se toman **siempre en orden ascendente
-de `producto_id`**, en una sola consulta (`... WHERE producto_id = ANY($1) ORDER BY
-producto_id FOR UPDATE`).
+de `sku`**, en una sola consulta (`SELECT ... FROM catalogo.producto WHERE sku =
+ANY($1) ORDER BY sku FOR UPDATE`).
 
 El costo aceptado: las operaciones sobre el **mismo producto** se serializan. Sobre
 productos distintos no hay contención, de modo que el impacto en RNF-02 es
@@ -745,7 +778,8 @@ hay nada que desacoplar.
 **Condición de revisión:** si la integración real con Hacienda resultara lenta o poco
 confiable, `emitir()` debe convertirse en Active Object —encolar la solicitud y
 responder al cliente sin esperar—, lo cual además refuerza RNF-06. La tabla de
-facturas ya admite el estado `pendiente` para ese caso.
+facturas no necesita cambiar para eso: una factura solo se guarda cuando se emitió,
+así que una solicitud encolada todavía no tiene fila.
 
 ### 7.5 Leader/Followers — no aplica
 
@@ -823,20 +857,21 @@ datos.
 
 | Va en la base de datos (restricciones) | Va en `apps/server/` (servicios) |
 |---|---|
-| `CHECK (cantidad >= 0)` en existencias: segunda línea de defensa de RN-13 | La validación de RN-13 y su mensaje de error |
-| SKU normalizado y `UNIQUE (sku)`: permite el upsert por SKU de RF-59 | El Template Method de la importación (§ 6.6) |
+| `CHECK (stock >= 0)` en el producto: segunda línea de defensa de RN-13 | La validación de RN-13 y su mensaje de error |
+| SKU normalizado como llave primaria: permite el upsert por SKU de RF-59 | El Template Method de la importación (§ 6.6) |
 | Llaves foráneas, `NOT NULL`, tipos, valores permitidos | La máquina de estados del pedido (§ 6.4) |
 | `CHECK (estado IN (...))`: **qué estados existen** | **Qué transiciones son legales** (RN-15) |
-| Ningún `CHECK` sobre el signo del margen (RN-02 lo permite negativo) | El motor de precios (§ 6.5) |
-| Coherencia de un registro: un ajuste trae motivo y responsable (RF-20) | Quién puede hacer un ajuste y cuándo |
+| `CHECK (margen_ganancia > -100)`, sin exigir signo (RN-02 lo permite negativo) | El motor de precios (§ 6.5) |
+| Coherencia de un registro: un movimiento de mercancía tiene responsable y una cantidad distinta de cero | Quién puede registrar mercancía y cuándo |
 
 **Triggers y procedimientos almacenados sin lógica de negocio.** Si RN-15 viviera en
 un trigger, quedaría duplicada con la tabla de transiciones del código, no se podría
 probar sin base de datos y rompería la convención de que cada regla cita su RN en el
-código (§ 15). Los triggers se reservan para dos tareas técnicas: mantener la columna
-`actualizado_en` y **rechazar la modificación de registros históricos** (DD-16). Las
-**vistas** sí tienen un lugar natural: las consultas de `reportes` son de solo lectura
-y no contienen reglas de dominio (ver § 16 sobre lo que pueda exigir CI0128).
+código (§ 15). Los triggers se reservan para tareas técnicas y de integridad: mantener
+la columna `fecha_actualizacion` y **rechazar la modificación de registros históricos**
+(DD-16). Las **vistas** sí tienen un lugar natural: las consultas de `reportes` son
+de solo lectura y no contienen reglas de dominio (ver § 16 sobre lo que pueda exigir
+CI0128).
 
 ### 9.3 Un esquema de PostgreSQL por módulo
 
@@ -845,20 +880,27 @@ La variante "capas por módulo" de § 3.2 se extiende a la base de datos: cada m
 
 | Esquema | Módulo dueño | Contenido |
 |---|---|---|
-| `admin` | admin | usuarios y roles, recuperación de contraseña, bitácora, parámetros de negocio |
-| `catalogo` | catalogo | categorías, subcategorías, productos |
-| `inventario` | inventario | existencias y libro de movimientos |
-| `clientes` | clientes | niveles de fidelidad, clientes, teléfonos, consentimientos |
-| `pedidos` | pedidos | carritos, pedidos, líneas, historial de estados |
-| `pagos` | pagos | intentos de cobro |
+| `usuarios` | admin | usuarios y sus sesiones |
+| `admin` | admin | el administrador (especialización de usuario) |
+| `catalogo` | catalogo | productos, con su stock |
+| `inventario` | inventario | registro de entradas y salidas de mercancía |
+| `clientes` | clientes | clientes (especialización de usuario) y sus teléfonos |
+| `pedidos` | pedidos | carritos, productos agregados, ofertas, pedidos e historial de estados |
+| `pagos` | pagos | pagos |
 | `facturacion` | facturacion | facturas |
 | `reportes` | reportes | solo vistas de lectura |
 
+`usuarios` es el único esquema que no lleva el nombre de su módulo: las cuentas y sus
+sesiones son de todos los usuarios, clientes incluidos, pero quien las maneja es el
+módulo `admin`, que es el del inicio de sesión.
+
 **Regla de propiedad.** Solo el repositorio de un módulo escribe en su esquema; por
-ejemplo, únicamente `inventario.repository.js` escribe en `inventario.*`. Si el
-servicio de inventario necesita cambiar el costo vigente de un producto, lo pide a la
-fachada de `catalogo`. Las llaves foráneas entre esquemas sí se permiten: es una sola
-base de datos y RES-07 exige consistencia transaccional entre módulos.
+ejemplo, únicamente `inventario.repository.js` escribe en `inventario.*`. Si otro
+módulo necesita cambiar algo de un esquema ajeno, lo pide a la fachada del módulo
+dueño: la importación del Excel guarda los productos a través de `catalogo`, y el
+servicio de inventario cambia el stock de un producto de la misma forma. Las llaves
+foráneas entre esquemas sí se permiten: es una sola base de datos y RES-07 exige
+consistencia transaccional entre módulos.
 
 **Costo aceptado.** Hay que calificar los nombres (`catalogo.producto`) en el SQL de
 los repositorios y en las migraciones.
@@ -867,112 +909,116 @@ los repositorios y en las migraciones.
 
 ```mermaid
 erDiagram
-    CATEGORIA ||--o{ SUBCATEGORIA : agrupa
-    SUBCATEGORIA ||--o{ PRODUCTO : clasifica
-    PRODUCTO ||--|| EXISTENCIA : tiene
-    PRODUCTO ||--o{ MOVIMIENTO : "afecta (RF-15)"
-    USUARIO ||--o| CLIENTE : "cuenta de"
-    CLIENTE ||--o{ CLIENTE_TELEFONO : tiene
-    CLIENTE ||--o{ CONSENTIMIENTO : "acepta (RF-38)"
-    USUARIO ||--o{ CARRITO : "tiene (RN-14)"
-    CARRITO ||--|{ LINEA_CARRITO : contiene
-    CARRITO |o--o| PEDIDO : "se convierte en"
-    CLIENTE |o--o{ PEDIDO : realiza
-    PEDIDO ||--|{ LINEA_PEDIDO : contiene
-    PRODUCTO ||--o{ LINEA_PEDIDO : "se vende en"
-    PEDIDO ||--|{ HISTORIAL_ESTADO : "registra (RF-26)"
-    PEDIDO |o--o{ MOVIMIENTO : "origina"
-    PEDIDO |o--o{ INTENTO_PAGO : cobra
-    PEDIDO ||--o| FACTURA : "se factura (RF-41)"
-    USUARIO |o--o{ BITACORA : "actúa (RF-52)"
+    USUARIO ||--o| ADMINISTRADOR : "es (traslapada)"
+    USUARIO ||--o| CLIENTE : "es (traslapada)"
+    USUARIO ||--o{ SESION : "Necesita (RF-53)"
+    CLIENTE ||--o{ CLIENTE_TELEFONO : "Teléfonos (multivaluado)"
+    CLIENTE ||--o{ CARRITO : "Tiene (RN-14)"
+    CARRITO ||--o{ AGREGA : Agrega
+    PRODUCTO ||--o{ AGREGA : Agrega
+    CARRITO ||--o| PEDIDO : Convierte
+    OFERTA |o--o{ PEDIDO : Aplicar
+    PEDIDO ||--|{ HISTORIAL_ESTADO : "Actualiza (RF-26)"
+    PEDIDO ||--o{ PAGO : Necesita
+    PAGO ||--o| FACTURA : "Respalda (RF-41)"
+    ADMINISTRADOR ||--o{ PRODUCTO_ADMINISTRA : "Administrar (RF-13)"
+    PRODUCTO ||--o{ PRODUCTO_ADMINISTRA : Administrar
 
     PRODUCTO {
-        bigint id PK
-        varchar sku UK "normalizado"
-        numeric costo_item
-        numeric porcentaje_importacion
+        varchar sku PK "normalizado"
+        numeric item "costo"
+        numeric importacion
+        numeric costo_total "columna generada"
         numeric margen_ganancia "admite negativo"
-        boolean admite_contrapedido
-        varchar estado "activo | descontinuado"
+        numeric tasa_impuesto "13 por defecto"
+        varchar categoria "texto, un nivel"
+        int stock "CHECK >= 0"
+        boolean contrapedido
     }
-    EXISTENCIA {
-        bigint producto_id PK
-        int cantidad "CHECK >= 0"
+    CARRITO {
+        varchar correo_cliente PK, FK
+        int num_carrito PK
+        varchar estado_carrito "activo | convertido"
+        timestamptz fecha_cierre
     }
-    MOVIMIENTO {
-        bigint id PK
-        varchar tipo
-        int cantidad "con signo"
-        numeric costo_unitario "en ingresos"
-        text motivo "obligatorio en ajustes"
-        bigint pedido_id FK
+    AGREGA {
+        varchar sku PK, FK
+        int cantidad_solicitada
+        numeric precio_unitario "copia fija, sin impuesto"
+        numeric tasa_impuesto_aplicada
     }
     PEDIDO {
-        bigint id PK "RF-30"
-        varchar canal
-        varchar estado
-        varchar estado_pago
-        numeric total "copia fija"
+        varchar correo_cliente PK, FK
+        int num_carrito PK, FK "RF-30"
+        varchar modalidad_entrega
+        numeric costo_entrega
+        varchar codigo_oferta FK
     }
-    LINEA_PEDIDO {
-        int cantidad
-        int cantidad_contrapedido
-        numeric precio_unitario "copia fija"
+    PRODUCTO_ADMINISTRA {
+        varchar sku PK, FK
+        varchar correo_administrador PK, FK
+        timestamptz fecha PK
+        int cantidad "con signo, distinta de 0"
     }
 ```
 
 Decisiones de modelado que salen del SRS y de este documento:
 
+- **La base de datos sigue el EER del equipo** (DD-17). Cada diferencia con el EER del
+  Sprint 0 responde a un requerimiento y está registrada en `modelo-datos.md` § 4.
+- **Llaves naturales: correo y SKU.** El usuario se identifica por su correo y el
+  producto por su SKU, como en el EER. Ambos se guardan normalizados (el correo en
+  minúsculas, el SKU en mayúsculas, sin espacios en los extremos) y un `CHECK` lo
+  garantiza. Si un correo cambia, `ON UPDATE CASCADE` lo propaga. El carrito, el
+  pedido y su historial heredan la llave del cliente (`correo_cliente`,
+  `num_carrito`).
+- **Usuario se especializa en Administrador y Cliente**, de forma traslapada, como
+  marca el EER: un mismo usuario puede estar en las dos tablas. El rol no es una
+  columna: sale de la tabla en la que está el correo. RF-49 (una sola cuenta de
+  administrador) se garantiza con un índice único. Todo cliente tiene cuenta, y su cédula es obligatoria y
+  única porque la factura la exige (RN-18).
 - **El precio final no se guarda en el producto** (DD-13). Se guardan sus entradas
-  (costo, importación, margen) y el motor de precios lo calcula. Guardarlo obligaría a
-  recalcular toda la tabla cuando se cierre INC-05. Si el catálogo resultara lento, la
-  respuesta prevista es el Proxy de caché (§ 5.6), no una columna.
-- **El pedido es independiente del carrito** (DD-15). Tiene su propio identificador
-  (RF-30) y sus propias líneas. Así también puede nacer de una venta presencial o por
-  redes sociales, sin carrito (RF-17, RN-05), y los reportes cuentan todos los
-  canales.
-- **El carrito no guarda precios.** El carrito se conserva indefinidamente (RN-14):
-  un precio fijado al agregar un producto quedaría viejo. El precio se calcula al
-  mostrar el carrito y se fija en la línea del pedido al confirmar.
-- **La línea del pedido guarda una copia del precio**, y el pedido una copia de sus
-  montos. Ese precio es un hecho histórico: un cambio posterior en la fórmula no puede
-  alterar el monto de un pedido ya hecho.
-- **El inventario usa dos tablas.** `existencia` guarda el saldo actual y es la fila
-  que se bloquea con `FOR UPDATE` (§ 7.3); `movimiento` es el libro que explica cómo se
-  llegó a ese saldo, con tipo, cantidad con signo, responsable y pedido de origen.
-  Ambas se escriben en la misma transacción, y las pruebas de `database/` verifican que
-  el saldo siempre coincide con la suma de los movimientos.
-- **El histórico de costos son los movimientos de ingreso** (RN-06, RF-14). Cada
-  ingreso conserva su fecha y su costo de compra, y nunca se sobrescribe.
-  `catalogo.producto.costo_item` es solo el costo vigente para calcular el precio.
-- **Contrapedido.** La línea del pedido distingue la parte que se pidió por
-  contrapedido (`cantidad_contrapedido`). Esa parte no descuenta existencias, así que
-  el saldo nunca queda negativo (RN-13, RF-23).
-- **Los registros históricos son de solo inserción** (DD-16): movimientos, líneas de
-  pedido, historial de estados, bitácora y consentimientos. Un trigger rechaza
-  cualquier `UPDATE` o `DELETE` (RF-19). Se prefirió al `REVOKE` porque en desarrollo
-  la aplicación se conecta como dueña de las tablas, y a la dueña un `REVOKE` no la
-  detiene.
-- **Usuarios con llave numérica.** El correo es único, pero no es la llave: puede
-  cambiar sin arrastrar llaves foráneas y no se expone como identificador (RES-05).
-  `usuarios.usuario` guarda credenciales y rol; RF-49 (una sola cuenta de administrador)
-  se garantiza con un índice único parcial.
-- **Un cliente puede no tener cuenta.** `clientes.cliente.usuario_id` es opcional:
-  así se registran compradores de otros canales (RF-17) y clientes importados con su
-  historial (RF-60). La cédula es obligatoria porque la factura la exige (RN-18).
-- **Los parámetros que edita el administrador viven en tablas**: la escala de niveles
-  en `clientes.nivel_fidelidad` y el monto mínimo de descuento en
-  `admin.parametro_negocio` (aprobado #10). Los valores fijados por ley o por el SRS
-  que no son editables —impuesto de 13 % (RES-06) y umbral de alerta de 2 unidades
-  (RN-04)— viven en la configuración del servidor (§ 15, convención 5).
-- **El nivel de fidelidad no se guarda**: se deriva de `num_compras` y de la escala
-  vigente. Si el administrador cambia la escala, todos los clientes quedan en el nivel
-  correcto sin recalcular nada.
-- **Un intento de pago puede referirse solo al carrito.** RF-39 establece que un pago
-  rechazado no crea el pedido; el intento queda registrado igual. Si la pasarela no
-  responde (Null Object, § 5.2), el intento se guarda sin referencia externa.
-- **La factura guarda una copia de los datos fiscales** del emisor y del receptor al
-  emitirse (RN-18): si después cambian, la factura emitida no cambia.
+  (costo, importación, margen y tasa de impuesto) y el motor de precios lo calcula.
+  `costo_total` es una columna generada a partir del costo y la importación, así que
+  nunca contradice a sus partes. Si el catálogo resultara lento, la respuesta prevista
+  es el Proxy de caché (§ 5.6), no una columna.
+- **La línea del carrito fija el precio** (DD-13). `pedidos.agrega` guarda el precio
+  unitario sin impuesto y la tasa aplicada. Esas mismas filas son las líneas del
+  pedido: un cambio posterior en el costo o el margen no altera el monto de un pedido
+  ya hecho.
+- **El pedido es entidad débil del carrito** (DD-15). Todo pedido nace de un carrito
+  (relación «Convierte», 1 a 0..1) y hereda su llave (RF-30); sus líneas son las de
+  `agrega`, sin duplicarlas en otra tabla. Las ventas de otros canales (RF-17, RN-05)
+  también pasan por un carrito, de modo que los reportes cuentan todos los canales.
+- **El stock vive en el producto.** `catalogo.producto.stock` es el saldo actual y la
+  fila que se bloquea con `FOR UPDATE` (§ 7.3). `inventario.producto_administra` es el
+  historial de entradas (cantidad positiva) y salidas (negativa) que registra el
+  administrador, con su fecha (RF-13, RF-15).
+- **Contrapedido.** Es un atributo del producto: si lo admite, se puede pedir aunque no
+  haya stock, y el stock nunca queda negativo (RN-13, RF-23).
+- **Los registros históricos son de solo inserción** (DD-16): el registro de mercancía
+  y el historial de estados del pedido. Un trigger rechaza cualquier `UPDATE` o
+  `DELETE` (RF-19), salvo los que produce un `ON UPDATE CASCADE`. Se prefirió al
+  `REVOKE` porque en desarrollo la aplicación se conecta como dueña de las tablas, y a
+  la dueña un `REVOKE` no la detiene.
+- **El estado del pedido no se guarda en el pedido.** Es el último registro de
+  `historial_estado`, y la vista `reportes.v_estado_pedido` lo expone. Así no hay dos
+  fuentes para el mismo dato.
+- **Los descuentos viven en una tabla** (DD-14). `pedidos.oferta` guarda la vigencia,
+  el porcentaje, el monto mínimo y el nivel de fidelidad mínimo de cada oferta
+  (aprobado #10), y un pedido puede aplicar una. Los valores fijados por el SRS que no
+  son editables, como el umbral de alerta de 2 unidades (RN-04), viven en la
+  configuración del servidor (§ 15, convención 5).
+- **El nivel de fidelidad no se guarda**: se deriva de `num_compras`. Si cambia la
+  escala, todos los clientes quedan en el nivel correcto sin recalcular nada.
+- **Montos en dólares.** La tienda maneja dólares, y la hoja del cliente trae los
+  costos en esa moneda.
+- **El pago se registra contra un pedido.** Un pedido puede tener varios pagos, cada
+  uno identificado por la referencia que devuelve la pasarela y con estado
+  `pendiente`, `aprobado` o `rechazado`.
+- **La factura respalda un pago.** Un pago tiene a lo sumo una factura (RF-41). Sus
+  montos (subtotal, impuesto, descuento y total) se derivan de las líneas del pedido y
+  no se guardan.
 - **No existe ninguna columna para datos de tarjeta.** RNF-09 queda garantizado por
   la ausencia de la columna, no solo por el filtro del DTO.
 - **Nombres en español y en `snake_case`**, iguales a los términos del SRS.
@@ -981,10 +1027,9 @@ Decisiones de modelado que salen del SRS y de este documento:
 
 Las herramientas de `database/` provienen del prototipo `kit-bd-21copilots_4`, que el
 equipo construyó para familiarizarse con la base de datos antes de consolidar esta
-arquitectura. Al revisarlo contra el SRS y este documento, el equipo decidió
-**conservar sus herramientas y reescribir su esquema** (DD-17): las herramientas eran
-sólidas, pero el modelo de datos tenía decisiones de base que habrían sido costosas de
-deshacer más adelante (ver `modelo-datos.md` § 4).
+arquitectura. El equipo decidió **conservar sus herramientas y que el esquema siga el
+EER del equipo** (DD-17): las herramientas eran sólidas, y el modelo de datos ya
+estaba acordado en el EER.
 
 - **Migraciones SQL numeradas, solo hacia adelante** (DD-12). Una migración que ya se
   integró a la rama principal no se edita: cualquier cambio es una migración nueva. El
@@ -998,15 +1043,17 @@ deshacer más adelante (ver `modelo-datos.md` § 4).
   su propio SQL (§ 3.2) y con los objetivos de CI0128.
 - **Un comando por tarea**, dentro de `database/`: `npm run db:up` levanta
   PostgreSQL 17 en Docker, `npm run db:reset` reconstruye todo desde cero,
-  `npm run db:migrate` aplica lo pendiente y `npm run db:test` ejecuta las pruebas.
-  Esto es lo que sostiene RNF-21.
-- **Dos tipos de semilla.** `semillas/referencia/` contiene lo que el sistema necesita
-  para arrancar (escala de niveles, parámetros de negocio); `semillas/demo/` contiene
-  datos de prueba que cubren a propósito los casos del SRS. La carga real del catálogo
-  no es una semilla: entra por la importación del Excel (RF-57).
+  `npm run db:migrate` aplica lo pendiente, `npm run db:test` ejecuta las pruebas y
+  `npm run db:cliente` reconstruye la base y carga el Excel real del cliente a través
+  del servidor. Esto es lo que sostiene RNF-21.
+- **Semillas de prueba.** `semillas/demo/` contiene usuarios, productos, mercancía y
+  pedidos de ejemplo que cubren a propósito los casos del SRS. La carga real del
+  catálogo no es una semilla: entra por la importación del Excel (RF-57).
 - **Pruebas de restricciones.** `database/pruebas/` verifica con SQL que cada
-  restricción rechaza lo que debe rechazar y acepta lo que debe aceptar. Cada archivo
-  corre en una transacción que se revierte, así que nunca deja datos.
+  restricción rechaza lo que debe rechazar y acepta lo que debe aceptar, y que se
+  cumplen los invariantes que cruzan varias tablas (por ejemplo, que todo pedido nace
+  de un carrito convertido). Cada archivo corre en una transacción que se revierte,
+  así que nunca deja datos.
 - **DDL generado.** `npm run db:dump` produce `database/schema.sql`, el entregable
   "Script de BD" del curso, a partir de lo que realmente existe en la base de datos.
 
@@ -1018,9 +1065,9 @@ deshacer más adelante (ver `modelo-datos.md` § 4).
 
 ```
 database/migraciones/005_catalogo.sql
-   │  (se aplica una vez; crea las tablas en PostgreSQL)
+   │  (se aplica una vez; crea la tabla en PostgreSQL)
    ▼
-PostgreSQL ── catalogo.producto, catalogo.subcategoria, inventario.existencia, ...
+PostgreSQL ── catalogo.producto
    ▲
    │  SQL parametrizado ($1, $2)
 apps/server/
@@ -1032,13 +1079,13 @@ apps/server/
    catalogo.controller.js traduce HTTP ↔ dominio
    catalogo.dto.js        lista blanca: expone precioFinal, oculta costo y margen
    │
-   │  JSON sobre HTTPS — GET /api/catalogo
+   │  JSON sobre HTTPS — GET /api/catalogo/productos
    ▼
 apps/client/
    api/                   clienteHttp: el único lugar que habla con la red
    hooks/useCatalogo      maneja cargando / error / datos
-   paginas/Catalogo.jsx   contenedor: usa el hook
-   componentes/catalogo/  presentacionales: reciben props y las muestran
+   pages/catalog/         contenedor: Catalog.jsx usa el hook
+   components/            presentacionales: reciben props y las muestran (product-card, ...)
 ```
 
 El dato cambia de forma en cada frontera, y cada transformación tiene un único
@@ -1057,29 +1104,29 @@ cliente no se enteran.
 
 ### 10.2 Escritura: confirmar un pedido (RF-25, RF-30)
 
-1. `PedidosService` calcula precios y descuento con el motor de precios y la
-   estrategia del nivel del cliente, y abre `enTransaccion(...)`.
-2. `InventarioRepository` bloquea las filas de `inventario.existencia` de todos los
-   productos del pedido, en orden ascendente de `producto_id` (§ 7.3).
-3. El servicio valida RN-13. La parte que no hay en existencia solo se acepta si el
-   producto admite contrapedido, y se anota en `cantidad_contrapedido`. Si falla,
-   `ROLLBACK`. Si algún camino se saltara esta validación, el `CHECK (cantidad >= 0)`
-   lo detiene igual.
-4. En la misma transacción: `INSERT` del pedido y de sus líneas con el precio copiado,
-   `INSERT` en `historial_estado` (colocado), `INSERT` de un movimiento `venta` por
-   producto y `UPDATE` de existencias por la parte disponible, y el carrito pasa a
-   `convertido`. Luego `COMMIT`.
-5. **Después** del `COMMIT` se publica `MOVIMIENTO_REGISTRADO` en el bus; la alerta
-   (RF-16) y la bitácora (RF-52) hacen su parte (§ 6.2).
-6. El cobro y la factura pasan por sus interfaces (§ 5.2); si fallan, el pedido ya
-   está registrado y queda con pago pendiente (RNF-06).
+1. `PedidosService` toma el carrito activo del cliente. Los precios ya están fijados
+   en sus líneas (`agrega`); el servicio decide con la estrategia de descuento (§ 6.5)
+   si aplica una oferta, y abre `enTransaccion(...)`.
+2. Se bloquean las filas de `catalogo.producto` de todos los SKU del carrito, en orden
+   ascendente de `sku` (§ 7.3).
+3. El servicio valida RN-13. Si el stock no alcanza, la línea solo se acepta si el
+   producto admite contrapedido. Si falla, `ROLLBACK`. Si algún camino se saltara esta
+   validación, el `CHECK (stock >= 0)` lo detiene igual.
+4. En la misma transacción: `UPDATE` del stock por la parte disponible, el carrito
+   pasa a `convertido` con su `fecha_cierre`, `INSERT` del pedido con su modalidad de
+   entrega y su oferta, e `INSERT` en `historial_estado` del estado `colocado`
+   con su fecha. Luego `COMMIT`.
+5. **Después** del `COMMIT` se publican `PEDIDO_CONFIRMADO` y `MOVIMIENTO_REGISTRADO`
+   en el bus; la alerta (RF-16) y la bitácora (RF-52) hacen su parte (§ 6.2).
+6. El cobro y la factura pasan por sus interfaces (§ 5.2). El pago se registra contra
+   el pedido ya creado; si la pasarela o la facturación fallan, el pedido ya está
+   registrado y queda con el pago pendiente (RNF-06).
 
 ---
 
 ## 11. Estructura del proyecto
 
-El repositorio se organiza en tres partes. `apps/client/` y `database/` ya existen;
-`apps/server/` se creará con la estructura descrita aquí.
+El repositorio se organiza en tres partes, y las tres ya existen.
 
 ```
 21CoPilots_PIBasesIngesoft/
@@ -1087,7 +1134,7 @@ El repositorio se organiza en tres partes. `apps/client/` y `database/` ya exist
 │   ├── client/                      CAPA DE PRESENTACIÓN — React 19 + Vite
 │   └── server/                      CAPAS DE API, DOMINIO Y PERSISTENCIA — Node.js + Express
 ├── database/                        CONTRATO DE DATOS — PostgreSQL 17, autocontenido
-└── documentos/                      Requerimientos, diseño, entrevistas
+└── documentos/                      Requerimientos, diseño, entrevistas, sprints
 ```
 
 Cada parte es autocontenida: tiene su propio `package.json` y, cuando lo necesita, su
@@ -1098,28 +1145,27 @@ propio `.env`.
 ```
 apps/client/
 ├── index.html                   Cascarón con <div id="root">
-├── vite.config.js               Proxy a la API en desarrollo
+├── vite.config.js               Proxy de /api al servidor en desarrollo
 └── src/
     ├── main.jsx                 Montaje de React
-    ├── App.jsx                  Proveedores + estructura de página
-    ├── rutas.jsx                Mapa de rutas (panel admin con carga diferida)
-    ├── estilos/                 Sistema de diseño: tokens · base · layout · componentes
-    ├── componentes/
-    │   ├── ui/                  Presentacionales puros
-    │   ├── layout/              Encabezado · navegación · pie
-    │   └── catalogo/            Tarjetas · rejillas · carrusel
-    ├── paginas/                 Una por ruta; son los contenedores
-    ├── hooks/                   useCarrusel · useCatalogo · useRecursoRemoto
+    ├── App.jsx                  Proveedores + mapa de rutas (el panel va detrás de AdminRoute)
+    ├── routes.js                Funciones que arman las rutas del catálogo y de la ficha
+    ├── estilos/                 Sistema de diseño: tokens · base · componentes
+    ├── components/              Presentacionales, una carpeta por componente
+    │                            (header, footer, product-card, product-table, product-form, ...)
+    ├── pages/                   Una por ruta; son los contenedores
+    │                            (home, catalog, product-detail, access, products)
+    ├── hooks/                   useCatalogo · useProducto · useCategorias · useSesion · ...
     ├── api/                     clienteHttp + endpoints por módulo
-    └── contexto/                Estado compartido: copia local del carrito
+    └── context/                 Estado compartido: la sesión del usuario
 ```
 
 En el frontend, la separación equivalente a las capas del servidor es
-**Contenedor/Presentacional** (§ 3.3): `componentes/ui/` y `componentes/layout/` no
-conocen el origen de los datos, `paginas/` resuelve los datos con los hooks, y `api/`
-es el único lugar que habla con la red. La regla verificable en revisión de código:
-**ningún componente de `componentes/ui/` importa de `api/`**. El carrito se persiste en
-la base de datos (RF-24); el contexto de React solo mantiene la copia que se muestra.
+**Contenedor/Presentacional** (§ 3.3): `components/` no conoce el origen de los datos,
+`pages/` resuelve los datos con los hooks, y `api/` es el único lugar que habla con la
+red. La regla verificable en revisión de código: **ningún componente de `components/`
+importa de `api/`**. Cuando se implemente el carrito, se persiste en la base de datos
+(RF-24) y el contexto de React solo mantiene la copia que se muestra.
 
 ### 11.2 `apps/server/`
 
@@ -1129,26 +1175,33 @@ apps/server/
 ├── app.js                       CAPA DE API: cadena de middlewares y rutas
 ├── composicion.js               Raíz de composición (Abstract Factory en intención)
 ├── configuracion.js             Único lector de variables de entorno
+├── scripts/                     Generador de la plantilla de importación
 ├── shared/
-│   ├── db/                      Pool · Unit of Work · bloqueo de fila
+│   ├── db/                      Pool · Unit of Work
 │   ├── eventos/                 Observer: bus y catálogo de eventos
 │   ├── errores/                 Errores de dominio (sin conocimiento de HTTP)
 │   └── http/                    Chain of Responsibility: middlewares
 └── modules/
-    ├── catalogo/                Primer módulo; sirve de plantilla para los demás
+    ├── catalogo/                Primer módulo implementado; sirve de plantilla para los demás
     │   └── precio/              Strategy compuesta (Pipes & Filters)
-    ├── inventario/              Núcleo (RES-07) + observador de alertas
-    ├── pedidos/                 State (máquina de estados)
+    ├── admin/                   Sesión e importación implementadas + observador de bitácora
+    │   ├── importacion/         Template Method
+    │   └── seguridad/           Hash de contraseñas y tokens de sesión
+    ├── inventario/              Núcleo (RES-07)
+    │   └── suscriptores/        Observador de alertas
+    ├── pedidos/
+    │   └── estados/             State (máquina de estados)
     ├── clientes/                Strategy de descuento
     ├── pagos/                   Bridge: interfaz + Adapter + Null Object
+    │   └── adaptadores/
     ├── facturacion/             Bridge: interfaz + Adapter + Null Object
-    ├── reportes/                Consultas de lectura sobre las vistas de reportes
-    └── admin/                   Control de acceso + observador de bitácora
+    │   └── adaptadores/
+    └── reportes/                Consultas de lectura sobre las vistas de reportes
 ```
 
 El equipo acordó implementar `catalogo` primero, completo en todas sus capas, para que
 sirva de referencia al resto. Cada módulo de negocio repite internamente la misma
-disposición:
+disposición, con sus pruebas (`*.test.js`) junto al archivo que prueban:
 
 ```
 modules/<modulo>/
@@ -1160,11 +1213,15 @@ modules/<modulo>/
 └── index.js                 Facade del módulo
 ```
 
+`pagos` y `facturacion` no siguen esta disposición porque no tienen rutas: solo la
+interfaz (`*.port.js`), sus adaptadores y un `index.js` con la fábrica (§ 4.1).
+
 ### 11.3 `database/`
 
 ```
 database/
 ├── README.md                    Cómo levantar, cambiar y probar la base de datos (RNF-21)
+├── guia.md                      Guía rápida para levantar la base de datos local
 ├── package.json                 Comandos npm run db:* y dependencias (pg, dotenv)
 ├── docker-compose.yml           PostgreSQL 17 para desarrollo
 ├── .env.example                 Plantilla de variables; el .env real no se sube
@@ -1179,16 +1236,16 @@ database/
 │   ├── 008_pagos_facturacion.sql
 │   └── 009_reportes.sql                Vistas de solo lectura
 ├── semillas/
-│   ├── referencia/              Lo que el sistema necesita para arrancar
 │   └── demo/                    Datos de prueba para desarrollo y evidencias
-├── pruebas/                     SQL que verifica las restricciones (npm run db:test)
-├── scripts/                     migrate · seed · reset · probar · dump · new-migration
+├── pruebas/                     SQL que verifica restricciones e invariantes (npm run db:test)
+├── scripts/                     migrate · seed · reset · probar · dump · new-migration · cargar-cliente
 └── schema.sql                   DDL completo, GENERADO con npm run db:dump (entregable)
 ```
 
-La numeración de las migraciones sigue las dependencias entre llaves foráneas: `admin`
-va antes que `catalogo` e `inventario` porque ambos referencian usuarios, y `pedidos`
-después de `clientes`.
+La numeración de las migraciones sigue las dependencias entre llaves foráneas:
+`usuarios` va primero porque administrador y cliente lo referencian, `inventario`
+después de `admin` y `catalogo` porque referencia a ambos, y `pedidos` después de
+`clientes` y `catalogo`.
 
 ---
 
@@ -1217,24 +1274,23 @@ Esta tabla los traduce para evitar ambigüedades en la revisión:
 | Requerimiento | Exigencia | Patrón o mecanismo que la satisface |
 |---|---|---|
 | RNF-20 | Los placeholder deben estar aislados tras una interfaz propia | **Bridge + Adapter** |
-| RNF-06 | Las operaciones deben completarse aunque los placeholder fallen | **Null Object** + aislamiento de fallos en el Observer + intento de pago sin referencia externa |
+| RNF-06 | Las operaciones deben completarse aunque los placeholder fallen | **Null Object** + aislamiento de fallos en el Observer + pago registrado como `pendiente` |
 | RES-03 | Pago y facturación son simulados | **Adapter** + **Factory Method** |
-| RN-01, INC-05 | Fórmula de precio configurable y en disputa | **Strategy** compuesta (Pipes & Filters); precio no persistido |
-| RN-02 | Margen negativo permitido | **Strategy** sin validación de signo; sin `CHECK` de signo en la tabla |
-| RN-06, RF-14 | El histórico de costos no se sobrescribe | Movimientos de ingreso con costo, de solo inserción |
-| RN-08, RN-09, aprobado #10 | Escala de niveles y descuentos editable | **Strategy** parametrizada con valores en tablas |
-| RF-26, RF-27 | Estados del pedido y su visibilidad | **State** (variante tabular) + `pedidos.historial_estado` |
+| RN-01, INC-05 | Fórmula de precio configurable | **Strategy** compuesta (Pipes & Filters); precio no persistido; `costo_total` como columna generada |
+| RN-02 | Margen negativo permitido | **Strategy** sin validación de signo; el `CHECK` solo exige que sea mayor que −100 |
+| RN-08, RN-09, aprobado #10 | Descuentos editables por el administrador | **Strategy** parametrizada con las ofertas de `pedidos.oferta` |
+| RF-26, RF-27 | Estados del pedido y su visibilidad | **State** (variante tabular) + `pedidos.historial_estado` + `reportes.v_estado_pedido` |
 | RN-15, RF-28 | Cancelable solo antes del despacho | **State**: derivado de la tabla de transiciones |
 | RF-16, RN-04 | Alerta de existencias bajas, umbral fijo | **Observer** + umbral en configuración |
-| RF-52, RNF-10 | Bitácora de operaciones sensibles y accesos denegados | **Observer** + tabla de solo inserción |
-| RF-50, RF-49 | Roles y una única cuenta de administrador | **Chain of Responsibility** + índice único parcial |
+| RF-52, RNF-10 | Bitácora de operaciones sensibles y accesos denegados | **Observer**: `exigirRol` publica `acceso_denegado`; dónde se guarda, ver [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md) |
+| RF-50, RF-49 | Roles y una única cuenta de administrador | **Chain of Responsibility** + especialización de usuario + índice único |
+| RF-53 | Sesión con vencimiento | Cookie `HttpOnly` + `usuarios.sesion` con el hash del token |
 | RF-25, RF-30 | Confirmación de pedido bajo concurrencia | **Unit of Work** + **Monitor Object** delegado al SGBD |
-| RES-07, RN-13 | Inventario único, exacto y sin negativos | Bloqueo pesimista de fila + `CHECK (cantidad >= 0)` + libro de movimientos |
-| RF-15, RF-19, RF-20 | Todo movimiento registrado, no modificable y justificado | `inventario.movimiento` con tipo, motivo, responsable y trigger de solo inserción |
-| RF-17, RN-05 | Ventas de otros canales en el mismo inventario | Pedido independiente del carrito, con canal |
-| RF-57, RF-58, RF-59 | Importación del Excel | **Template Method** + SKU normalizado con `UNIQUE` |
-| RF-38 | Consentimiento con fecha | `clientes.consentimiento_terminos`, de solo inserción |
-| RF-54 | Enlace de recuperación de un solo uso y con vencimiento | `admin.recuperacion_contrasena` con hash del token |
+| RES-07, RN-13 | Inventario único, exacto y sin negativos | Bloqueo pesimista de la fila del producto + `CHECK (stock >= 0)` |
+| RF-13, RF-15, RF-19 | Entradas y salidas registradas y no modificables | `inventario.producto_administra` con responsable y fecha, y trigger de solo inserción |
+| RF-17, RN-05 | Ventas de otros canales en el mismo inventario | Pedido como entidad débil del carrito: toda venta pasa por un carrito y descuenta el mismo stock |
+| RF-57, RF-58, RF-59 | Importación del Excel | **Template Method** + SKU normalizado como llave primaria |
+| RN-06, RF-14, RF-20, RF-38 | Histórico de costos, motivo de los ajustes y aceptación de términos | Sin representación en el modelo todavía, ver [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md) |
 | RNF-09 | Ningún dato de tarjeta almacenado | Ausencia de la columna en el esquema + **DTO** con lista blanca |
 | RNF-01, RNF-02 | Desempeño del catálogo | **Proxy** de caché (reservado) |
 | RNF-19 | Mantenibilidad | **Multicapa** + capas por módulo + esquema por módulo |
@@ -1251,19 +1307,19 @@ Esta tabla los traduce para evitar ambigüedades en la revisión:
 | DD-02 | Descartar **Broker** y **P2P** | Arquitectura distribuida | Si el sistema se distribuyera, el bus de eventos es la costura por donde entraría el intermediario |
 | DD-03 | **Bridge + Adapter** solo en el borde externo | Aplicarlo a todos los módulos | Los módulos que solo hablan con PostgreSQL no tienen interfaz duplicada |
 | DD-04 | Bus de eventos **en memoria** | Cola de mensajes externa | Desacople sin infraestructura; los eventos no sobreviven a un reinicio del proceso |
-| DD-05 | **Strategy** compuesta para el precio | Fórmula escrita directamente en el servicio o en una vista SQL | INC-05 se cierra reordenando pasos |
+| DD-05 | **Strategy** compuesta para el precio | Fórmula escrita directamente en el servicio o en una vista SQL | Si la fórmula cambia, se reordenan o se sustituyen pasos |
 | DD-06 | **State** en variante tabular | Una clase por estado | Se migra a la forma canónica cuando el estado determine comportamiento, no solo transiciones |
-| DD-07 | **Monitor Object** delegado al gestor de base de datos | Control de concurrencia en la aplicación | Las operaciones sobre un mismo producto se serializan; los candados se toman en orden de `producto_id` |
+| DD-07 | **Monitor Object** delegado al gestor de base de datos | Control de concurrencia en la aplicación | Las operaciones sobre un mismo producto se serializan; los candados se toman en orden de `sku` |
 | DD-08 | Evitar **Singleton**; instancia única inyectada | `getInstance()` global | Las dependencias quedan explícitas y sustituibles en pruebas |
 | DD-09 | **Command** documentado pero no implementado | Implementarlo desde el sprint 1 | Primera extensión recomendada; mientras tanto la bitácora se resuelve con Observer |
 | DD-10 | Integridad en la base de datos, reglas de negocio en el dominio | Triggers y procedimientos con lógica de negocio | Algunas reglas tienen doble defensa (servicio + `CHECK`); los triggers quedan para tareas técnicas |
 | DD-11 | Un **esquema de PostgreSQL por módulo** | Un solo esquema plano | Nombres calificados en el SQL; cada esquema tiene un único módulo que escribe en él |
 | DD-12 | **Migraciones SQL versionadas**, solo hacia adelante, sin ORM | ORM con esquema generado | Más SQL escrito a mano; control total del esquema y alineación con CI0128 |
-| DD-13 | Persistir las **entradas del precio**, no el precio final; copiar el precio en la línea del pedido | Guardar el precio calculado en el producto o en el carrito | El catálogo calcula en cada lectura; el desempeño se resuelve con el Proxy de caché si hace falta |
-| DD-14 | Parámetros editables por el administrador **en tablas**; valores fijos por ley o por el SRS en la configuración del servidor | Todo en variables de entorno | Los repositorios de `clientes` y `admin` cargan los parámetros y los inyectan en las estrategias |
-| DD-15 | **Pedido independiente del carrito**, con identificador y líneas propias | Pedido como entidad débil del carrito (prototipo y EER del Sprint 0) | Las líneas del carrito y del pedido son tablas distintas; a cambio, las ventas de otros canales y los pedidos cerrados quedan bien modelados |
-| DD-16 | **Registros históricos de solo inserción**, protegidos con trigger | `REVOKE` de permisos, o confiar en el código | Corregir un movimiento se hace con un movimiento compensatorio, nunca editando el original |
-| DD-17 | **Conservar las herramientas del prototipo** `kit-bd-21copilots_4` y **reescribir su esquema** | Adoptar el prototipo completo, o empezar de cero | Se reutiliza el trabajo de herramientas; el EER del Sprint 0 debe actualizarse con los cambios del modelo |
+| DD-13 | Persistir las **entradas del precio**, no el precio final; fijar el precio sin impuesto y la tasa en la línea del carrito (`agrega`) | Guardar el precio calculado en el producto | El catálogo calcula en cada lectura; el desempeño se resuelve con el Proxy de caché si hace falta |
+| DD-14 | Descuentos editables por el administrador **en tablas** (`pedidos.oferta`); valores fijos por ley o por el SRS en la configuración del servidor o como valor por defecto de la columna | Todo en variables de entorno | El repositorio de `pedidos` carga la oferta y la inyecta en la estrategia de descuento |
+| DD-15 | **Pedido como entidad débil del carrito**: hereda su llave y sus líneas son las de `agrega` | Pedido independiente, con identificador y líneas propias | No se duplican las líneas; las ventas de otros canales también pasan por un carrito |
+| DD-16 | **Registros históricos de solo inserción**, protegidos con trigger | `REVOKE` de permisos, o confiar en el código | Corregir un registro de mercancía se hace con otro de signo contrario, nunca editando el original |
+| DD-17 | **Conservar las herramientas del prototipo** `kit-bd-21copilots_4` y que el **esquema siga el EER del equipo**, con ajustes mínimos y justificados | Adoptar el esquema del prototipo, o rediseñar el modelo | Se reutiliza el trabajo de herramientas; cada diferencia con el EER del Sprint 0 queda registrada en `modelo-datos.md` § 4 |
 
 ---
 
@@ -1275,15 +1331,17 @@ Esta tabla los traduce para evitar ambigüedades en la revisión:
 2. **Ningún adaptador concreto se importa fuera de `composicion.js`.** Es la
    verificación práctica de RNF-20 durante la revisión de código.
 3. **Todo movimiento de existencias pasa por el servicio de inventario**, dentro de
-   una transacción, tomando el candado de fila en orden de `producto_id` y registrando
-   el movimiento correspondiente (RES-07, RF-15, RF-30).
+   una transacción, tomando el candado de las filas de `catalogo.producto` en orden de
+   `sku` (RES-07, RF-15, RF-30). Las entradas y salidas que hace el administrador
+   quedan además en `inventario.producto_administra`.
 4. **Notificar es publicar un evento**, no invocar al otro módulo, y se publica
    después del `COMMIT`.
 5. **Ningún valor de negocio queda escrito en el código.** Los que el administrador
-   puede editar (escala de niveles, monto mínimo de descuento) viven en tablas; los
-   fijados por ley o por el SRS (impuesto de venta de 13 % por RES-06, umbral de
-   alerta de 2 unidades por RN-04) y los de infraestructura (conexión, puerto,
-   adaptador de pago) viven en la configuración, leída solo por `configuracion.js`.
+   puede editar (las ofertas, con su porcentaje y monto mínimo) viven en tablas; la
+   tasa de impuesto de 13 % (RES-06) se guarda en cada producto; los fijados por el SRS
+   (umbral de alerta de 2 unidades por RN-04) y los de infraestructura (conexión,
+   puerto, adaptador de pago) viven en la configuración, leída solo por
+   `configuracion.js`.
 6. **Nomenclatura en español, igual a la del SRS** (`contrapedido`, `margen`,
    `bitacora`): el mismo término en el requerimiento, en el código, en la base de datos
    y en la conversación con el cliente. En la base de datos, en `snake_case` y sin
@@ -1298,17 +1356,19 @@ Esta tabla los traduce para evitar ambigüedades en la revisión:
 
 ## 16. Riesgos y puntos abiertos
 
+Esta tabla registra los riesgos del diseño y cómo los mitiga. Las decisiones que
+siguen abiertas, con su detalle, están en [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md).
+
 | Riesgo o punto abierto | Origen | Mitigación prevista en el diseño |
 |---|---|---|
-| La fórmula de precio no está cerrada | INC-05; falta el Excel del cliente | Strategy compuesta: se reordenan o sustituyen pasos; el precio no está persistido |
-| Los porcentajes de descuento están en conflicto | RN-09, RN-10, RN-11 marcadas "en conflicto" | La escala vive en tablas, no en el código |
+| La fórmula de precio puede volver a cambiar | INC-05, [`formula-precio.md`](formula-precio.md) | Strategy compuesta: se reordenan o sustituyen pasos; el precio no está persistido |
+| Los porcentajes de descuento están en conflicto | RN-09, RN-10, RN-11 marcadas "en conflicto" | Los descuentos viven en `pedidos.oferta`, no en el código |
 | Las tarifas de envío no están definidas | RN-16, DEP-07, aprobado #11 | Strategy de tarifa con tabla configurable |
-| No se han visto los datos reales del Excel | SUP-01 | La importación reporta cada fila rechazada con su motivo (RF-58) |
 | El desempeño del catálogo no se ha medido | RNF-01, RNF-02 | Proxy de caché reservado como primera intervención |
 | Los eventos se pierden si el proceso se reinicia | DD-04 | Aceptado: ninguna regla de negocio depende hoy de su persistencia |
 | Dos integrantes crean una migración con el mismo número | DD-12, RES-02 | El script lo detecta y se detiene; quien no ha integrado su rama renumera la suya |
 | CI0128 podría exigir procedimientos almacenados o triggers | Evaluación del curso | Confirmar con el profesor; de ser necesario, ubicarlos en `reportes` o en tareas técnicas, sin reglas de negocio (DD-10) |
-| El EER del Sprint 0 no refleja el modelo actual | DD-15, DD-17 | Actualizar el diagrama y el mapeo con los cambios listados en `modelo-datos.md` § 4 |
-| La entrevista del 24 de setiembre propone cuentas para empleados | `documentos/entrevistas/e1-24-9-2026.md`, punto 6 | Hoy RF-49 impone una sola cuenta de administrador; si el cliente lo aprueba, una migración elimina el índice único y agrega el rol |
+| Requerimientos sin representación en el modelo: bitácora, histórico de costos, motivo de los ajustes y aceptación de términos | RF-52, RN-06, RF-14, RF-20, RF-38 | Cada uno se agrega con una migración nueva y su fila en `modelo-datos.md` § 4 (DD-12) |
+| Cuentas para empleados, aprobadas por el cliente | `documentos/entrevistas/e1-24-9-2026.md`, punto 6 | El rol sale de una tabla de especialización: se agrega la del empleado en una migración nueva y `exigirRol` no cambia. RF-49 y el registro de mercancía (que apunta a `admin.administrador`) se revisan en ese momento |
 | No está definido qué hacer si un cliente no da su cédula | RF-33 ("comportamiento definido") | La base de datos la exige porque la factura la necesita (RN-18); confirmar con el cliente |
-| Datos fiscales de la sociedad pendientes | RN-18 | Parámetros `emisor_razon_social` y `emisor_cedula_juridica` con valor "POR DEFINIR" |
+| Datos fiscales de la sociedad y escala de niveles sin lugar en el modelo | RN-08, RN-18 | Los usan los descuentos y la facturación, que todavía no se implementan; de dónde salen se decide antes de implementarlos |
