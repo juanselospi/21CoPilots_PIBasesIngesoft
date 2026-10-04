@@ -1,4 +1,4 @@
--- 006: crea las tablas relacionadas con carritos, pedidos y ofertas.
+-- 007: crea las tablas relacionadas con carritos, pedidos y ofertas.
 
 -- Guarda los carritos de cada cliente.
 -- Cada cliente puede tener varios carritos, pero solo uno puede estar activo.

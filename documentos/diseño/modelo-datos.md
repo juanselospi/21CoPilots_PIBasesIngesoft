@@ -19,14 +19,15 @@ esquemas sí se permiten.
 
 | Esquema | Tablas | Migración |
 |---|---|---|
-| `admin` | `usuario`, `sesion`, `recuperacion_contrasena`, `bitacora`, `parametro_negocio` | `002_admin.sql`, `009_sesion.sql` |
-| `catalogo` | `categoria`, `subcategoria`, `producto` | `003_catalogo.sql` |
-| `inventario` | `existencia`, `movimiento` | `004_inventario.sql` |
-| `clientes` | `nivel_fidelidad`, `cliente`, `cliente_telefono`, `consentimiento_terminos` | `005_clientes.sql` |
-| `pedidos` | `carrito`, `linea_carrito`, `pedido`, `linea_pedido`, `historial_estado` | `006_pedidos.sql` |
-| `pagos` | `intento_pago` | `007_pagos_facturacion.sql` |
-| `facturacion` | `factura` | `007_pagos_facturacion.sql` |
-| `reportes` | vistas `v_venta_por_linea`, `v_existencias`, `v_pedidos_por_cliente`, `v_historico_costos` | `008_reportes.sql` |
+| `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
+| `admin` | `administrador`, `recuperacion_contrasena`, `bitacora`, `parametro_negocio` | `003_admin.sql` |
+| `catalogo` | `categoria`, `subcategoria`, `producto` | `005_catalogo.sql` |
+| `inventario` | `existencia`, `movimiento` | `006_inventario.sql` |
+| `clientes` | `nivel_fidelidad`, `cliente`, `cliente_telefono`, `consentimiento_terminos` | `004_clientes.sql` |
+| `pedidos` | `carrito`, `linea_carrito`, `pedido`, `linea_pedido`, `historial_estado` | `007_pedidos.sql` |
+| `pagos` | `intento_pago` | `008_pagos_facturacion.sql` |
+| `facturacion` | `factura` | `008_pagos_facturacion.sql` |
+| `reportes` | vistas `v_venta_por_linea`, `v_existencias`, `v_pedidos_por_cliente`, `v_historico_costos` | `009_reportes.sql` |
 
 Convenciones: nombres en español, `snake_case` y sin tildes; llaves primarias
 numéricas (`GENERATED ALWAYS AS IDENTITY`); montos en `NUMERIC(12,2)` dólares;
@@ -69,7 +70,9 @@ Se listan las columnas con significado de negocio y las restricciones relevantes
 columnas `id`, `creado_en` y `actualizado_en` se omiten salvo que tengan algo
 particular. El detalle exacto está en las migraciones.
 
-### 2.1 `admin`
+### 2.1 `usuarios` y `admin`
+
+`usuario` y `sesion` están en el esquema `usuarios` (M-17); el resto, en `admin`.
 
 **`usuario`** — cuentas para iniciar sesión (RF-50, RF-53).
 
@@ -258,7 +261,8 @@ diagrama EER y el mapeo deben actualizarse para reflejarlos.**
 | M-13 | Se elimina **Oferta** (del EER actualizado). | Modelaba cupones (RF-66), que el SRS tiene en suspenso con prioridad W. El descuento confirmado es por nivel. | RF-66, RN-09 |
 | M-14 | Entidades nuevas: **Nivel de fidelidad**, **Parámetro de negocio**, **Bitácora**, **Recuperación de contraseña** y **Consentimiento de términos**. | Requerimientos sin representación en el EER. | RN-08, RN-09, aprobado #10, RF-38, RF-52, RF-54, RNF-10 |
 | M-15 | Un **esquema de PostgreSQL por módulo** y triggers que rechazan la modificación de registros históricos. | Alinea la base de datos con la arquitectura por módulos (DD-11) y hace verificable RF-19 (DD-16). | RF-19, RNF-19 |
-| M-16 | Entidad nueva **Sesión** (`admin.sesion`, migración 009). | El inicio de sesión usa una cookie con un token aleatorio; la base de datos guarda solo su hash y el vencimiento, para poder validar la sesión en cada petición sin exponer tokens si se filtra la tabla. | RF-53, RNF-08 |
+| M-16 | Entidad nueva **Sesión** (`usuarios.sesion`, migración 002). | El inicio de sesión usa una cookie con un token aleatorio; la base de datos guarda solo su hash y el vencimiento, para poder validar la sesión en cada petición sin exponer tokens si se filtra la tabla. | RF-53, RNF-08 |
+| M-17 | **Usuario** y **Sesión** van en un esquema propio, `usuarios`, en vez de `admin`, creadas en `002_usuarios.sql`. | Las cuentas y sus sesiones son de todos los usuarios, clientes incluidos. En `admin` hacían pensar que todo usuario era administrador. | RF-50, RF-53 |
 
 ### Lo que se conservó del prototipo
 

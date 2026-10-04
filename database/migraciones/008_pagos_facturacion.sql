@@ -1,4 +1,4 @@
--- 007: crea las tablas PAGO y FACTURA.
+-- 008: crea las tablas PAGO y FACTURA.
 
 -- Guarda los intentos de pago realizados para cada pedido.
 -- Un pedido puede tener varios pagos.

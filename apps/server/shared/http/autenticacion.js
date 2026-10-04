@@ -6,7 +6,7 @@
  * permite rutas públicas autenticadas (el catálogo de un cliente logueado)
  * sin duplicar la verificación de rol.
  *
- * La sesión viaja en la cookie `sesion`; admin.sesion guarda solo el hash
+ * La sesión viaja en la cookie `sesion`; usuarios.sesion guarda solo el hash
  * del token. Las contraseñas se almacenan con hash y salt — RNF-08 —,
  * nunca en claro.
  */

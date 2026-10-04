@@ -8,7 +8,8 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
 -- Organiza las tablas por módulo dentro de la misma base de datos.
-CREATE SCHEMA admin;         -- usuarios y administrador
+CREATE SCHEMA usuarios;      -- usuarios y sus sesiones
+CREATE SCHEMA admin;         -- administrador
 CREATE SCHEMA clientes;      -- clientes y sus teléfonos
 CREATE SCHEMA catalogo;      -- productos
 CREATE SCHEMA inventario;    -- registro de mercancía que administra el administrador

@@ -34,7 +34,7 @@ export class AdminRepository {
   async buscarUsuarioPorCorreo(correo) {
     const { rows } = await this.#pool.query(
       `SELECT u.correo, u.nombre, u.contrasena, ${ROL_DEL_USUARIO}
-         FROM admin.usuario u
+         FROM usuarios.usuario u
        ${ESPECIALIZACIONES_DEL_USUARIO}
         WHERE u.correo = $1`,
       [correo]
@@ -50,7 +50,7 @@ export class AdminRepository {
   /** RF-53 — se guarda el hash del token, nunca el token. */
   async crearSesion({ correoUsuario, tokenHash, venceEn }) {
     await this.#pool.query(
-      `INSERT INTO admin.sesion (correo_usuario, token_hash, fecha_vencimiento)
+      `INSERT INTO usuarios.sesion (correo_usuario, token_hash, fecha_vencimiento)
        VALUES ($1, $2, $3)`,
       [correoUsuario, tokenHash, venceEn]
     );
@@ -60,8 +60,8 @@ export class AdminRepository {
   async buscarUsuarioPorSesion(tokenHash) {
     const { rows } = await this.#pool.query(
       `SELECT u.correo, u.nombre, ${ROL_DEL_USUARIO}
-         FROM admin.sesion s
-         JOIN admin.usuario u ON u.correo = s.correo_usuario
+         FROM usuarios.sesion s
+         JOIN usuarios.usuario u ON u.correo = s.correo_usuario
        ${ESPECIALIZACIONES_DEL_USUARIO}
         WHERE s.token_hash = $1
           AND s.fecha_vencimiento > now()`,

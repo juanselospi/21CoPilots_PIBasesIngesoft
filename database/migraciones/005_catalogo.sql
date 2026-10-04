@@ -1,4 +1,4 @@
--- 004: crea la tabla PRODUCTO.
+-- 005: crea la tabla PRODUCTO.
 
 -- Guarda la información principal de cada producto.
 -- El costo_total se calcula automáticamente a partir de item e importacion.

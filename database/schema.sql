@@ -92,6 +92,13 @@ CREATE SCHEMA reportes;
 
 
 --
+-- Name: usuarios; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA usuarios;
+
+
+--
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -174,33 +181,6 @@ SET default_table_access_method = heap;
 
 CREATE TABLE admin.administrador (
     correo_usuario character varying(255) NOT NULL
-);
-
-
---
--- Name: sesion; Type: TABLE; Schema: admin; Owner: -
---
-
-CREATE TABLE admin.sesion (
-    correo_usuario character varying(255) NOT NULL,
-    token_hash character varying(128) NOT NULL,
-    fecha_creacion timestamp with time zone DEFAULT now() NOT NULL,
-    fecha_vencimiento timestamp with time zone NOT NULL,
-    CONSTRAINT ck_sesion_vigencia CHECK ((fecha_vencimiento > fecha_creacion))
-);
-
-
---
--- Name: usuario; Type: TABLE; Schema: admin; Owner: -
---
-
-CREATE TABLE admin.usuario (
-    correo character varying(255) NOT NULL,
-    contrasena character varying(255) NOT NULL,
-    nombre character varying(150) NOT NULL,
-    CONSTRAINT ck_usuario_correo CHECK (((correo)::text ~~ '%_@_%'::text)),
-    CONSTRAINT ck_usuario_correo_normalizado CHECK (((correo)::text = lower(btrim((correo)::text)))),
-    CONSTRAINT ck_usuario_nombre CHECK ((btrim((nombre)::text) <> ''::text))
 );
 
 
@@ -423,6 +403,20 @@ CREATE VIEW reportes.v_existencias AS
 
 
 --
+-- Name: usuario; Type: TABLE; Schema: usuarios; Owner: -
+--
+
+CREATE TABLE usuarios.usuario (
+    correo character varying(255) NOT NULL,
+    contrasena character varying(255) NOT NULL,
+    nombre character varying(150) NOT NULL,
+    CONSTRAINT ck_usuario_correo CHECK (((correo)::text ~~ '%_@_%'::text)),
+    CONSTRAINT ck_usuario_correo_normalizado CHECK (((correo)::text = lower(btrim((correo)::text)))),
+    CONSTRAINT ck_usuario_nombre CHECK ((btrim((nombre)::text) <> ''::text))
+);
+
+
+--
 -- Name: v_pedidos_por_cliente; Type: VIEW; Schema: reportes; Owner: -
 --
 
@@ -441,7 +435,7 @@ CREATE VIEW reportes.v_pedidos_por_cliente AS
     ep.estado
    FROM ((((pedidos.pedido pe
      JOIN clientes.cliente cl ON (((cl.correo_usuario)::text = (pe.correo_cliente)::text)))
-     JOIN admin.usuario u ON (((u.correo)::text = (pe.correo_cliente)::text)))
+     JOIN usuarios.usuario u ON (((u.correo)::text = (pe.correo_cliente)::text)))
      JOIN LATERAL ( SELECT COALESCE(sum(((a.cantidad_solicitada)::numeric * a.precio_unitario)), (0)::numeric) AS subtotal,
             COALESCE(sum(((((a.cantidad_solicitada)::numeric * a.precio_unitario) * a.tasa_impuesto_aplicada) / (100)::numeric)), (0)::numeric) AS impuesto
            FROM pedidos.agrega a
@@ -486,27 +480,24 @@ CREATE VIEW reportes.v_venta_por_producto AS
 
 
 --
+-- Name: sesion; Type: TABLE; Schema: usuarios; Owner: -
+--
+
+CREATE TABLE usuarios.sesion (
+    correo_usuario character varying(255) NOT NULL,
+    token_hash character varying(128) NOT NULL,
+    fecha_creacion timestamp with time zone DEFAULT now() NOT NULL,
+    fecha_vencimiento timestamp with time zone NOT NULL,
+    CONSTRAINT ck_sesion_vigencia CHECK ((fecha_vencimiento > fecha_creacion))
+);
+
+
+--
 -- Name: administrador administrador_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
 --
 
 ALTER TABLE ONLY admin.administrador
     ADD CONSTRAINT administrador_pkey PRIMARY KEY (correo_usuario);
-
-
---
--- Name: sesion sesion_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
---
-
-ALTER TABLE ONLY admin.sesion
-    ADD CONSTRAINT sesion_pkey PRIMARY KEY (correo_usuario, token_hash);
-
-
---
--- Name: usuario usuario_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
---
-
-ALTER TABLE ONLY admin.usuario
-    ADD CONSTRAINT usuario_pkey PRIMARY KEY (correo);
 
 
 --
@@ -614,17 +605,26 @@ ALTER TABLE ONLY pedidos.pedido
 
 
 --
+-- Name: sesion sesion_pkey; Type: CONSTRAINT; Schema: usuarios; Owner: -
+--
+
+ALTER TABLE ONLY usuarios.sesion
+    ADD CONSTRAINT sesion_pkey PRIMARY KEY (correo_usuario, token_hash);
+
+
+--
+-- Name: usuario usuario_pkey; Type: CONSTRAINT; Schema: usuarios; Owner: -
+--
+
+ALTER TABLE ONLY usuarios.usuario
+    ADD CONSTRAINT usuario_pkey PRIMARY KEY (correo);
+
+
+--
 -- Name: ux_administrador_unico; Type: INDEX; Schema: admin; Owner: -
 --
 
 CREATE UNIQUE INDEX ux_administrador_unico ON admin.administrador USING btree ((true));
-
-
---
--- Name: ux_sesion_token; Type: INDEX; Schema: admin; Owner: -
---
-
-CREATE UNIQUE INDEX ux_sesion_token ON admin.sesion USING btree (token_hash);
 
 
 --
@@ -677,6 +677,13 @@ CREATE UNIQUE INDEX ux_carrito_activo_por_cliente ON pedidos.carrito USING btree
 
 
 --
+-- Name: ux_sesion_token; Type: INDEX; Schema: usuarios; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_sesion_token ON usuarios.sesion USING btree (token_hash);
+
+
+--
 -- Name: administrador tg_administrador_disjunto; Type: TRIGGER; Schema: admin; Owner: -
 --
 
@@ -716,15 +723,7 @@ CREATE TRIGGER tg_historial_solo_insercion BEFORE DELETE OR UPDATE ON pedidos.hi
 --
 
 ALTER TABLE ONLY admin.administrador
-    ADD CONSTRAINT administrador_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES admin.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: sesion sesion_correo_usuario_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
---
-
-ALTER TABLE ONLY admin.sesion
-    ADD CONSTRAINT sesion_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES admin.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT administrador_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -732,7 +731,7 @@ ALTER TABLE ONLY admin.sesion
 --
 
 ALTER TABLE ONLY clientes.cliente
-    ADD CONSTRAINT cliente_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES admin.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT cliente_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -821,6 +820,14 @@ ALTER TABLE ONLY pedidos.pedido
 
 ALTER TABLE ONLY pedidos.pedido
     ADD CONSTRAINT pedido_correo_cliente_num_carrito_fkey FOREIGN KEY (correo_cliente, num_carrito) REFERENCES pedidos.carrito(correo_cliente, num_carrito) ON UPDATE CASCADE;
+
+
+--
+-- Name: sesion sesion_correo_usuario_fkey; Type: FK CONSTRAINT; Schema: usuarios; Owner: -
+--
+
+ALTER TABLE ONLY usuarios.sesion
+    ADD CONSTRAINT sesion_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

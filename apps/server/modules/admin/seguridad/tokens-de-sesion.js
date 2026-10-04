@@ -1,7 +1,7 @@
 /**
  * Tokens de sesión. RF-53.
  *
- * Token aleatorio de 256 bits para la cookie; admin.sesion guarda su hash
+ * Token aleatorio de 256 bits para la cookie; usuarios.sesion guarda su hash
  * SHA-256. No usa bcrypt: el token no es una contraseña elegida por el usuario.
  */
 

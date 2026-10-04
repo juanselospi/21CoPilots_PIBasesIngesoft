@@ -1,11 +1,11 @@
--- 003: crea las tablas CLIENTE y CLIENTE_TELEFONO.
+-- 004: crea las tablas CLIENTE y CLIENTE_TELEFONO.
 
 
 -- Guarda la información propia de un cliente.
 -- Todo cliente debe existir primero como usuario.
 CREATE TABLE clientes.cliente (
     correo_usuario  VARCHAR(255)  PRIMARY KEY
-        REFERENCES admin.usuario (correo) 
+        REFERENCES usuarios.usuario (correo) 
         ON UPDATE CASCADE 
         ON DELETE CASCADE,
     cedula          VARCHAR(20)   NOT NULL,   
@@ -23,8 +23,10 @@ CREATE TABLE clientes.cliente (
 -- Guarda los teléfonos de cada cliente.
 -- Un cliente puede tener varios teléfonos (multivalor).
 CREATE TABLE clientes.cliente_telefono (
-    correo_usuario  VARCHAR(255)  NOT NULLs
-        REFERENCES clientes.cliente (correo_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    correo_usuario  VARCHAR(255)  NOT NULL
+        REFERENCES clientes.cliente (correo_usuario) 
+        ON UPDATE CASCADE 
+        ON DELETE CASCADE,
     telefono        VARCHAR(20)   NOT NULL,
 
     PRIMARY KEY (correo_usuario, telefono),
