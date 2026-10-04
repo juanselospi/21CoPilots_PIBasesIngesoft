@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
+import StockFields from './StockFields.jsx'
+import { validateStock } from './stockInput.js'
 
 const derivedFields = [
     { key: 'costoTotal', label: 'Costo total' },
@@ -9,14 +11,18 @@ const derivedFields = [
     { key: 'precioFinal', label: 'Precio final' },
 ]
 
-// Valores iniciales de los inputs (como texto)
-const valuesOf = (product) => Object.fromEntries(
-    priceFields.map(({ key }) => [key, product[key] === null || product[key] === undefined ? '' : String(product[key])])
-)
+const asText = (value) => (value === null || value === undefined ? '' : String(value))
 
-// Modal "Editar precio" (RF-01). No llama a la API: usa `onSave`, que devuelve
-// { product } si se guardó o { error, fields } si el servidor lo rechazó.
-function EditPrice({ product, formatPrice, onClose, onSave }) {
+// Valores iniciales de los inputs: los números como texto
+const valuesOf = (product) => ({
+    ...Object.fromEntries(priceFields.map(({ key }) => [key, asText(product[key])])),
+    stock: asText(product.stock),
+    backorder: Boolean(product.backorder),
+})
+
+// precio, existencias y contrapedido. No llama a la API:
+// usa onSave, que devuelve { product } si se guardó o { error, fields } si el servidor lo rechazó.
+function EditProduct({ product, formatPrice, onClose, onSave }) {
     // Producto tal como está guardado ahora
     const [saved, setSaved] = useState(product)
     const [values, setValues] = useState(() => valuesOf(product))
@@ -26,9 +32,14 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
     const [justSaved, setJustSaved] = useState(false)
 
     // Campos que el usuario cambió; solo esos se envían
-    const changedFields = priceFields
+    const changedPrices = priceFields
         .map(({ key }) => key)
         .filter((key) => values[key] === '' || Number(values[key]) !== saved[key])
+    const changedFields = [
+        ...changedPrices,
+        ...(values.stock === '' || Number(values.stock) !== saved.stock ? ['stock'] : []),
+        ...(values.backorder !== Boolean(saved.backorder) ? ['backorder'] : []),
+    ]
     const hasChanges = changedFields.length > 0
 
     // No se cierra mientras guarda
@@ -36,14 +47,16 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
         if (!saving) onClose()
     }
 
-    const handleChange = (key, allowNegative, input) => {
+    const setField = (key, value) => {
+        setValues({ ...values, [key]: value })
+        setErrors({ ...errors, [key]: undefined })
+        setSaveError(null)
+        setJustSaved(false)
+    }
+
+    const handlePriceChange = (key, allowNegative, input) => {
         const value = readPriceInput(input, allowNegative)
-        if (value !== null) {
-            setValues({ ...values, [key]: value })
-            setErrors({ ...errors, [key]: undefined })
-            setSaveError(null)
-            setJustSaved(false)
-        }
+        if (value !== null) setField(key, value)
     }
 
     useEffect(() => {
@@ -54,7 +67,7 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        const foundErrors = validatePrices(values)
+        const foundErrors = { ...validatePrices(values), ...validateStock(values) }
         setErrors(foundErrors)
         if (Object.keys(foundErrors).length > 0 || !hasChanges) return
 
@@ -79,13 +92,13 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
                 className='product-form-modal'
                 role='dialog'
                 aria-modal='true'
-                aria-labelledby='edit-price-title'
+                aria-labelledby='edit-product-title'
                 onClick={(event) => event.stopPropagation()}
                 onSubmit={handleSubmit}
             >
                 <header className='product-form-header'>
                     <div>
-                        <h2 id='edit-price-title'>Editar precio</h2>
+                        <h2 id='edit-product-title'>Editar producto</h2>
                         <p>{saved.sku} · {saved.name}</p>
                     </div>
                     <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
@@ -104,7 +117,7 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
                                 disabled={saving}
                                 aria-invalid={Boolean(errors[key])}
                                 value={values[key]}
-                                onChange={(event) => handleChange(key, allowNegative, event.target.value)}
+                                onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
                             />
                             <span>{unit}</span>
                         </div>
@@ -124,14 +137,22 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
                         return (
                             <div key={key}>
                                 <span>{label}</span>
-                                <span>{hasChanges || amount === null || amount === undefined ? 'Se calcula al guardar' : formatPrice(amount)}</span>
+                                <span>{changedPrices.length > 0 || amount === null || amount === undefined ? 'Se calcula al guardar' : formatPrice(amount)}</span>
                             </div>
                         )
                     })}
                 </section>
 
+                <StockFields
+                    stock={values.stock}
+                    backorder={values.backorder}
+                    error={errors.stock}
+                    disabled={saving}
+                    onChange={setField}
+                />
+
                 {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
-                {justSaved && <p className='product-form-success' role='status'>Precio actualizado.</p>}
+                {justSaved && <p className='product-form-success' role='status'>Producto actualizado.</p>}
 
                 <footer className='product-form-actions'>
                     <button type='button' className='product-form-button' disabled={saving} onClick={close}>
@@ -150,4 +171,4 @@ function EditPrice({ product, formatPrice, onClose, onSave }) {
     )
 }
 
-export default EditPrice
+export default EditProduct

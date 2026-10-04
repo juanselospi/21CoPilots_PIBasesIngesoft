@@ -6,14 +6,14 @@ import ProductTable from '../../components/product-table/ProductTable.jsx'
 import { activeFilterTags, emptyFilters } from '../../components/product-filters/productFilters.js'
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
-import EditPrice from '../../components/product-form/EditPrice.jsx'
-import { actualizarPrecio, crearProducto } from '../../api/catalogo.js'
+import EditProduct from '../../components/product-form/EditProduct.jsx'
+import { actualizarProducto, crearProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toModalFields, toServerFields } from './toAdminProduct.js'
 
-// Opciones de orden; el value es lo que entiende el servidor (RF-43)
+// Opciones de orden; el value es lo que entiende el servidor
 const sortOptions = [
     { value: 'nombre', label: 'Nombre A–Z' },
     { value: '-nombre', label: 'Nombre Z–A' },
@@ -39,7 +39,7 @@ const visiblePages = (current, count) => {
     return Array.from({ length: last - first + 1 }, (_, index) => first + index)
 }
 
-// Página de productos del panel (RF-43): busca, filtra, ordena, pagina, agrega productos y edita precios.
+// Página de productos del panel (RF-43): busca, filtra, ordena, pagina, agrega y edita productos.
 function Products() {
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -120,11 +120,11 @@ function Products() {
         clearFilters()
     }
 
-    // Guarda el precio (RF-01) y recarga el listado.
+    // Guarda los cambios del producto y recarga el listado.
     // Le devuelve al modal el producto actualizado o el error.
     const handleSave = async (sku, values) => {
         try {
-            const actualizado = await actualizarPrecio(sku, toServerFields(values))
+            const actualizado = await actualizarProducto(sku, toServerFields(values))
             listado.recargar()
             return { product: toAdminProduct(actualizado) }
         } catch (error) {
@@ -336,7 +336,7 @@ function Products() {
             </section>
 
             {editingProduct && (
-                <EditPrice
+                <EditProduct
                     product={editingProduct}
                     formatPrice={priceFormat.format}
                     onClose={() => setEditingProduct(null)}

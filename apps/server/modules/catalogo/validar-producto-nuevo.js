@@ -8,6 +8,7 @@
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
+import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
 
 const LIMITES = Object.freeze({
   sku: 50,
@@ -56,9 +57,14 @@ export function validarProductoNuevo(datos = {}) {
   const problemaDeMargen = problemaDelMargen(margenGanancia);
   if (problemaDeMargen) anotar("margenGanancia", problemaDeMargen);
 
-  if (datos.admiteContrapedido !== undefined && typeof datos.admiteContrapedido !== "boolean") {
-    anotar("admiteContrapedido", "Indique si el producto admite contrapedido.");
-  }
+  // Si no se indican, el producto nace sin existencias.
+  const existencias = numero(datos.existencias) ?? 0;
+  const problemaDeExistencias = problemaDeLasExistencias(existencias);
+  if (problemaDeExistencias) anotar("existencias", problemaDeExistencias);
+
+  const admiteContrapedido = datos.admiteContrapedido ?? false;
+  const problemaDeContrapedido = problemaDelContrapedido(admiteContrapedido);
+  if (problemaDeContrapedido) anotar("admiteContrapedido", problemaDeContrapedido);
 
   const imagenUrl = texto(datos.imagenUrl);
   if (imagenUrl && (!esUrlWeb(imagenUrl) || imagenUrl.length > LIMITES.imagenUrl)) {
@@ -84,7 +90,8 @@ export function validarProductoNuevo(datos = {}) {
     costoItem,
     porcentajeImportacion,
     margenGanancia,
-    admiteContrapedido: datos.admiteContrapedido ?? false,
+    existencias,
+    admiteContrapedido,
   };
 }
 

@@ -1,4 +1,4 @@
-/* Estilos de los formularios de producto: "Editar precio" (EditPrice.jsx)
+/* Estilos de los formularios de producto: "Editar producto" (EditProduct.jsx)
    y "Agregar producto" (AddProduct.jsx) */
 
 /* Fondo oscuro semitransparente que cubre toda la pantalla y centra el modal.
@@ -229,9 +229,35 @@
   font-size: var(--texto-pequeno);
 }
 
+/* Existencias y contrapedido (StockFields.jsx), en los dos modales */
+.product-form-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Aviso de que el producto queda oculto en la tienda */
+.product-form-hint {
+  margin: 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+/* Casilla de contrapedido con su texto al lado */
+.product-form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
+  cursor: pointer;
+}
+
 /* Solo "Agregar producto" */
 
-/* Más ancho que el de editar precio porque tiene más campos */
+/* Más ancho que el de editar producto porque tiene más campos */
 .product-form-wide {
   max-width: 560px;
 }
@@ -255,21 +281,13 @@
   resize: vertical;
 }
 
-/* Costo, importación y margen en una fila */
+/* Costo, importación y margen en una fila. Con minmax(0, 1fr) las columnas
+   pueden ser más angostas que el ancho natural del input; con 1fr solo, el
+   margen se salía del modal. */
 .product-form-prices {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-}
-
-/* Casilla de contrapedido con su texto al lado */
-.product-form-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-texto);
-  font-size: var(--texto-pequeno);
-  cursor: pointer;
 }
 
 /* En pantallas angostas los precios van uno debajo del otro */

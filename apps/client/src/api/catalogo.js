@@ -40,9 +40,9 @@ export function listarParaAdministracion(
     })
 }
 
-// Guarda el costo, la importación o el margen de un producto (RF-01).
-// El servidor recalcula el precio y devuelve el producto actualizado.
-export function actualizarPrecio(sku, cambios, { signal } = {}) {
+// Guarda el costo, la importación, el margen, las existencias o el contrapedido
+// de un producto (RF-01). El servidor recalcula el precio y devuelve el producto actualizado.
+export function actualizarProducto(sku, cambios, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }
 

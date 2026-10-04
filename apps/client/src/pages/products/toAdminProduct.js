@@ -1,4 +1,4 @@
-// Traduce los productos del panel (RF-43) entre el formato del servidor
+// Traduce los productos del panel entre el formato del servidor
 // y el que usan la tarjeta, la tabla y los modales de agregar y editar producto.
 
 // Nombre del campo en los modales → nombre en el servidor
@@ -9,6 +9,7 @@ const serverFieldByModalField = {
     supplier: 'proveedor',
     description: 'descripcion',
     imageUrl: 'imagenUrl',
+    stock: 'existencias',
     backorder: 'admiteContrapedido',
     costoItem: 'costoItem',
     importacionPct: 'porcentajeImportacion',
@@ -29,7 +30,7 @@ const montoDelPaso = (desglosePrecio, paso) =>
 
 // Producto del servidor → datos para la tarjeta, la tabla y los modales
 export const toAdminProduct = ({
-    sku, nombre, categoria, imagenUrl, precioFinal, existencias, etiquetas = [],
+    sku, nombre, categoria, imagenUrl, precioFinal, existencias, admiteContrapedido, etiquetas = [],
     costoItem, porcentajeImportacion, margenGanancia, tasaImpuesto, desglosePrecio,
 }) => ({
     sku,
@@ -38,6 +39,7 @@ export const toAdminProduct = ({
     image: imagenUrl,
     price: precioFinal,
     stock: existencias,
+    backorder: admiteContrapedido,
     labels: etiquetas.map((etiqueta) => ({ key: etiqueta, text: labelByEtiqueta[etiqueta] ?? etiqueta })),
     costoItem,
     importacionPct: porcentajeImportacion,

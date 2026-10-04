@@ -30,27 +30,30 @@
  *     401  sin sesión
  *     403  con sesión de otro rol
  *
- *   PATCH /productos/:sku             solo administrador (RF-01, RN-02)
+ *   PATCH /productos/:sku             solo administrador (RF-01, RN-02, RN-03)
  *
- *     Cambia el costo, la importación o el margen de un producto, también
- *     de uno oculto en la tienda. El SKU de la URL se normaliza
- *     (mayúsculas, sin espacios). Cuerpo JSON con uno, dos o los tres
+ *     Cambia el precio, las existencias o el contrapedido de un producto,
+ *     también de uno oculto en la tienda. El SKU de la URL se normaliza
+ *     (mayúsculas, sin espacios). Cuerpo JSON con cualquiera de estos
  *     campos; lo que no venga se queda como está:
  *
  *       costoItem              dólares, 0 o más
  *       porcentajeImportacion  0 o más
  *       margenGanancia         mayor que -100
+ *       existencias            entero, 0 o más
+ *       admiteContrapedido     true | false
  *
- *     Se aceptan como número o como texto ("12.5"). Un campo que viene
- *     vacío (null o "") es un error: para no cambiarlo, no se manda.
- *     Cualquier otra clave, incluidos los precios derivados, se rechaza.
+ *     Los números se aceptan como número o como texto ("12.5"). Un campo
+ *     que viene vacío (null o "") es un error: para no cambiarlo, no se
+ *     manda. Cualquier otra clave, incluidos los precios derivados, se
+ *     rechaza.
  *
  *     200  { datos: producto } con el precio recalculado. Los campos
- *          derivados del modal "Editar precio" están en:
+ *          derivados del modal "Editar producto" están en:
  *            Costo total          paso `importacion` de `desglosePrecio`
  *            Precio sin impuesto  paso `margen` de `desglosePrecio`
  *            Precio final         `precioFinal`
- *     400  cuerpo vacío, sin ninguno de los tres campos, con un valor
+ *     400  cuerpo vacío, sin ninguno de los campos, con un valor
  *          inválido o con claves no permitidas; `detalles.campos` dice
  *          cuáles
  *     401  sin sesión
@@ -73,7 +76,7 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
 
   rutas.get("/admin/productos", ...soloAdministrador, asincrono(controlador.listarParaAdministracion));
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
-  rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizarPrecio));
+  rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizar));
 
   return rutas;
 }

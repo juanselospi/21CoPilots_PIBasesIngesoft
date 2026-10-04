@@ -19,20 +19,20 @@ const motorDePrecios = new MotorDePrecios([
 ]);
 
 // Base falsa: guarda los productos por SKU y, como la real, no deja
-// guardar dos con el mismo código. Llenan stock y tasa con sus valores
-// por defecto (0 y 13 %).
+// guardar dos con el mismo código. Llena la tasa con su valor por
+// defecto (13 %).
 function crearServicio() {
   const productos = new Map();
 
   const repositorio = {
     crear: async (producto) => {
       if (productos.has(producto.sku)) return null;
-      productos.set(producto.sku, { ...producto, existencias: 0, tasaImpuesto: 13 });
+      productos.set(producto.sku, { ...producto, tasaImpuesto: 13 });
       return producto.sku;
     },
     obtenerPorSku: async (sku) => productos.get(sku) ?? null,
     // Como el COALESCE del SQL: lo que no viene se queda como está.
-    actualizarPrecio: async (sku, cambios) => {
+    actualizar: async (sku, cambios) => {
       const producto = productos.get(sku);
       if (!producto) return null;
       for (const [campo, valor] of Object.entries(cambios)) {
@@ -87,7 +87,7 @@ test("RF-03, RF-04, RF-05: con costo 1000, importación 20 y margen 25 el precio
   const { servicio } = crearServicio();
   await servicio.crearProducto(pkm001);
 
-  const producto = await servicio.actualizarPrecio("PKM-001", {
+  const producto = await servicio.actualizarProducto("PKM-001", {
     costoItem: 1000,
     porcentajeImportacion: 20,
     margenGanancia: 25,
@@ -106,7 +106,7 @@ test("un cambio parcial conserva los otros dos campos", async () => {
   const { servicio, productos } = crearServicio();
   await servicio.crearProducto(pkm001);
 
-  const producto = await servicio.actualizarPrecio("PKM-001", { margenGanancia: "30" });
+  const producto = await servicio.actualizarProducto("PKM-001", { margenGanancia: "30" });
 
   assert.equal(producto.costoItem, 100);
   assert.equal(producto.porcentajeImportacion, 20);
@@ -117,14 +117,14 @@ test("un cambio parcial conserva los otros dos campos", async () => {
 test("editar el precio de un SKU que no existe da RecursoNoEncontrado", async () => {
   const { servicio } = crearServicio();
 
-  await assert.rejects(servicio.actualizarPrecio("NO-EXISTE", { costoItem: 1000 }), RecursoNoEncontrado);
+  await assert.rejects(servicio.actualizarProducto("NO-EXISTE", { costoItem: 1000 }), RecursoNoEncontrado);
 });
 
 test("no cambia nada si los cambios no son válidos", async () => {
   const { servicio, productos } = crearServicio();
   await servicio.crearProducto(pkm001);
 
-  await assert.rejects(servicio.actualizarPrecio("PKM-001", { costoItem: -1, margenGanancia: 30 }), EntradaInvalida);
+  await assert.rejects(servicio.actualizarProducto("PKM-001", { costoItem: -1, margenGanancia: 30 }), EntradaInvalida);
   assert.equal(productos.get("PKM-001").costoItem, 100);
   assert.equal(productos.get("PKM-001").margenGanancia, 25);
 });
@@ -135,17 +135,44 @@ test("RN-03: el administrador sí puede editar un producto oculto en la tienda",
   await servicio.crearProducto(pkm001);
   await assert.rejects(servicio.obtenerFicha("PKM-001"), RecursoNoEncontrado);
 
-  const producto = await servicio.actualizarPrecio("PKM-001", { costoItem: 1000 });
+  const producto = await servicio.actualizarProducto("PKM-001", { costoItem: 1000 });
 
   assert.equal(producto.disponibilidad, "no_disponible");
   assert.equal(producto.costoItem, 1000);
+});
+
+test("RN-03: un producto creado con existencias o con contrapedido se ve en la tienda", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto({ ...pkm001, existencias: 3 });
+  await servicio.crearProducto({ ...pkm001, sku: "PKM-002", admiteContrapedido: true });
+
+  assert.equal((await servicio.obtenerFicha("PKM-001")).disponibilidad, "en_existencia");
+  assert.equal((await servicio.obtenerFicha("PKM-002")).disponibilidad, "por_contrapedido");
+});
+
+test("RN-03: editar existencias y contrapedido cambia la disponibilidad", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const conExistencias = await servicio.actualizarProducto("PKM-001", { existencias: "4" });
+  assert.equal(conExistencias.existencias, 4);
+  assert.equal(conExistencias.disponibilidad, "en_existencia");
+  assert.equal(conExistencias.costoItem, 100);
+
+  const agotado = await servicio.actualizarProducto("PKM-001", { existencias: 0, admiteContrapedido: true });
+  assert.equal(agotado.disponibilidad, "por_contrapedido");
+  assert.ok(agotado.etiquetas.includes("contrapedido"));
+
+  const oculto = await servicio.actualizarProducto("PKM-001", { admiteContrapedido: false });
+  assert.equal(oculto.disponibilidad, "no_disponible");
+  await assert.rejects(servicio.obtenerFicha("PKM-001"), RecursoNoEncontrado);
 });
 
 test("RN-02: un margen negativo válido agrega la etiqueta 'margen_negativo'", async () => {
   const { servicio } = crearServicio();
   await servicio.crearProducto(pkm001);
 
-  const producto = await servicio.actualizarPrecio("PKM-001", { margenGanancia: -10 });
+  const producto = await servicio.actualizarProducto("PKM-001", { margenGanancia: -10 });
 
   assert.ok(producto.etiquetas.includes("margen_negativo"));
 });

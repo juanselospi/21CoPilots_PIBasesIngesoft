@@ -11,7 +11,7 @@ import {
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
 import { validarProductoNuevo } from "./validar-producto-nuevo.js";
-import { validarCambiosDePrecio } from "./validar-cambios-de-precio.js";
+import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -145,7 +145,8 @@ export class CatalogoService {
 
   /**
    * Registra un producto nuevo desde el panel. El código tiene que ser
-   * único: si ya existe, no se guarda nada (RF-01). Nace con stock en 0.
+   * único: si ya existe, no se guarda nada (RF-01). Si no se indican
+   * existencias, nace con stock en 0.
    *
    * @returns el producto guardado, con su precio calculado
    */
@@ -161,11 +162,16 @@ export class CatalogoService {
   }
 
   /**
-   * Cambia el costo, la importación o el margen de un producto desde el
-   * modal "Editar precio" del panel (RF-01). Lo que no venga se queda como
-   * está. El precio no se guarda: se vuelve a calcular con el motor de
-   * precios (RF-03, RF-04, RF-05), y el margen puede ser negativo pero
-   * mayor que -100 % (RN-02).
+   * Cambia el costo, la importación, el margen, las existencias o el
+   * contrapedido de un producto desde el modal "Editar producto" del panel
+   * (RF-01). Lo que no venga se queda como está. El precio no se guarda: se
+   * vuelve a calcular con el motor de precios (RF-03, RF-04, RF-05), y el
+   * margen puede ser negativo pero mayor que -100 % (RN-02). Con las
+   * existencias y el contrapedido cambia también si la tienda lo muestra
+   * (RN-03).
+   *
+   * Las existencias se corrigen a mano, sin dejar un movimiento en
+   * inventario.producto_administra: eso es del registro de mercancía.
    *
    * Se busca con `obtenerPorSku` y no con `obtenerFicha`, porque el
    * administrador también edita los productos que RN-03 oculta en la tienda.
@@ -175,12 +181,12 @@ export class CatalogoService {
    * impuesto, así que el precio nuevo solo afecta lo que se agregue desde
    * ahora.
    *
-   * @returns el producto actualizado, con su precio recalculado
+   * @returns el producto actualizado, con su precio y disponibilidad recalculados
    */
-  async actualizarPrecio(sku, datos) {
-    const cambios = validarCambiosDePrecio(datos);
+  async actualizarProducto(sku, datos) {
+    const cambios = validarCambiosDeProducto(datos);
 
-    const actualizado = await this.#repositorio.actualizarPrecio(sku, cambios);
+    const actualizado = await this.#repositorio.actualizar(sku, cambios);
     if (actualizado === null) {
       throw new RecursoNoEncontrado("el producto", sku);
     }

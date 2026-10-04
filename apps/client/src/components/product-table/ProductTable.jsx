@@ -11,7 +11,7 @@ const chipByLabel = {
 
 const defaultChip = { className: 'chip', Icon: Tag }
 
-// Vista de tabla del listado de productos del panel (RF-43).
+// Vista de tabla del listado de productos del panel.
 // Solo muestra lo que recibe; "Editar" avisa con `onEdit`.
 function ProductTable({ products, formatPrice, onEdit }) {
     return (
@@ -53,7 +53,7 @@ function ProductTable({ products, formatPrice, onEdit }) {
                                 <button
                                     type='button'
                                     className='product-table-button'
-                                    aria-label={`Editar precio de ${product.name}`}
+                                    aria-label={`Editar ${product.name}`}
                                     onClick={() => onEdit(product)}
                                 >
                                     <Pencil size={16} />Editar
