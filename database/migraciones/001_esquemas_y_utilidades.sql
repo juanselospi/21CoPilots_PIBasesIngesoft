@@ -1,20 +1,13 @@
--- =====================================================================
--- 001 — Esquemas por módulo y funciones técnicas compartidas
---
--- Esta versión de la base de datos sigue al pie de la letra el EER y el
--- mapeo del equipo (EER 21 CoPilots.drawio): llaves naturales (correo, SKU,
--- número de referencia, número de factura) y entidades débiles (carrito,
--- pedido, historial de estado).
---
--- Se conserva un esquema de PostgreSQL por módulo de apps/server (DD-11):
--- solo el repositorio del módulo dueño escribe en su esquema. Las funciones
--- de este archivo son técnicas: no contienen reglas de negocio (DD-10).
--- =====================================================================
+-- 001: configuración inicial de la base de datos.
+-- Crea los esquemas y funciones compartidas por otras migraciones.
 
--- Hash bcrypt desde SQL. Solo lo usan las semillas de desarrollo;
--- en ejecución el hash lo genera apps/server.
+
+-- Permite generar hashes en las semillas de desarrollo.
+-- La aplicación genera los hashes normalmente desde apps/server.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+
+-- Organiza las tablas por módulo dentro de la misma base de datos.
 CREATE SCHEMA admin;         -- usuarios y administrador
 CREATE SCHEMA clientes;      -- clientes y sus teléfonos
 CREATE SCHEMA catalogo;      -- productos
@@ -24,7 +17,7 @@ CREATE SCHEMA pagos;         -- pagos
 CREATE SCHEMA facturacion;   -- facturas
 CREATE SCHEMA reportes;      -- solo vistas de lectura
 
--- Mantiene la columna fecha_actualizacion en las tablas que la tienen.
+-- Actualiza automáticamente fecha_actualizacion cuando una fila cambia
 CREATE FUNCTION public.fijar_fecha_actualizacion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
@@ -33,15 +26,8 @@ BEGIN
 END;
 $$;
 
--- Rechaza UPDATE y DELETE en las tablas de solo inserción (RF-19, RF-26).
--- Se usa un trigger y no REVOKE porque en desarrollo la aplicación se conecta
--- como dueña de las tablas, y a la dueña un REVOKE no la detiene.
--- El código de error 23001 (restrict_violation) lo traduce apps/server.
---
--- Excepción: con llaves naturales, cambiar un correo o un SKU se propaga por
--- ON UPDATE CASCADE hasta estas tablas. Esa actualización la hace la llave
--- foránea (un trigger interno), así que llega con pg_trigger_depth() > 1 y se
--- deja pasar. Un UPDATE directo llega con profundidad 1 y se rechaza.
+-- Impide modificar o eliminar registros de tablas usadas como historial.
+-- Los cambios producidos automáticamente por ON UPDATE CASCADE sí se permiten.
 CREATE FUNCTION public.rechazar_modificacion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
