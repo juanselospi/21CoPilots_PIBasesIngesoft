@@ -65,7 +65,7 @@ DECLARE
 BEGIN
     IF v_admin IS NULL THEN
         v_admin := 'admin.prueba@prueba.test';
-        INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES (v_admin, 'x', 'Admin de prueba');
+        INSERT INTO usuarios.usuario (correo, contrasena, nombre) VALUES (v_admin, 'x', 'Admin de prueba');
         INSERT INTO admin.administrador (correo_usuario) VALUES (v_admin);
     END IF;
     RETURN v_admin;
@@ -79,7 +79,7 @@ DECLARE
     v_correo text := 'cliente.prueba@prueba.test';
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM clientes.cliente WHERE correo_usuario = v_correo) THEN
-        INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES (v_correo, 'x', 'Cliente de prueba');
+        INSERT INTO usuarios.usuario (correo, contrasena, nombre) VALUES (v_correo, 'x', 'Cliente de prueba');
         INSERT INTO clientes.cliente (correo_usuario, cedula) VALUES (v_correo, '9-9999-9999');
     END IF;
     RETURN v_correo;

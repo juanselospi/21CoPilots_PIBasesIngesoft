@@ -4,21 +4,21 @@ SELECT pg_temp.debe_funcionar('Existe un administrador',
     $$SELECT pg_temp.admin_prueba()$$);
 
 SELECT pg_temp.debe_fallar('No puede haber dos administradores (RF-49)',
-    $$WITH u AS (INSERT INTO admin.usuario (correo, contrasena, nombre)
+    $$WITH u AS (INSERT INTO usuarios.usuario (correo, contrasena, nombre)
                  VALUES ('admin2.prueba@prueba.test', 'x', 'Dos') RETURNING correo)
       INSERT INTO admin.administrador (correo_usuario) SELECT correo FROM u$$, '23505');
 
 SELECT pg_temp.debe_fallar('Un correo con mayúsculas se rechaza (se guarda normalizado)',
-    $$INSERT INTO admin.usuario (correo, contrasena, nombre)
+    $$INSERT INTO usuarios.usuario (correo, contrasena, nombre)
       VALUES ('Mayusculas@prueba.test', 'x', 'Uno')$$, '23514');
 
 SELECT pg_temp.debe_fallar('Un correo repetido se rechaza (PK)',
-    $$INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES
+    $$INSERT INTO usuarios.usuario (correo, contrasena, nombre) VALUES
         ('repetido@prueba.test', 'x', 'Uno'),
         ('repetido@prueba.test', 'x', 'Dos')$$, '23505');
 
 SELECT pg_temp.debe_fallar('Un correo sin arroba se rechaza',
-    $$INSERT INTO admin.usuario (correo, contrasena, nombre)
+    $$INSERT INTO usuarios.usuario (correo, contrasena, nombre)
       VALUES ('sin-arroba.prueba.test', 'x', 'Uno')$$, '23514');
 
 SELECT pg_temp.debe_funcionar('Se registra un cliente (subtipo de USUARIO)',
@@ -36,12 +36,12 @@ SELECT pg_temp.debe_fallar('Un cliente no puede ser también administrador (espe
     $$INSERT INTO admin.administrador (correo_usuario) VALUES (pg_temp.cliente_prueba())$$, '23514');
 
 SELECT pg_temp.debe_fallar('Un cliente sin cédula se rechaza (RN-18)',
-    $$WITH u AS (INSERT INTO admin.usuario (correo, contrasena, nombre)
+    $$WITH u AS (INSERT INTO usuarios.usuario (correo, contrasena, nombre)
                  VALUES ('sincedula@prueba.test', 'x', 'Sin cédula') RETURNING correo)
       INSERT INTO clientes.cliente (correo_usuario, cedula) SELECT correo, '  ' FROM u$$, '23514');
 
 SELECT pg_temp.debe_fallar('Una cédula repetida se rechaza',
-    $$WITH u AS (INSERT INTO admin.usuario (correo, contrasena, nombre)
+    $$WITH u AS (INSERT INTO usuarios.usuario (correo, contrasena, nombre)
                  VALUES ('otro@prueba.test', 'x', 'Otro') RETURNING correo)
       INSERT INTO clientes.cliente (correo_usuario, cedula) SELECT correo, '9-9999-9999' FROM u$$, '23505');
 
@@ -58,7 +58,7 @@ SELECT pg_temp.debe_fallar('Un número de compras negativo se rechaza',
       WHERE correo_usuario = pg_temp.cliente_prueba()$$, '23514');
 
 SELECT pg_temp.debe_funcionar('Cambiar el correo del usuario se propaga al cliente',
-    $$UPDATE admin.usuario SET correo = 'nuevo.correo@prueba.test'
+    $$UPDATE usuarios.usuario SET correo = 'nuevo.correo@prueba.test'
       WHERE correo = 'cliente.prueba@prueba.test'$$);
 
 SELECT pg_temp.debe_cumplirse('Cliente y teléfono quedaron con el correo nuevo',

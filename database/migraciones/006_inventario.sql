@@ -1,4 +1,4 @@
--- 005: crea el historial de movimientos de inventario.
+-- 006: crea el historial de movimientos de inventario.
 
 -- Registra cada entrada o salida de mercancía realizada por un administrador.
 -- El stock actual se guarda en PRODUCTO; esta tabla conserva el historial.

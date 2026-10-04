@@ -3,7 +3,7 @@
 **Proyecto:** DC Hobbies Cultura Geek Online · **Equipo:** Twenty One CoPilots
 **Tarea:** SCRUM-6 (HU-02 — Inicio de sesión con permisos por rol)
 **Documentos relacionados:** [`arquitectura.md`](arquitectura.md) § 6.1,
-[`modelo-datos.md`](modelo-datos.md) (`admin.usuario`)
+[`modelo-datos.md`](modelo-datos.md) (`usuarios.usuario`)
 
 Este documento resume lo que acordamos en las reuniones del equipo sobre qué puede
 hacer cada tipo de usuario en el sistema.
@@ -57,8 +57,9 @@ que está dentro del panel es exclusivo del administrador.
 
 ## 3. Cómo se aplica
 
-- **En la base de datos:** `admin.usuario.rol` solo acepta `'administrador'` o
-  `'cliente'`, y un índice único impide que exista más de un administrador (RF-49).
+- **En la base de datos:** el rol sale de la especialización de `usuarios.usuario`:
+  es administrador si está en `admin.administrador` y cliente si está en
+  `clientes.cliente`. Un índice único impide que exista más de un administrador (RF-49).
 - **En el servidor:** las rutas del panel pasan por la cadena de middlewares
   `identificarUsuario → exigirSesion → exigirRol(ADMINISTRADOR)`
   ([`arquitectura.md`](arquitectura.md) § 6.1). Sin sesión se responde 401 y con un

@@ -955,7 +955,7 @@ Decisiones de modelado que salen del SRS y de este documento:
   detiene.
 - **Usuarios con llave numérica.** El correo es único, pero no es la llave: puede
   cambiar sin arrastrar llaves foráneas y no se expone como identificador (RES-05).
-  `admin.usuario` guarda credenciales y rol; RF-49 (una sola cuenta de administrador)
+  `usuarios.usuario` guarda credenciales y rol; RF-49 (una sola cuenta de administrador)
   se garantiza con un índice único parcial.
 - **Un cliente puede no tener cuenta.** `clientes.cliente.usuario_id` es opcional:
   así se registran compradores de otros canales (RF-17) y clientes importados con su
@@ -1017,7 +1017,7 @@ deshacer más adelante (ver `modelo-datos.md` § 4).
 ### 10.1 Lectura: ver el catálogo
 
 ```
-database/migraciones/003_catalogo.sql
+database/migraciones/005_catalogo.sql
    │  (se aplica una vez; crea las tablas en PostgreSQL)
    ▼
 PostgreSQL ── catalogo.producto, catalogo.subcategoria, inventario.existencia, ...
@@ -1170,13 +1170,14 @@ database/
 ├── .env.example                 Plantilla de variables; el .env real no se sube
 ├── migraciones/                 Fuente de verdad del esquema; en orden, sin editar después
 │   ├── 001_esquemas_y_utilidades.sql   Esquemas por módulo y triggers técnicos
-│   ├── 002_admin.sql
-│   ├── 003_catalogo.sql
-│   ├── 004_inventario.sql
-│   ├── 005_clientes.sql
-│   ├── 006_pedidos.sql
-│   ├── 007_pagos_facturacion.sql
-│   └── 008_reportes.sql                Vistas de solo lectura
+│   ├── 002_usuarios.sql
+│   ├── 003_admin.sql
+│   ├── 004_clientes.sql
+│   ├── 005_catalogo.sql
+│   ├── 006_inventario.sql
+│   ├── 007_pedidos.sql
+│   ├── 008_pagos_facturacion.sql
+│   └── 009_reportes.sql                Vistas de solo lectura
 ├── semillas/
 │   ├── referencia/              Lo que el sistema necesita para arrancar
 │   └── demo/                    Datos de prueba para desarrollo y evidencias

@@ -1,4 +1,4 @@
--- 008: crea vistas de solo lectura para reportes.
+-- 009: crea vistas de solo lectura para reportes.
 
 -- Muestra el estado más reciente de cada pedido.
 CREATE VIEW reportes.v_estado_pedido AS
@@ -70,7 +70,7 @@ SELECT pe.correo_cliente,
 FROM   pedidos.pedido   pe
 JOIN   clientes.cliente cl 
        ON cl.correo_usuario = pe.correo_cliente
-JOIN   admin.usuario    u  
+JOIN   usuarios.usuario u  
        ON u.correo          = pe.correo_cliente
 JOIN   LATERAL 
        (

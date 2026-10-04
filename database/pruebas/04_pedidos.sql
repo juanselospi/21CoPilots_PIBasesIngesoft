@@ -103,7 +103,7 @@ SELECT pg_temp.debe_cumplirse('El estado derivado del pedido es el último cambi
      WHERE  correo_cliente = pg_temp.cliente_prueba()) = 'colocado');
 
 SELECT pg_temp.debe_funcionar('Cambiar el correo del cliente se propaga hasta el historial',
-    $$UPDATE admin.usuario SET correo = 'renombrado@prueba.test'
+    $$UPDATE usuarios.usuario SET correo = 'renombrado@prueba.test'
       WHERE correo = 'cliente.prueba@prueba.test'$$);
 
 SELECT pg_temp.debe_cumplirse('Carrito, pedido e historial quedaron con el correo nuevo',

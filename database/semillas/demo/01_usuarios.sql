@@ -4,7 +4,7 @@
 --   cliente@correo.test       / Cliente123!
 --   presencial@correo.test    / Presencial123!
 
-INSERT INTO admin.usuario (correo, contrasena, nombre) VALUES
+INSERT INTO usuarios.usuario (correo, contrasena, nombre) VALUES
     ('admin@dchobbies.test',   crypt('Admin123!',      gen_salt('bf', 10)), 'Administración DC Hobbies'),
     ('cliente@correo.test',    crypt('Cliente123!',    gen_salt('bf', 10)), 'Cliente de Prueba'),
     ('presencial@correo.test', crypt('Presencial123!', gen_salt('bf', 10)), 'Comprador Presencial')
