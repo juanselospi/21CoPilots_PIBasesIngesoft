@@ -1,9 +1,6 @@
 /**
  * Rutas de administración.
  *
- * Iniciar sesión y recuperar la contraseña son públicas, así que no se
- * puede poner exigirRol en todo el router: cada ruta protegida lo lleva.
- *
  * Rutas previstas (confirmar con el equipo antes de fijarlas):
  *   POST   /sesion                    pública
  *   GET    /sesion                    listo

@@ -1,12 +1,5 @@
 /**
  * Lo que sale por la API desde el módulo de administración.
- *
- * Ningún usuario sale con el hash de su contraseña, ni siquiera en las
- * vistas del administrador.
- *
- * Falta implementar:
- *   - aEntradaDeBitacora(): evento, responsable y fecha (RF-52)
- *   - aParametroComercial() (RF-51)
  */
 
 import { NOMBRE_DEL_REPORTE, TIPO_DEL_REPORTE } from "./importacion/reporte-de-rechazos.js";
@@ -19,8 +12,7 @@ export const aUsuario = (usuario) => ({
 });
 
 /**
- * Resumen de una importación del Excel. De cada fila rechazada sale solo
- * el número de fila, el código y los motivos, no la fila completa.
+ * Resumen de una importación del Excel
  *
  * `reporte` es el Excel de filas rechazadas, o debe ser null si no hubo rechazos.
  */

@@ -1,9 +1,5 @@
 /**
  * Arma el módulo de catálogo.
- *
- * El resto del sistema importa solo este archivo. El repositorio, el
- * servicio y los pasos de precio quedan adentro; hacia afuera solo salen
- * las rutas y lo que otros módulos necesitan.
  */
 
 import { CatalogoRepository } from "./catalogo.repository.js";
@@ -16,8 +12,7 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 
 export function crearModuloCatalogo({ pool, exigirRol, umbralDeExistenciasBajas }) {
-  // El orden de estos pasos es la fórmula del precio. Coincide con la que
-  // usa el Excel del negocio: costo, más importación, más margen, más IVA.
+  // El orden de estos pasos es la fórmula del precio
   const motorDePrecios = new MotorDePrecios([
     new ImportacionPorAranceles(),
     new MargenDeGanancia(),

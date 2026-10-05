@@ -2,8 +2,7 @@
  * Errores de dominio.
  *
  * El dominio no conoce HTTP: lanza errores con significado de negocio y
- * es la capa de API la que los traduce a códigos de estado. Así la misma
- * lógica sirve para un endpoint, un script de importación o una prueba.
+ * es la capa de API la que los traduce a códigos de estado
  */
 
 export class ErrorDeDominio extends Error {
