@@ -2,13 +2,7 @@
  * Motor de precios.
  *
  * Aplica los pasos en orden sobre el costo del producto: importación,
- * margen e impuesto (ver documentos/diseño/formula-precio.md).
- *
- * Además del precio final devuelve el desglose de cada paso, para poder
- * comparar el cálculo del sistema con el del Excel y ver en qué paso se
- * separan si no coinciden.
- *
- * No toca la base de datos ni HTTP, así que se prueba sin levantar nada.
+ * margen e impuesto
  */
 
 export class MotorDePrecios {

@@ -1,11 +1,6 @@
 /**
  * Genera modules/admin/importacion/plantilla-de-productos.xlsx
  *
- * Usa las mismas columnas que el parser (columnas.js), así que si se
- * cambia una columna hay que correr esto de nuevo:  npm run plantilla
- *
- * La fila de ejemplo es una fila real de la hoja del negocio, con las
- * mismas fórmulas.
  */
 
 import path from "node:path";
@@ -49,8 +44,7 @@ const encabezado = hoja.getRow(1);
 encabezado.font = { bold: true, color: { argb: "FFFFFFFF" } };
 encabezado.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1F4E79" } };
 
-// Se guarda también el resultado de cada fórmula; si no, quien lea el
-// archivo sin abrirlo en Excel vería las celdas vacías.
+// Se guarda también el resultado de cada fórmula.
 const celda = (nombre) => `${hoja.getColumn(nombre).letter}2`;
 const costoImportacion = EJEMPLO.costo_usd * EJEMPLO["%_costo_importacion"];
 const totalCosto = EJEMPLO.costo_usd + costoImportacion;

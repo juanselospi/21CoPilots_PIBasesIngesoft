@@ -1,9 +1,5 @@
 /**
- * Reporte de las filas rechazadas en una importación (RF-58).
- *
- * Es un Excel con una fila por cada fila rechazada: su número de fila en
- * el archivo original, el código, el nombre y los motivos. Así el
- * administrador puede abrir su hoja, ir a esas filas y corregirlas.
+ * Reporte de las filas rechazadas en una importación
  */
 
 import ExcelJS from "exceljs";

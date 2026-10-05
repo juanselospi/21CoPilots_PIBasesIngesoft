@@ -1,12 +1,5 @@
 /**
  * Controlador de administración: traduce HTTP a llamadas al servicio.
- *
- * Falta implementar:
- *   - cerrarSesion (aprobado #15)
- *   - recuperarContrasena (RF-54)
- *   - crearUsuario (RF-49, aprobado #6)
- *   - cambiarParametro (RF-51)
- *   - consultarBitacora (RF-52)
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
@@ -60,13 +53,8 @@ export class AdminController {
   };
 
   /**
-   * POST /importaciones con el Excel en el campo `archivo`
-   * (multipart/form-data). Responde 200 aunque haya filas rechazadas: el
+   * POST /importaciones con el Excel. Responde 200 aunque haya filas rechazadas: el
    * resumen dice cuáles fueron y por qué.
-   *
-   * Si hubo rechazos, la respuesta trae también el reporte en Excel
-   * (en base64) para que la pantalla lo ofrezca como descarga. Así no hay
-   * que guardarlo en el servidor ni pedirlo en otra llamada.
    */
   importarExcel = async (peticion, respuesta) => {
     if (!peticion.file) {

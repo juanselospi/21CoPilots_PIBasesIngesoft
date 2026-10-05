@@ -1,15 +1,8 @@
 /**
  * Repositorio del catálogo.
  *
- * Es el único archivo del módulo con SQL. Devuelve objetos en camelCase
- * y no filas de la base, así que si cambia una columna solo hay que
- * tocar este archivo.
- *
  * Solo escribe en el esquema `catalogo`. El producto se identifica por su SKU,
  * la categoria es texto y el stock vive en la misma fila del producto.
- *
- * Las consultas siempre usan parámetros ($1, $2...) y nunca concatenan
- * texto, para evitar inyección de SQL.
  */
 
 const COLUMNAS_DE_PRODUCTO = `
@@ -26,30 +19,7 @@ const COLUMNAS_DE_PRODUCTO = `
        p.categoria,
        p.proveedor`;
 
-
-
-/**
- * Productos con filtro opcional por categoría y por nombre.
- * Qué productos se muestran al público lo decide el servicio, no este SQL.
- */
-
-/** Ficha de un producto por su SKU, que tiene que venir normalizado. */
-
-/**
- * Guarda un producto de la importación: lo crea si el SKU no existe y lo
- * actualiza si ya existe, así reimportar la misma hoja no duplica nada
- * (RF-59).
- *
- * Al actualizar no se tocan contrapedido, proveedor ni stock, porque la
- * hoja no los trae y el administrador pudo cambiarlos a mano. Tampoco se
- * borra una descripción o imagen si en la hoja vienen vacías. costo_total
- * no se manda nunca porque es una columna generada.
- *
- * Se llama dentro de la transacción de la importación, con el `cliente`
- * que entrega enTransaccion.
- */
-
-
+// Guarda un producto de la importación (inserta si no existe y actualiza si ya existe)
 export class CatalogoRepository {
   #pool;
 
@@ -103,12 +73,7 @@ export class CatalogoRepository {
   }
 
   /**
-   * Registra un producto nuevo desde el panel. Devuelve su SKU, o null si
-   * ya existe otro con ese código. Con ON CONFLICT DO NOTHING la base
-   * decide sola, así dos registros al mismo tiempo no pueden duplicarlo.
-   *
-   * La tasa de impuesto queda con su valor por defecto (13 %), y
-   * costo_total no se manda porque es una columna generada.
+   * Registra un producto nuevo desde el panel
    */
   async crear(producto) {
     const { rows } = await this.#pool.query(

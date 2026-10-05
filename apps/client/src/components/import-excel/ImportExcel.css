@@ -1,6 +1,3 @@
-/* Modal "Cargar productos desde Excel" (ImportExcel.jsx).
-   Sigue el mismo estilo que el modal de editar producto. */
-
 .import-excel-overlay {
   position: fixed;
   inset: 0;
@@ -151,7 +148,7 @@
   color: var(--estado-error-texto);
 }
 
-/* Tabla de filas rechazadas; si son muchas, se desplaza dentro del modal */
+/* Tabla de filas rechazadas */
 .import-excel-table-wrapper {
   max-height: 240px;
   overflow-y: auto;

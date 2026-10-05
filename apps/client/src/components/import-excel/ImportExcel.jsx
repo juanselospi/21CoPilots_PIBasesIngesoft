@@ -3,8 +3,7 @@ import { FileSpreadsheet, X } from 'lucide-react'
 import './ImportExcel.css'
 import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 
-// El servidor revisa lo mismo; aquí solo evitamos subir un archivo que
-// igual se va a rechazar.
+// se evita subir un archivo que se va a rechazar
 const MAX_SIZE_MB = 5
 
 // Botón "Cargar Excel" del encabezado de Productos. Maneja su propio estado
@@ -29,7 +28,7 @@ function ImportExcelModal({ onClose, onImported }) {
     const [uploading, setUploading] = useState(false)
     const [result, setResult] = useState(null)
 
-    // Mientras sube no se puede cerrar: el usuario no sabría si se guardó.
+    // Mientras sube no se puede cerrar
     const close = () => {
         if (!uploading) onClose()
     }
@@ -40,7 +39,7 @@ function ImportExcelModal({ onClose, onImported }) {
         return () => window.removeEventListener('keydown', closeOnEscape)
     }, [uploading, onClose])
 
-    // El reporte llega en base64; lo convertimos en un enlace de descarga.
+    // se convierte en un enlace de descarga
     const reportUrl = useMemo(() => {
         if (!result?.reporte) return null
         const { contenidoBase64, tipo } = result.reporte
@@ -50,6 +49,7 @@ function ImportExcelModal({ onClose, onImported }) {
 
     useEffect(() => () => reportUrl && URL.revokeObjectURL(reportUrl), [reportUrl])
 
+    // manejo del archivo seleccionado
     const handleFileChange = (event) => {
         const selected = event.target.files[0] ?? null
         setError(null)
@@ -65,6 +65,7 @@ function ImportExcelModal({ onClose, onImported }) {
         }
     }
 
+    // envio del archivo
     const handleSubmit = async (event) => {
         event.preventDefault()
         if (!file) return
@@ -81,6 +82,7 @@ function ImportExcelModal({ onClose, onImported }) {
         }
     }
 
+    // reinicio del proceso
     const startOver = () => {
         setFile(null)
         setResult(null)

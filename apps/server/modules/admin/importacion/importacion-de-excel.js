@@ -1,14 +1,5 @@
 /**
  * Importación del Excel de productos.
- *
- * Aquí está todo lo que depende del formato .xlsx: leer las celdas,
- * encontrar los encabezados y validar cada fila. El orden de los pasos lo
- * define PlantillaDeImportacion.
- *
- * Lo que quedó definido con el PO el 27/09:
- *   - el producto se identifica por codigo_sku
- *   - los montos se quedan en dólares, como en la hoja
- *   - la hoja no trae existencias, así que no se toca el inventario
  */
 
 import ExcelJS from "exceljs";
@@ -16,11 +7,10 @@ import { EntradaInvalida } from "../../../shared/errores/errores-de-dominio.js";
 import { PlantillaDeImportacion } from "./plantilla-de-importacion.js";
 import { COLUMNAS, TIPOS, normalizarEncabezado } from "./columnas.js";
 
-// El encabezado no siempre está en la fila 1; a veces hay un título arriba.
+// por si el encabezado no esta de primero
 const FILAS_DONDE_BUSCAR_ENCABEZADO = 10;
 
-// Tamaños de las columnas de catalogo.producto. Se validan aquí para que
-// una fila mala se rechace sola y no haga fallar el guardado de todas.
+// valida tamaños de las columnas de catalogo.producto.
 const LIMITES = Object.freeze({
   sku: 50,
   nombre: 200,
@@ -135,8 +125,6 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
     return motivos;
   }
 
-  // Contrapedido y proveedor no vienen en la hoja. No los mandamos para
-  // no pisar lo que el administrador haya cambiado a mano.
   // La tasa siempre es la del sistema porque validarFila rechaza otro %_IVA.
   mapearFila(fila) {
     return {
@@ -162,9 +150,7 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
 }
 
 /**
- * Busca en cada hoja la fila con más encabezados conocidos. Se piden al
- * menos dos para no confundir la hoja de Instrucciones, que menciona las
- * columnas una por fila, con la de productos.
+ * Busca en cada hoja la fila con más encabezados conocidos
  */
 function ubicarEncabezado(libro) {
   const porEncabezado = new Map(COLUMNAS.map((c) => [normalizarEncabezado(c.encabezado), c]));
@@ -221,7 +207,6 @@ function construirMapa(hoja, { numero, encontradas }) {
 
 /**
  * exceljs devuelve objetos para fórmulas, links y texto con formato.
- * Esto saca el valor que ve el usuario en la celda.
  */
 function valorCrudo(celda) {
   const valor = celda.value;
@@ -235,8 +220,7 @@ function valorCrudo(celda) {
   return null;
 }
 
-// Si un número no se puede convertir se deja como NaN en vez de null,
-// para que el validador diga "no es un número" y no "falta".
+// Si un número no se puede convertir se deja como NaN en vez de null
 function leerCelda(celda, tipo) {
   const valor = valorCrudo(celda);
 
@@ -253,7 +237,7 @@ function leerCelda(celda, tipo) {
   }
 }
 
-// Acepta montos escritos como texto, por ejemplo "$1,073.37".
+// Acepta montos escritos como texto
 function aNumero(valor) {
   if (typeof valor === "number") return valor;
   if (typeof valor !== "string") return NaN;
@@ -262,8 +246,7 @@ function aNumero(valor) {
   return limpio === "" ? NaN : Number(limpio);
 }
 
-// Excel guarda 20 % como 0.2 (con formato de porcentaje) y la base de
-// datos espera 20.
+// Excel guarda 20 % como 0.2 (con formato de porcentaje), hay que pasarlo a 20
 function aPorcentaje(valor, formato = "") {
   if (typeof valor === "number") {
     return formato.includes("%") ? redondear(valor * 100) : valor;
@@ -304,5 +287,5 @@ function esUrlWeb(texto) {
   }
 }
 
-// Sin esto, 0.2 * 100 da 20.000000000000004.
+// asegurar el numero tenga 4 decimales, por si acaso
 const redondear = (numero) => Math.round(numero * 10_000) / 10_000;

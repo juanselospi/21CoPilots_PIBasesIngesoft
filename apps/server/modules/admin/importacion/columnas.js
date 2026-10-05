@@ -1,24 +1,14 @@
 /**
  * Columnas de la hoja de productos.
- *
- * Son las mismas del Excel que ya usa el negocio, con los mismos nombres
- * y en el mismo orden. La idea es que el administrador no tenga que
- * cambiar su hoja para importarla. Los montos están en dólares.
+ * El parser y el generador de la plantilla usan esta lista.
  *
  * codigo_item no tiene campo porque el sistema no lo usa, solo se reconoce
  * como encabezado para que la hoja del negocio se pueda subir tal cual.
- *
- * Las columnas `calculada` son fórmulas del Excel. No se guardan porque
- * el precio lo calcula el motor de precios; precio_venta_con_IVA se lee
- * solo para comparar nuestro cálculo con el de la hoja.
- *
- * El parser y el generador de la plantilla usan esta lista, así que si se
- * agrega una columna basta con ponerla aquí.
  */
 
 import { fileURLToPath } from "node:url";
 
-/** Dónde queda la plantilla que genera `npm run plantilla`. */
+/** donde queda la plantilla que genera `npm run plantilla`. */
 export const RUTA_DE_LA_PLANTILLA = fileURLToPath(
   new URL("./plantilla-de-productos.xlsx", import.meta.url)
 );

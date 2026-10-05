@@ -1,9 +1,5 @@
 /**
  * Revisa y normaliza los datos de un producto nuevo que llegan del panel.
- *
- * Junta todos los problemas en un solo error, para que el formulario
- * pueda marcar todos los campos malos de una vez y no de uno en uno.
- * Los límites son los de las columnas de catalogo.producto.
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
@@ -30,8 +26,7 @@ export function validarProductoNuevo(datos = {}) {
     problemas.push(mensaje);
   };
 
-  // El SKU se guarda en mayúsculas y sin espacios, así "pkm-001 " y
-  // "PKM-001" son el mismo código.
+  // El SKU se guarda en mayúsculas y sin espacios
   const sku = texto(datos.sku)?.toUpperCase() ?? null;
   if (!sku) anotar("sku", "El código es obligatorio.");
   else if (sku.length > LIMITES.sku) anotar("sku", `El código no puede pasar de ${LIMITES.sku} caracteres.`);
