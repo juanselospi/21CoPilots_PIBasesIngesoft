@@ -1,17 +1,12 @@
 /**
  * Bus de eventos en proceso (patrón Observer).
  *
- * Desacopla a quien produce un hecho de quien reacciona a él: el módulo
- * de inventario publica "se registró un movimiento" sin saber que la
- * alerta de existencias bajas (RF-16) esta escuchando.
+ * Desacopla a quien produce un hecho de quien reacciona a él.
  *
- * Es deliberadamente en memoria, no un broker de mensajes: con un solo
- * proceso Node, una cola externa agregaría infraestructura, despliegue y
- * un punto de falla sin ganancia alguna. Si algún día el sistema se
- * distribuye, esta clase es la costura por donde se reemplaza.
+ * Es deliberadamente en memoria, no un broker de mensajes.
  *
  * Un suscriptor que falla no puede tumbar la operación que publicó el
- * evento (RNF-06): los errores se capturan y se registran.
+ * evento: los errores se capturan y se registran.
  */
 
 export class BusDeEventos {

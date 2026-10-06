@@ -1,9 +1,9 @@
-/* Variables de la identidad visual (documentos/diseño/propuesta-identidad-visual.html):
-   paleta C · Slime, letra 1 · Rotulo y modo oscuro automatico.
+/* Variables de la identidad visual:
+   paleta Slime, letra tipo Rotulo y modo oscuro automatico.
    Es el unico archivo con colores escritos a mano, los demas usan estas variables */
 
 :root {
-  /* Paleta C · Slime */
+  /* Paleta Slime */
   --color-principal: #0A76AD;
   --color-acento: #F2B630;
   --color-destacado: #8EDCF7;
@@ -47,7 +47,7 @@
   --estado-neutro-fondo: #EEF2F7;
   --estado-neutro-texto: #475569;
 
-  /* Letra 1 · Rotulo: Bungee solo en el logo y los titulos */
+  /* Letra Rotulo: Bungee solo en el logo y los titulos */
   --fuente-marca: 'Bungee', 'Arial Black', sans-serif;
   --fuente-texto: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif;
   --fuente-codigo: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', monospace;

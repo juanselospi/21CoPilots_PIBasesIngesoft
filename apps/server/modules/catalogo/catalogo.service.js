@@ -32,24 +32,20 @@ const UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO = 2;
 
 
 /**
- * Catálogo público con precio final y disponibilidad (RF-10, RF-11).
- * Con ~195 SKU (RNF-02) filtrar y paginar en memoria es suficiente; si
- * el catálogo crece, la paginación baja al repositorio.
+ * Catálogo público con precio final y disponibilidad.
  */
 
- /** Ficha de producto (RF-12). */
+ /** Ficha de producto. */
 
- /** RN-03: si no es visible, para el público es como si no existiera. */
+ /** Si no es visible, para el público es como si no existiera. */
 
 /**
  * Compone el producto con su precio calculado y su disponibilidad.
- * El precio nunca se lee de una columna: se calcula, para que un cambio
- * de margen o de impuesto se refleje sin recalcular tabla alguna (DD-13).
  */
 
-/** RN-03 — un producto sin existencias que no admite contrapedido no se muestra. */
+/** Un producto sin existencias que no admite contrapedido no se muestra. */
 
-/** RF-07, RF-08, RN-03 — devolver los tres estados posibles. */
+/** Devolver los tres estados posibles. */
 
 export class CatalogoService {
   #repositorio;

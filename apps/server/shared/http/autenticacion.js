@@ -1,14 +1,11 @@
 /**
- * Middleware de autenticación (RF-50, RF-53).
+ * Middleware de autenticación.
  *
  * Deja al usuario identificado en `peticion.usuario` y no decide nada
- * más: los permisos son problema de `autorizacion-por-rol.js`. Separarlos
- * permite rutas públicas autenticadas (el catálogo de un cliente logueado)
- * sin duplicar la verificación de rol.
+ * más: los permisos son problema de `autorizacion-por-rol.js`.
  *
  * La sesión viaja en la cookie `sesion`; usuarios.sesion guarda solo el hash
- * del token. Las contraseñas se almacenan con hash y salt — RNF-08 —,
- * nunca en claro.
+ * del token. Las contraseñas se almacenan con hash y salt, nunca le limpio.
  */
 
 import { NoAutenticado } from "../errores/errores-de-dominio.js";

@@ -1,12 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 
-/**
- * Pide un recurso al servidor y devuelve { datos, cargando, error, recargar }.
- * `pedirRecurso(signal)` hace la llamada y se repite cuando cambia algún valor
- * de `dependencias`, que deben ser primitivos (textos, números).
- * Al cambiar las dependencias o al desmontar se cancela la petición en curso,
- * así una respuesta vieja no pisa a la nueva.
- */
 export function useRecursoRemoto(pedirRecurso, dependencias) {
     const [intento, setIntento] = useState(0)
     const clave = JSON.stringify([...dependencias, intento])

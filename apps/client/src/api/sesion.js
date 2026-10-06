@@ -9,9 +9,9 @@ const messagesByStatus = {
 }
 
 /**
- * Inicia sesión y devuelve el usuario: { id, correo, nombre, rol }.
+ * Inicia sesión y devuelve los datos del usuario.
  * El servidor deja la cookie de sesión en la respuesta.
- * Si algo sale mal lanza un Error con un mensaje para mostrar tal cual.
+ * Si algo sale mal lanza un Error.
  */
 export async function logIn(correo, contrasena) {
     let response
@@ -37,7 +37,7 @@ export async function logIn(correo, contrasena) {
     return body.datos
 }
 
-// Devuelve el usuario de la cookie: { correo, nombre, rol }, o null si no hay sesion.
+// Devuelve el usuario de la cookie, o null si no hay sesion.
 export async function getSession({ signal } = {}) {
     try {
         return await pedir('/api/admin/sesion', { signal })

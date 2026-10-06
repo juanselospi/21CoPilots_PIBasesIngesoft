@@ -1,4 +1,4 @@
-// Cliente HTTP: el único lugar del cliente que habla con la red (arquitectura.md § 11.1).
+// Cliente HTTP: el único lugar del cliente que habla con la red
 // Las rutas van a /api, que Vite reenvía al servidor, así viaja la cookie de sesión.
 
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Revise su conexión e intente de nuevo.'
@@ -18,12 +18,7 @@ export class ErrorHttp extends Error {
 
 /**
  * Hace la petición y devuelve el campo `datos` de la respuesta.
- * - `parametros` va en la consulta; los valores vacíos no viajan.
- * - `cuerpo` se envía como JSON, o tal cual si es un FormData.
- * - `conMeta` devuelve { datos, meta }, para las listas paginadas.
- * Si algo sale mal lanza un Error con un mensaje para mostrar tal cual; si el
- * servidor respondió con error, es un ErrorHttp. Si se cancela con `signal`,
- * deja pasar el AbortError para que quien pidió sepa que no es un fallo.
+ * Si algo sale mal lanza un Error.
  */
 export async function pedir(ruta, { metodo = 'GET', parametros, cuerpo, signal, conMeta = false } = {}) {
     const opciones = { method: metodo, signal }

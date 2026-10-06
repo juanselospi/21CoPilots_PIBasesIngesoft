@@ -1,15 +1,3 @@
-/**
- * Configuración del proceso.
- *
- * Único punto donde se lee `process.env` (§ 15, convención 5). Ningún
- * módulo de dominio consulta variables de entorno: reciben sus valores por
- * parámetro, lo que los deja probables sin montar el entorno completo.
- *
- * Aquí solo viven los valores de infraestructura y los fijados por ley o
- * por el SRS. De donde salen la escala de fidelidad y los datos del emisor
- * sigue por definir, ver cambios-siguiente-sprint.md
- */
-
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -34,7 +22,7 @@ export const configuracion = Object.freeze({
     contrasena: process.env.DB_PASSWORD ?? "",
   }),
 
-  /** RF-53 — cookie de sesión; `Secure` solo en producción (HTTPS). */
+  /** Cookie de sesión. */
   sesion: Object.freeze({
     duracionMinutos: numero(process.env.DURACION_SESION_MINUTOS, 25),
     cookieSegura: process.env.NODE_ENV === "production",
@@ -46,8 +34,8 @@ export const configuracion = Object.freeze({
   }),
 
   /** Valores de negocio fijados por ley o por el SRS; no son editables.
-      RES-06 — 13 %, es la tasa que la importacion guarda en cada producto.
-      RN-04 — umbral fijo e igual para todos los productos. */
+      13 %, es la tasa que la importacion guarda en cada producto.
+  */
   negocio: Object.freeze({
     impuestoDeVenta: numero(process.env.IMPUESTO_DE_VENTA, 0.13),
     umbralDeExistenciasBajas: numero(process.env.UMBRAL_EXISTENCIAS_BAJAS, 2),

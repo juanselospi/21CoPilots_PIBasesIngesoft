@@ -1,9 +1,10 @@
 /**
  * Columnas de la hoja de productos.
- * El parser y el generador de la plantilla usan esta lista.
  *
- * codigo_item no tiene campo porque el sistema no lo usa, solo se reconoce
- * como encabezado para que la hoja del negocio se pueda subir tal cual.
+ * Son las mismas del Excel y los montos también están en dólares.
+ *
+ * Las columnas `calculada` son fórmulas del Excel. No se guardan porque
+ * el precio lo calcula el motor de precios.
  */
 
 import { fileURLToPath } from "node:url";

@@ -1,8 +1,10 @@
 /**
  * Repositorio del catálogo.
  *
+ * Es el único archivo del módulo con SQL. Devuelve objetos en camelCase.
+ *
  * Solo escribe en el esquema `catalogo`. El producto se identifica por su SKU,
- * la categoria es texto y el stock vive en la misma fila del producto.
+ * la categoria es texto plano.
  */
 
 const COLUMNAS_DE_PRODUCTO = `
@@ -19,7 +21,21 @@ const COLUMNAS_DE_PRODUCTO = `
        p.categoria,
        p.proveedor`;
 
-// Guarda un producto de la importación (inserta si no existe y actualiza si ya existe)
+
+
+/**
+ * Productos con filtro opcional por categoría y por nombre.
+ * Qué productos se muestran al público lo decide el servicio, no este SQL.
+ */
+
+/** Ficha de un producto por su SKU, que tiene que venir normalizado. */
+
+/**
+ * Guarda un producto de la importación: lo crea si el SKU no existe y lo
+ * actualiza si ya existe, así reimportar la misma hoja no duplica nada.
+ */
+
+
 export class CatalogoRepository {
   #pool;
 
@@ -167,8 +183,8 @@ export class CatalogoRepository {
   }
 }
 
-// Pasa la fila de la base a camelCase. 
-// PostgreSQL devuelve NUMERIC como texto, aqui se convierten a numero
+// Pasa la fila de la base a camelCase.
+// PostgreSQL devuelve NUMERIC como texto, aqui se convierten a numero.
 const aProducto = (fila) => ({
   sku: fila.sku,
   nombre: fila.nombre,

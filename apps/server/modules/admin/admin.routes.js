@@ -1,16 +1,19 @@
 /**
  * Rutas de administración.
  *
- * Rutas previstas (confirmar con el equipo antes de fijarlas):
- *   POST   /sesion                    pública
- *   GET    /sesion                    listo
- *   DELETE /sesion
- *   POST   /contrasena/recuperacion   pública
- *   POST   /usuarios
- *   PATCH  /parametros
- *   GET    /bitacora
- *   POST   /importaciones             listo
- *   GET    /importaciones/plantilla   listo
+ * Iniciar sesión y recuperar la contraseña son públicas, así que no se
+ * puede poner exigirRol en todo el router: cada ruta protegida lo lleva.
+ *
+ * POST   /sesion
+ * GET    /sesion
+ * DELETE /sesion
+ * POST   /contrasena/recuperacion
+ * POST   /usuarios
+ * PATCH  /parametros
+ * GET    /bitacora
+ * POST   /importaciones
+ * GET    /importaciones/plantilla
+ *
  */
 
 import { Router } from "express";

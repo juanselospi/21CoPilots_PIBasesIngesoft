@@ -25,13 +25,6 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
   #enTransaccion;
   #porcentajeIva;
 
-  /**
-   * @param {object} dependencias
-   * @param {(cliente, producto: object) => Promise<{sku: string, insertado: boolean}>} dependencias.guardarProducto
-   *        inserta o actualiza el producto por SKU
-   * @param {(trabajo: (cliente) => Promise<any>) => Promise<any>} dependencias.enTransaccion
-   * @param {number} dependencias.impuestoDeVenta como proporción: 0.13
-   */
   constructor({ guardarProducto, enTransaccion, impuestoDeVenta }) {
     super();
     this.#guardarProducto = guardarProducto;

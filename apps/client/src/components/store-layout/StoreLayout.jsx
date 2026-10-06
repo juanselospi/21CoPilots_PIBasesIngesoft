@@ -6,8 +6,7 @@ import { useSesion } from '../../hooks/useSesion.js'
 
 // Estructura de la tienda. Pide las categorías una sola vez y las reparte:
 // el encabezado y el pie las reciben por props, y la página de adentro
-// (por ejemplo Inicio) las lee con useOutletContext, junto con el estado
-// de la petición para avisar si todavía cargan o si falló.
+// Por ejemplo para el Inicio las lee con useOutletContext, junto con el estado de la petición para avisar si todavía cargan o si falló.
 function StoreLayout() {
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []

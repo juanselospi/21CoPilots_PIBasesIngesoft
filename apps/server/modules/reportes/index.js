@@ -1,5 +1,5 @@
 /**
- * Facade del módulo de reportes (§ 5.3).
+ * Facade del módulo de reportes.
  *
  * Recibe el motor de precios del catalogo porque las vistas no traen el precio de venta.
  */

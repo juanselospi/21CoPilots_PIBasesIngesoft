@@ -1,5 +1,5 @@
-// El público solo recibe estos dos estados: los no disponibles el
-// servidor no los debe mandar (RF-07, RF-08, RN-03).
+// El público solo recibe estos dos estados: los no disponibles el servidor no los muestra.
+// Verificar con equipo para contrapedido.
 const availabilityByDisponibilidad = {
     en_existencia: 'in-stock',
     por_contrapedido: 'backorder',
