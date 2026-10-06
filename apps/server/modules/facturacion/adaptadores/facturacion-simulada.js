@@ -1,13 +1,5 @@
 /**
- * ADAPTADOR — facturación simulada (RES-03, RF-41).
- *
- * PENDIENTE: la factura ya no tiene pedido_id, el consecutivo simulado se deberia sacar del
- * num_referencia del pago, que tambien es unico.
- *
- * No devuelve un valor fijo (§ 5.1): valida que vengan los datos fiscales
- * del emisor y del receptor antes de "emitir", que es justo lo que
- * verifica RNF-18. Así la prueba del requerimiento corre hoy, contra el
- * placeholder, y seguirá corriendo contra Hacienda.
+ * Facturación simulada.
  */
 
 import { FacturacionElectronica } from "../facturacion-electronica.port.js";

@@ -2,22 +2,14 @@
  * Servicio de administración y seguridad.
  *
  * Falta implementar:
- *   - cuenta de administrador y acceso por rol (RF-49, RF-50)
- *   - modificar precios, descuentos y márgenes (RF-51)
- *   - consultar la bitacora (RF-52), queda pendiente porque el modelo no tiene tabla de bitacora
- *   - recuperación de contraseña (RF-54)
+ *   - cuenta de administrador y acceso por rol
+ *   - modificar precios, descuentos y márgenes
+ *   - consultar la bitacora, queda pendiente porque el modelo no tiene tabla de bitacora
+ *   - recuperación de contraseña
  *
  * A tener en cuenta:
- *   - Cada cambio de parámetro publica PARAMETRO_MODIFICADO después de
- *     guardarlo.
- *   - Los accesos denegados ya los publica el middleware de rol; no hay
- *     que publicarlos otra vez aquí.
- *   - Un usuario que no es administrador ni cliente no tiene rol y no puede
- *     iniciar sesion, ver cambios-siguiente-sprint.md
- *   - La sesión se guarda como hash del token. El token en claro solo
- *     viaja en la cookie.
  *   - Las contraseñas se guardan siempre con hash. Deben tener de 8 a 12
- *     caracteres, con mayúscula, número y carácter especial.
+ *     caracteres, con mayúscula, número y carácter especial como nos pidió el cliente.
  */
 
 import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";

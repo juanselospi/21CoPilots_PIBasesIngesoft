@@ -10,8 +10,7 @@ const ADMIN_ROLE = 'administrador'
 const toInitials = (nombre) =>
     nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((parte) => parte[0].toUpperCase()).join('')
 
-// `user` es el usuario de la sesion o null. Mientras `loadingSession` no se muestra
-// ni el usuario ni el enlace de iniciar sesion para que no cambie de golpe.
+// `user` es el usuario de la sesion o null. Mientras que con `loadingSession` no se muestra ni el usuario ni el enlace de iniciar sesion para que no cambie de golpe.
 function Header({ categories, user, loadingSession }) {
     return (
         <header className='header'>

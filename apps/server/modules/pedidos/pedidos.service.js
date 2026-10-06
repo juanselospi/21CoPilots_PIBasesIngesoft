@@ -1,15 +1,6 @@
 /**
  * CAPA DE DOMINIO — Carrito y pedidos.
  *
- * PENDIENTE: adaptar al EER corregido antes de implementar (ver cambios-siguiente-sprint.md):
- *   - confirmar es una transaccion que bloquea el stock de catalogo.producto ordenado por sku,
- *     lo descuenta, pasa el carrito a convertido con fecha_cierre (un CHECK pide las dos),
- *     inserta el pedido y el historial con numero_cambio 1 y estado colocado
- *   - el precio queda fijado en agrega al agregar al carrito, el motor se usa ahi
- *   - un pedido siempre nace de un carrito, una venta presencial tambien necesita uno
- *   - el pago necesita que el pedido ya exista
- *   - el descuento sale de pedidos.oferta (codigo_oferta del pedido)
- *
  * POR IMPLEMENTAR
  *   RF-21..RF-24  Carrito persistente; no exceder existencias salvo
  *                 contrapedido (RN-13); se conserva indefinidamente (RN-14)
@@ -18,20 +9,6 @@
  *   RF-28         Cancelar antes del despacho y devolver unidades (RN-15)
  *   RF-29         Sin límite de pedidos activos (RN-12)
  *   RF-30, RF-31  Concurrencia y comprobante
- *
- * Reglas al implementar:
- *   · Las transiciones de estado salen de `estados/maquina-de-estados.js`
- *     (State, § 6.4); no escribir `if (estado === ...)` en este archivo.
- *   · Confirmar un pedido es UNA transacción que bloquea las existencias
- *     en orden de `producto_id`, crea el pedido y sus líneas con el precio
- *     copiado, registra el historial y los movimientos (§ 7.3, § 10.2).
- *   · Los eventos se publican DESPUÉS del COMMIT (§ 6.2).
- *   · El cobro y la factura se piden a las interfaces, que llegan ya
- *     construidas. Está prohibido importar un adaptador concreto desde
- *     este archivo (RNF-20, Bridge § 5.2).
- *   · Si el cobro o la factura no están disponibles, el pedido igual se
- *     registra y el inventario igual se mueve (RNF-06).
- *   · El precio se calcula con `motorDePrecios`, no reimplementarlo.
  */
 
 export class PedidosService {

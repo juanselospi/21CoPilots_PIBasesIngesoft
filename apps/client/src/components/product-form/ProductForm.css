@@ -14,7 +14,7 @@
   background: var(--color-overlay);
 }
 
-/* Tarjeta del modal (el <form> con role="dialog") */
+/* Tarjeta del modal */
 .product-form-modal {
   display: flex;
   flex-direction: column;
@@ -172,7 +172,7 @@
   color: var(--color-enlace);
 }
 
-/* Botón principal (Guardar): se combina con .product-form-button y lo rellena de azul */
+/* Botón principal de `guardar`: se combina con .product-form-button y lo rellena de azul */
 .product-form-button-primary {
   border-color: var(--color-principal);
   background: var(--color-principal);

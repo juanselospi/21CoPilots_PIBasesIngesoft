@@ -1,16 +1,13 @@
 /**
- * CAPA DE PERSISTENCIA — Repositorio de administración.
+ * CAPA DE PERSISTENCIA —> Repositorio de administración.
  *
- * Escribe solo en el esquema `admin` (§ 9.3): usuario, administrador y sesion.
+ * Escribe solo en el esquema `admin`: usuario, administrador y sesion.
  * El usuario se identifica por su correo, que la base guarda en minusculas y sin espacios.
  * El rol no es una columna, sale de si el correo esta en admin.administrador o en clientes.cliente.
  *
- * POR IMPLEMENTAR
- *   crearUsuario()             RF-49 — una sola cuenta de administrador (índice único)
- *   borrarSesion()             cierre de sesion, se borra la fila por el hash del token
+ * Falta por implementar ne otro spint: crearUsuario() y borrarSesion()
  *
- * RNF-08: la contraseña llega ya transformada con hash; este repositorio
- * jamás recibe ni devuelve una contraseña en claro.
+ * La contraseña llega ya transformada con hash; este repositorio jamás recibe ni devuelve una contraseña en limpio.
  */
 
 const ROL_DEL_USUARIO = `
@@ -29,7 +26,7 @@ export class AdminRepository {
     this.#pool = pool;
   }
 
-  /** RF-50, RF-53 — el correo tiene que venir normalizado. Incluye el hash para el servicio. */
+  /** El correo tiene que venir normalizado. Incluye el hash para el servicio. */
   // Se busca al usuario usando el correo normalizado
   async buscarUsuarioPorCorreo(correo) {
     const { rows } = await this.#pool.query(
@@ -47,7 +44,7 @@ export class AdminRepository {
     return { ...usuario, contrasenaHash };
   }
 
-  /** RF-53 — se guarda el hash del token, nunca el token. */
+  /** Se guarda el hash del token, nunca el token. */
   async crearSesion({ correoUsuario, tokenHash, venceEn }) {
     await this.#pool.query(
       `INSERT INTO usuarios.sesion (correo_usuario, token_hash, fecha_vencimiento)
@@ -56,7 +53,7 @@ export class AdminRepository {
     );
   }
 
-  /** RF-53 — dueño de una sesión vigente, o `null`. */
+  /** Dueño de una sesión vigente, o `null`. */
   async buscarUsuarioPorSesion(tokenHash) {
     const { rows } = await this.#pool.query(
       `SELECT u.correo, u.nombre, ${ROL_DEL_USUARIO}
@@ -68,8 +65,7 @@ export class AdminRepository {
       [tokenHash]
     );
 
-    // Si no se enceuntra la usuario por token de sesion como dice el comentario generado
-    // de lo que hay que implementar simplemente se asume que no existe
+    // Si no se enceuntra la usuario por token de sesion simplemente se asume que no existe.
     return rows[0] ?? null;
   }
 }

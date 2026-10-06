@@ -1,11 +1,7 @@
 /**
- * Unifica operaciones de repositorio en una sola transacción
- * si alguna falla no se guarda nada
+ * Unidad de trabajo.
  *
- * Es obligatoria para confirmar un pedido (RF-25, RF-30): descontar el stock,
- * cerrar el carrito y crear el pedido con su historial tienen que ser atomicos (§ 10.2).
- * El candado sobre el stock de catalogo.producto se toma dentro de esta misma
- * transaccion (§ 7.3) con SELECT ... FOR UPDATE.
+ * Ejecuta varias operaciones de repositorio dentro de una sola transacción: o se confirman todas, o no se confirma ninguna.
  */
 
 export async function enTransaccion(pool, trabajo) {

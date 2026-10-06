@@ -3,9 +3,8 @@ import { ErrorHttp } from '../api/clienteHttp.js'
 import { useRecursoRemoto } from './useRecursoRemoto.js'
 
 /**
- * Ficha de un producto del catalogo publico: { datos, cargando, error, recargar }.
- * Si el producto no existe o esta oculto, `datos` queda en null sin error,
- * asi la pagina distingue "no encontrado" de una falla de conexion.
+ * Ficha de un producto del catalogo publico.
+ * Si el producto no existe o esta oculto, `datos` queda en null sin error.
  */
 export function useProducto(sku) {
     return useRecursoRemoto(

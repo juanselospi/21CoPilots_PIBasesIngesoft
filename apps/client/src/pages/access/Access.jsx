@@ -8,9 +8,6 @@ import { useSesion } from '../../hooks/useSesion.js'
 
 const ADMIN_ROLE = 'administrador'
 
-// Sub-pantalla de acceso (wireframe 01a). Por ahora solo funciona
-// "Iniciar sesión": "Crear cuenta" espera la respuesta del cliente y la
-// recuperación de contraseña (RF-54) es del Sprint 2.
 function Access() {
     return (
         <div className='access'>

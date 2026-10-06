@@ -1,8 +1,7 @@
 /**
- * Hash y verificación de contraseñas. RNF-08.
+ * Hash y verificación de contraseñas.
  *
- * bcrypt con salt por hash (incluido en el mismo texto) y 10 rondas.
- * Compatible con `crypt(..., gen_salt('bf', 10))` de las semillas.
+ * bcrypt con salt por hash.
  */
 
 import bcrypt from "bcryptjs";

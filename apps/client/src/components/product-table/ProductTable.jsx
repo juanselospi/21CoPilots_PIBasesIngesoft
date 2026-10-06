@@ -1,7 +1,7 @@
 import { Clock, EyeOff, Pencil, Tag, TrendingDown, TriangleAlert } from 'lucide-react'
 import './ProductTable.css'
 
-// Color e icono de cada etiqueta que calcula el servidor; una etiqueta nueva sale en gris
+// Color e icono de cada etiqueta que calcula el servidor; una etiqueta nueva sale en gris.
 const chipByLabel = {
     contrapedido: { className: 'chip chip-info', Icon: Clock },
     margen_negativo: { className: 'chip chip-error', Icon: TrendingDown },
