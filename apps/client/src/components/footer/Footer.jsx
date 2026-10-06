@@ -25,11 +25,6 @@ function Footer({ categories }) {
                 <h3>Términos</h3>
                 <a href='#'>Términos y condiciones</a>
             </div>
-
-            <div className='footer-column'>
-                <h3>Admin</h3>
-                <Link to='/acceso'>Acceso administrador</Link>
-            </div>
         </footer>
     )
 }
