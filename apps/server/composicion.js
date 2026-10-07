@@ -1,14 +1,5 @@
 /**
  * Raíz de composición (Composition Root).
- *
- * Aquí se arma todo el sistema y es el único lugar que decide qué
- * implementación concreta se usa. Por ejemplo, para cambiar la pasarela
- * de pago simulada por una real solo hay que tocar este archivo, no la
- * lógica de pedidos.
- *
- * El orden importa: primero la infraestructura (pool y bus de eventos),
- * luego los adaptadores externos, el control de acceso, los módulos y al
- * final los observadores del bus, que necesitan los módulos ya armados.
  */
 
 import { crearPool } from "./shared/db/pool.js";
