@@ -1,12 +1,5 @@
 /**
- * Reglas del costo, la importación y el margen de un producto.
- *
- * Las usan el registro de un producto nuevo y la edición del precio, para
- * que los dos acepten exactamente lo mismo y con los mismos mensajes. Los
- * límites son los de las columnas de catalogo.producto.
- *
- * Cada regla recibe el valor ya convertido con `numero` y devuelve el
- * mensaje del problema, o null si el valor sirve.
+ * Reglas de costo, importación y margen; las comparten crear y editar.
  */
 
 const LIMITES = Object.freeze({
@@ -29,8 +22,7 @@ export function problemaDeLaImportacion(porcentajeImportacion) {
   return null;
 }
 
-// El margen puede ser negativo (liquidaciones), pero con -100 % el
-// producto quedaría gratis (RN-02).
+// El margen puede ser negativo, pero no mayor que -100 % (RN-02).
 export function problemaDelMargen(margenGanancia) {
   if (Number.isNaN(margenGanancia) || margenGanancia <= -100 || margenGanancia > LIMITES.porcentaje) {
     return "El margen tiene que ser un número mayor que -100 %.";
@@ -38,10 +30,7 @@ export function problemaDelMargen(margenGanancia) {
   return null;
 }
 
-/**
- * Los formularios mandan los números como texto ("12.5"). Devuelve null
- * si no viene y NaN si viene algo que no es número.
- */
+/** Convierte a número: null si no viene y NaN si no es un número. */
 export function numero(valor) {
   if (valor === undefined || valor === null) return null;
   if (typeof valor === "number") return valor;

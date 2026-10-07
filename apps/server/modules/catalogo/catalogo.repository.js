@@ -56,12 +56,7 @@ export class CatalogoRepository {
     return rows.map(aProducto);
   }
 
-  /**
-   * Productos para el panel del administrador. El término busca en el
-   * nombre o en el SKU, porque el administrador suele buscar por código.
-   * Los filtros que dependen del precio o de la disponibilidad los aplica
-   * el servicio, que es quien los calcula.
-   */
+  /** Busca por nombre o SKU; los filtros de precio los aplica el servicio. */
   async listarParaAdministracion({ termino = null, categoria = null, proveedor = null } = {}) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
@@ -120,9 +115,7 @@ export class CatalogoRepository {
   /**
    * Cambia el precio (costo, importación y margen), el stock o el
    * contrapedido de un producto.
-   *
    * costo_total no se manda porque es una columna generada.
-   *
    * @returns el SKU, o null si no existe el producto
    */
   async actualizar(

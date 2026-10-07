@@ -1,10 +1,5 @@
 /**
- * Revisa y normaliza la consulta del listado del panel
- * (GET /admin/productos). Todos los parámetros son opcionales.
- *
- * Como en validar-producto-nuevo.js, junta todos los problemas en un
- * solo error, para que el panel pueda marcar todos los filtros malos de
- * una vez.
+ * Revisa y normaliza la consulta del listado del panel (GET /admin/productos).
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
@@ -29,8 +24,7 @@ export function validarConsultaAdministrativa(consulta = {}) {
     problemas.push(mensaje);
   };
 
-  // Un parámetro vacío cuenta como que no vino. Si viene repetido
-  // (?q=a&q=b), Express lo entrega como lista y no se adivina cuál vale.
+  // Un parámetro vacío cuenta como que no vino; uno repetido llega como lista y se rechaza.
   const leer = (campo) => {
     const valor = consulta[campo];
     if (valor === undefined) return null;

@@ -72,13 +72,8 @@ export class CatalogoService {
   }
 
   /**
-   * Listado del panel (RF-43): todos los productos, también los que RN-03
-   * oculta en la tienda. Los filtros por precio y disponibilidad y el
-   * orden van en memoria por la misma razón que en `listarCatalogo`: el
-   * precio se calcula, no se guarda.
-   *
-   * @returns la página pedida y el total de productos que cumplen los
-   *          filtros, antes de paginar
+   * Listado del panel con todos los productos, también los ocultos (RF-43).
+   * @returns la página pedida y el total de productos que cumplen los filtros
    */
   async listarParaAdministracion({
     termino = null,
@@ -193,11 +188,7 @@ const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, "es");
 const porPrecio = (a, b) => a.precioFinal - b.precioFinal;
 const invertido = (comparar) => (a, b) => comparar(b, a);
 
-/**
- * Valores de `orden` del listado del panel; el `-` invierte. Los
- * empates se resuelven siempre por SKU, para que la paginación no
- * repita ni salte productos.
- */
+/** Órdenes del panel; los empates van por SKU para no repetir productos al paginar. */
 export const ORDENES_DE_ADMINISTRACION = Object.freeze({
   nombre: porNombre,
   "-nombre": invertido(porNombre),
@@ -207,11 +198,7 @@ export const ORDENES_DE_ADMINISTRACION = Object.freeze({
   sku: porSku,
 });
 
-/**
- * Etiquetas del producto ya compuesto (con su disponibilidad). Salen
- * siempre en este orden y solo las que aplican. Las calcula el servidor
- * porque dependen de reglas de negocio; el panel solo las dibuja.
- */
+/** Etiquetas del producto ya compuesto, en orden fijo y solo las que aplican. */
 export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
   const etiquetas = [];
 
