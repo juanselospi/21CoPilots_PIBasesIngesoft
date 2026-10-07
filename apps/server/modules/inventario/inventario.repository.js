@@ -1,10 +1,5 @@
 /**
  * Repositorio de inventario.
- *
- * Falta implementar:
- *   - registrarMovimiento(): los ingresos llevan costo_unitario (RN-06)
- *   - actualizarExistencia(): siempre junto con registrarMovimiento()
- *   - listarMovimientos()
  */
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";

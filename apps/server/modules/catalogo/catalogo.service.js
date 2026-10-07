@@ -140,10 +140,7 @@ export class CatalogoService {
   }
 
   /**
-   * Registra un producto nuevo desde el panel. El código tiene que ser
-   * único: si ya existe, no se guarda nada (RF-01). Si no se indican
-   * existencias, nace con stock en 0.
-   *
+   * Registra un producto nuevo desde el panel. 
    * @returns el producto guardado, con su precio calculado
    */
   async crearProducto(datos) {
@@ -160,23 +157,6 @@ export class CatalogoService {
   /**
    * Cambia el costo, la importación, el margen, las existencias o el
    * contrapedido de un producto desde el modal "Editar producto" del panel
-   * (RF-01). Lo que no venga se queda como está. El precio no se guarda: se
-   * vuelve a calcular con el motor de precios (RF-03, RF-04, RF-05), y el
-   * margen puede ser negativo pero mayor que -100 % (RN-02). Con las
-   * existencias y el contrapedido cambia también si la tienda lo muestra
-   * (RN-03).
-   *
-   * Las existencias se corrigen a mano, sin dejar un movimiento en
-   * inventario.producto_administra: eso es del registro de mercancía.
-   *
-   * Se busca con `obtenerPorSku` y no con `obtenerFicha`, porque el
-   * administrador también edita los productos que RN-03 oculta en la tienda.
-   *
-   * No cambia el historial: las líneas de carritos y pedidos
-   * (`pedidos.agrega`) guardan su propio precio unitario y tasa de
-   * impuesto, así que el precio nuevo solo afecta lo que se agregue desde
-   * ahora.
-   *
    * @returns el producto actualizado, con su precio y disponibilidad recalculados
    */
   async actualizarProducto(sku, datos) {
