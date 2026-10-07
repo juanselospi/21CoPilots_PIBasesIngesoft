@@ -45,9 +45,7 @@ export class CatalogoController {
     respuesta.json({ datos: categorias.map(aCategoriaPublica) });
   };
 
-  // GET /admin/productos, solo administrador. A diferencia del listado
-  // público, trae los productos ocultos, los costos y el total, para que
-  // el panel pueda mostrar "195 productos · mostrando 1–24".
+  // GET /admin/productos, solo administrador
   listarParaAdministracion = async (peticion, respuesta) => {
     const { pagina, ...filtros } = validarConsultaAdministrativa(peticion.query);
 
@@ -69,9 +67,7 @@ export class CatalogoController {
     respuesta.status(201).json({ datos: aProductoAdministrativo(producto) });
   };
 
-  // PATCH /productos/:sku, solo administrador. Responde 200 con el
-  // producto y su precio recalculado, para que el modal muestre el
-  // resultado sin pedirlo otra vez.
+  // PATCH /productos/:sku, solo administrador
   actualizar = async (peticion, respuesta) => {
     const sku = peticion.params.sku.trim().toUpperCase();
     const producto = await this.#servicio.actualizarProducto(sku, peticion.body);
