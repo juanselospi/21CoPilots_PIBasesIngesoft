@@ -1,8 +1,7 @@
 import { listarParaAdministracion } from '../api/catalogo.js'
 import { useRecursoRemoto } from './useRecursoRemoto.js'
 
-// Pide los productos del panel (RF-43) y devuelve { datos, cargando, error, recargar }.
-// `datos` llega tal cual del servidor: { datos, meta }.
+// Productos del panel; `datos` llega tal cual del servidor: { datos, meta }.
 export function useListadoAdministrativo({
     q, categoria, proveedor, disponibilidad, existenciasBajas, margenNegativo, precioMin, precioMax, orden, limite, pagina,
 } = {}) {

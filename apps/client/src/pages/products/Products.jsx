@@ -132,7 +132,7 @@ function Products() {
         }
     }
 
-    // Registra el producto nuevo (RF-01) y recarga el listado.
+    // Registra el producto nuevo y recarga el listado.
     // Le devuelve al modal el producto creado o el error.
     const handleCreate = async (values) => {
         try {

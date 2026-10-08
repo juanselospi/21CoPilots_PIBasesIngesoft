@@ -1,5 +1,4 @@
-// Formato del precio y textos de disponibilidad que comparten la tarjeta, la ficha y el panel
-// Precios en dólares con el símbolo $ (ej. $1 234,50)
+// Precio en dólares (ej. $1 234,50) y textos de disponibilidad para la tarjeta, la ficha y el panel
 export const priceFormat = new Intl.NumberFormat('es-CR', {
     style: 'currency',
     currency: 'USD',

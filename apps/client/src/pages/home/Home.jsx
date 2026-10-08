@@ -25,8 +25,7 @@ const categoryIcons = [
 const categoryIcon = (category) =>
     categoryIcons.find(({ match }) => category.toLowerCase().includes(match))?.Icon ?? Tag
 
-// Página de Inicio. Es el contenedor: pide los productos al servidor y
-// se los pasa ya traducidos a ProductCard, que solo los muestra.
+// Página de Inicio: pide los productos y se los pasa traducidos a ProductCard.
 function Home() {
     // Las categorías las pide StoreLayout una sola vez y las comparte
     const { categorias, categoryNames } = useOutletContext()
@@ -52,8 +51,7 @@ function Home() {
                 <Link to={catalogPath()} className='home-banner-button'>Ver catálogo</Link>
             </section>
 
-            {/* Mientras llegan los datos, si falla la petición o si el catálogo
-                está vacío se muestra un aviso en lugar de las secciones */}
+            {/* Aviso en lugar de las secciones mientras carga, si falla o si el catálogo está vacío */}
             {cargando ? (
                 <p className='home-section home-status' role='status'>Cargando productos…</p>
             ) : error ? (
@@ -118,8 +116,7 @@ function Home() {
 function CategorySection({ category }) {
     const { datos } = useCatalogo({ categoria: category, limite: 4 })
 
-    // Mientras carga, si falla o si no tiene productos visibles no se muestra;
-    // la falta de conexión ya la avisa el estado general de la página.
+    // Si carga, falla o está vacía no se muestra; el error ya lo avisa la página.
     if (!datos?.length) return null
 
     return (

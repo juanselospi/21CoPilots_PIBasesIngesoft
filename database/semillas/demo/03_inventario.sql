@@ -1,7 +1,7 @@
 -- Datos de prueba: registro de mercancía del administrador. SOLO para desarrollo local.
 -- Cada producto con existencias tiene su carga inicial; PKM-001 tiene además
 -- un segundo ingreso. FUN-001 queda en 2 unidades para probar la alerta de
--- existencias bajas (RF-16).
+-- existencias bajas.
 
 INSERT INTO inventario.producto_administra (sku, correo_administrador, fecha, cantidad)
 SELECT v.sku, 'admin@dchobbies.test', TIMESTAMPTZ '2026-09-01 09:00-06', v.cantidad

@@ -57,7 +57,7 @@ BEGIN
 END;
 $$;
 
--- Devuelve el correo del administrador existente o crea uno (RF-49 permite solo uno)
+-- Devuelve el correo del administrador existente o crea uno (solo puede haber uno)
 CREATE FUNCTION pg_temp.admin_prueba() RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE

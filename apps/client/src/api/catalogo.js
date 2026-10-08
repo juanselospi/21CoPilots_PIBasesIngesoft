@@ -21,9 +21,8 @@ export function listarCategorias({ signal } = {}) {
     return pedir('/api/catalogo/categorias', { signal })
 }
 
-// Productos del panel de administración, incluidos los ocultos en la tienda (RF-43).
-// Devuelve { datos, meta } donde meta trae el total para paginar.
-// Todos los filtros son opcionales; `pagina` empieza en 0.
+// Productos del panel de administración, incluidos los ocultos en la tienda.
+// Devuelve { datos, meta } (meta trae el total para paginar); `pagina` empieza en 0.
 export function listarParaAdministracion(
     { q, categoria, proveedor, disponibilidad, existenciasBajas, margenNegativo, precioMin, precioMax, orden, limite, pagina } = {},
     { signal } = {},
@@ -41,8 +40,7 @@ export function actualizarProducto(sku, cambios, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }
 
-// Registra un producto nuevo; el código no se puede repetir (RF-01).
-// Devuelve el producto guardado con su precio calculado.
+// Registra un producto nuevo (el código no se puede repetir) y lo devuelve con su precio.
 export function crearProducto(producto, { signal } = {}) {
     return pedir('/api/catalogo/productos', { metodo: 'POST', cuerpo: producto, signal })
 }

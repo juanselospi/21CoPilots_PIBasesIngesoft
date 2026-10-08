@@ -24,9 +24,8 @@ SELECT pg_temp.debe_cumplirse(
     )
 );
 
--- RF-26: el historial empieza en "colocado" y numera sus cambios sin huecos
 SELECT pg_temp.debe_cumplirse(
-    'El historial de cada pedido empieza en colocado y no tiene huecos (RF-26)',
+    'El historial de cada pedido empieza en colocado y no tiene huecos',
     NOT EXISTS (
         SELECT 1
         FROM   pedidos.historial_estado h
@@ -37,7 +36,7 @@ SELECT pg_temp.debe_cumplirse(
 );
 
 SELECT pg_temp.debe_cumplirse(
-    'Solo se factura un pago aprobado (RF-41)',
+    'Solo se factura un pago aprobado',
     NOT EXISTS (
         SELECT 1
         FROM   facturacion.factura f

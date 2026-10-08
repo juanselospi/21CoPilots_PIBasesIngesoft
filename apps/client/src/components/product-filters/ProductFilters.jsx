@@ -2,8 +2,7 @@ import { useState } from 'react'
 import './ProductFilters.css'
 import { availabilityOptions, emptyFilters } from './productFilters.js'
 
-// Panel de filtros del listado de productos (RF-43).
-// Los cambios se guardan en un borrador y se aplican con "Aplicar".
+// Panel de filtros del listado; los cambios quedan en un borrador hasta "Aplicar".
 function ProductFilters({ filters, categories, onApply, onClose }) {
     const [draft, setDraft] = useState(filters)
     const [error, setError] = useState(null)

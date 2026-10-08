@@ -8,7 +8,7 @@ CREATE TABLE catalogo.producto (
     item             NUMERIC(12,2)  NOT NULL,             
     importacion      NUMERIC(6,2)   NOT NULL DEFAULT 0,  
 
-   -- Costo del producto incluyendo el porcentaje de importación.
+    -- Costo del producto incluyendo el porcentaje de importación.
     costo_total      NUMERIC        
         GENERATED ALWAYS AS (item * (1 + importacion / 100)) STORED,
     margen_ganancia  NUMERIC(6,2)   NOT NULL DEFAULT 0,    

@@ -1,6 +1,6 @@
 /* Estilos de la página de productos (Products.jsx) */
 
-/* Contenedor principal (<main>): apila las secciones de la página en columna */
+/* Apila las secciones de la página en columna */
 .products {
   display: flex;
   flex-direction: column;

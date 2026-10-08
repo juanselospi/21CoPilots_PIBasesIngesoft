@@ -1,8 +1,8 @@
--- Restricciones de pagos y facturación (RF-39, RF-40, RF-41)
+-- Restricciones de pagos y facturación
 
 SELECT pg_temp.pedido_prueba();
 
-SELECT pg_temp.debe_funcionar('Se registra un pago rechazado del pedido (RF-40)',
+SELECT pg_temp.debe_funcionar('Se registra un pago rechazado del pedido',
     $$INSERT INTO pagos.pago (num_referencia, monto, metodo_pago, estado_pago, correo_cliente, num_carrito)
       SELECT 'PRB-PAGO-1', 1695, 'tarjeta', 'rechazado', correo_cliente, num_carrito
       FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba() LIMIT 1$$);

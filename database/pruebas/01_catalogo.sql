@@ -34,7 +34,7 @@ SELECT pg_temp.debe_fallar('Una importación negativa se rechaza',
 SELECT pg_temp.debe_fallar('Una tasa de impuesto mayor a 100 % se rechaza',
     $$UPDATE catalogo.producto SET tasa_impuesto = 101 WHERE sku = 'PRB-001'$$, '23514');
 
-SELECT pg_temp.debe_fallar('El stock no puede quedar negativo (RN-13)',
+SELECT pg_temp.debe_fallar('El stock no puede quedar negativo',
     $$UPDATE catalogo.producto SET stock = -1 WHERE sku = 'PRB-001'$$, '23514');
 
 SELECT pg_temp.debe_fallar('Un producto sin categoría se rechaza',

@@ -1,11 +1,7 @@
 //   npm run db:cliente                       usa el .xlsx de database/datos-cliente/
 //   npm run db:cliente -- ruta/al/excel.xlsx
-//
-// Pasos:
-//   1. db:reset normal (migraciones + semillas).
-//   2. Oculta los productos de prueba (stock=0, contrapedido=false).
-//   3. Sube el Excel del cliente al servidor (igual que "Cargar Excel").
-//   4. Registra existencias iniciales (RF-13) a los productos importados.
+// Hace db:reset, oculta los productos de prueba, sube el Excel por el servidor
+// (igual que "Cargar Excel") y da existencias iniciales a los importados.
 
 const fs = require('fs');
 const path = require('path');

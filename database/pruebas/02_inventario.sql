@@ -1,8 +1,8 @@
--- Restricciones del registro de mercancía (PRODUCTO_ADMINISTRA; RF-13, RF-19)
+-- Restricciones del registro de mercancía (PRODUCTO_ADMINISTRA)
 
 SELECT pg_temp.producto_prueba('PRB-INV', 3);
 
-SELECT pg_temp.debe_funcionar('El administrador registra mercancía (RF-13)',
+SELECT pg_temp.debe_funcionar('El administrador registra mercancía',
     $$INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad)
       VALUES ('PRB-INV', pg_temp.admin_prueba(), 10)$$);
 
@@ -23,10 +23,10 @@ SELECT pg_temp.debe_fallar('El mismo producto, administrador y fecha no se repit
       SELECT sku, correo_administrador, fecha, 5
       FROM   inventario.producto_administra WHERE sku = 'PRB-INV'$$, '23505');
 
-SELECT pg_temp.debe_fallar('Un registro de mercancía no se puede editar (RF-19)',
+SELECT pg_temp.debe_fallar('Un registro de mercancía no se puede editar',
     $$UPDATE inventario.producto_administra SET cantidad = 99 WHERE sku = 'PRB-INV'$$, '23001');
 
-SELECT pg_temp.debe_fallar('Un registro de mercancía no se puede borrar (RF-19)',
+SELECT pg_temp.debe_fallar('Un registro de mercancía no se puede borrar',
     $$DELETE FROM inventario.producto_administra WHERE sku = 'PRB-INV'$$, '23001');
 
 SELECT pg_temp.debe_funcionar('Cambiar el SKU se propaga al registro de mercancía',
