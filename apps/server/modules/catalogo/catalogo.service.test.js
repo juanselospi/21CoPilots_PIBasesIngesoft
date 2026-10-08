@@ -367,7 +367,7 @@ test("el total cuenta solo los productos que cumplen los filtros", async () => {
   assert.equal(productos.length, 2);
 });
 // Catálogo falso para las categorías: un producto se ve si tiene
-// existencias o admite contrapedido (RN-03).
+// existencias o admite contrapedido.
 function crearServicioConProductos(productos) {
   const repositorio = { listar: async () => productos };
   return new CatalogoService({ repositorio, motorDePrecios });
@@ -382,7 +382,7 @@ const producto = (sku, categoria, existencias, admiteContrapedido = false) => ({
   tasaImpuesto: 13,
 });
 
-test("RN-03: las categorías solo cuentan los productos visibles", async () => {
+test("las categorías solo cuentan los productos visibles", async () => {
   const servicio = crearServicioConProductos([
     producto("LEG-001", "Legos", 3),
     producto("LEG-002", "Legos", 0, true),
@@ -396,7 +396,7 @@ test("RN-03: las categorías solo cuentan los productos visibles", async () => {
   ]);
 });
 
-test("RN-03: una categoría con todos sus productos ocultos no aparece", async () => {
+test("una categoría con todos sus productos ocultos no aparece", async () => {
   const servicio = crearServicioConProductos([
     producto("FUN-003", "Coleccionables", 0),
     producto("NSW-001", "Video Juegos", 2),
