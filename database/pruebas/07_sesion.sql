@@ -1,4 +1,4 @@
--- Restricciones de las sesiones (RF-53)
+-- Restricciones de las sesiones
 
 SELECT pg_temp.debe_funcionar('Se abre una sesión del usuario',
     $$INSERT INTO usuarios.sesion (correo_usuario, token_hash, fecha_vencimiento)

@@ -4,8 +4,7 @@
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Revise su conexión e intente de nuevo.'
 const MENSAJE_POR_DEFECTO = 'Ocurrió un error inesperado. Intente de nuevo.'
 
-// Error que respondió el servidor: trae el estado HTTP, el código y los detalles
-// (por ejemplo, qué campos venían mal).
+// Error que respondió el servidor, con su estado HTTP, código y detalles (p. ej. campos inválidos).
 export class ErrorHttp extends Error {
     constructor(mensaje, { estado, codigo = null, detalles = null }) {
         super(mensaje)

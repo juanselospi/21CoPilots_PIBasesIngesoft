@@ -1,8 +1,7 @@
 -- 004: crea las tablas CLIENTE y CLIENTE_TELEFONO.
 
 
--- Guarda la información propia de un cliente.
--- Todo cliente debe existir primero como usuario.
+-- Datos propios del cliente; todo cliente es primero un usuario.
 CREATE TABLE clientes.cliente (
     correo_usuario  VARCHAR(255)  PRIMARY KEY
         REFERENCES usuarios.usuario (correo) 
@@ -20,8 +19,7 @@ CREATE TABLE clientes.cliente (
         CHECK (num_compras >= 0)
 );
 
--- Guarda los teléfonos de cada cliente.
--- Un cliente puede tener varios teléfonos (multivalor).
+-- Teléfonos del cliente (puede tener varios).
 CREATE TABLE clientes.cliente_telefono (
     correo_usuario  VARCHAR(255)  NOT NULL
         REFERENCES clientes.cliente (correo_usuario) 
@@ -56,12 +54,10 @@ BEGIN
 END;
 $$;
 
--- Aplica la validación al crear o cambiar un administrador.
 CREATE TRIGGER tg_administrador_disjunto
     BEFORE INSERT OR UPDATE OF correo_usuario ON admin.administrador
     FOR EACH ROW EXECUTE FUNCTION public.verificar_usuario_disjunto();
 
--- Aplica la validación al crear o cambiar un cliente.
 CREATE TRIGGER tg_cliente_disjunto
     BEFORE INSERT OR UPDATE OF correo_usuario ON clientes.cliente
     FOR EACH ROW EXECUTE FUNCTION public.verificar_usuario_disjunto();

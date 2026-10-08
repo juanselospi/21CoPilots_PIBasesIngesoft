@@ -2,19 +2,18 @@
 -- Crea los esquemas y funciones compartidas por otras migraciones.
 
 
--- Permite generar hashes en las semillas de desarrollo.
--- La aplicación genera los hashes normalmente desde apps/server.
+-- Solo para generar hashes en las semillas; la app los genera en apps/server.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
 -- Organiza las tablas por módulo dentro de la misma base de datos.
 CREATE SCHEMA usuarios;      -- usuarios y sus sesiones
-CREATE SCHEMA admin;         -- administrador
+CREATE SCHEMA admin;
 CREATE SCHEMA clientes;      -- clientes y sus teléfonos
 CREATE SCHEMA catalogo;      -- productos
-CREATE SCHEMA inventario;    -- registro de mercancía que administra el administrador
+CREATE SCHEMA inventario;    -- registro de mercancía
 CREATE SCHEMA pedidos;       -- carritos, líneas del carrito, ofertas, pedidos e historial
-CREATE SCHEMA pagos;         -- pagos
+CREATE SCHEMA pagos;
 CREATE SCHEMA facturacion;   -- facturas
 CREATE SCHEMA reportes;      -- solo vistas de lectura
 
@@ -27,8 +26,8 @@ BEGIN
 END;
 $$;
 
--- Impide modificar o eliminar registros de tablas usadas como historial.
--- Los cambios producidos automáticamente por ON UPDATE CASCADE sí se permiten.
+-- Hace de solo inserción las tablas de historial.
+-- Deja pasar los UPDATE que vienen de un ON UPDATE CASCADE.
 CREATE FUNCTION public.rechazar_modificacion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN

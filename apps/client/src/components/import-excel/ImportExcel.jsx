@@ -7,8 +7,7 @@ import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 const MAX_SIZE_MB = 5
 
 // Botón "Cargar Excel" del encabezado de Productos. Maneja su propio estado
-// para que la página solo tenga que ponerlo. `onImported` avisa que entraron
-// productos, para que la página recargue su listado.
+// para que la página solo tenga que ponerlo; `onImported` le avisa que recargue el listado.
 function ImportExcel({ onImported }) {
     const [open, setOpen] = useState(false)
 

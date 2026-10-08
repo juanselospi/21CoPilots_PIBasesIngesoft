@@ -1,4 +1,4 @@
-// Filtros sin aplicar; las claves son los parámetros que acepta el servidor (RF-43)
+// Filtros sin aplicar; las claves son los parámetros que acepta el servidor
 export const emptyFilters = {
     categoria: '',
     disponibilidad: '',
@@ -8,7 +8,7 @@ export const emptyFilters = {
     precioMax: '',
 }
 
-// Estados de disponibilidad de un producto (RF-07)
+// Estados de disponibilidad de un producto
 export const availabilityOptions = [
     { value: 'en_existencia', label: 'En existencia' },
     { value: 'por_contrapedido', label: 'Por contrapedido' },

@@ -4,8 +4,8 @@ import Footer from '../footer/Footer.jsx'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useSesion } from '../../hooks/useSesion.js'
 
-// Estructura de la tienda. Pide las categorías una sola vez y las reparte:
-// el encabezado y el pie las reciben por props, y la página de adentro
+// Estructura de la tienda. Pide las categorías una sola vez: el encabezado y el pie
+// las reciben por props y las páginas de adentro por el contexto del Outlet.
 // Por ejemplo para el Inicio las lee con useOutletContext, junto con el estado de la petición para avisar si todavía cargan o si falló.
 function StoreLayout() {
     const categorias = useCategorias()

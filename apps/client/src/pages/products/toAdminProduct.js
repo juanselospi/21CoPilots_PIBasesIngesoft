@@ -16,7 +16,7 @@ const serverFieldByModalField = {
     margenPct: 'margenGanancia',
 }
 
-// Texto de cada etiqueta que calcula el servidor (RF-43)
+// Texto de cada etiqueta que calcula el servidor
 const labelByEtiqueta = {
     contrapedido: 'Por contrapedido',
     margen_negativo: 'Margen negativo',

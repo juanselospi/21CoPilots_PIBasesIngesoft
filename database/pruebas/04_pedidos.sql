@@ -1,4 +1,4 @@
--- Restricciones de carritos, ofertas, pedidos e historial (RN-14, RF-24, RF-25, RF-26)
+-- Restricciones de carritos, ofertas, pedidos e historial
 
 SELECT pg_temp.producto_prueba('PRB-PED', 5);
 
@@ -59,7 +59,7 @@ SELECT pg_temp.debe_fallar('Un pedido sin carrito se rechaza',
     $$INSERT INTO pedidos.pedido (correo_cliente, num_carrito, modalidad_entrega)
       VALUES (pg_temp.cliente_prueba(), 999, 'mensajero')$$, '23503');
 
-SELECT pg_temp.debe_fallar('Una modalidad de entrega desconocida se rechaza (RF-62)',
+SELECT pg_temp.debe_fallar('Una modalidad de entrega desconocida se rechaza',
     $$UPDATE pedidos.pedido SET modalidad_entrega = 'dron'
       WHERE correo_cliente = pg_temp.cliente_prueba()$$, '23514');
 
@@ -75,7 +75,7 @@ SELECT pg_temp.debe_funcionar('Se aplica una oferta al pedido (Aplicar)',
     $$UPDATE pedidos.pedido SET codigo_oferta = 'PRUEBA5'
       WHERE correo_cliente = pg_temp.cliente_prueba()$$);
 
-SELECT pg_temp.debe_funcionar('Se registra el primer cambio de estado (RF-26)',
+SELECT pg_temp.debe_funcionar('Se registra el primer cambio de estado',
     $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado)
       SELECT correo_cliente, num_carrito, 1, 'colocado' FROM pedidos.pedido
       WHERE  correo_cliente = pg_temp.cliente_prueba()$$);
@@ -85,7 +85,7 @@ SELECT pg_temp.debe_fallar('El número de cambio no se repite en el mismo pedido
       SELECT correo_cliente, num_carrito, 1, 'procesado' FROM pedidos.pedido
       WHERE  correo_cliente = pg_temp.cliente_prueba()$$, '23505');
 
-SELECT pg_temp.debe_fallar('Un estado fuera de RF-26 se rechaza',
+SELECT pg_temp.debe_fallar('Un estado desconocido se rechaza',
     $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado)
       SELECT correo_cliente, num_carrito, 2, 'despachado' FROM pedidos.pedido
       WHERE  correo_cliente = pg_temp.cliente_prueba()$$, '23514');

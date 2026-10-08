@@ -117,9 +117,8 @@ export class CatalogoService {
   }
 
   /**
-   * Categorías con la cantidad de productos que ve el público. Solo se
-   * cuentan los visibles, así una categoría con todos sus productos
-   * ocultos no aparece en la tienda (RN-03).
+   * Categorías con su cantidad de productos visibles; las que solo tienen
+   * productos ocultos no aparecen en la tienda.
    */
   async listarCategorias() {
     const productos = await this.#repositorio.listar();

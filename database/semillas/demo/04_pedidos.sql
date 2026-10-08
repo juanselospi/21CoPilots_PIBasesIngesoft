@@ -1,9 +1,6 @@
 -- Datos de prueba: una oferta, un pedido en línea pagado y facturado, una
--- venta presencial y un carrito activo. SOLO para desarrollo local. Sirven
--- para ver los reportes (EP-06) con datos.
--- Los precios unitarios siguen la fórmula de documentos/diseño/formula-precio.md
--- (item + importación %, + margen %) y se guardan sin impuesto; en ejecución
--- los calcula el motor de precios.
+-- venta presencial y un carrito activo, para ver los reportes con datos.
+-- SOLO para desarrollo local. Los precios unitarios se guardan sin impuesto.
 
 INSERT INTO pedidos.oferta (codigo_oferta, nombre, descripcion, fecha_inicio, fecha_fin,
                             porcentaje_descuento, monto_minimo, nivel_fidelidad_minimo) VALUES
@@ -40,7 +37,7 @@ BEGIN
         ('cliente@correo.test', 1, 3, 'en_transito', TIMESTAMPTZ '2026-09-11 09:00-06'),
         ('cliente@correo.test', 1, 4, 'finalizado',  TIMESTAMPTZ '2026-09-13 16:00-06');
 
-    -- Un primer intento rechazado y el cobro aprobado ("Necesita", 1 a N)
+    -- Un primer intento rechazado y luego el cobro aprobado
     INSERT INTO pagos.pago (num_referencia, fecha, monto, metodo_pago, estado_pago,
                             correo_cliente, num_carrito) VALUES
         ('SIM-0001', TIMESTAMPTZ '2026-09-10 10:58-06', 22840.00, 'tarjeta', 'rechazado', 'cliente@correo.test', 1),
@@ -52,7 +49,7 @@ BEGIN
     UPDATE clientes.cliente SET num_compras = num_compras + 1
     WHERE  correo_usuario = 'cliente@correo.test';
 
-    -- 2) Venta presencial con entrega personal (RF-17).
+    -- 2) Venta presencial con entrega personal.
     --    Subtotal ₡11 960 + 13 % (₡1 554,80) = ₡13 514,80
     INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_creacion, fecha_cierre)
     VALUES ('presencial@correo.test', 1, 'convertido',
@@ -82,7 +79,7 @@ BEGIN
     UPDATE clientes.cliente SET num_compras = num_compras + 1
     WHERE  correo_usuario = 'presencial@correo.test';
 
-    -- 3) Carrito activo del cliente en línea, todavía sin pedido (RN-14)
+    -- 3) Carrito activo del cliente en línea, todavía sin pedido
     INSERT INTO pedidos.carrito (correo_cliente, num_carrito)
     VALUES ('cliente@correo.test', 2);
 
