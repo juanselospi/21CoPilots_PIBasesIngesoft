@@ -17,18 +17,12 @@ export const readPriceInput = (input, allowNegative) => {
     return (allowNegative ? signedNumber : positiveNumber).test(value) ? value : null
 }
 
-// Errores de los campos de precio; los de `optional` pueden quedar vacíos
-export const validatePrices = (values, optional = []) => {
-    const errors = {}
-    for (const { key } of priceFields) {
-        const value = values[key]
-        if (value === '' && optional.includes(key)) continue
-        if (value === '' || value === '-' || value === '.' || Number.isNaN(Number(value))) {
-            errors[key] = 'Ingrese un número válido.'
-        }
-    }
-    if (!errors.margenPct && values.margenPct !== '' && Number(values.margenPct) <= -100) {
-        errors.margenPct = 'El margen debe ser mayor que -100 %.'
-    }
-    return errors
+// Las mismas reglas en ambos modales; al crear, importación y margen son opcionales.
+export const priceRules = {
+    costoItem: { obligatorio: true, tipo: 'numero', minimo: 0 },
+    importacionPct: { obligatorio: true, tipo: 'numero', minimo: 0 },
+    margenPct: {
+        obligatorio: true, tipo: 'numero', minimo: -100, exclusivo: true,
+        mensajeMinimo: 'El margen debe ser mayor que -100 %.',
+    },
 }

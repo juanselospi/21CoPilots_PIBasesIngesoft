@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import './ProductForm.css'
-import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
+import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
-import { validateStock } from './stockInput.js'
+import { useFormulario } from '../../hooks/useFormulario.js'
+
+const fieldRules = {
+    ...priceRules,
+    stock: { obligatorio: true, tipo: 'entero', minimo: 0 },
+}
 
 const derivedFields = [
     { key: 'costoTotal', label: 'Costo total' },
@@ -25,8 +30,10 @@ const valuesOf = (product) => ({
 function EditProduct({ product, formatPrice, onClose, onSave }) {
     // Producto tal como está guardado ahora
     const [saved, setSaved] = useState(product)
-    const [values, setValues] = useState(() => valuesOf(product))
-    const [errors, setErrors] = useState({})
+    const {
+        valores: values, errores: errors, formularioRef, cambiarCampo, validar,
+        erroresServidor, reiniciar, atributosCampo, idError,
+    } = useFormulario(() => valuesOf(product), fieldRules)
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const [justSaved, setJustSaved] = useState(false)
@@ -48,8 +55,7 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
     }
 
     const setField = (key, value) => {
-        setValues({ ...values, [key]: value })
-        setErrors({ ...errors, [key]: undefined })
+        cambiarCampo(key, value)
         setSaveError(null)
         setJustSaved(false)
     }
@@ -67,9 +73,7 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        const foundErrors = { ...validatePrices(values), ...validateStock(values) }
-        setErrors(foundErrors)
-        if (Object.keys(foundErrors).length > 0 || !hasChanges) return
+        if (saving || !validar() || !hasChanges) return
 
         setSaving(true)
         setSaveError(null)
@@ -78,10 +82,10 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
 
         if (result.error) {
             setSaveError(result.error)
-            setErrors(Object.fromEntries(result.fields.map((key) => [key, 'Revise este valor.'])))
+            erroresServidor(result.fields)
         } else {
             setSaved(result.product)
-            setValues(valuesOf(result.product))
+            reiniciar(valuesOf(result.product))
             setJustSaved(true)
         }
     }
@@ -89,6 +93,8 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
     return (
         <div className='product-form-overlay' onClick={close}>
             <form
+                ref={formularioRef}
+                noValidate
                 className='product-form-modal'
                 role='dialog'
                 aria-modal='true'
@@ -113,15 +119,14 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
                             <input
                                 type='text'
                                 inputMode='decimal'
-                                required
                                 disabled={saving}
-                                aria-invalid={Boolean(errors[key])}
+                                {...atributosCampo(key)}
                                 value={values[key]}
                                 onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
                             />
                             <span>{unit}</span>
                         </div>
-                        {errors[key] && <p className='product-form-error'>{errors[key]}</p>}
+                        {errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>}
                     </label>
                 ))}
 
@@ -147,6 +152,8 @@ function EditProduct({ product, formatPrice, onClose, onSave }) {
                     stock={values.stock}
                     backorder={values.backorder}
                     error={errors.stock}
+                    inputProps={atributosCampo('stock')}
+                    errorId={idError('stock')}
                     disabled={saving}
                     onChange={setField}
                 />

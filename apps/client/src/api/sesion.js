@@ -28,9 +28,14 @@ export async function logIn(correo, contrasena) {
     const body = await response.json().catch(() => null)
 
     if (!response.ok) {
-        throw new Error(
+        throw new ErrorHttp(
             messagesByStatus[response.status] ??
-            'No se pudo iniciar sesión. Intente de nuevo en unos minutos.'
+            'No se pudo iniciar sesión. Intente de nuevo en unos minutos.',
+            {
+                estado: response.status,
+                codigo: body?.error?.codigo,
+                detalles: body?.error?.detalles,
+            },
         )
     }
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import './ProductForm.css'
-import { priceFields, readPriceInput, validatePrices } from './priceFields.js'
+import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
-import { validateStock } from './stockInput.js'
+import { useFormulario } from '../../hooks/useFormulario.js'
 
 const CATEGORY_LIST_ID = 'add-product-categories'
 
@@ -18,6 +18,13 @@ const textFields = [
 
 // Al crear, importación y margen son opcionales: si quedan vacíos valen 0
 const optionalPrices = ['importacionPct', 'margenPct']
+const fieldRules = {
+    ...Object.fromEntries(textFields.map(({ key, required, type }) => [key, { obligatorio: required, tipo: type }])),
+    ...priceRules,
+    importacionPct: { ...priceRules.importacionPct, obligatorio: false },
+    margenPct: { ...priceRules.margenPct, obligatorio: false },
+    stock: { tipo: 'entero', minimo: 0 },
+}
 
 const emptyProduct = {
     sku: '',
@@ -36,8 +43,10 @@ const emptyProduct = {
 // No llama a la API: usa `onCreate`, que devuelve
 // { product } si se guardó o { error, fields } si el servidor lo rechazó.
 function AddProduct({ categories, formatPrice, onClose, onCreate }) {
-    const [values, setValues] = useState(emptyProduct)
-    const [errors, setErrors] = useState({})
+    const {
+        valores: values, errores: errors, formularioRef, cambiarCampo, validar,
+        erroresServidor, reiniciar, atributosCampo, idError,
+    } = useFormulario(emptyProduct, fieldRules)
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const [created, setCreated] = useState(null)
@@ -54,8 +63,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     }, [saving, onClose])
 
     const setField = (key, value) => {
-        setValues({ ...values, [key]: value })
-        setErrors({ ...errors, [key]: undefined })
+        cambiarCampo(key, value)
         setSaveError(null)
     }
 
@@ -66,10 +74,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
 
     const handleSubmit = async (event) => {
         event.preventDefault()
-        // Las existencias son opcionales: si quedan vacías el producto nace con 0
-        const foundErrors = { ...validatePrices(values, optionalPrices), ...validateStock(values, true) }
-        setErrors(foundErrors)
-        if (Object.keys(foundErrors).length > 0) return
+        if (saving || !validar()) return
 
         setSaving(true)
         setSaveError(null)
@@ -78,7 +83,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
 
         if (result.error) {
             setSaveError(result.error)
-            setErrors(Object.fromEntries(result.fields.map((key) => [key, 'Revise este valor.'])))
+            erroresServidor(result.fields)
         } else {
             setCreated(result.product)
         }
@@ -86,8 +91,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
 
     // Deja el formulario en blanco para agregar otro
     const addAnother = () => {
-        setValues(emptyProduct)
-        setErrors({})
+        reiniciar()
         setCreated(null)
     }
 
@@ -130,6 +134,8 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     return (
         <div className='product-form-overlay' onClick={close}>
             <form
+                ref={formularioRef}
+                noValidate
                 className='product-form-modal product-form-wide'
                 role='dialog'
                 aria-modal='true'
@@ -153,16 +159,15 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                         <div className='product-form-input'>
                             <input
                                 type={type}
-                                required={required}
                                 disabled={saving}
                                 placeholder={placeholder}
                                 list={list}
-                                aria-invalid={Boolean(errors[key])}
+                                {...atributosCampo(key)}
                                 value={values[key]}
                                 onChange={(event) => setField(key, event.target.value)}
                             />
                         </div>
-                        {errors[key] && <p className='product-form-error'>{errors[key]}</p>}
+                        {errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>}
                     </label>
                 ))}
 
@@ -177,12 +182,12 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                         <textarea
                             rows={3}
                             disabled={saving}
-                            aria-invalid={Boolean(errors.description)}
+                            {...atributosCampo('description')}
                             value={values.description}
                             onChange={(event) => setField('description', event.target.value)}
                         />
                     </div>
-                    {errors.description && <p className='product-form-error'>{errors.description}</p>}
+                    {errors.description && <p id={idError('description')} className='product-form-error'>{errors.description}</p>}
                 </label>
 
                 <section className='product-form-prices'>
@@ -193,16 +198,15 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                                 <input
                                     type='text'
                                     inputMode='decimal'
-                                    required={!optionalPrices.includes(key)}
                                     disabled={saving}
                                     placeholder={optionalPrices.includes(key) ? '0' : undefined}
-                                    aria-invalid={Boolean(errors[key])}
+                                    {...atributosCampo(key)}
                                     value={values[key]}
                                     onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
                                 />
                                 <span>{unit}</span>
                             </div>
-                            {errors[key] && <p className='product-form-error'>{errors[key]}</p>}
+                            {errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>}
                         </label>
                     ))}
                 </section>
@@ -211,6 +215,8 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                     stock={values.stock}
                     backorder={values.backorder}
                     error={errors.stock}
+                    inputProps={atributosCampo('stock')}
+                    errorId={idError('stock')}
                     disabled={saving}
                     optional
                     onChange={setField}
