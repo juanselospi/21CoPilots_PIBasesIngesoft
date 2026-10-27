@@ -182,7 +182,7 @@
 }
 
 /* Marca en rojo el borde de la caja cuando su input tiene un valor inválido */
-.product-form-input:has(input[aria-invalid='true']) {
+.product-form-input:has([aria-invalid='true']) {
   border-color: var(--estado-error-texto);
 }
 

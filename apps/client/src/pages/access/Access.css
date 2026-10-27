@@ -148,6 +148,11 @@
   border-color: var(--estado-error-texto);
 }
 
+.access-field-error {
+  color: var(--estado-error-texto);
+  font-size: var(--texto-etiqueta);
+}
+
 .access-password {
   position: relative;
 }

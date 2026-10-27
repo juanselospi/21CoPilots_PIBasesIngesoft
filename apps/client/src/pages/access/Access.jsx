@@ -5,8 +5,13 @@ import './Access.css'
 import Logo from '../../components/logo/Logo.jsx'
 import { logIn } from '../../api/sesion.js'
 import { useSesion } from '../../hooks/useSesion.js'
+import { useFormulario } from '../../hooks/useFormulario.js'
 
 const ADMIN_ROLE = 'administrador'
+const loginFields = {
+    correo: { obligatorio: true, tipo: 'correo' },
+    contrasena: { obligatorio: true },
+}
 
 function Access() {
     return (
@@ -38,8 +43,10 @@ function Access() {
 function LogInForm() {
     const navigate = useNavigate()
     const { recargar: reloadSession } = useSesion()
-    const [correo, setCorreo] = useState('')
-    const [contrasena, setContrasena] = useState('')
+    const {
+        valores: { correo, contrasena }, errores, formularioRef, cambiarCampo,
+        validar, erroresServidor, atributosCampo, idError,
+    } = useFormulario({ correo: '', contrasena: '' }, loginFields)
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState(null)
     const [sending, setSending] = useState(false)
@@ -47,10 +54,7 @@ function LogInForm() {
     const handleSubmit = async (event) => {
         event.preventDefault()
 
-        if (!correo.trim() || !contrasena) {
-            setError('Escriba su correo y contraseña.')
-            return
-        }
+        if (sending || !validar()) return
 
         setSending(true)
         setError(null)
@@ -60,12 +64,18 @@ function LogInForm() {
             navigate(usuario.rol === ADMIN_ROLE ? '/admin/productos' : '/', { replace: true })
         } catch (logInError) {
             setError(logInError.message)
+            erroresServidor(logInError.detalles?.campos)
             setSending(false)
         }
     }
 
+    const setField = (campo, valor) => {
+        cambiarCampo(campo, valor)
+        setError(null)
+    }
+
     return (
-        <form className='access-form' onSubmit={handleSubmit} noValidate>
+        <form ref={formularioRef} className='access-form' onSubmit={handleSubmit} noValidate>
             <div className='access-heading'>
                 <h1>Bienvenido de vuelta</h1>
                 <p>Inicia sesión para dar seguimiento a tus pedidos.</p>
@@ -79,10 +89,12 @@ function LogInForm() {
                     type='email'
                     placeholder='nombre@correo.com'
                     autoComplete='email'
+                    {...atributosCampo('correo')}
                     value={correo}
-                    onChange={(event) => setCorreo(event.target.value)}
+                    onChange={(event) => setField('correo', event.target.value)}
                     disabled={sending}
                 />
+                {errores.correo && <p id={idError('correo')} className='access-field-error'>{errores.correo}</p>}
             </label>
 
             <div className='access-field'>
@@ -98,8 +110,8 @@ function LogInForm() {
                         type={showPassword ? 'text' : 'password'}
                         autoComplete='current-password'
                         value={contrasena}
-                        onChange={(event) => setContrasena(event.target.value)}
-                        aria-invalid={Boolean(error)}
+                        onChange={(event) => setField('contrasena', event.target.value)}
+                        {...atributosCampo('contrasena')}
                         disabled={sending}
                     />
                     <button
@@ -112,6 +124,7 @@ function LogInForm() {
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
+                {errores.contrasena && <p id={idError('contrasena')} className='access-field-error'>{errores.contrasena}</p>}
             </div>
 
             <button type='submit' className='access-submit' disabled={sending}>
