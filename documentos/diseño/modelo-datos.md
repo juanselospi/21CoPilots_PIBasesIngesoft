@@ -283,6 +283,17 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-12 | Entidad débil **Historial del estado** (relación «Actualiza» con Pedido): llave parcial `estado` y atributo `fecha`; `CHECK` con los estados de RF-26 más `cancelado`, solo inserción. El estado del pedido se lee de la vista `v_estado_pedido`. | El estado ya era un atributo derivado en el EER del Sprint 0; ahora queda acotado a los estados del SRS, se sabe cuándo ocurrió cada cambio y su historial no se puede alterar. | RF-26, RF-28 |
 | C-13 | **Implementación física** (no cambia el EER): un esquema de PostgreSQL por módulo, restricciones con nombre, correo y SKU normalizados, índice que permite un solo administrador, triggers de solo inserción y vistas para los reportes. | Alinea la base de datos con los módulos del servidor, hace verificables RF-19 y RF-49, y permite que el servidor traduzca cada error a un mensaje de negocio. | RF-19, RF-49, RNF-19 |
 | C-14 | **Usuario** y **Sesión** van en un esquema propio, `usuarios`, en vez de `admin`, creadas en `002_usuarios.sql`. | Las cuentas y sus sesiones son de todos los usuarios, clientes incluidos. En `admin` hacían pensar que todo usuario era administrador. | RF-50, RF-53 |
+| C-15 | Entidad nueva **Familia** (`nombre` como llave, descripción, importación, margen de ganancia y si está activa); `producto.categoria` pasa a llave foránea a `familia.nombre`. El producto hereda la importación y el margen de su familia y puede sobrescribirlos (`NULL` en el producto = hereda). `costo_total` deja de ser columna generada y se calcula en el motor de precios. Reemplaza C-04. Migración 011 (A3, SCRUM-89). | El PDF del Sprint 2 pide administrar familias (ingresar, modificar, desactivar, eliminar y consultar) con características que pasan a sus productos, y un atributo no puede guardar eso. Según el profesor, que el porcentaje esté ligado a la familia es parte del diseño correcto del modelo relacional, con excepción por producto. Una columna generada no puede leer otra tabla. Abierto: si la importación también se hereda o solo el margen (Daniel); mientras tanto, las dos son heredables. | RF-02, RN-01, RN-02, PDF del Sprint 2, `requerimientos-profesor` § 7 |
+| C-16 | **Producto:** se agrega Estado (`activo` por defecto o `descontinuado`); un descontinuado se puede reactivar. Un producto sin historial (sin filas en `agrega` ni en `producto_administra`) se puede eliminar físicamente; uno con historial no. Migración 012 (A4, SCRUM-90). | Descontinuar saca el producto del catálogo sin perder su historial y lo distingue de uno agotado (opción (a) del documento del Sprint 1 § 2.8). El PDF del Sprint 2 exige poder eliminar un producto «teniendo en cuenta las relaciones»: las llaves foráneas impiden borrar uno con ventas o movimientos. | RF-18, PDF del Sprint 2 |
+| C-18 | **Historial del estado:** el `CHECK` de estados admite `en_disputa`. Migración 014 (A6, SCRUM-92). | El cliente pidió un estado para pedidos con problemas, que se mantiene hasta resolverlo y queda en el historial. | RF-26, RF-28, `e2-6-10-2026` punto 1 |
+| C-20 | Entidad nueva **Bitácora** (`admin.bitacora`), de solo inserción: fecha, evento, entidad, identificador, valor anterior y valor nuevo. Llave `(correo_usuario, fecha)`, con `correo_usuario` obligatorio (llave foránea a `usuarios.usuario`) y `fecha DEFAULT clock_timestamp()`. Migración 015 (A7, SCRUM-93). | El EER no tenía dónde guardar los cambios auditables ni los accesos denegados. El profesor pidió el historial de cambios de los pedidos como control ante empleados malintencionados. `clock_timestamp()` evita que dos registros del mismo usuario en una transacción choquen. Solo se registran acciones de usuarios con sesión. | RF-52, RNF-10, `requerimientos-profesor` § 3 |
+| C-21 | **Administrador:** puede haber varios. Se quita `ux_administrador_unico` y se agregan `es_propietario` (con índice único parcial: un solo dueño), `creado_por` y `activo`. Migración 016 (A8, SCRUM-94). | Un empleado es otra cuenta de administrador, no un rol nuevo; puede todo lo del administrador salvo crear cuentas y configurar, que son del propietario. Sigue habiendo un solo dueño. Cambia el índice de C-13. | RF-49, `e1-24-9-2026` punto 6, `e2-6-10-2026` punto 3 |
+| C-23 | **Especialización de Usuario** traslapada: se quita el trigger `verificar_usuario_disjunto`. **Historial del estado** sin Número de cambio, con llave parcial `(estado, fecha)`: la llave es `(correo_cliente, num_carrito, estado, fecha)`. Migración 010 (A2, SCRUM-88). | Alinea la base de datos con el EER, que marca la especialización con «O» y tiene el historial con solo estado y fecha. Una cuenta puede ser administrador y cliente y tiene los dos permisos. Con `estado` solo en la llave, un pedido no podría volver a «en disputa», que puede repetirse. Cambia la llave de C-12. | RF-26, `e2-6-10-2026` punto 1 |
+| C-24 | Entidades nuevas para las **tarifas de envío** por modalidad (propuesta: `pedidos.tarifa_envio (modalidad PK, monto)`) y los **datos del negocio** (una tabla de una sola fila: razón social, cédula jurídica, dirección). El **pago** guarda su moneda. Migración 018 (falta crear la tarea en Jira). | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`. La factura va en la moneda en que se hizo el pago. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-62, RN-16, RN-18, RNF-17 |
+
+C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
+migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
+diagrama. C-17, C-19 y C-22 están reservados para las migraciones 013, 014 y 017.
 
 ### Lo que se conservó del prototipo
 
@@ -296,10 +307,20 @@ cubren a propósito los casos del SRS.
 
 ## 5. Pendientes
 
-Las decisiones abiertas que afectan al modelo (referencia de un pago sin respuesta de
-la pasarela, usuarios que no son ni administrador ni cliente, bitácora, histórico de
-costos, motivo de los ajustes, aceptación de términos, escala de fidelidad, datos
-fiscales y cómo excluir un producto) están en
+Las decisiones abiertas que afectan al modelo son:
+
+- si la importación también se hereda de la familia o solo el margen (Daniel; C-15);
+- qué monedas se aceptan y, si se aceptan colones, de dónde sale el tipo de cambio
+  (Daniel; C-24);
+- los montos de las tarifas de envío, la razón social y la cédula jurídica (el PO los
+  pide a Daniel; C-24), y crear en Jira la tarea de la migración 018;
+- dónde se guarda el token de recuperación de contraseña (E4, SCRUM-117);
+- cómo se registran las ventas en línea en `producto_administra`, que no tienen
+  administrador (A5, SCRUM-91);
+- cómo se consume un crédito a favor (A9, SCRUM-95);
+- cómo se registra un pedido manual para alguien sin cuenta (I4, SCRUM-141).
+
+El detalle está en
 [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md). Cuando
 se decida cada una, se agrega aquí su fila en § 4.
 
@@ -308,8 +329,9 @@ se decida cada una, se agrega aquí su fila en § 4.
 ## 6. Cómo registrar un cambio al modelo
 
 1. `npm run db:new -- descripcion` y escriba el SQL (nombres calificados por esquema).
-2. Agregue aquí una fila en § 4 con el siguiente ID (`C-15`, …), el cambio, la
-   justificación y los requerimientos que lo motivan. Si cambia una tabla, actualice
+2. Agregue aquí una fila en § 4 con el siguiente ID (`C-25`, …, o el que esté
+   reservado para su migración), el cambio, la justificación y los requerimientos que
+   lo motivan. Si la fila ya existe, complétela. Si cambia una tabla, actualice
    también § 2.
 3. Si la migración agrega una restricción, agregue su prueba en `database/pruebas/`.
 4. Actualice el diagrama EER (`EER 21 CoPilots.drawio.xml`) y el mapeo.
