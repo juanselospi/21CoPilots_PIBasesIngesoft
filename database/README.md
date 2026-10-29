@@ -137,7 +137,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 010: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 011: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -157,6 +157,7 @@ database/
 | `008_pagos_facturacion.sql` | `pagos`, `facturacion` | `PAGO`, `FACTURA` |
 | `009_reportes.sql` | `reportes` | vistas de solo lectura y atributos derivados (estado del pedido, montos) |
 | `010_alinear_eer.sql` | `admin`, `clientes`, `pedidos`, `reportes` | Alinea con el EER (C-23): la especialización de `USUARIO` queda traslapada y `HISTORIAL_ESTADO` pierde `numero_cambio`, con llave parcial `(estado, fecha)` |
+| `011_familias.sql` | `catalogo`, `reportes` | `FAMILIA` (C-15): `PRODUCTO` hereda de su familia la importación y el margen, o los sobrescribe; `costo_total` deja de ser columna y `v_existencias` muestra los valores efectivos |
 
 ---
 

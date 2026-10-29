@@ -158,6 +158,22 @@ CREATE TABLE admin.administrador (
 
 
 --
+-- Name: familia; Type: TABLE; Schema: catalogo; Owner: -
+--
+
+CREATE TABLE catalogo.familia (
+    nombre character varying(100) NOT NULL,
+    descripcion text,
+    importacion numeric(6,2) DEFAULT 0 NOT NULL,
+    margen_ganancia numeric(6,2) DEFAULT 0 NOT NULL,
+    activa boolean DEFAULT true NOT NULL,
+    CONSTRAINT ck_familia_importacion CHECK ((importacion >= (0)::numeric)),
+    CONSTRAINT ck_familia_margen CHECK ((margen_ganancia > ('-100'::integer)::numeric)),
+    CONSTRAINT ck_familia_nombre CHECK ((btrim((nombre)::text) <> ''::text))
+);
+
+
+--
 -- Name: producto; Type: TABLE; Schema: catalogo; Owner: -
 --
 
@@ -165,9 +181,8 @@ CREATE TABLE catalogo.producto (
     sku character varying(50) NOT NULL,
     nombre character varying(200) NOT NULL,
     item numeric(12,2) NOT NULL,
-    importacion numeric(6,2) DEFAULT 0 NOT NULL,
-    costo_total numeric GENERATED ALWAYS AS ((item * ((1)::numeric + (importacion / (100)::numeric)))) STORED,
-    margen_ganancia numeric(6,2) DEFAULT 0 NOT NULL,
+    importacion numeric(6,2),
+    margen_ganancia numeric(6,2),
     tasa_impuesto numeric(5,2) DEFAULT 13 NOT NULL,
     categoria character varying(100) NOT NULL,
     proveedor character varying(150),
@@ -360,17 +375,20 @@ CREATE VIEW reportes.v_estado_pedido AS
 --
 
 CREATE VIEW reportes.v_existencias AS
- SELECT sku,
-    nombre,
-    categoria,
-    stock,
-    item,
-    importacion,
-    costo_total,
-    margen_ganancia,
-    tasa_impuesto,
-    contrapedido
-   FROM catalogo.producto;
+ SELECT p.sku,
+    p.nombre,
+    p.categoria,
+    p.stock,
+    p.item,
+    COALESCE(p.importacion, f.importacion) AS importacion,
+    (p.item * ((1)::numeric + (COALESCE(p.importacion, f.importacion) / (100)::numeric))) AS costo_total,
+    COALESCE(p.margen_ganancia, f.margen_ganancia) AS margen_ganancia,
+    (p.importacion IS NULL) AS importacion_heredada,
+    (p.margen_ganancia IS NULL) AS margen_heredado,
+    p.tasa_impuesto,
+    p.contrapedido
+   FROM (catalogo.producto p
+     JOIN catalogo.familia f ON (((f.nombre)::text = (p.categoria)::text)));
 
 
 --
@@ -469,6 +487,14 @@ CREATE TABLE usuarios.sesion (
 
 ALTER TABLE ONLY admin.administrador
     ADD CONSTRAINT administrador_pkey PRIMARY KEY (correo_usuario);
+
+
+--
+-- Name: familia familia_pkey; Type: CONSTRAINT; Schema: catalogo; Owner: -
+--
+
+ALTER TABLE ONLY catalogo.familia
+    ADD CONSTRAINT familia_pkey PRIMARY KEY (nombre);
 
 
 --
@@ -681,6 +707,14 @@ CREATE TRIGGER tg_historial_solo_insercion BEFORE DELETE OR UPDATE ON pedidos.hi
 
 ALTER TABLE ONLY admin.administrador
     ADD CONSTRAINT administrador_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: producto fk_producto_familia; Type: FK CONSTRAINT; Schema: catalogo; Owner: -
+--
+
+ALTER TABLE ONLY catalogo.producto
+    ADD CONSTRAINT fk_producto_familia FOREIGN KEY (categoria) REFERENCES catalogo.familia(nombre) ON UPDATE CASCADE;
 
 
 --

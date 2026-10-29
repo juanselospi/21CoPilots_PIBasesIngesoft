@@ -5,7 +5,7 @@ SELECT pg_temp.debe_funcionar('Se crea un producto con SKU normalizado',
 
 SELECT pg_temp.debe_fallar('Un SKU en minúsculas se rechaza (se guarda normalizado, RF-01)',
     $$INSERT INTO catalogo.producto (sku, nombre, categoria, item)
-      VALUES ('prb-002', 'x', 'Categoría', 100)$$, '23514');
+      VALUES ('prb-002', 'x', 'Categoría de prueba', 100)$$, '23514');
 
 SELECT pg_temp.debe_fallar('Un SKU repetido se rechaza (RF-01, RF-59)',
     $$SELECT pg_temp.producto_prueba('PRB-001')$$, '23505');
@@ -14,10 +14,7 @@ SELECT pg_temp.debe_funcionar('Se asignan item e importación',
     $$UPDATE catalogo.producto SET item = 100, importacion = 20 WHERE sku = 'PRB-001'$$);
 
 SELECT pg_temp.debe_cumplirse('El costo total es item + importación % (formula-precio.md)',
-    (SELECT costo_total FROM catalogo.producto WHERE sku = 'PRB-001') = 120);
-
-SELECT pg_temp.debe_fallar('El costo total no se puede escribir a mano',
-    $$UPDATE catalogo.producto SET costo_total = 1 WHERE sku = 'PRB-001'$$, '428C9');
+    (SELECT costo_total FROM reportes.v_existencias WHERE sku = 'PRB-001') = 120);
 
 SELECT pg_temp.debe_funcionar('El margen negativo se acepta (RN-02)',
     $$UPDATE catalogo.producto SET margen_ganancia = -10 WHERE sku = 'PRB-001'$$);

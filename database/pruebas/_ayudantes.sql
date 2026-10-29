@@ -51,6 +51,8 @@ $$;
 CREATE FUNCTION pg_temp.producto_prueba(p_sku text, p_stock integer DEFAULT 0) RETURNS text
 LANGUAGE plpgsql AS $$
 BEGIN
+    INSERT INTO catalogo.familia (nombre, importacion, margen_ganancia)
+    VALUES ('Categoría de prueba', 10, 30) ON CONFLICT (nombre) DO NOTHING;
     INSERT INTO catalogo.producto (sku, nombre, categoria, item, stock)
     VALUES (p_sku, 'Producto ' || p_sku, 'Categoría de prueba', 1000, p_stock);
     RETURN p_sku;
