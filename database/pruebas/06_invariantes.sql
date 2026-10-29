@@ -25,13 +25,22 @@ SELECT pg_temp.debe_cumplirse(
 );
 
 SELECT pg_temp.debe_cumplirse(
-    'El historial de cada pedido empieza en colocado y no tiene huecos',
+    'El historial de cada pedido empieza en colocado',
     NOT EXISTS (
         SELECT 1
         FROM   pedidos.historial_estado h
-        GROUP  BY h.correo_cliente, h.num_carrito
-        HAVING max(h.numero_cambio) <> count(*)
-            OR bool_or(h.numero_cambio = 1 AND h.estado <> 'colocado')
+        WHERE  h.estado <> 'colocado'
+          AND  h.fecha = (SELECT min(h2.fecha) FROM pedidos.historial_estado h2
+                          WHERE  h2.correo_cliente = h.correo_cliente
+                            AND  h2.num_carrito    = h.num_carrito)
+    )
+);
+
+SELECT pg_temp.debe_cumplirse(
+    'Ningún pedido tiene dos cambios de estado a la misma hora (el estado actual no es ambiguo)',
+    NOT EXISTS (
+        SELECT 1 FROM pedidos.historial_estado
+        GROUP  BY correo_cliente, num_carrito, fecha HAVING count(*) > 1
     )
 );
 

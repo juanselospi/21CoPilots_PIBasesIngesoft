@@ -76,18 +76,30 @@ SELECT pg_temp.debe_funcionar('Se aplica una oferta al pedido (Aplicar)',
       WHERE correo_cliente = pg_temp.cliente_prueba()$$);
 
 SELECT pg_temp.debe_funcionar('Se registra el primer cambio de estado',
-    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado)
-      SELECT correo_cliente, num_carrito, 1, 'colocado' FROM pedidos.pedido
+    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha)
+      SELECT correo_cliente, num_carrito, 'colocado', TIMESTAMPTZ '2026-10-01 10:00-06'
+      FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba()$$);
+
+SELECT pg_temp.debe_fallar('El mismo estado a la misma hora no se repite (llave parcial estado, fecha)',
+    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha)
+      SELECT correo_cliente, num_carrito, 'colocado', TIMESTAMPTZ '2026-10-01 10:00-06'
+      FROM   pedidos.pedido WHERE correo_cliente = pg_temp.cliente_prueba()$$, '23505');
+
+SELECT pg_temp.debe_funcionar('Un pedido puede volver a un estado en otra fecha',
+    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha)
+      SELECT correo_cliente, num_carrito, e, f
+      FROM   pedidos.pedido,
+             (VALUES ('procesado', TIMESTAMPTZ '2026-10-01 11:00-06'),
+                     ('colocado',  TIMESTAMPTZ '2026-10-01 12:00-06')) AS v(e, f)
       WHERE  correo_cliente = pg_temp.cliente_prueba()$$);
 
-SELECT pg_temp.debe_fallar('El número de cambio no se repite en el mismo pedido (llave parcial)',
-    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado)
-      SELECT correo_cliente, num_carrito, 1, 'procesado' FROM pedidos.pedido
-      WHERE  correo_cliente = pg_temp.cliente_prueba()$$, '23505');
+SELECT pg_temp.debe_cumplirse('El estado actual es el del cambio más reciente',
+    (SELECT estado FROM reportes.v_estado_pedido
+     WHERE correo_cliente = pg_temp.cliente_prueba()) = 'colocado');
 
 SELECT pg_temp.debe_fallar('Un estado desconocido se rechaza',
-    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado)
-      SELECT correo_cliente, num_carrito, 2, 'despachado' FROM pedidos.pedido
+    $$INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado)
+      SELECT correo_cliente, num_carrito, 'despachado' FROM pedidos.pedido
       WHERE  correo_cliente = pg_temp.cliente_prueba()$$, '23514');
 
 SELECT pg_temp.debe_fallar('El historial de estados no se puede editar',

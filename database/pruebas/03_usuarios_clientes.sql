@@ -28,12 +28,13 @@ SELECT pg_temp.debe_fallar('Un cliente sin usuario se rechaza',
     $$INSERT INTO clientes.cliente (correo_usuario, cedula)
       VALUES ('no.existe@prueba.test', '5-5555-5555')$$, '23503');
 
-SELECT pg_temp.debe_fallar('El administrador no puede ser también cliente (especialización disjunta)',
+SELECT pg_temp.debe_funcionar('El administrador también puede ser cliente (especialización traslapada)',
     $$INSERT INTO clientes.cliente (correo_usuario, cedula)
-      VALUES (pg_temp.admin_prueba(), '6-6666-6666')$$, '23514');
+      VALUES (pg_temp.admin_prueba(), '6-6666-6666')$$);
 
-SELECT pg_temp.debe_fallar('Un cliente no puede ser también administrador (especialización disjunta)',
-    $$INSERT INTO admin.administrador (correo_usuario) VALUES (pg_temp.cliente_prueba())$$, '23514');
+SELECT pg_temp.debe_cumplirse('Un mismo correo está en administrador y en cliente',
+    EXISTS (SELECT 1 FROM admin.administrador a
+            JOIN clientes.cliente c ON c.correo_usuario = a.correo_usuario));
 
 SELECT pg_temp.debe_fallar('Un cliente sin cédula se rechaza (RN-18)',
     $$WITH u AS (INSERT INTO usuarios.usuario (correo, contrasena, nombre)
