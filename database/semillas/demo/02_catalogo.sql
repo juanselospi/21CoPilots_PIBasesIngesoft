@@ -5,9 +5,18 @@
 --   * sin existencias + contrapedido (se ve) .. MTG-002            (RF-07, RN-03)
 --   * sin existencias ni contrapedido (oculto)  FUN-003            (RF-08)
 --   * margen negativo / liquidación .......... LIQ-001            (RN-02, RF-43)
--- item en colones; importacion y margen en porcentaje. costo_total lo calcula
--- la base de datos y el precio de venta el motor de precios.
+-- item en colones; importacion y margen en porcentaje. Las familias van
+-- primero porque producto.categoria es llave foránea a familia (011). Cada
+-- producto trae su propia importación y margen (sobrescribe a la familia).
+-- costo_total y el precio de venta los calcula el motor de precios.
 -- El stock ya incluye el registro de mercancía (03) y las ventas (04).
+
+INSERT INTO catalogo.familia (nombre, importacion, margen_ganancia) VALUES
+    ('Juegos de cartas (TCG)', 20, 25),
+    ('Coleccionables',         15, 35),
+    ('Juguetes',               15, 25),
+    ('Videojuegos',            20, 20)
+ON CONFLICT (nombre) DO NOTHING;
 
 INSERT INTO catalogo.producto (sku, nombre, categoria, item, importacion, margen_ganancia,
                                contrapedido, stock, proveedor, descripcion) VALUES
