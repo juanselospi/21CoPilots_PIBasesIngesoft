@@ -23,14 +23,14 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 | `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
 | `admin` | `administrador` | `003_admin.sql` |
 | `clientes` | `cliente`, `cliente_telefono` | `004_clientes.sql` |
-| `catalogo` | `producto` | `005_catalogo.sql` |
+| `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql` |
 | `inventario` | `producto_administra` | `006_inventario.sql` |
 | `pedidos` | `carrito`, `agrega`, `oferta`, `pedido`, `historial_estado` | `007_pedidos.sql` |
 | `pagos` | `pago` | `008_pagos_facturacion.sql` |
 | `facturacion` | `factura` | `008_pagos_facturacion.sql` |
 | `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia` | `009_reportes.sql` |
 
-En total son 14 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
+En total son 15 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
 las funciones de los triggers técnicos.
 
 Convenciones: nombres en español, `snake_case` y sin tildes; **llaves naturales**
@@ -115,24 +115,46 @@ Administrador y Cliente está marcada con "O": un mismo correo puede estar en
 
 ### 2.3 `catalogo`
 
+**`familia`** — clase de productos (RF-02, C-15). Define la importación y el margen que
+heredan sus productos; un cambio en la familia llega a todos los que heredan
+([`requerimientos-profesor.md`](../sprint-02/requerimientos-profesor.md) § 7).
+
+| Columna | Descripción |
+|---|---|
+| `nombre` | Llave primaria; no puede estar vacío |
+| `descripcion` | Opcional |
+| `importacion` | Porcentaje por aranceles que heredan sus productos (RN-01); 0 o más, 0 por defecto |
+| `margen_ganancia` | Margen que heredan sus productos; admite negativos (RN-02), pero mayor que −100; 0 por defecto |
+| `activa` | Si la familia está activa; `true` por defecto |
+
+Una familia con productos no se puede borrar (llave foránea), y renombrarla se propaga a
+sus productos (`ON UPDATE CASCADE`).
+
 **`producto`**
 
 | Columna | Descripción |
 |---|---|
 | `sku` | Llave primaria. Se guarda en mayúsculas y sin espacios en los extremos (RF-01, RF-59) |
 | `nombre`, `descripcion`, `imagen`, `proveedor` | Datos generales; el nombre no puede estar vacío |
-| `categoria` | Texto de un solo nivel, la "familia" de la hoja del cliente (RF-02). Indexada (`ix_producto_categoria`) |
+| `categoria` | Familia del producto: llave foránea a `familia.nombre` (RF-02). Indexada (`ix_producto_categoria`) |
 | `item` | Costo del producto en dólares; 0 o más |
-| `importacion` | Porcentaje por aranceles (RN-01); 0 o más |
-| `costo_total` | **Columna generada**: `item × (1 + importacion / 100)`. Nunca contradice a sus partes |
-| `margen_ganancia` | Porcentaje sobre el costo total; admite negativos para liquidación (RN-02), pero mayor que −100 |
+| `importacion` | Porcentaje por aranceles (RN-01); 0 o más. `NULL` = hereda el de su familia; un valor la sobrescribe |
+| `margen_ganancia` | Porcentaje sobre el costo total; admite negativos para liquidación (RN-02), pero mayor que −100. `NULL` = hereda el de su familia; un valor lo sobrescribe |
 | `tasa_impuesto` | Porcentaje de impuesto de venta, 13 por defecto (RES-06); entre 0 y 100 |
 | `stock` | Existencias actuales; 0 o más (RN-13). Es la fila que se bloquea con `FOR UPDATE` al vender |
 | `contrapedido` | Si se puede pedir aunque no haya stock (RN-03, RF-23) |
 
+`importacion` y `margen_ganancia` no tienen valor por defecto: con un 0 por defecto, un
+producto que no los indica sobrescribiría a su familia en vez de heredar.
+
+El **costo total ya no es una columna**: desde la migración 011 depende de la familia, y
+una columna generada no puede leer otra tabla. Se calcula como
+`item × (1 + importacion efectiva / 100)` en el motor de precios y en
+`reportes.v_existencias`.
+
 El **precio de venta no se guarda** (DD-13): lo calcula el motor de precios a partir
-de `costo_total`, `margen_ganancia` y `tasa_impuesto`
-([`formula-precio.md`](formula-precio.md)).
+de `item`, la importación y el margen efectivos (el del producto o, si es `NULL`, el de
+su familia) y `tasa_impuesto` ([`formula-precio.md`](formula-precio.md)).
 
 ### 2.4 `inventario`
 
@@ -229,7 +251,7 @@ descuento y el total se derivan de las líneas del pedido.
 |---|---|
 | `v_estado_pedido` | Estado vigente de cada pedido: el último registro de su historial (RF-26, RF-27) |
 | `v_venta_por_producto` | Ventas por producto y categoría, sin pedidos cancelados (RF-44, RF-45). Se filtra por `fecha_pedido_realizado` para el rango de fechas (RF-47) |
-| `v_existencias` | Stock de cada producto con las entradas del precio; el precio lo calcula el servicio |
+| `v_existencias` | Stock de cada producto con las entradas del precio; el precio lo calcula el servicio. La importación, el margen y el costo total son los efectivos (heredados de la familia si el producto no tiene valor propio), y `importacion_heredada` y `margen_heredado` dicen si se heredaron |
 | `v_pedidos_por_cliente` | Pedidos de cada cliente con fecha, modalidad, oferta, subtotal, impuesto, costo de entrega y estado (RF-46) |
 | `v_registro_mercancia` | Entradas y salidas de mercancía con su fecha y responsable (RF-19) |
 
