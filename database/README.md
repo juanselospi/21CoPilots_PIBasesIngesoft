@@ -137,7 +137,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 009: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 010: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -150,12 +150,13 @@ database/
 | `001_esquemas_y_utilidades.sql` | todos | Crea los esquemas y dos funciones técnicas: `fijar_fecha_actualizacion()` y `rechazar_modificacion()` |
 | `002_usuarios.sql` | `usuarios` | `USUARIO` y `SESION`, entidad débil de `USUARIO` para el inicio de sesión (agregada al EER) |
 | `003_admin.sql` | `admin` | `ADMINISTRADOR` |
-| `004_clientes.sql` | `clientes` | `CLIENTE`, `CLIENTE_TELEFONO` y la especialización disjunta |
+| `004_clientes.sql` | `clientes` | `CLIENTE`, `CLIENTE_TELEFONO` (la especialización disjunta se quitó en 010) |
 | `005_catalogo.sql` | `catalogo` | `PRODUCTO` |
 | `006_inventario.sql` | `inventario` | `PRODUCTO_ADMINISTRA` |
 | `007_pedidos.sql` | `pedidos` | `CARRITO`, `AGREGA`, `OFERTA`, `PEDIDO`, `HISTORIAL_ESTADO` |
 | `008_pagos_facturacion.sql` | `pagos`, `facturacion` | `PAGO`, `FACTURA` |
 | `009_reportes.sql` | `reportes` | vistas de solo lectura y atributos derivados (estado del pedido, montos) |
+| `010_alinear_eer.sql` | `admin`, `clientes`, `pedidos`, `reportes` | Alinea con el EER (C-23): la especialización de `USUARIO` queda traslapada y `HISTORIAL_ESTADO` pierde `numero_cambio`, con llave parcial `(estado, fecha)` |
 
 ---
 
