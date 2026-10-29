@@ -31,11 +31,11 @@ BEGIN
     VALUES ('cliente@correo.test', 1, TIMESTAMPTZ '2026-09-10 11:00-06', TIMESTAMPTZ '2026-09-13 16:00-06',
             'correos_cr', 'San Pedro, Montes de Oca, San José', 2500.00);
 
-    INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado, fecha) VALUES
-        ('cliente@correo.test', 1, 1, 'colocado',    TIMESTAMPTZ '2026-09-10 11:00-06'),
-        ('cliente@correo.test', 1, 2, 'procesado',   TIMESTAMPTZ '2026-09-10 15:00-06'),
-        ('cliente@correo.test', 1, 3, 'en_transito', TIMESTAMPTZ '2026-09-11 09:00-06'),
-        ('cliente@correo.test', 1, 4, 'finalizado',  TIMESTAMPTZ '2026-09-13 16:00-06');
+    INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha) VALUES
+        ('cliente@correo.test', 1, 'colocado',    TIMESTAMPTZ '2026-09-10 11:00-06'),
+        ('cliente@correo.test', 1, 'procesado',   TIMESTAMPTZ '2026-09-10 15:00-06'),
+        ('cliente@correo.test', 1, 'en_transito', TIMESTAMPTZ '2026-09-11 09:00-06'),
+        ('cliente@correo.test', 1, 'finalizado',  TIMESTAMPTZ '2026-09-13 16:00-06');
 
     -- Un primer intento rechazado y luego el cobro aprobado
     INSERT INTO pagos.pago (num_referencia, fecha, monto, metodo_pago, estado_pago,
@@ -64,9 +64,9 @@ BEGIN
     VALUES ('presencial@correo.test', 1, TIMESTAMPTZ '2026-09-12 13:00-06', TIMESTAMPTZ '2026-09-12 13:00-06',
             'entrega_personal', 0);
 
-    INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, numero_cambio, estado, fecha) VALUES
-        ('presencial@correo.test', 1, 1, 'colocado',   TIMESTAMPTZ '2026-09-12 13:00-06'),
-        ('presencial@correo.test', 1, 2, 'finalizado', TIMESTAMPTZ '2026-09-12 13:00-06');
+    INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha) VALUES
+        ('presencial@correo.test', 1, 'colocado',   TIMESTAMPTZ '2026-09-12 13:00-06'),
+        ('presencial@correo.test', 1, 'finalizado', TIMESTAMPTZ '2026-09-12 13:05-06');
 
     INSERT INTO pagos.pago (num_referencia, fecha, monto, metodo_pago, estado_pago,
                             correo_cliente, num_carrito)
