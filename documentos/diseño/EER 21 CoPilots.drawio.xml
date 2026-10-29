@@ -173,7 +173,7 @@
         <mxCell id="cq0uPsTV4KVKKtnLNc_V-60" parent="cq0uPsTV4KVKKtnLNc_V-1" style="shape=rhombus;double=1;perimeter=rhombusPerimeter;whiteSpace=wrap;html=1;align=center;fillColor=#f8cecc;strokeColor=#b85450;rounded=0;" value="Actualiza" vertex="1">
           <mxGeometry height="60" width="120" x="-480" y="760" as="geometry" />
         </mxCell>
-        <mxCell id="cq0uPsTV4KVKKtnLNc_V-62" parent="cq0uPsTV4KVKKtnLNc_V-1" style="ellipse;whiteSpace=wrap;html=1;align=center;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=0;" value="Fecha" vertex="1">
+        <mxCell id="cq0uPsTV4KVKKtnLNc_V-62" parent="cq0uPsTV4KVKKtnLNc_V-1" style="ellipse;whiteSpace=wrap;html=1;align=center;fontStyle=20;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=0;" value="Fecha" vertex="1">
           <mxGeometry height="40" width="100" x="-610" y="995" as="geometry" />
         </mxCell>
         <mxCell id="cq0uPsTV4KVKKtnLNc_V-63" parent="cq0uPsTV4KVKKtnLNc_V-1" style="ellipse;whiteSpace=wrap;html=1;align=center;fillColor=#d5e8d4;strokeColor=#82b366;rounded=0;" value="&lt;u&gt;Num_Referencia&lt;/u&gt;" vertex="1">
@@ -1399,20 +1399,14 @@
         <mxCell id="qkZOjrovbagMjtTdtZyc-170" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f7f0;strokeColor=#c9c9c9;fontStyle=1;align=center;fontSize=11;" value="PK" vertex="1">
           <mxGeometry height="30" width="72" x="502" y="1498" as="geometry" />
         </mxCell>
-        <mxCell id="qkZOjrovbagMjtTdtZyc-171" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9c9c9;align=left;spacingLeft=8;fontSize=11;fontStyle=4" value="NumeroCambio" vertex="1">
+        <mxCell id="qkZOjrovbagMjtTdtZyc-171" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9c9c9;align=left;spacingLeft=8;fontSize=11;fontStyle=4" value="Estado" vertex="1">
           <mxGeometry height="30" width="98" x="574" y="1498" as="geometry" />
         </mxCell>
-        <mxCell id="qkZOjrovbagMjtTdtZyc-172" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f7f0;strokeColor=#c9c9c9;fontStyle=1;align=center;fontSize=11;" value="" vertex="1">
+        <mxCell id="qkZOjrovbagMjtTdtZyc-172" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f7f0;strokeColor=#c9c9c9;fontStyle=1;align=center;fontSize=11;" value="PK" vertex="1">
           <mxGeometry height="30" width="72" x="669" y="1498" as="geometry" />
         </mxCell>
-        <mxCell id="qkZOjrovbagMjtTdtZyc-173" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9c9c9;align=left;spacingLeft=8;fontSize=11;" value="Estado" vertex="1">
+        <mxCell id="qkZOjrovbagMjtTdtZyc-173" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9c9c9;align=left;spacingLeft=8;fontSize=11;fontStyle=4" value="Fecha" vertex="1">
           <mxGeometry height="30" width="59" x="741" y="1498" as="geometry" />
-        </mxCell>
-        <mxCell id="qkZOjrovbagMjtTdtZyc-174" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f7f0;strokeColor=#c9c9c9;fontStyle=1;align=center;fontSize=11;" value="" vertex="1">
-          <mxGeometry height="30" width="72" x="800" y="1498" as="geometry" />
-        </mxCell>
-        <mxCell id="qkZOjrovbagMjtTdtZyc-175" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9c9c9;align=left;spacingLeft=8;fontSize=11;" value="Fecha" vertex="1">
-          <mxGeometry height="30" width="59" x="872" y="1498" as="geometry" />
         </mxCell>
         <mxCell id="ojEAowunH2hMEjKgTm9J-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d9e8fb;strokeColor=#666666;fontStyle=1;align=left;spacingLeft=8;" value="CARRITO" vertex="1">
           <mxGeometry height="34" width="190" x="150" y="710" as="geometry" />
