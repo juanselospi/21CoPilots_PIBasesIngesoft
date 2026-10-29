@@ -150,12 +150,13 @@ database/
 | `001_esquemas_y_utilidades.sql` | todos | Crea los esquemas y dos funciones técnicas: `fijar_fecha_actualizacion()` y `rechazar_modificacion()` |
 | `002_usuarios.sql` | `usuarios` | `USUARIO` y `SESION`, entidad débil de `USUARIO` para el inicio de sesión (agregada al EER) |
 | `003_admin.sql` | `admin` | `ADMINISTRADOR` |
-| `004_clientes.sql` | `clientes` | `CLIENTE`, `CLIENTE_TELEFONO` y la especialización disjunta |
+| `004_clientes.sql` | `clientes` | `CLIENTE`, `CLIENTE_TELEFONO` (la especialización disjunta se quitó en 010) |
 | `005_catalogo.sql` | `catalogo` | `PRODUCTO` |
 | `006_inventario.sql` | `inventario` | `PRODUCTO_ADMINISTRA` |
 | `007_pedidos.sql` | `pedidos` | `CARRITO`, `AGREGA`, `OFERTA`, `PEDIDO`, `HISTORIAL_ESTADO` |
 | `008_pagos_facturacion.sql` | `pagos`, `facturacion` | `PAGO`, `FACTURA` |
 | `009_reportes.sql` | `reportes` | vistas de solo lectura y atributos derivados (estado del pedido, montos) |
+| `010_alinear_eer.sql` | `admin`, `clientes`, `pedidos`, `reportes` | Alinea con el EER (C-23): la especialización de `USUARIO` queda traslapada y `HISTORIAL_ESTADO` pierde `numero_cambio`, con llave parcial `(estado, fecha)` |
 | `011_familias.sql` | `catalogo`, `reportes` | `FAMILIA` (C-15): `PRODUCTO` hereda de su familia la importación y el margen, o los sobrescribe; `costo_total` deja de ser columna y `v_existencias` muestra los valores efectivos |
 
 ---

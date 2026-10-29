@@ -111,7 +111,8 @@ contacto" del cliente.
 
 **Especialización traslapada.** En el EER la especialización de Usuario en
 Administrador y Cliente está marcada con "O": un mismo correo puede estar en
-`administrador` y en `cliente` a la vez.
+`administrador` y en `cliente` a la vez. Desde la migración 010 la base de datos ya no
+lo impide: se quitó el trigger `verificar_usuario_disjunto` (C-23).
 
 ### 2.3 `catalogo`
 
@@ -219,12 +220,14 @@ El pedido no guarda su estado ni sus montos: el estado sale del historial y los 
 de las líneas en `agrega`.
 
 **`historial_estado`** — entidad débil de `pedido` (relación «Actualiza») con cada
-cambio de estado (RF-26). **Solo inserción.** Su llave parcial es `estado`, así que la
-llave es `(correo_cliente, num_carrito, estado)`: un pedido pasa por cada estado a lo
-sumo una vez, lo que coincide con la máquina de estados, que no tiene ciclos (RN-15).
-`estado` es `colocado`, `procesado`, `en_transito`, `finalizado` o `cancelado` (RF-28);
-qué transición es legal lo decide el dominio. `fecha` es cuándo ocurrió el cambio. El
-estado vigente es el del registro más reciente (`reportes.v_estado_pedido`).
+cambio de estado (RF-26). **Solo inserción.** Su llave parcial es `(estado, fecha)`,
+así que la llave es `(correo_cliente, num_carrito, estado, fecha)`: un pedido puede
+volver a un estado en otra fecha, por ejemplo a «en disputa», que puede repetirse
+(C-23). `estado` es `colocado`, `procesado`, `en_transito`, `finalizado` o `cancelado`
+(RF-28); qué transición es legal lo decide el dominio. `fecha` es cuándo ocurrió el
+cambio y por defecto toma `clock_timestamp()`, no `now()`: así dos cambios guardados
+en la misma transacción no quedan con la misma hora. El estado vigente es el de la
+fecha más reciente (`reportes.v_estado_pedido`).
 
 ### 2.6 `pagos` y `facturacion`
 

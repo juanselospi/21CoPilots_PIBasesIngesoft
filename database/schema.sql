@@ -144,33 +144,6 @@ END;
 $$;
 
 
---
--- Name: verificar_usuario_disjunto(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.verificar_usuario_disjunto() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    v_ya_es_el_otro boolean;
-BEGIN
-    IF TG_TABLE_NAME = 'administrador' THEN
-        SELECT EXISTS (SELECT 1 FROM clientes.cliente WHERE correo_usuario = NEW.correo_usuario)
-        INTO v_ya_es_el_otro;
-    ELSE
-        SELECT EXISTS (SELECT 1 FROM admin.administrador WHERE correo_usuario = NEW.correo_usuario)
-        INTO v_ya_es_el_otro;
-    END IF;
-
-    IF v_ya_es_el_otro THEN
-        RAISE EXCEPTION 'El usuario % no puede ser administrador y cliente a la vez', NEW.correo_usuario
-            USING ERRCODE = 'check_violation';
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -338,11 +311,9 @@ CREATE TABLE pedidos.carrito (
 CREATE TABLE pedidos.historial_estado (
     correo_cliente character varying(255) NOT NULL,
     num_carrito integer NOT NULL,
-    numero_cambio integer NOT NULL,
     estado character varying(20) NOT NULL,
-    fecha timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying])::text[]))),
-    CONSTRAINT ck_historial_numero CHECK ((numero_cambio > 0))
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying])::text[])))
 );
 
 
@@ -396,7 +367,7 @@ CREATE VIEW reportes.v_estado_pedido AS
     estado,
     fecha AS fecha_estado
    FROM pedidos.historial_estado h
-  ORDER BY correo_cliente, num_carrito, numero_cambio DESC;
+  ORDER BY correo_cliente, num_carrito, fecha DESC;
 
 
 --
@@ -611,7 +582,7 @@ ALTER TABLE ONLY pedidos.carrito
 --
 
 ALTER TABLE ONLY pedidos.historial_estado
-    ADD CONSTRAINT historial_estado_pkey PRIMARY KEY (correo_cliente, num_carrito, numero_cambio);
+    ADD CONSTRAINT historial_estado_pkey PRIMARY KEY (correo_cliente, num_carrito, estado, fecha);
 
 
 --
@@ -707,20 +678,6 @@ CREATE UNIQUE INDEX ux_carrito_activo_por_cliente ON pedidos.carrito USING btree
 --
 
 CREATE UNIQUE INDEX ux_sesion_token ON usuarios.sesion USING btree (token_hash);
-
-
---
--- Name: administrador tg_administrador_disjunto; Type: TRIGGER; Schema: admin; Owner: -
---
-
-CREATE TRIGGER tg_administrador_disjunto BEFORE INSERT OR UPDATE OF correo_usuario ON admin.administrador FOR EACH ROW EXECUTE FUNCTION public.verificar_usuario_disjunto();
-
-
---
--- Name: cliente tg_cliente_disjunto; Type: TRIGGER; Schema: clientes; Owner: -
---
-
-CREATE TRIGGER tg_cliente_disjunto BEFORE INSERT OR UPDATE OF correo_usuario ON clientes.cliente FOR EACH ROW EXECUTE FUNCTION public.verificar_usuario_disjunto();
 
 
 --
