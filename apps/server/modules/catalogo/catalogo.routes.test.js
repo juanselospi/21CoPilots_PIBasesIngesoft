@@ -29,6 +29,8 @@ const fun003 = {
   costoItem: 15000,
   porcentajeImportacion: 15,
   margenGanancia: 40,
+  // la importación sale de la familia y el margen es propio
+  heredado: { porcentajeImportacion: true, margenGanancia: false },
   tasaImpuesto: 13,
   existencias: 0,
   desglosePrecio: [

@@ -34,6 +34,11 @@ export const aProductoAdministrativo = (producto) => ({
   costoItem: producto.costoItem,
   porcentajeImportacion: producto.porcentajeImportacion,
   margenGanancia: producto.margenGanancia,
+  // true si el valor sale de la familia y no del producto
+  heredado: {
+    porcentajeImportacion: producto.heredado?.porcentajeImportacion ?? false,
+    margenGanancia: producto.heredado?.margenGanancia ?? false,
+  },
   tasaImpuesto: producto.tasaImpuesto,
   existencias: producto.existencias,
   desglosePrecio: producto.desglosePrecio,
