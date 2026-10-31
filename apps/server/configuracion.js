@@ -22,9 +22,10 @@ export const configuracion = Object.freeze({
     contrasena: process.env.DB_PASSWORD ?? "",
   }),
 
-  /** Cookie de sesión. */
+  /** Cookie de sesión. Con `renovar`, una sesión en uso se extiende sola. */
   sesion: Object.freeze({
     duracionMinutos: numero(process.env.DURACION_SESION_MINUTOS, 25),
+    renovar: process.env.SESION_RENOVAR === "true",
     cookieSegura: process.env.NODE_ENV === "production",
   }),
 

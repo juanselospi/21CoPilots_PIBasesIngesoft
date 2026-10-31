@@ -34,6 +34,7 @@ export function crearModuloAdmin({
     repositorio,
     busDeEventos,
     duracionSesionMinutos: sesion.duracionMinutos,
+    renovarSesion: sesion.renovar,
     importacionDeExcel,
   });
   const controlador = new AdminController({

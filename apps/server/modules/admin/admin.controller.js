@@ -3,7 +3,11 @@
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
-import { COOKIE_DE_SESION } from "../../shared/http/autenticacion.js";
+import {
+  COOKIE_DE_SESION,
+  borrarCookieDeSesion,
+  escribirCookieDeSesion,
+} from "../../shared/http/autenticacion.js";
 import { aUsuario, aResultadoDeImportacion } from "./admin.dto.js";
 import { CAMPO_DEL_ARCHIVO } from "./importacion/recibir-excel.js";
 import { RUTA_DE_LA_PLANTILLA } from "./importacion/columnas.js";
@@ -35,16 +39,15 @@ export class AdminController {
       contrasena,
     });
 
-    // HttpOnly para que el JavaScript de la pagina no pueda leer la cookie
-    respuesta.cookie(COOKIE_DE_SESION, token, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: this.#cookieSegura, // Secure solo en produccion que es donde hay HTTPS
-      path: "/api",
-      expires: venceEn,
-    });
-
+    escribirCookieDeSesion(respuesta, token, venceEn, { segura: this.#cookieSegura });
     respuesta.status(201).json({ datos: aUsuario(usuario) });
+  };
+
+  // DELETE /sesion. Responde 204 aunque no hubiera sesión
+  cerrarSesion = async (peticion, respuesta) => {
+    await this.#servicio.cerrarSesion(peticion.cookies?.[COOKIE_DE_SESION]);
+    borrarCookieDeSesion(respuesta, { segura: this.#cookieSegura });
+    respuesta.status(204).end();
   };
 
   // GET / sesion del usuario de la cookie con la misma forma que al iniciar sesion
