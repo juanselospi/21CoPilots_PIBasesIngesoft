@@ -7,6 +7,7 @@
  * POST   /sesion
  * GET    /sesion
  * DELETE /sesion
+ * PATCH  /contrasena
  * POST   /contrasena/recuperacion
  * POST   /usuarios
  * PATCH  /parametros
@@ -30,6 +31,9 @@ export function crearRutasDeAdmin(controlador, { exigirRol, recibirExcel }) {
   // Cualquier rol puede consultar su propia sesion si la tiene
   rutas.get("/sesion", exigirSesion, controlador.consultarSesion);
   rutas.delete("/sesion", asincrono(controlador.cerrarSesion));
+
+  // Cualquier usuario con sesión cambia la suya
+  rutas.patch("/contrasena", exigirSesion, asincrono(controlador.cambiarContrasena));
 
   // Primero se revisan la sesión y el rol, después se recibe el archivo para no cargar en memoria lo que mande alguien sin permiso
   rutas.post(

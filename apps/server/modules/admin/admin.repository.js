@@ -89,4 +89,20 @@ export class AdminRepository {
       [correoUsuario]
     );
   }
+
+  /**
+   * Guarda el hash nuevo y cierra las demás sesiones del usuario en la misma
+   * sentencia, así no queda la contraseña cambiada con sesiones viejas abiertas.
+   */
+  async cambiarContrasena({ correo, contrasenaHash, sesionQueSeQueda }) {
+    await this.#pool.query(
+      `WITH cambio AS (
+         UPDATE usuarios.usuario SET contrasena = $2 WHERE correo = $1
+       )
+       DELETE FROM usuarios.sesion
+        WHERE correo_usuario = $1
+          AND token_hash <> $3`,
+      [correo, contrasenaHash, sesionQueSeQueda]
+    );
+  }
 }

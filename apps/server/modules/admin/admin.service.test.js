@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { AdminService } from "./admin.service.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { hashearToken } from "./seguridad/tokens-de-sesion.js";
-import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";
+import { CredencialesInvalidas, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 
 /** Repositorio en memoria con un administrador y un usuario que no es administrador ni cliente. */
 async function crearRepositorioFalso() {
@@ -45,6 +45,10 @@ async function crearRepositorioFalso() {
     },
     async borrarSesionesVencidas(correoUsuario) {
       quitarSesiones((s) => s.correoUsuario === correoUsuario && s.venceEn <= new Date());
+    },
+    async cambiarContrasena({ correo, contrasenaHash, sesionQueSeQueda }) {
+      usuarios.find((u) => u.correo === correo).contrasenaHash = contrasenaHash;
+      quitarSesiones((s) => s.correoUsuario === correo && s.tokenHash !== sesionQueSeQueda);
     },
   };
 
@@ -223,6 +227,51 @@ test("al iniciar sesión se borran las sesiones vencidas del usuario", async () 
   const { sesion } = await entrarComoAdministrador(servicio, repositorio);
 
   assert.deepEqual(repositorio.sesiones, [sesion]);
+});
+
+test("RF-49: cambia la contraseña, deja esta sesión abierta y cierra las demás", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token: estaSesion } = await entrarComoAdministrador(servicio, repositorio);
+  const { token: otraSesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  await servicio.cambiarContrasena({
+    correo: "admin@dchobbies.test",
+    actual: "Admin123!",
+    nueva: "Nueva#2026",
+    token: estaSesion,
+  });
+
+  assert.notEqual(await servicio.identificarPorToken(estaSesion), null);
+  assert.equal(await servicio.identificarPorToken(otraSesion), null);
+  await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Nueva#2026" });
+  await assert.rejects(
+    servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" }),
+    CredencialesInvalidas
+  );
+});
+
+test("con la contraseña actual equivocada no cambia nada", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  await assert.rejects(
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "otra", nueva: "Nueva#2026", token }),
+    (error) => error instanceof EntradaInvalida && error.detalles.campos[0] === "actual"
+  );
+  await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" });
+});
+
+test("una contraseña nueva que no cumple la política se rechaza con el motivo", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  await assert.rejects(
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "Admin123!", nueva: "nueva#2026", token }),
+    { message: "La contraseña debe tener al menos una mayúscula." }
+  );
 });
 
 // Test de los servicios del administrador hecho con la ayuda de Claude

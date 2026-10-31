@@ -55,6 +55,27 @@ export class AdminController {
     respuesta.json({ datos: aUsuario(peticion.usuario) });
   };
 
+  // PATCH /contrasena con { actual, nueva }. Responde 204 y deja abierta solo esta sesión
+  cambiarContrasena = async (peticion, respuesta) => {
+    const { actual, nueva } = peticion.body ?? {};
+
+    // Las contraseñas no se recortan: un espacio también es un carácter
+    const faltantes = Object.entries({ actual, nueva })
+      .filter(([, valor]) => typeof valor !== "string" || valor === "")
+      .map(([campo]) => campo);
+    if (faltantes.length > 0) {
+      throw new EntradaInvalida("La contraseña actual y la nueva son obligatorias.", faltantes);
+    }
+
+    await this.#servicio.cambiarContrasena({
+      correo: peticion.usuario.correo,
+      actual,
+      nueva,
+      token: peticion.cookies?.[COOKIE_DE_SESION],
+    });
+    respuesta.status(204).end();
+  };
+
   /**
    * POST /importaciones con el Excel. Responde 200 aunque haya filas rechazadas: el
    * resumen dice cuáles fueron y por qué.
