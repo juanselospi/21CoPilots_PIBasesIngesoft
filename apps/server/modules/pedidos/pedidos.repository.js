@@ -25,4 +25,10 @@ export class PedidosRepository {
   enTransaccion(trabajo) {
     return enTransaccion(this.#pool, trabajo);
   }
+
+  /** Monto de cada modalidad de entrega. */
+  async listarTarifas() {
+    const { rows } = await this.#pool.query(`SELECT modalidad, monto FROM pedidos.tarifa_envio`);
+    return rows.map((fila) => ({ modalidad: fila.modalidad, monto: Number(fila.monto) }));
+  }
 }

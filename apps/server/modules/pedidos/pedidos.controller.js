@@ -9,10 +9,18 @@
  *   listarParaAdministracion / cambiarEstado                    RF-26, RF-28, RF-46
  */
 
+import { aModalidad } from "./pedidos.dto.js";
+
 export class PedidosController {
   #servicio;
 
   constructor({ servicio }) {
     this.#servicio = servicio;
   }
+
+  // GET /modalidades, pública para mostrar el costo antes de pagar
+  listarModalidades = async (_peticion, respuesta) => {
+    const modalidades = await this.#servicio.listarModalidades();
+    respuesta.json({ datos: modalidades.map(aModalidad) });
+  };
 }

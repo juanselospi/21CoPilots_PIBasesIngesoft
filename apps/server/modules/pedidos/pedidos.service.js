@@ -17,6 +17,9 @@
  * rechaza se revierte todo y el carrito queda como estaba.
  */
 
+import { RecursoNoEncontrado } from "../../shared/errores/errores-de-dominio.js";
+import { MODALIDADES, validarEntrega } from "./entrega/modalidades-de-entrega.js";
+
 export class PedidosService {
   #repositorio;
   #inventario;
@@ -42,5 +45,29 @@ export class PedidosService {
     this.#motorDePrecios = motorDePrecios;
     this.#pasarelaDePago = pasarelaDePago;
     this.#facturacionElectronica = facturacionElectronica;
+  }
+
+  /** Las modalidades en el orden en que se muestran, cada una con su costo. */
+  async listarModalidades() {
+    const montos = new Map((await this.#repositorio.listarTarifas()).map(({ modalidad, monto }) => [modalidad, monto]));
+
+    return Object.entries(MODALIDADES).map(([modalidad, { nombre, exigeDireccion }]) => ({
+      modalidad,
+      nombre,
+      costo: montos.get(modalidad) ?? 0,
+      exigeDireccion,
+    }));
+  }
+
+  /**
+   * Modalidad, dirección y costo de entrega listos para el pedido. La
+   * confirmación lo guarda en pedido.costo_entrega y lo suma al total.
+   */
+  async cotizarEntrega(datos) {
+    const entrega = validarEntrega(datos);
+    const tarifa = (await this.#repositorio.listarTarifas()).find((t) => t.modalidad === entrega.modalidadEntrega);
+    if (!tarifa) throw new RecursoNoEncontrado("la tarifa de envío", entrega.modalidadEntrega);
+
+    return { ...entrega, costoEntrega: tarifa.monto };
   }
 }
