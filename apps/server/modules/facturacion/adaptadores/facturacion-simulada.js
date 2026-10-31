@@ -5,7 +5,7 @@
 import { FacturacionElectronica } from "../facturacion-electronica.port.js";
 
 export class FacturacionSimulada extends FacturacionElectronica {
-  async emitir({ pedidoId, emisor, receptor, lineas }) {
+  async emitir({ numReferencia, emisor, receptor, lineas }) {
     const faltantes = [];
     if (!emisor?.razonSocial) faltantes.push("razón social del emisor");
     if (!emisor?.cedulaJuridica) faltantes.push("cédula jurídica del emisor");
@@ -21,11 +21,11 @@ export class FacturacionSimulada extends FacturacionElectronica {
       };
     }
 
-    // Un pedido tiene a lo sumo una factura (pedido_id UNIQUE), así que el
-    // consecutivo simulado se deriva del pedido y no se repite al reiniciar.
+    // Un pago tiene a lo sumo una factura, así que el consecutivo simulado
+    // se deriva de su referencia y no se repite al reiniciar.
     return {
       estado: "emitida",
-      consecutivo: `SIM-${String(pedidoId).padStart(10, "0")}`,
+      consecutivo: `FAC-${numReferencia}`,
       motivo: null,
     };
   }

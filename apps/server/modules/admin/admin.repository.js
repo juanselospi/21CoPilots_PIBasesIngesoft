@@ -1,11 +1,11 @@
 /**
  * CAPA DE PERSISTENCIA —> Repositorio de administración.
  *
- * Escribe solo en el esquema `admin`: usuario, administrador y sesion.
+ * Escribe en `usuarios.usuario` y `usuarios.sesion`, y lee `admin.administrador`.
  * El usuario se identifica por su correo, que la base guarda en minusculas y sin espacios.
  * El rol no es una columna, sale de si el correo esta en admin.administrador o en clientes.cliente.
  *
- * Falta por implementar ne otro spint: crearUsuario() y borrarSesion()
+ * Falta por implementar en otro sprint: crearUsuario() y borrarSesion()
  *
  * La contraseña llega ya transformada con hash; este repositorio jamás recibe ni devuelve una contraseña en limpio.
  */

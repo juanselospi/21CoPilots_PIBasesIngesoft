@@ -64,6 +64,7 @@ export function componerSistema(configuracion) {
   const pedidos = crearModuloPedidos({
     pool,
     busDeEventos,
+    exigirRol,
     inventario: inventario.servicio,
     clientes: clientes.servicio,
     motorDePrecios: catalogo.motorDePrecios,
