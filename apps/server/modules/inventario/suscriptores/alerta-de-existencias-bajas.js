@@ -16,7 +16,7 @@ export function registrarAlertaDeExistenciasBajas(busDeEventos, { umbral }) {
   return busDeEventos.suscribir(
     EVENTOS.MOVIMIENTO_REGISTRADO,
     async (movimiento) => {
-      if (movimiento.existenciasResultantes > umbral) return;
+      if (!cruzaElUmbral(movimiento, umbral)) return;
 
       await busDeEventos.publicar(EVENTOS.EXISTENCIAS_BAJAS, {
         sku: movimiento.sku,
@@ -26,4 +26,16 @@ export function registrarAlertaDeExistenciasBajas(busDeEventos, { umbral }) {
       });
     }
   );
+}
+
+/**
+ * El movimiento trae `{ sku, cantidad, existenciasResultantes }`, con la
+ * cantidad negativa si es una salida. Solo avisa cuando el stock baja al
+ * umbral desde arriba, para no repetir la alerta en cada venta siguiente.
+ * Si no viene la cantidad, avisa siempre que quede en el umbral o por debajo.
+ */
+function cruzaElUmbral({ cantidad, existenciasResultantes }, umbral) {
+  if (existenciasResultantes > umbral) return false;
+  if (typeof cantidad !== "number") return true;
+  return existenciasResultantes - cantidad > umbral;
 }

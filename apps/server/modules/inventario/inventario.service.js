@@ -19,9 +19,21 @@
 export class InventarioService {
   #repositorio;
   #busDeEventos;
+  #umbralDeExistenciasBajas;
 
-  constructor({ repositorio, busDeEventos }) {
+  constructor({ repositorio, busDeEventos, umbralDeExistenciasBajas = 2 }) {
     this.#repositorio = repositorio;
     this.#busDeEventos = busDeEventos;
+    this.#umbralDeExistenciasBajas = umbralDeExistenciasBajas;
+  }
+
+  /**
+   * RF-16: productos activos en el umbral o por debajo (RN-04). Se calcula del stock
+   * en cada consulta, así que un ingreso que lo sube saca al producto solo.
+   */
+  async listarAlertas() {
+    const umbral = this.#umbralDeExistenciasBajas;
+    const productos = await this.#repositorio.listarExistenciasBajas(umbral);
+    return { umbral, productos };
   }
 }

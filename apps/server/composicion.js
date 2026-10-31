@@ -42,7 +42,12 @@ export function componerSistema(configuracion) {
     umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
   });
 
-  const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
+  const inventario = crearModuloInventario({
+    pool,
+    busDeEventos,
+    exigirRol,
+    umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
+  });
 
   const admin = crearModuloAdmin({
     pool,
