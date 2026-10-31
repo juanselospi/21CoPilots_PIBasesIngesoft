@@ -268,6 +268,15 @@ llave `(correo_cliente, num_carrito)`, que identifica al pedido (RF-30).
 El pedido no guarda su estado ni sus montos: el estado sale del historial y los montos
 de las líneas en `agrega`.
 
+**`tarifa_envio`** — lo que cobra cada modalidad de entrega (C-24, RF-62, RN-16). Al
+confirmar, el pedido copia el monto en `costo_entrega`, así que cambiar una tarifa no
+toca los pedidos que ya existen.
+
+| Columna | Descripción |
+|---|---|
+| `modalidad` | Llave primaria; los mismos cuatro valores que `pedido.modalidad_entrega` |
+| `monto` | 0 o más; empieza en 0 hasta que el cliente defina las tarifas |
+
 **`historial_estado`** — entidad débil de `pedido` (relación «Actualiza») con cada
 cambio de estado (RF-26). **Solo inserción.** Su llave parcial es `(estado, fecha)`,
 así que la llave es `(correo_cliente, num_carrito, estado, fecha)`: un pedido puede

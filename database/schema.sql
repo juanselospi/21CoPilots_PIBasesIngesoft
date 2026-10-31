@@ -446,6 +446,18 @@ CREATE TABLE pedidos.pedido (
 
 
 --
+-- Name: tarifa_envio; Type: TABLE; Schema: pedidos; Owner: -
+--
+
+CREATE TABLE pedidos.tarifa_envio (
+    modalidad character varying(20) NOT NULL,
+    monto numeric(12,2) DEFAULT 0 NOT NULL,
+    CONSTRAINT ck_tarifa_envio_modalidad CHECK (((modalidad)::text = ANY ((ARRAY['mensajero'::character varying, 'uber_flash'::character varying, 'correos_cr'::character varying, 'entrega_personal'::character varying])::text[]))),
+    CONSTRAINT ck_tarifa_envio_monto CHECK ((monto >= (0)::numeric))
+);
+
+
+--
 -- Name: v_estado_pedido; Type: VIEW; Schema: reportes; Owner: -
 --
 
@@ -726,6 +738,14 @@ ALTER TABLE ONLY pedidos.oferta
 
 ALTER TABLE ONLY pedidos.pedido
     ADD CONSTRAINT pedido_pkey PRIMARY KEY (correo_cliente, num_carrito);
+
+
+--
+-- Name: tarifa_envio tarifa_envio_pkey; Type: CONSTRAINT; Schema: pedidos; Owner: -
+--
+
+ALTER TABLE ONLY pedidos.tarifa_envio
+    ADD CONSTRAINT tarifa_envio_pkey PRIMARY KEY (modalidad);
 
 
 --
