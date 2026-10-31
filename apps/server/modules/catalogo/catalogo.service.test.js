@@ -34,18 +34,19 @@ function crearServicio() {
     // Existen todas las familias salvo "Sin familia", y se guardan con mayúscula inicial
     buscarFamilia: async (nombre) =>
       nombre === "Sin familia" ? null : { nombre: nombre[0].toUpperCase() + nombre.slice(1) },
-    // Como el COALESCE del SQL: lo que no viene se queda como está.
+    // Como el UPDATE: cambia solo lo que viene, también a null.
     actualizar: async (sku, cambios) => {
       const producto = productos.get(sku);
       if (!producto) return null;
-      for (const [campo, valor] of Object.entries(cambios)) {
-        if (valor !== null && valor !== undefined) producto[campo] = valor;
-      }
+      productos.set(sku, { ...producto, ...cambios });
       return sku;
     },
   };
 
-  return { servicio: new CatalogoService({ repositorio, motorDePrecios }), productos };
+  const eventos = [];
+  const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
+
+  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), productos, eventos };
 }
 
 const pkm001 = {
@@ -496,4 +497,85 @@ test("una familia inactiva saca sus productos de la tienda y los marca ocultos e
 
   const { productos: panel } = await servicio.listarParaAdministracion({ limite: 24 });
   assert.ok(panel.find((p) => p.sku === "LEG-001").etiquetas.includes("oculto_en_tienda"));
+});
+
+// Editar datos generales
+
+test("cambia el nombre, la descripción y el proveedor del producto", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarProducto("PKM-001", {
+    nombre: "Sobre Pokémon 151",
+    descripcion: "Expansión 151",
+    proveedor: "Distribuidora TCG",
+  });
+
+  assert.equal(producto.nombre, "Sobre Pokémon 151");
+  assert.equal(producto.descripcion, "Expansión 151");
+  assert.equal(producto.proveedor, "Distribuidora TCG");
+});
+
+test("mueve el producto a otra familia con el nombre como está guardado", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarProducto("PKM-001", { categoria: "coleccionables" });
+
+  assert.equal(producto.categoria, "Coleccionables");
+});
+
+test("no mueve el producto a una familia que no existe", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await assert.rejects(servicio.actualizarProducto("PKM-001", { categoria: "Sin familia" }), EntradaInvalida);
+  assert.equal(productos.get("PKM-001").categoria, "Trading Cards");
+});
+
+test("null en el margen hace que el producto vuelva a usar el de su familia", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+  productos.get("PKM-001").familia = { porcentajeImportacion: 0, margenGanancia: 50 };
+
+  const producto = await servicio.actualizarProducto("PKM-001", { margenGanancia: null });
+
+  assert.equal(producto.margenGanancia, 50);
+  assert.equal(producto.heredado.margenGanancia, true);
+});
+
+test("RF-52: cambiar el margen publica el valor anterior y el nuevo con quién lo cambió", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await servicio.actualizarProducto("PKM-001", { margenGanancia: 30 }, { responsable: "admin@dchobbies.test" });
+
+  assert.deepEqual(eventos, [
+    {
+      evento: "parametro_modificado",
+      datos: {
+        correoUsuario: "admin@dchobbies.test",
+        entidad: "producto",
+        entidadId: "PKM-001",
+        valorAnterior: { costoItem: 100, porcentajeImportacion: 20, margenGanancia: 25 },
+        valorNuevo: { costoItem: 100, porcentajeImportacion: 20, margenGanancia: 30 },
+      },
+    },
+  ]);
+});
+
+test("cambiar solo datos generales o existencias no publica cambio de parámetros", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await servicio.actualizarProducto("PKM-001", { nombre: "Otro nombre", existencias: 3 });
+  await servicio.actualizarProducto("PKM-001", { margenGanancia: 25 });
+
+  assert.deepEqual(eventos, []);
+});
+
+test("editar un producto que no existe responde no encontrado", async () => {
+  const { servicio } = crearServicio();
+
+  await assert.rejects(servicio.actualizarProducto("NO-EXISTE", { nombre: "X" }), RecursoNoEncontrado);
 });

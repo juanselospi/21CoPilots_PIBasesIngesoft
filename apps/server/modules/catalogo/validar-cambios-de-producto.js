@@ -1,24 +1,45 @@
 /**
  * Revisa y normaliza los cambios de un producto que llegan del modal
  * "Editar producto"
+ *
+ * Importación y margen aceptan null, que significa volver a usar los de la
+ * familia. Descripción, proveedor e imagen vacíos se borran.
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
-import { crearValidacion } from "../../shared/validacion/validar-campos.js";
+import { crearValidacion, texto } from "../../shared/validacion/validar-campos.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
 import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
+import {
+  problemaDelNombre,
+  problemaDeLaCategoria,
+  problemaDelProveedor,
+  problemaDeLaImagen,
+} from "./reglas-de-datos-generales.js";
 
 // El contrapedido llega como true o false, no como texto
 const sinConvertir = (valor) => valor ?? null;
 
+// siVieneVacio: null quiere decir que vacío es válido y borra el valor
 const CAMPOS = Object.freeze({
+  nombre: { leer: texto, siVieneVacio: "El nombre es obligatorio.", problemaCon: problemaDelNombre },
+  descripcion: { leer: texto, siVieneVacio: null },
+  categoria: { leer: texto, siVieneVacio: "La categoría es obligatoria.", problemaCon: problemaDeLaCategoria },
+  proveedor: { leer: texto, siVieneVacio: null, problemaCon: problemaDelProveedor },
+  imagenUrl: { leer: texto, siVieneVacio: null, problemaCon: problemaDeLaImagen },
   costoItem: { leer: numero, siVieneVacio: "El costo es obligatorio.", problemaCon: problemaDelCosto },
   porcentajeImportacion: {
     leer: numero,
     siVieneVacio: "El porcentaje de importación es obligatorio.",
     problemaCon: problemaDeLaImportacion,
+    heredable: true,
   },
-  margenGanancia: { leer: numero, siVieneVacio: "El margen es obligatorio.", problemaCon: problemaDelMargen },
+  margenGanancia: {
+    leer: numero,
+    siVieneVacio: "El margen es obligatorio.",
+    problemaCon: problemaDelMargen,
+    heredable: true,
+  },
   existencias: { leer: numero, siVieneVacio: "Las existencias son obligatorias.", problemaCon: problemaDeLasExistencias },
   admiteContrapedido: {
     leer: sinConvertir,
@@ -52,16 +73,27 @@ export function validarCambiosDeProducto(datos) {
   }
 
   const cambios = {};
-  for (const [campo, { leer, siVieneVacio, problemaCon }] of Object.entries(CAMPOS)) {
+  for (const [campo, { leer, siVieneVacio, problemaCon, heredable }] of Object.entries(CAMPOS)) {
     if (!Object.hasOwn(datos, campo)) continue;
 
+    // Un null explícito es pedir la de la familia; un texto vacío sigue siendo un error
+    if (heredable && datos[campo] === null) {
+      cambios[campo] = null;
+      continue;
+    }
+
     const valor = leer(datos[campo]);
-    const problema = valor === null ? siVieneVacio : problemaCon(valor);
+    if (valor === null) {
+      if (siVieneVacio) validacion.anotar(campo, siVieneVacio);
+      else cambios[campo] = null;
+      continue;
+    }
+
+    const problema = problemaCon?.(valor);
     if (problema) validacion.anotar(campo, problema);
     else cambios[campo] = valor;
   }
 
   validacion.lanzarSiHayProblemas();
-
   return cambios;
 }

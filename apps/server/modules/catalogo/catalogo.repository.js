@@ -45,7 +45,20 @@ const COLUMNAS_DE_FAMILIA = `
        f.activa,
        (SELECT count(*) FROM catalogo.producto p WHERE p.categoria = f.nombre)::int AS total_de_productos`;
 
-// Campo del dominio → columna, para armar el UPDATE solo con lo que cambia.
+// Campo del dominio → columna, para armar los UPDATE solo con lo que cambia.
+const COLUMNA_DE_PRODUCTO = Object.freeze({
+  nombre: "nombre",
+  descripcion: "descripcion",
+  categoria: "categoria",
+  proveedor: "proveedor",
+  imagenUrl: "imagen",
+  costoItem: "item",
+  porcentajeImportacion: "importacion",
+  margenGanancia: "margen_ganancia",
+  existencias: "stock",
+  admiteContrapedido: "contrapedido",
+});
+
 const COLUMNA_DE_FAMILIA = Object.freeze({
   nombre: "nombre",
   descripcion: "descripcion",
@@ -140,30 +153,17 @@ export class CatalogoRepository {
   }
 
   /**
-   * Cambia el precio (costo, importación y margen), el stock o el
-   * contrapedido de un producto.
+   * Cambia solo los campos que vienen. Importación o margen en null hacen
+   * que el producto vuelva a usar los de su familia.
    * @returns el SKU, o null si no existe el producto
    */
-  async actualizar(
-    sku,
-    {
-      costoItem = null,
-      porcentajeImportacion = null,
-      margenGanancia = null,
-      existencias = null,
-      admiteContrapedido = null,
-    }
-  ) {
+  async actualizar(sku, cambios) {
+    const campos = Object.keys(cambios);
+    const asignaciones = campos.map((campo, indice) => `${COLUMNA_DE_PRODUCTO[campo]} = $${indice + 2}`);
+
     const { rows } = await this.#pool.query(
-      `UPDATE catalogo.producto
-          SET item            = COALESCE($2, item),
-              importacion     = COALESCE($3, importacion),
-              margen_ganancia = COALESCE($4, margen_ganancia),
-              stock           = COALESCE($5, stock),
-              contrapedido    = COALESCE($6, contrapedido)
-        WHERE sku = $1
-       RETURNING sku`,
-      [sku, costoItem, porcentajeImportacion, margenGanancia, existencias, admiteContrapedido]
+      `UPDATE catalogo.producto SET ${asignaciones.join(", ")} WHERE sku = $1 RETURNING sku`,
+      [sku, ...campos.map((campo) => cambios[campo])]
     );
 
     return rows[0]?.sku ?? null;
