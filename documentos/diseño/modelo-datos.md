@@ -160,15 +160,18 @@ su familia) y `tasa_impuesto` ([`formula-precio.md`](formula-precio.md)).
 
 ### 2.4 `inventario`
 
-**`producto_administra`** — historial de entradas y salidas de mercancía que registra
-el administrador (RF-13, RF-15). **Solo inserción** (RF-19).
+**`producto_administra`** — historial de entradas y salidas de mercancía (RF-13,
+RF-15). **Solo inserción** (RF-19). Llave `(sku, fecha)` (C-17).
 
 | Columna | Descripción |
 |---|---|
 | `sku` | Producto que entra o sale |
-| `correo_administrador` | Quién registró el movimiento; llave foránea a `admin.administrador` |
-| `fecha` | Cuándo se registró. Forma parte de la llave `(sku, correo_administrador, fecha)` |
+| `correo_administrador` | Quién registró el movimiento; llave foránea a `admin.administrador`. Puede ser nulo solo en las ventas en línea y las reposiciones, que no registra un administrador |
+| `fecha` | Cuándo se registró. Forma parte de la llave `(sku, fecha)`; por defecto toma `clock_timestamp()`, así dos movimientos del mismo producto en una transacción no quedan con la misma hora |
 | `cantidad` | Con signo: positiva es una entrada y negativa una salida; nunca 0 |
+| `tipo` | Obligatorio: `ingreso`, `ajuste`, `venta_externa`, `venta_en_linea` o `reposicion` |
+| `costo_unitario` | Costo de la mercancía en ese movimiento; 0 o más. Guarda el histórico de costos (RF-14) |
+| `motivo` | Justificación del movimiento; obligatoria y no en blanco en los ajustes (RF-20) |
 
 El saldo vigente está en `catalogo.producto.stock`; esta tabla explica cómo se llegó a
 él. Un error se corrige con otro registro de signo contrario.
@@ -257,7 +260,7 @@ descuento y el total se derivan de las líneas del pedido.
 | `v_venta_por_producto` | Ventas por producto y categoría, sin pedidos cancelados (RF-44, RF-45). Se filtra por `fecha_pedido_realizado` para el rango de fechas (RF-47) |
 | `v_existencias` | Stock de cada producto con las entradas del precio; el precio lo calcula el servicio. La importación, el margen y el costo total son los efectivos (heredados de la familia si el producto no tiene valor propio), y `importacion_heredada` y `margen_heredado` dicen si se heredaron |
 | `v_pedidos_por_cliente` | Pedidos de cada cliente con fecha, modalidad, oferta, subtotal, impuesto, costo de entrega y estado (RF-46) |
-| `v_registro_mercancia` | Entradas y salidas de mercancía con su fecha y responsable (RF-19) |
+| `v_registro_mercancia` | Entradas y salidas de mercancía con su fecha, responsable, tipo, costo unitario y motivo (RF-14, RF-19, RF-20) |
 
 ---
 
@@ -311,6 +314,7 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-14 | **Usuario** y **Sesión** van en un esquema propio, `usuarios`, en vez de `admin`, creadas en `002_usuarios.sql`. | Las cuentas y sus sesiones son de todos los usuarios, clientes incluidos. En `admin` hacían pensar que todo usuario era administrador. | RF-50, RF-53 |
 | C-15 | Entidad nueva **Familia** (`nombre` como llave, descripción, importación, margen de ganancia y si está activa); `producto.categoria` pasa a llave foránea a `familia.nombre`. El producto hereda la importación y el margen de su familia y puede sobrescribirlos (`NULL` en el producto = hereda). `costo_total` deja de ser columna generada y se calcula en el motor de precios. Reemplaza C-04. Migración 011 (A3, SCRUM-89). | El PDF del Sprint 2 pide administrar familias (ingresar, modificar, desactivar, eliminar y consultar) con características que pasan a sus productos, y un atributo no puede guardar eso. Según el profesor, que el porcentaje esté ligado a la familia es parte del diseño correcto del modelo relacional, con excepción por producto. Una columna generada no puede leer otra tabla. Abierto: si la importación también se hereda o solo el margen (Daniel); mientras tanto, las dos son heredables. | RF-02, RN-01, RN-02, PDF del Sprint 2, `requerimientos-profesor` § 7 |
 | C-16 | **Producto:** se agrega Estado (`activo` por defecto o `descontinuado`); un descontinuado se puede reactivar. Un producto sin historial (sin filas en `agrega` ni en `producto_administra`) se puede eliminar físicamente; uno con historial no. Las llaves foráneas de `agrega` y `producto_administra` hacia `producto` son `NO ACTION` (el valor por defecto): rechazan el `DELETE` de un producto con historial. Migración 012 (A4, SCRUM-90). | Descontinuar saca el producto del catálogo sin perder su historial y lo distingue de uno agotado (opción (a) del documento del Sprint 1 § 2.8). El PDF del Sprint 2 exige poder eliminar un producto «teniendo en cuenta las relaciones»: las llaves foráneas impiden borrar uno con ventas o movimientos. | RF-18, PDF del Sprint 2 |
+| C-17 | **Producto_Administra:** tipo de movimiento (`ingreso`, `ajuste`, `venta_externa`, `venta_en_linea` o `reposicion`), costo unitario (RF-14) y motivo obligatorio en los ajustes (RF-20); administrador opcional solo en ventas en línea y reposiciones; llave `(sku, fecha)` con `clock_timestamp()`. Migración 013 (A5, SCRUM-91). | El histórico de costos y el motivo de los ajustes no tenían dónde guardarse, y una venta en línea no la registra un administrador. Una columna nula no puede ser parte de la llave primaria, así que el administrador sale de ella. Cambia la llave de C-11. | RF-13, RF-14, RF-15, RF-19, RF-20, HU-07, HU-08 |
 | C-18 | **Historial del estado:** el `CHECK` de estados admite `en_disputa`. Migración 014 (A6, SCRUM-92). | El cliente pidió un estado para pedidos con problemas, que se mantiene hasta resolverlo y queda en el historial. | RF-26, RF-28, `e2-6-10-2026` punto 1 |
 | C-20 | Entidad nueva **Bitácora** (`admin.bitacora`), de solo inserción: fecha, evento, entidad, identificador, valor anterior y valor nuevo. Llave `(correo_usuario, fecha)`, con `correo_usuario` obligatorio (llave foránea a `usuarios.usuario`) y `fecha DEFAULT clock_timestamp()`. Migración 015 (A7, SCRUM-93). | El EER no tenía dónde guardar los cambios auditables ni los accesos denegados. El profesor pidió el historial de cambios de los pedidos como control ante empleados malintencionados. `clock_timestamp()` evita que dos registros del mismo usuario en una transacción choquen. Solo se registran acciones de usuarios con sesión. | RF-52, RNF-10, `requerimientos-profesor` § 3 |
 | C-21 | **Administrador:** puede haber varios. Se quita `ux_administrador_unico` y se agregan `es_propietario` (con índice único parcial: un solo dueño), `creado_por` y `activo`. Migración 016 (A8, SCRUM-94). | Un empleado es otra cuenta de administrador, no un rol nuevo; puede todo lo del administrador salvo crear cuentas y configurar, que son del propietario. Sigue habiendo un solo dueño. Cambia el índice de C-13. | RF-49, `e1-24-9-2026` punto 6, `e2-6-10-2026` punto 3 |
@@ -319,7 +323,7 @@ coinciden con los del documento del Sprint 1, § 3.2.
 
 C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
 migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
-diagrama. C-17, C-19 y C-22 están reservados para las migraciones 013, 014 y 017.
+diagrama. C-19 y C-22 están reservados para las migraciones 014 y 017.
 
 ### Lo que se conservó del prototipo
 

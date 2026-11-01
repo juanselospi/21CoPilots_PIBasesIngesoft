@@ -20,8 +20,8 @@ SELECT pg_temp.debe_funcionar('Un producto sin historial se borra físicamente',
 SELECT pg_temp.producto_prueba('PRB-MOV');
 
 SELECT pg_temp.debe_funcionar('Se registra un movimiento de mercancía del producto',
-    $$INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad)
-      VALUES ('PRB-MOV', pg_temp.admin_prueba(), 3)$$);
+    $$INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad, tipo)
+      VALUES ('PRB-MOV', pg_temp.admin_prueba(), 3, 'ingreso')$$);
 
 SELECT pg_temp.debe_fallar('Un producto con movimientos de mercancía no se borra',
     $$DELETE FROM catalogo.producto WHERE sku = 'PRB-MOV'$$, '23503');

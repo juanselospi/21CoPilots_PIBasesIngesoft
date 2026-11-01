@@ -246,10 +246,17 @@ CREATE TABLE facturacion.factura (
 
 CREATE TABLE inventario.producto_administra (
     sku character varying(50) NOT NULL,
-    correo_administrador character varying(255) NOT NULL,
-    fecha timestamp with time zone DEFAULT now() NOT NULL,
+    correo_administrador character varying(255),
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
     cantidad integer NOT NULL,
-    CONSTRAINT ck_producto_administra_cantidad CHECK ((cantidad <> 0))
+    tipo character varying(20) NOT NULL,
+    costo_unitario numeric(12,2),
+    motivo text,
+    CONSTRAINT ck_producto_administra_cantidad CHECK ((cantidad <> 0)),
+    CONSTRAINT ck_producto_administra_costo CHECK ((costo_unitario >= (0)::numeric)),
+    CONSTRAINT ck_producto_administra_motivo CHECK ((((tipo)::text <> 'ajuste'::text) OR (btrim(COALESCE(motivo, ''::text)) <> ''::text))),
+    CONSTRAINT ck_producto_administra_responsable CHECK (((correo_administrador IS NOT NULL) OR ((tipo)::text = ANY ((ARRAY['venta_en_linea'::character varying, 'reposicion'::character varying])::text[])))),
+    CONSTRAINT ck_producto_administra_tipo CHECK (((tipo)::text = ANY ((ARRAY['ingreso'::character varying, 'ajuste'::character varying, 'venta_externa'::character varying, 'venta_en_linea'::character varying, 'reposicion'::character varying])::text[])))
 );
 
 
@@ -443,7 +450,10 @@ CREATE VIEW reportes.v_registro_mercancia AS
     p.nombre,
     pa.fecha,
     pa.cantidad,
-    pa.correo_administrador
+    pa.correo_administrador,
+    pa.tipo,
+    pa.costo_unitario,
+    pa.motivo
    FROM (inventario.producto_administra pa
      JOIN catalogo.producto p ON (((p.sku)::text = (pa.sku)::text)));
 
@@ -552,7 +562,7 @@ ALTER TABLE ONLY facturacion.factura
 --
 
 ALTER TABLE ONLY inventario.producto_administra
-    ADD CONSTRAINT producto_administra_pkey PRIMARY KEY (sku, correo_administrador, fecha);
+    ADD CONSTRAINT producto_administra_pkey PRIMARY KEY (sku, fecha);
 
 
 --

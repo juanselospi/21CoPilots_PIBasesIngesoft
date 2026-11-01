@@ -14,6 +14,8 @@ const SERVIDOR_URL = process.env.SERVIDOR_URL || 'http://localhost:3000';
 // Administrador de las semillas (semillas/demo/01_usuarios.sql)
 const ADMINISTRADOR = { correo: 'admin@dchobbies.test', contrasena: 'Admin123!' };
 const EXISTENCIAS_INICIALES = 1;
+// Sacar el stock de los productos de prueba es un ajuste, y la BD exige su motivo (013)
+const MOTIVO_OCULTAR_PRUEBA = 'Se ocultan los productos de prueba al cargar el catálogo del cliente';
 
 (async () => {
   if (!isLocalHost()) {
@@ -106,9 +108,9 @@ async function ocultarProductosDePrueba(client) {
 
     for (const { sku, stock } of rows.filter((p) => p.stock > 0)) {
       await client.query(
-        `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad)
-         VALUES ($1, $2, $3)`,
-        [sku, ADMINISTRADOR.correo, -stock]
+        `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad, tipo, motivo)
+         VALUES ($1, $2, $3, 'ajuste', $4)`,
+        [sku, ADMINISTRADOR.correo, -stock, MOTIVO_OCULTAR_PRUEBA]
       );
     }
     await client.query(`UPDATE catalogo.producto SET stock = 0, contrapedido = false`);
@@ -160,8 +162,8 @@ async function registrarExistenciasIniciales(client, deprueba) {
     const skus = rows.map((p) => p.sku);
 
     await client.query(
-      `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad)
-       SELECT unnest($1::text[]), $2, $3`,
+      `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad, tipo, costo_unitario)
+       SELECT sku, $2, $3, 'ingreso', item FROM catalogo.producto WHERE sku = ANY($1::text[])`,
       [skus, ADMINISTRADOR.correo, EXISTENCIAS_INICIALES]
     );
     await client.query(
