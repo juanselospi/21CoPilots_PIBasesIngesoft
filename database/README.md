@@ -137,7 +137,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 013: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 014: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -160,6 +160,7 @@ database/
 | `011_familias.sql` | `catalogo`, `reportes` | `FAMILIA` (C-15): `PRODUCTO` hereda de su familia la importación y el margen, o los sobrescribe; `costo_total` deja de ser columna y `v_existencias` muestra los valores efectivos |
 | `012_estado_producto.sql` | `catalogo` | `PRODUCTO` con `estado` (`activo` o `descontinuado`): baja lógica (C-16) |
 | `013_inventario.sql` | `inventario`, `reportes` | `PRODUCTO_ADMINISTRA` con tipo, costo unitario y motivo (C-17); llave `(sku, fecha)` y administrador opcional en ventas en línea y reposiciones |
+| `014_pedidos_y_terminos.sql` | `pedidos`, `clientes` | `HISTORIAL_ESTADO` admite `en_disputa`; `PEDIDO` con canal, creador y destinatario (C-18); `CLIENTE` con la fecha de aceptación de términos (C-19) |
 
 ---
 

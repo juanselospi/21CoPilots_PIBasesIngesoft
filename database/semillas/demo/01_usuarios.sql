@@ -14,9 +14,10 @@ INSERT INTO admin.administrador (correo_usuario) VALUES
     ('admin@dchobbies.test')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO clientes.cliente (correo_usuario, cedula, direccion) VALUES
-    ('cliente@correo.test',    '1-1111-1111', 'San Pedro, Montes de Oca, San José'),
-    ('presencial@correo.test', '2-2222-2222', NULL)
+-- fecha_aceptacion_terminos: cuándo aceptó los términos y condiciones (RF-38)
+INSERT INTO clientes.cliente (correo_usuario, cedula, direccion, fecha_aceptacion_terminos) VALUES
+    ('cliente@correo.test',    '1-1111-1111', 'San Pedro, Montes de Oca, San José', TIMESTAMPTZ '2026-09-01 10:00-06'),
+    ('presencial@correo.test', '2-2222-2222', NULL,                                 TIMESTAMPTZ '2026-09-12 12:50-06')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO clientes.cliente_telefono (correo_usuario, telefono) VALUES

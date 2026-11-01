@@ -212,6 +212,7 @@ CREATE TABLE clientes.cliente (
     cedula character varying(20) NOT NULL,
     direccion text,
     num_compras integer DEFAULT 0 NOT NULL,
+    fecha_aceptacion_terminos timestamp with time zone,
     CONSTRAINT ck_cliente_cedula CHECK ((btrim((cedula)::text) <> ''::text)),
     CONSTRAINT ck_cliente_num_compras CHECK ((num_compras >= 0))
 );
@@ -322,7 +323,7 @@ CREATE TABLE pedidos.historial_estado (
     num_carrito integer NOT NULL,
     estado character varying(20) NOT NULL,
     fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
-    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying])::text[])))
+    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying, 'en_disputa'::character varying])::text[])))
 );
 
 
@@ -360,7 +361,12 @@ CREATE TABLE pedidos.pedido (
     direccion text,
     costo_entrega numeric(12,2) DEFAULT 0 NOT NULL,
     codigo_oferta character varying(30),
+    canal character varying(20) DEFAULT 'web'::character varying NOT NULL,
+    creado_por character varying(255),
+    nombre_destinatario character varying(150),
+    CONSTRAINT ck_pedido_canal CHECK (((canal)::text = ANY ((ARRAY['web'::character varying, 'whatsapp'::character varying, 'facebook'::character varying, 'telefono'::character varying, 'presencial'::character varying])::text[]))),
     CONSTRAINT ck_pedido_costo_entrega CHECK ((costo_entrega >= (0)::numeric)),
+    CONSTRAINT ck_pedido_destinatario CHECK (((nombre_destinatario IS NULL) OR (btrim((nombre_destinatario)::text) <> ''::text))),
     CONSTRAINT ck_pedido_fecha_entrega CHECK (((fecha_entrega IS NULL) OR (fecha_entrega >= fecha_pedido_realizado))),
     CONSTRAINT ck_pedido_modalidad CHECK (((modalidad_entrega)::text = ANY ((ARRAY['mensajero'::character varying, 'uber_flash'::character varying, 'correos_cr'::character varying, 'entrega_personal'::character varying])::text[])))
 );
@@ -672,6 +678,13 @@ CREATE INDEX ix_agrega_sku ON pedidos.agrega USING btree (sku);
 
 
 --
+-- Name: ix_pedido_creado_por; Type: INDEX; Schema: pedidos; Owner: -
+--
+
+CREATE INDEX ix_pedido_creado_por ON pedidos.pedido USING btree (creado_por);
+
+
+--
 -- Name: ix_pedido_fecha; Type: INDEX; Schema: pedidos; Owner: -
 --
 
@@ -830,6 +843,14 @@ ALTER TABLE ONLY pedidos.pedido
 
 ALTER TABLE ONLY pedidos.pedido
     ADD CONSTRAINT pedido_correo_cliente_num_carrito_fkey FOREIGN KEY (correo_cliente, num_carrito) REFERENCES pedidos.carrito(correo_cliente, num_carrito) ON UPDATE CASCADE;
+
+
+--
+-- Name: pedido pedido_creado_por_fkey; Type: FK CONSTRAINT; Schema: pedidos; Owner: -
+--
+
+ALTER TABLE ONLY pedidos.pedido
+    ADD CONSTRAINT pedido_creado_por_fkey FOREIGN KEY (creado_por) REFERENCES admin.administrador(correo_usuario) ON UPDATE CASCADE;
 
 
 --
