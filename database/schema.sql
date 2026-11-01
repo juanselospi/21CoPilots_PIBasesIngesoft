@@ -190,7 +190,9 @@ CREATE TABLE catalogo.producto (
     stock integer DEFAULT 0 NOT NULL,
     imagen character varying(500),
     contrapedido boolean DEFAULT false NOT NULL,
+    estado character varying(20) DEFAULT 'activo'::character varying NOT NULL,
     CONSTRAINT ck_producto_categoria CHECK ((btrim((categoria)::text) <> ''::text)),
+    CONSTRAINT ck_producto_estado CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'descontinuado'::character varying])::text[]))),
     CONSTRAINT ck_producto_importacion CHECK ((importacion >= (0)::numeric)),
     CONSTRAINT ck_producto_item CHECK ((item >= (0)::numeric)),
     CONSTRAINT ck_producto_margen CHECK ((margen_ganancia > ('-100'::integer)::numeric)),
@@ -629,6 +631,13 @@ CREATE UNIQUE INDEX ux_administrador_unico ON admin.administrador USING btree ((
 --
 
 CREATE INDEX ix_producto_categoria ON catalogo.producto USING btree (categoria);
+
+
+--
+-- Name: ix_producto_estado; Type: INDEX; Schema: catalogo; Owner: -
+--
+
+CREATE INDEX ix_producto_estado ON catalogo.producto USING btree (estado);
 
 
 --
