@@ -1,69 +1,3 @@
-.access {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  background: var(--color-fondo);
-  text-align: left;
-}
-
-.access-topbar {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--color-borde);
-  background: var(--color-superficie);
-}
-
-.access-logo {
-  text-decoration: none;
-}
-
-.access-back,
-.access-cart {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--color-texto);
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.access-back:hover {
-  color: var(--color-enlace);
-  text-decoration: underline;
-}
-
-.access-cart {
-  margin-left: auto;
-  padding: 8px 14px;
-  border: 1.5px solid var(--color-borde);
-  border-radius: var(--radio-control);
-}
-
-.access-cart:hover {
-  color: var(--color-enlace);
-}
-
-.access-main {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 48px 16px;
-}
-
-.access-card {
-  width: 100%;
-  max-width: 440px;
-  overflow: hidden;
-  border: 1px solid var(--color-borde);
-  border-radius: var(--radio-modal);
-  background: var(--color-superficie);
-  box-shadow: var(--sombra);
-}
-
 .access-tabs {
   display: flex;
   border-bottom: 1px solid var(--color-borde);
@@ -199,6 +133,7 @@
   font: inherit;
   font-size: var(--texto-pequeno);
   font-weight: 700;
+  text-decoration: none;
   vertical-align: middle;
   cursor: pointer;
 }
@@ -244,16 +179,73 @@
   font-size: var(--texto-pequeno);
 }
 
+/* Enlace chico de arriba para volver a iniciar sesion */
+.access-back-link {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.access-back-link:hover {
+  color: var(--color-enlace);
+}
+
+/* Pantallas de resultado (correo enviado, contraseña cambiada o enlace que ya no sirve), todo centrado */
+.access-result {
+  align-items: center;
+  text-align: center;
+}
+
+.access-result h1 {
+  font-size: var(--texto-subtitulo);
+}
+
+.access-result p {
+  color: var(--color-texto-suave);
+}
+
+.access-result-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+}
+
+.access-result-icon-error {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+/* Los enlaces con forma de boton ocupan todo el ancho como el boton de enviar */
+.access-result .access-submit,
+.access-secondary {
+  align-self: stretch;
+  text-align: center;
+  text-decoration: none;
+}
+
+.access-secondary {
+  padding: 12px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  font-weight: 700;
+}
+
+.access-secondary:hover {
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
+}
+
 @media (max-width: 640px) {
-  .access-topbar {
-    gap: 16px;
-    padding: 12px 16px;
-  }
-
-  .access-main {
-    padding: 24px 16px;
-  }
-
   .access-form {
     padding: 24px 20px;
   }

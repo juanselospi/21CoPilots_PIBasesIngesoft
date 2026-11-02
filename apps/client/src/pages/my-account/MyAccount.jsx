@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { Link } from 'react-router'
 import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
 import './MyAccount.css'
 import PasswordRules from '../../components/password-rules/PasswordRules.jsx'
@@ -40,13 +41,13 @@ function MyAccount() {
                 </dl>
             </section>
 
-            <PasswordSection />
+            <PasswordSection email={usuario.correo} />
         </main>
     )
 }
 
 // Seccion "Contraseña", empieza cerrada y al abrirla sale el formulario para cambiarla
-function PasswordSection() {
+function PasswordSection({ email }) {
     const {
         valores, errores, formularioRef, cambiarCampo, validar,
         erroresServidor, reiniciar, atributosCampo, idError,
@@ -155,10 +156,10 @@ function PasswordSection() {
                         errorId={idError('confirmarContrasena')}
                     />
 
-                    {/* Queda deshabilitado hasta que exista la recuperacion por correo */}
-                    <button type='button' className='my-account-link' disabled title='Disponible próximamente'>
+                    {/* Es el mismo flujo de /acceso, el correo de la cuenta ya va lleno */}
+                    <Link to='/recuperar-contrasena' state={{ correo: email }} className='my-account-link'>
                         ¿Olvidaste tu contraseña actual?
-                    </button>
+                    </Link>
 
                     <div className='my-account-actions'>
                         <button type='button' className='my-account-cancel' onClick={close} disabled={saving}>

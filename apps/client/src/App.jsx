@@ -3,12 +3,15 @@ import SessionProvider from './context/SessionProvider.jsx'
 import StoreLayout from './components/store-layout/StoreLayout.jsx'
 import AdminRoute from './components/admin-route/AdminRoute.jsx'
 import SessionRoute from './components/session-route/SessionRoute.jsx'
+import AccessLayout from './components/access-layout/AccessLayout.jsx'
 import Home from './pages/home/Home.jsx'
 import Catalog from './pages/catalog/Catalog.jsx'
 import ProductDetail from './pages/product-detail/ProductDetail.jsx'
 import MyAccount from './pages/my-account/MyAccount.jsx'
 import Products from './pages/products/Products.jsx'
 import Access from './pages/access/Access.jsx'
+import ForgotPassword from './pages/access/ForgotPassword.jsx'
+import ResetPassword from './pages/access/ResetPassword.jsx'
 
 function App() {
   return (
@@ -24,7 +27,11 @@ function App() {
               <Route path='mi-cuenta' element={<MyAccount />} />
             </Route>
           </Route>
-          <Route path='/acceso' element={<Access />} />
+          <Route element={<AccessLayout />}>
+            <Route path='/acceso' element={<Access />} />
+            <Route path='/recuperar-contrasena' element={<ForgotPassword />} />
+            <Route path='/restablecer' element={<ResetPassword />} />
+          </Route>
           <Route path='/admin' element={<AdminRoute />}>
             <Route path='productos' element={<Products />} />
           </Route>

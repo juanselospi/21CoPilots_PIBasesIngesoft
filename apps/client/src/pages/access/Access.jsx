@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { ChevronLeft, ChevronRight, Eye, EyeOff, ShoppingCart } from 'lucide-react'
+import { ChevronRight, Eye, EyeOff } from 'lucide-react'
 import './Access.css'
-import Logo from '../../components/logo/Logo.jsx'
 import { logIn } from '../../api/sesion.js'
 import { useSesion } from '../../hooks/useSesion.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
@@ -13,30 +12,21 @@ const loginFields = {
     contrasena: { obligatorio: true },
 }
 
+// La barra de arriba y la tarjeta las pone AccessLayout
 function Access() {
     return (
-        <div className='access'>
-            <header className='access-topbar'>
-                <Link to='/' className='access-logo'><Logo /></Link>
-                <Link to='/' className='access-back'><ChevronLeft size={20} />Volver a la tienda</Link>
-                <a href='#' className='access-cart'><ShoppingCart size={20} />Carrito (0)</a>
-            </header>
+        <>
+            <div className='access-tabs' role='tablist'>
+                <button type='button' role='tab' aria-selected='true' className='access-tab access-tab-active'>
+                    Iniciar sesión
+                </button>
+                <button type='button' role='tab' aria-selected='false' className='access-tab' disabled>
+                    Crear cuenta
+                </button>
+            </div>
 
-            <main className='access-main'>
-                <section className='access-card'>
-                    <div className='access-tabs' role='tablist'>
-                        <button type='button' role='tab' aria-selected='true' className='access-tab access-tab-active'>
-                            Iniciar sesión
-                        </button>
-                        <button type='button' role='tab' aria-selected='false' className='access-tab' disabled>
-                            Crear cuenta
-                        </button>
-                    </div>
-
-                    <LogInForm />
-                </section>
-            </main>
-        </div>
+            <LogInForm />
+        </>
     )
 }
 
@@ -103,9 +93,10 @@ function LogInForm() {
             <div className='access-field'>
                 <div className='access-field-label'>
                     <label htmlFor='access-password'>Contraseña</label>
-                    <button type='button' className='access-link' disabled title='Disponible próximamente'>
+                    {/* Si ya escribio el correo se lo pasamos para que no lo tenga que escribir otra vez */}
+                    <Link to='/recuperar-contrasena' state={{ correo: correo.trim() }} className='access-link'>
                         ¿Olvidaste tu contraseña?
-                    </button>
+                    </Link>
                 </div>
                 <div className='access-password'>
                     <input

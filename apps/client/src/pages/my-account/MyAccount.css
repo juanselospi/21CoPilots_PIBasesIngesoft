@@ -168,12 +168,12 @@
   font: inherit;
   font-size: var(--texto-pequeno);
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.my-account-link:disabled {
-  color: var(--color-texto-suave);
-  cursor: not-allowed;
+.my-account-link:hover {
+  text-decoration: underline;
 }
 
 .my-account-actions {
