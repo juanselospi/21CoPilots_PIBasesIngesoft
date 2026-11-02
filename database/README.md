@@ -138,7 +138,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 016: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 017: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -164,6 +164,7 @@ database/
 | `014_pedidos_y_terminos.sql` | `pedidos`, `clientes` | `HISTORIAL_ESTADO` admite `en_disputa`; `PEDIDO` con canal, creador y destinatario (C-18); `CLIENTE` con la fecha de aceptación de términos (C-19) |
 | `015_bitacora.sql` | `admin` | `BITACORA` de solo inserción, con llave `(correo_usuario, fecha)` (C-20) |
 | `016_empleados.sql` | `admin` | Varios `ADMINISTRADOR` y un solo propietario (`es_propietario`), con `creado_por` y `activo` (C-21); quita `ux_administrador_unico` |
+| `017_creditos.sql` | `clientes`, `pagos`, `reportes` | `CREDITO` de solo inserción (C-22); `PAGO` admite el método `credito`, sin pasar del saldo; `v_saldo_credito` |
 
 ---
 
