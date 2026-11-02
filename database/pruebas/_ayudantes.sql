@@ -59,11 +59,12 @@ BEGIN
 END;
 $$;
 
--- Devuelve el correo del administrador existente o crea uno (solo puede haber uno)
+-- Devuelve el correo de un administrador existente (el propietario, si hay) o crea uno
 CREATE FUNCTION pg_temp.admin_prueba() RETURNS text
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_admin text := (SELECT correo_usuario FROM admin.administrador);
+    v_admin text := (SELECT correo_usuario FROM admin.administrador
+                     ORDER BY es_propietario DESC, correo_usuario LIMIT 1);
 BEGIN
     IF v_admin IS NULL THEN
         v_admin := 'admin.prueba@prueba.test';

@@ -3,10 +3,10 @@
 SELECT pg_temp.debe_funcionar('Existe un administrador',
     $$SELECT pg_temp.admin_prueba()$$);
 
-SELECT pg_temp.debe_fallar('No puede haber dos administradores (RF-49)',
+SELECT pg_temp.debe_funcionar('Puede haber varios administradores (C-21)',
     $$WITH u AS (INSERT INTO usuarios.usuario (correo, contrasena, nombre)
                  VALUES ('admin2.prueba@prueba.test', 'x', 'Dos') RETURNING correo)
-      INSERT INTO admin.administrador (correo_usuario) SELECT correo FROM u$$, '23505');
+      INSERT INTO admin.administrador (correo_usuario) SELECT correo FROM u$$);
 
 SELECT pg_temp.debe_fallar('Un correo con mayúsculas se rechaza (se guarda normalizado)',
     $$INSERT INTO usuarios.usuario (correo, contrasena, nombre)

@@ -21,7 +21,7 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 | Esquema | Tablas | Migración |
 |---|---|---|
 | `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
-| `admin` | `administrador`, `bitacora` | `003_admin.sql`, `015_bitacora.sql` |
+| `admin` | `administrador`, `bitacora` | `003_admin.sql`, `015_bitacora.sql`, `016_empleados.sql` |
 | `clientes` | `cliente`, `cliente_telefono` | `004_clientes.sql` |
 | `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql` |
 | `inventario` | `producto_administra` | `006_inventario.sql` |
@@ -56,6 +56,7 @@ erDiagram
     ADMINISTRADOR ||--o{ PRODUCTO_ADMINISTRA : "Administrar (RF-13)"
     PRODUCTO ||--o{ PRODUCTO_ADMINISTRA : Administrar
     USUARIO ||--o{ BITACORA : "Registra (RF-52)"
+    ADMINISTRADOR |o--o{ ADMINISTRADOR : "Crea (C-21)"
 ```
 
 ---
@@ -90,9 +91,16 @@ Si se borra el usuario, se borran sus sesiones.
 
 ### 2.2 `admin` y `clientes`
 
-**`admin.administrador`** — especialización de `usuario` sin atributos propios. Su
-llave es `correo_usuario`. Un índice único (`ux_administrador_unico`) impide que
-exista más de una fila (RF-49).
+**`admin.administrador`** — especialización de `usuario`. Su llave es
+`correo_usuario`. Puede haber varios: un empleado es otra cuenta de administrador
+(C-21), que puede todo lo del administrador salvo crear cuentas y configurar.
+
+| Columna | Descripción |
+|---|---|
+| `correo_usuario` | Llave primaria y llave foránea a `usuario` |
+| `es_propietario` | El dueño de la tienda; `false` por defecto. Un índice único parcial (`ux_administrador_propietario`) permite **un solo propietario** (RF-49). Para traspasarlo, primero se le quita al actual y después se asigna al nuevo |
+| `creado_por` | Administrador que creó la cuenta; opcional (el propietario no tiene). Llave foránea a `administrador`, indexada; una cuenta no se crea a sí misma |
+| `activo` | `true` por defecto. Una cuenta se desactiva en vez de borrarse; el propietario no se puede desactivar |
 
 **`admin.bitacora`** — registro de auditoría (RF-52, RNF-10, C-20). **Solo inserción.**
 Su llave es `(correo_usuario, fecha)`: solo se registran acciones de usuarios con

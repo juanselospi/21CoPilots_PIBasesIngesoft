@@ -153,7 +153,12 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE admin.administrador (
-    correo_usuario character varying(255) NOT NULL
+    correo_usuario character varying(255) NOT NULL,
+    es_propietario boolean DEFAULT false NOT NULL,
+    creado_por character varying(255),
+    activo boolean DEFAULT true NOT NULL,
+    CONSTRAINT ck_administrador_creador CHECK (((creado_por)::text <> (correo_usuario)::text)),
+    CONSTRAINT ck_administrador_propietario_activo CHECK ((activo OR (NOT es_propietario)))
 );
 
 
@@ -660,6 +665,13 @@ ALTER TABLE ONLY usuarios.usuario
 
 
 --
+-- Name: ix_administrador_creado_por; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_administrador_creado_por ON admin.administrador USING btree (creado_por);
+
+
+--
 -- Name: ix_bitacora_entidad; Type: INDEX; Schema: admin; Owner: -
 --
 
@@ -674,10 +686,10 @@ CREATE INDEX ix_bitacora_fecha ON admin.bitacora USING btree (fecha);
 
 
 --
--- Name: ux_administrador_unico; Type: INDEX; Schema: admin; Owner: -
+-- Name: ux_administrador_propietario; Type: INDEX; Schema: admin; Owner: -
 --
 
-CREATE UNIQUE INDEX ux_administrador_unico ON admin.administrador USING btree ((true));
+CREATE UNIQUE INDEX ux_administrador_propietario ON admin.administrador USING btree (es_propietario) WHERE es_propietario;
 
 
 --
@@ -784,6 +796,14 @@ CREATE TRIGGER tg_historial_solo_insercion BEFORE DELETE OR UPDATE ON pedidos.hi
 
 ALTER TABLE ONLY admin.administrador
     ADD CONSTRAINT administrador_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: administrador administrador_creado_por_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.administrador
+    ADD CONSTRAINT administrador_creado_por_fkey FOREIGN KEY (creado_por) REFERENCES admin.administrador(correo_usuario) ON UPDATE CASCADE;
 
 
 --

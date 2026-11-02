@@ -100,7 +100,8 @@ dchobbies=# \dn          -- lista los esquemas: admin, usuarios, catalogo, ...
 dchobbies=# \q
 ```
 
-**Usuarios de prueba:** `admin@dchobbies.test` / `Admin123!` · `cliente@correo.test` /
+**Usuarios de prueba:** `admin@dchobbies.test` / `Admin123!` (propietario) · `empleado@dchobbies.test` /
+`Empleado123!` (administrador, no propietario) · `cliente@correo.test` /
 `Cliente123!` · `presencial@correo.test` / `Presencial123!` (hash bcrypt, compatible con `bcrypt`/`bcryptjs` en Node).
 
 **Casos de prueba preparados en las semillas:**
@@ -137,7 +138,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 015: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 016: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -162,6 +163,7 @@ database/
 | `013_inventario.sql` | `inventario`, `reportes` | `PRODUCTO_ADMINISTRA` con tipo, costo unitario y motivo (C-17); llave `(sku, fecha)` y administrador opcional en ventas en línea y reposiciones |
 | `014_pedidos_y_terminos.sql` | `pedidos`, `clientes` | `HISTORIAL_ESTADO` admite `en_disputa`; `PEDIDO` con canal, creador y destinatario (C-18); `CLIENTE` con la fecha de aceptación de términos (C-19) |
 | `015_bitacora.sql` | `admin` | `BITACORA` de solo inserción, con llave `(correo_usuario, fecha)` (C-20) |
+| `016_empleados.sql` | `admin` | Varios `ADMINISTRADOR` y un solo propietario (`es_propietario`), con `creado_por` y `activo` (C-21); quita `ux_administrador_unico` |
 
 ---
 
