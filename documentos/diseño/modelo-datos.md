@@ -21,16 +21,16 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 | Esquema | Tablas | Migración |
 |---|---|---|
 | `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
-| `admin` | `administrador` | `003_admin.sql` |
-| `clientes` | `cliente`, `cliente_telefono` | `004_clientes.sql` |
+| `admin` | `administrador`, `bitacora` | `003_admin.sql`, `015_bitacora.sql`, `016_empleados.sql` |
+| `clientes` | `cliente`, `cliente_telefono`, `credito` | `004_clientes.sql`, `017_creditos.sql` |
 | `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql` |
 | `inventario` | `producto_administra` | `006_inventario.sql` |
 | `pedidos` | `carrito`, `agrega`, `oferta`, `pedido`, `historial_estado` | `007_pedidos.sql` |
 | `pagos` | `pago` | `008_pagos_facturacion.sql` |
 | `facturacion` | `factura` | `008_pagos_facturacion.sql` |
-| `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia` | `009_reportes.sql` |
+| `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia`, `v_saldo_credito` | `009_reportes.sql`, `017_creditos.sql` |
 
-En total son 15 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
+En total son 17 tablas y 6 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
 las funciones de los triggers técnicos.
 
 Convenciones: nombres en español, `snake_case` y sin tildes; **llaves naturales**
@@ -55,6 +55,10 @@ erDiagram
     PAGO ||--o| FACTURA : "Respalda (RF-41)"
     ADMINISTRADOR ||--o{ PRODUCTO_ADMINISTRA : "Administrar (RF-13)"
     PRODUCTO ||--o{ PRODUCTO_ADMINISTRA : Administrar
+    USUARIO ||--o{ BITACORA : "Registra (RF-52)"
+    ADMINISTRADOR |o--o{ ADMINISTRADOR : "Crea (C-21)"
+    CLIENTE ||--o{ CREDITO : "Tiene a favor (C-22)"
+    PEDIDO |o--o{ CREDITO : Origina
 ```
 
 ---
@@ -89,9 +93,31 @@ Si se borra el usuario, se borran sus sesiones.
 
 ### 2.2 `admin` y `clientes`
 
-**`admin.administrador`** — especialización de `usuario` sin atributos propios. Su
-llave es `correo_usuario`. Un índice único (`ux_administrador_unico`) impide que
-exista más de una fila (RF-49).
+**`admin.administrador`** — especialización de `usuario`. Su llave es
+`correo_usuario`. Puede haber varios: un empleado es otra cuenta de administrador
+(C-21), que puede todo lo del administrador salvo crear cuentas y configurar.
+
+| Columna | Descripción |
+|---|---|
+| `correo_usuario` | Llave primaria y llave foránea a `usuario` |
+| `es_propietario` | El dueño de la tienda; `false` por defecto. Un índice único parcial (`ux_administrador_propietario`) permite **un solo propietario** (RF-49). Para traspasarlo, primero se le quita al actual y después se asigna al nuevo |
+| `creado_por` | Administrador que creó la cuenta; opcional (el propietario no tiene). Llave foránea a `administrador`, indexada; una cuenta no se crea a sí misma |
+| `activo` | `true` por defecto. Una cuenta se desactiva en vez de borrarse; el propietario no se puede desactivar |
+
+**`admin.bitacora`** — registro de auditoría (RF-52, RNF-10, C-20). **Solo inserción.**
+Su llave es `(correo_usuario, fecha)`: solo se registran acciones de usuarios con
+sesión, así que el correo es obligatorio (llave foránea a `usuario`). `fecha` toma
+`clock_timestamp()`, para que dos registros del mismo usuario en una transacción no
+choquen. No se puede borrar un usuario que tenga registros en la bitácora.
+
+| Columna | Descripción |
+|---|---|
+| `correo_usuario`, `fecha` | Quién y cuándo; forman la llave |
+| `evento` | Qué pasó, por ejemplo `acceso_denegado` o `estado_pedido_cambiado`; no en blanco |
+| `entidad`, `entidad_id` | Qué registro se tocó (por ejemplo `pedido` y su llave); opcionales e indexados juntos (`ix_bitacora_entidad`) |
+| `valor_anterior`, `valor_nuevo` | El registro antes y después del cambio, en `JSONB`; opcionales |
+
+`ix_bitacora_fecha` sirve para consultar por rango de fechas sin filtrar por usuario.
 
 **`clientes.cliente`** — especialización de `usuario` con los datos del comprador
 (RF-33).
@@ -109,6 +135,21 @@ contacto" del cliente.
 
 **`clientes.cliente_telefono`** — atributo multivaluado "Teléfonos" del EER. Llave
 `(correo_usuario, telefono)`.
+
+**`clientes.credito`** — crédito a favor del cliente (C-22): al quitar un producto de
+un pedido ya pagado no se devuelve dinero, se otorga un crédito. **Solo inserción.**
+Llave `(correo_cliente, fecha)`, con `fecha DEFAULT clock_timestamp()`.
+
+| Columna | Descripción |
+|---|---|
+| `correo_cliente`, `fecha` | De quién es y cuándo se otorgó; forman la llave |
+| `monto` | Mayor que 0 |
+| `motivo` | Por qué se otorgó; obligatorio y no en blanco |
+| `num_carrito_pedido` | Pedido que lo originó, si hay uno. Junto con `correo_cliente` es llave foránea a `pedidos.pedido`, así que solo puede ser un pedido del mismo cliente |
+
+El crédito se usa como un pago más del pedido, con `metodo_pago = 'credito'` (§ 2.6);
+si no alcanza, la diferencia se cobra en otro pago. El saldo no se guarda: lo calcula
+`reportes.v_saldo_credito` (lo otorgado menos lo usado en pagos no rechazados).
 
 **Especialización traslapada.** En el EER la especialización de Usuario en
 Administrador y Cliente está marcada con "O": un mismo correo puede estar en
@@ -245,7 +286,7 @@ fecha más reciente (`reportes.v_estado_pedido`).
 |---|---|
 | `num_referencia` | Llave primaria: la referencia que devuelve la pasarela |
 | `fecha`, `monto` | El monto es 0 o más |
-| `metodo_pago` | `tarjeta`, `sinpe_movil`, `efectivo`, `datafono` o `contra_entrega` |
+| `metodo_pago` | `tarjeta`, `sinpe_movil`, `efectivo`, `datafono`, `contra_entrega` o `credito` (C-22). Un pago con `credito` no puede pasar del saldo a favor del cliente: lo revisa el trigger `tg_pago_saldo_credito`, que responde con `ck_pago_saldo_credito` |
 | `estado_pago` | `pendiente`, `aprobado` o `rechazado` |
 | `correo_cliente`, `num_carrito` | El pedido que se cobra; tiene que existir |
 
@@ -265,6 +306,7 @@ descuento y el total se derivan de las líneas del pedido.
 | `v_existencias` | Stock de cada producto con las entradas del precio; el precio lo calcula el servicio. La importación, el margen y el costo total son los efectivos (heredados de la familia si el producto no tiene valor propio), y `importacion_heredada` y `margen_heredado` dicen si se heredaron |
 | `v_pedidos_por_cliente` | Pedidos de cada cliente con fecha, modalidad, oferta, subtotal, impuesto, costo de entrega y estado (RF-46) |
 | `v_registro_mercancia` | Entradas y salidas de mercancía con su fecha, responsable, tipo, costo unitario y motivo (RF-14, RF-19, RF-20) |
+| `v_saldo_credito` | Crédito a favor de cada cliente: otorgado, usado y saldo (C-22) |
 
 ---
 
@@ -280,6 +322,9 @@ cruzan varias tablas y que por eso garantiza el servicio y no un `CHECK`:
 - todo pedido tiene al menos un producto;
 - el historial de cada pedido empieza en `colocado` (RF-26);
 - solo se factura un pago aprobado (RF-41).
+
+Un pago con crédito que pasa del saldo a favor sí lo rechaza la base de datos, con el
+trigger `tg_pago_saldo_credito` (C-22).
 
 La base de datos **no** decide:
 
@@ -323,12 +368,13 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-19 | **Cliente:** se agrega la fecha de aceptación de los términos y condiciones (`fecha_aceptacion_terminos`). Migración 014 (A6, SCRUM-92). | La aceptación de términos con su fecha no tenía dónde guardarse. | RF-38, RNF-16 |
 | C-20 | Entidad nueva **Bitácora** (`admin.bitacora`), de solo inserción: fecha, evento, entidad, identificador, valor anterior y valor nuevo. Llave `(correo_usuario, fecha)`, con `correo_usuario` obligatorio (llave foránea a `usuarios.usuario`) y `fecha DEFAULT clock_timestamp()`. Migración 015 (A7, SCRUM-93). | El EER no tenía dónde guardar los cambios auditables ni los accesos denegados. El profesor pidió el historial de cambios de los pedidos como control ante empleados malintencionados. `clock_timestamp()` evita que dos registros del mismo usuario en una transacción choquen. Solo se registran acciones de usuarios con sesión. | RF-52, RNF-10, `requerimientos-profesor` § 3 |
 | C-21 | **Administrador:** puede haber varios. Se quita `ux_administrador_unico` y se agregan `es_propietario` (con índice único parcial: un solo dueño), `creado_por` y `activo`. Migración 016 (A8, SCRUM-94). | Un empleado es otra cuenta de administrador, no un rol nuevo; puede todo lo del administrador salvo crear cuentas y configurar, que son del propietario. Sigue habiendo un solo dueño. Cambia el índice de C-13. | RF-49, `e1-24-9-2026` punto 6, `e2-6-10-2026` punto 3 |
+| C-22 | Entidad nueva **Crédito** (`clientes.credito`), débil de Cliente y de solo inserción: monto mayor que 0, motivo obligatorio y el pedido que lo originó (opcional). Llave `(correo_cliente, fecha)` con `clock_timestamp()`. Se usa como un pago con `metodo_pago = 'credito'`; el saldo lo calcula `reportes.v_saldo_credito` y un trigger impide usar más crédito del saldo. Migración 017 (A9, SCRUM-95). | Al quitar un producto de un pedido pagado no se devuelve dinero: se otorga un crédito, que cubre el total o una parte del siguiente pago, y la diferencia se cobra con otro medio. Una columna de saldo no puede bajar en una tabla de solo inserción, así que el saldo se deriva. Como pago, el uso queda ligado al pedido y a su factura sin otra tabla. | `requerimientos-profesor` § 6 |
 | C-23 | **Especialización de Usuario** traslapada: se quita el trigger `verificar_usuario_disjunto`. **Historial del estado** sin Número de cambio, con llave parcial `(estado, fecha)`: la llave es `(correo_cliente, num_carrito, estado, fecha)`. Migración 010 (A2, SCRUM-88). | Alinea la base de datos con el EER, que marca la especialización con «O» y tiene el historial con solo estado y fecha. Una cuenta puede ser administrador y cliente y tiene los dos permisos. Con `estado` solo en la llave, un pedido no podría volver a «en disputa», que puede repetirse. Cambia la llave de C-12. | RF-26, `e2-6-10-2026` punto 1 |
 | C-24 | Entidades nuevas para las **tarifas de envío** por modalidad (propuesta: `pedidos.tarifa_envio (modalidad PK, monto)`) y los **datos del negocio** (una tabla de una sola fila: razón social, cédula jurídica, dirección). El **pago** guarda su moneda. Migración 018 (falta crear la tarea en Jira). | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`. La factura va en la moneda en que se hizo el pago. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-62, RN-16, RN-18, RNF-17 |
 
 C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
 migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
-diagrama. C-22 está reservado para la migración 017.
+diagrama.
 
 ### Lo que se conservó del prototipo
 
@@ -350,7 +396,6 @@ Las decisiones abiertas que afectan al modelo son:
 - los montos de las tarifas de envío, la razón social y la cédula jurídica (el PO los
   pide a Daniel; C-24), y crear en Jira la tarea de la migración 018;
 - dónde se guarda el token de recuperación de contraseña (E4, SCRUM-117);
-- cómo se consume un crédito a favor (A9, SCRUM-95);
 - cómo se registra un pedido manual para alguien sin cuenta (I4, SCRUM-141).
 
 El detalle está en

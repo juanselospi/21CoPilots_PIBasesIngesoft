@@ -113,6 +113,43 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
+-- Name: verificar_saldo_credito(); Type: FUNCTION; Schema: pagos; Owner: -
+--
+
+CREATE FUNCTION pagos.verificar_saldo_credito() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_saldo NUMERIC(12,2);
+BEGIN
+    IF NEW.metodo_pago <> 'credito' OR NEW.estado_pago = 'rechazado' THEN
+        RETURN NEW;
+    END IF;
+
+    PERFORM 1 FROM clientes.cliente
+    WHERE correo_usuario = NEW.correo_cliente FOR UPDATE;
+
+    SELECT coalesce((SELECT sum(monto) FROM clientes.credito
+                     WHERE correo_cliente = NEW.correo_cliente), 0)
+         - coalesce((SELECT sum(monto) FROM pagos.pago
+                     WHERE correo_cliente = NEW.correo_cliente
+                       AND metodo_pago = 'credito'
+                       AND estado_pago <> 'rechazado'
+                       -- al editar un pago, no se cuenta su valor anterior
+                       AND (TG_OP = 'INSERT' OR num_referencia <> OLD.num_referencia)), 0)
+    INTO v_saldo;
+
+    IF NEW.monto > v_saldo THEN
+        RAISE EXCEPTION 'El cliente % tiene % de saldo a favor y el pago es de %',
+            NEW.correo_cliente, v_saldo, NEW.monto
+            USING ERRCODE = 'check_violation', CONSTRAINT = 'ck_pago_saldo_credito';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+
+--
 -- Name: fijar_fecha_actualizacion(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -153,7 +190,28 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE admin.administrador (
-    correo_usuario character varying(255) NOT NULL
+    correo_usuario character varying(255) NOT NULL,
+    es_propietario boolean DEFAULT false NOT NULL,
+    creado_por character varying(255),
+    activo boolean DEFAULT true NOT NULL,
+    CONSTRAINT ck_administrador_creador CHECK (((creado_por)::text <> (correo_usuario)::text)),
+    CONSTRAINT ck_administrador_propietario_activo CHECK ((activo OR (NOT es_propietario)))
+);
+
+
+--
+-- Name: bitacora; Type: TABLE; Schema: admin; Owner: -
+--
+
+CREATE TABLE admin.bitacora (
+    correo_usuario character varying(255) NOT NULL,
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    evento character varying(40) NOT NULL,
+    entidad character varying(40),
+    entidad_id character varying(100),
+    valor_anterior jsonb,
+    valor_nuevo jsonb,
+    CONSTRAINT ck_bitacora_evento CHECK ((btrim((evento)::text) <> ''::text))
 );
 
 
@@ -230,6 +288,21 @@ CREATE TABLE clientes.cliente_telefono (
 
 
 --
+-- Name: credito; Type: TABLE; Schema: clientes; Owner: -
+--
+
+CREATE TABLE clientes.credito (
+    correo_cliente character varying(255) NOT NULL,
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    monto numeric(12,2) NOT NULL,
+    motivo text NOT NULL,
+    num_carrito_pedido integer,
+    CONSTRAINT ck_credito_monto CHECK ((monto > (0)::numeric)),
+    CONSTRAINT ck_credito_motivo CHECK ((btrim(motivo) <> ''::text))
+);
+
+
+--
 -- Name: factura; Type: TABLE; Schema: facturacion; Owner: -
 --
 
@@ -274,7 +347,7 @@ CREATE TABLE pagos.pago (
     correo_cliente character varying(255) NOT NULL,
     num_carrito integer NOT NULL,
     CONSTRAINT ck_pago_estado CHECK (((estado_pago)::text = ANY ((ARRAY['pendiente'::character varying, 'aprobado'::character varying, 'rechazado'::character varying])::text[]))),
-    CONSTRAINT ck_pago_metodo CHECK (((metodo_pago)::text = ANY ((ARRAY['tarjeta'::character varying, 'sinpe_movil'::character varying, 'efectivo'::character varying, 'datafono'::character varying, 'contra_entrega'::character varying])::text[]))),
+    CONSTRAINT ck_pago_metodo CHECK (((metodo_pago)::text = ANY ((ARRAY['tarjeta'::character varying, 'sinpe_movil'::character varying, 'efectivo'::character varying, 'datafono'::character varying, 'contra_entrega'::character varying, 'credito'::character varying])::text[]))),
     CONSTRAINT ck_pago_monto CHECK ((monto >= (0)::numeric)),
     CONSTRAINT ck_pago_referencia CHECK ((btrim((num_referencia)::text) <> ''::text))
 );
@@ -465,6 +538,26 @@ CREATE VIEW reportes.v_registro_mercancia AS
 
 
 --
+-- Name: v_saldo_credito; Type: VIEW; Schema: reportes; Owner: -
+--
+
+CREATE VIEW reportes.v_saldo_credito AS
+ SELECT c.correo_cliente,
+    c.otorgado,
+    COALESCE(u.usado, (0)::numeric) AS usado,
+    (c.otorgado - COALESCE(u.usado, (0)::numeric)) AS saldo
+   FROM (( SELECT credito.correo_cliente,
+            sum(credito.monto) AS otorgado
+           FROM clientes.credito
+          GROUP BY credito.correo_cliente) c
+     LEFT JOIN ( SELECT pago.correo_cliente,
+            sum(pago.monto) AS usado
+           FROM pagos.pago
+          WHERE (((pago.metodo_pago)::text = 'credito'::text) AND ((pago.estado_pago)::text <> 'rechazado'::text))
+          GROUP BY pago.correo_cliente) u ON (((u.correo_cliente)::text = (c.correo_cliente)::text)));
+
+
+--
 -- Name: v_venta_por_producto; Type: VIEW; Schema: reportes; Owner: -
 --
 
@@ -508,6 +601,14 @@ ALTER TABLE ONLY admin.administrador
 
 
 --
+-- Name: bitacora bitacora_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.bitacora
+    ADD CONSTRAINT bitacora_pkey PRIMARY KEY (correo_usuario, fecha);
+
+
+--
 -- Name: familia familia_pkey; Type: CONSTRAINT; Schema: catalogo; Owner: -
 --
 
@@ -537,6 +638,14 @@ ALTER TABLE ONLY clientes.cliente
 
 ALTER TABLE ONLY clientes.cliente_telefono
     ADD CONSTRAINT cliente_telefono_pkey PRIMARY KEY (correo_usuario, telefono);
+
+
+--
+-- Name: credito credito_pkey; Type: CONSTRAINT; Schema: clientes; Owner: -
+--
+
+ALTER TABLE ONLY clientes.credito
+    ADD CONSTRAINT credito_pkey PRIMARY KEY (correo_cliente, fecha);
 
 
 --
@@ -636,10 +745,31 @@ ALTER TABLE ONLY usuarios.usuario
 
 
 --
--- Name: ux_administrador_unico; Type: INDEX; Schema: admin; Owner: -
+-- Name: ix_administrador_creado_por; Type: INDEX; Schema: admin; Owner: -
 --
 
-CREATE UNIQUE INDEX ux_administrador_unico ON admin.administrador USING btree ((true));
+CREATE INDEX ix_administrador_creado_por ON admin.administrador USING btree (creado_por);
+
+
+--
+-- Name: ix_bitacora_entidad; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_bitacora_entidad ON admin.bitacora USING btree (entidad, entidad_id);
+
+
+--
+-- Name: ix_bitacora_fecha; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_bitacora_fecha ON admin.bitacora USING btree (fecha);
+
+
+--
+-- Name: ux_administrador_propietario; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_administrador_propietario ON admin.administrador USING btree (es_propietario) WHERE es_propietario;
 
 
 --
@@ -654,6 +784,13 @@ CREATE INDEX ix_producto_categoria ON catalogo.producto USING btree (categoria);
 --
 
 CREATE INDEX ix_producto_estado ON catalogo.producto USING btree (estado);
+
+
+--
+-- Name: ix_credito_pedido; Type: INDEX; Schema: clientes; Owner: -
+--
+
+CREATE INDEX ix_credito_pedido ON clientes.credito USING btree (correo_cliente, num_carrito_pedido);
 
 
 --
@@ -713,10 +850,31 @@ CREATE UNIQUE INDEX ux_sesion_token ON usuarios.sesion USING btree (token_hash);
 
 
 --
+-- Name: bitacora tg_bitacora_solo_insercion; Type: TRIGGER; Schema: admin; Owner: -
+--
+
+CREATE TRIGGER tg_bitacora_solo_insercion BEFORE DELETE OR UPDATE ON admin.bitacora FOR EACH ROW EXECUTE FUNCTION public.rechazar_modificacion();
+
+
+--
+-- Name: credito tg_credito_solo_insercion; Type: TRIGGER; Schema: clientes; Owner: -
+--
+
+CREATE TRIGGER tg_credito_solo_insercion BEFORE DELETE OR UPDATE ON clientes.credito FOR EACH ROW EXECUTE FUNCTION public.rechazar_modificacion();
+
+
+--
 -- Name: producto_administra tg_producto_administra_solo_insercion; Type: TRIGGER; Schema: inventario; Owner: -
 --
 
 CREATE TRIGGER tg_producto_administra_solo_insercion BEFORE DELETE OR UPDATE ON inventario.producto_administra FOR EACH ROW EXECUTE FUNCTION public.rechazar_modificacion();
+
+
+--
+-- Name: pago tg_pago_saldo_credito; Type: TRIGGER; Schema: pagos; Owner: -
+--
+
+CREATE TRIGGER tg_pago_saldo_credito BEFORE INSERT OR UPDATE OF monto, metodo_pago, estado_pago, correo_cliente ON pagos.pago FOR EACH ROW EXECUTE FUNCTION pagos.verificar_saldo_credito();
 
 
 --
@@ -742,6 +900,22 @@ ALTER TABLE ONLY admin.administrador
 
 
 --
+-- Name: administrador administrador_creado_por_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.administrador
+    ADD CONSTRAINT administrador_creado_por_fkey FOREIGN KEY (creado_por) REFERENCES admin.administrador(correo_usuario) ON UPDATE CASCADE;
+
+
+--
+-- Name: bitacora bitacora_correo_usuario_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.bitacora
+    ADD CONSTRAINT bitacora_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE;
+
+
+--
 -- Name: producto fk_producto_familia; Type: FK CONSTRAINT; Schema: catalogo; Owner: -
 --
 
@@ -763,6 +937,22 @@ ALTER TABLE ONLY clientes.cliente
 
 ALTER TABLE ONLY clientes.cliente_telefono
     ADD CONSTRAINT cliente_telefono_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES clientes.cliente(correo_usuario) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: credito credito_correo_cliente_fkey; Type: FK CONSTRAINT; Schema: clientes; Owner: -
+--
+
+ALTER TABLE ONLY clientes.credito
+    ADD CONSTRAINT credito_correo_cliente_fkey FOREIGN KEY (correo_cliente) REFERENCES clientes.cliente(correo_usuario) ON UPDATE CASCADE;
+
+
+--
+-- Name: credito credito_correo_cliente_num_carrito_pedido_fkey; Type: FK CONSTRAINT; Schema: clientes; Owner: -
+--
+
+ALTER TABLE ONLY clientes.credito
+    ADD CONSTRAINT credito_correo_cliente_num_carrito_pedido_fkey FOREIGN KEY (correo_cliente, num_carrito_pedido) REFERENCES pedidos.pedido(correo_cliente, num_carrito) ON UPDATE CASCADE;
 
 
 --
