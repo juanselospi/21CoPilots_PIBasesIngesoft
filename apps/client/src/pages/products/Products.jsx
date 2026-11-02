@@ -9,9 +9,10 @@ import AddProduct from '../../components/product-form/AddProduct.jsx'
 import EditProduct from '../../components/product-form/EditProduct.jsx'
 import { actualizarProducto, crearProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
+import { useFamilias } from '../../hooks/useFamilias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
-import { toAdminProduct, toModalFields, toServerFields } from './toAdminProduct.js'
+import { toAdminProduct, toFamilyOption, toModalFields, toServerFields } from './toAdminProduct.js'
 
 // Opciones de orden; el value es lo que entiende el servidor
 const sortOptions = [
@@ -80,6 +81,10 @@ function Products() {
     // Categorías que ya existen: opciones del filtro y sugerencias al agregar un producto
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
+
+    // Familias con su importación y margen: selector y precios heredados al editar
+    const familias = useFamilias()
+    const families = familias.datos?.map(toFamilyOption) ?? []
 
     const filterTags = activeFilterTags(filters, priceFormat.format)
 
@@ -338,6 +343,7 @@ function Products() {
             {editingProduct && (
                 <EditProduct
                     product={editingProduct}
+                    families={families}
                     formatPrice={priceFormat.format}
                     onClose={() => setEditingProduct(null)}
                     onSave={handleSave}

@@ -250,12 +250,51 @@
   cursor: pointer;
 }
 
-/* Solo "Agregar producto" */
-
-/* Más ancho que el de editar producto porque tiene más campos */
+/* Más ancho que el modal base porque los dos tienen datos generales y precios */
 .product-form-wide {
   max-width: 560px;
 }
+
+/* Solo "Editar producto" */
+
+/* Selector de familia: mismo aspecto que los inputs */
+.product-form-input select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+/* Importación y margen: fieldset sin el borde ni el relleno del navegador */
+.product-form-inherit {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.product-form-inherit legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* Opciones «Usar el de la familia» y «Propio» en una fila */
+.product-form-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+/* Fondo gris mientras el valor viene de la familia */
+.product-form-input:has(input:disabled) {
+  background: var(--color-fondo);
+}
+
+/* Solo "Agregar producto" */
 
 /* Texto "(opcional)" junto a la etiqueta del campo */
 .product-form-optional {
