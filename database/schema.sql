@@ -190,7 +190,9 @@ CREATE TABLE catalogo.producto (
     stock integer DEFAULT 0 NOT NULL,
     imagen character varying(500),
     contrapedido boolean DEFAULT false NOT NULL,
+    estado character varying(20) DEFAULT 'activo'::character varying NOT NULL,
     CONSTRAINT ck_producto_categoria CHECK ((btrim((categoria)::text) <> ''::text)),
+    CONSTRAINT ck_producto_estado CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'descontinuado'::character varying])::text[]))),
     CONSTRAINT ck_producto_importacion CHECK ((importacion >= (0)::numeric)),
     CONSTRAINT ck_producto_item CHECK ((item >= (0)::numeric)),
     CONSTRAINT ck_producto_margen CHECK ((margen_ganancia > ('-100'::integer)::numeric)),
@@ -210,6 +212,7 @@ CREATE TABLE clientes.cliente (
     cedula character varying(20) NOT NULL,
     direccion text,
     num_compras integer DEFAULT 0 NOT NULL,
+    fecha_aceptacion_terminos timestamp with time zone,
     CONSTRAINT ck_cliente_cedula CHECK ((btrim((cedula)::text) <> ''::text)),
     CONSTRAINT ck_cliente_num_compras CHECK ((num_compras >= 0))
 );
@@ -244,10 +247,17 @@ CREATE TABLE facturacion.factura (
 
 CREATE TABLE inventario.producto_administra (
     sku character varying(50) NOT NULL,
-    correo_administrador character varying(255) NOT NULL,
-    fecha timestamp with time zone DEFAULT now() NOT NULL,
+    correo_administrador character varying(255),
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
     cantidad integer NOT NULL,
-    CONSTRAINT ck_producto_administra_cantidad CHECK ((cantidad <> 0))
+    tipo character varying(20) NOT NULL,
+    costo_unitario numeric(12,2),
+    motivo text,
+    CONSTRAINT ck_producto_administra_cantidad CHECK ((cantidad <> 0)),
+    CONSTRAINT ck_producto_administra_costo CHECK ((costo_unitario >= (0)::numeric)),
+    CONSTRAINT ck_producto_administra_motivo CHECK ((((tipo)::text <> 'ajuste'::text) OR (btrim(COALESCE(motivo, ''::text)) <> ''::text))),
+    CONSTRAINT ck_producto_administra_responsable CHECK (((correo_administrador IS NOT NULL) OR ((tipo)::text = ANY ((ARRAY['venta_en_linea'::character varying, 'reposicion'::character varying])::text[])))),
+    CONSTRAINT ck_producto_administra_tipo CHECK (((tipo)::text = ANY ((ARRAY['ingreso'::character varying, 'ajuste'::character varying, 'venta_externa'::character varying, 'venta_en_linea'::character varying, 'reposicion'::character varying])::text[])))
 );
 
 
@@ -313,7 +323,7 @@ CREATE TABLE pedidos.historial_estado (
     num_carrito integer NOT NULL,
     estado character varying(20) NOT NULL,
     fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
-    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying])::text[])))
+    CONSTRAINT ck_historial_estado CHECK (((estado)::text = ANY ((ARRAY['colocado'::character varying, 'procesado'::character varying, 'en_transito'::character varying, 'finalizado'::character varying, 'cancelado'::character varying, 'en_disputa'::character varying])::text[])))
 );
 
 
@@ -351,7 +361,12 @@ CREATE TABLE pedidos.pedido (
     direccion text,
     costo_entrega numeric(12,2) DEFAULT 0 NOT NULL,
     codigo_oferta character varying(30),
+    canal character varying(20) DEFAULT 'web'::character varying NOT NULL,
+    creado_por character varying(255),
+    nombre_destinatario character varying(150),
+    CONSTRAINT ck_pedido_canal CHECK (((canal)::text = ANY ((ARRAY['web'::character varying, 'whatsapp'::character varying, 'facebook'::character varying, 'telefono'::character varying, 'presencial'::character varying])::text[]))),
     CONSTRAINT ck_pedido_costo_entrega CHECK ((costo_entrega >= (0)::numeric)),
+    CONSTRAINT ck_pedido_destinatario CHECK (((nombre_destinatario IS NULL) OR (btrim((nombre_destinatario)::text) <> ''::text))),
     CONSTRAINT ck_pedido_fecha_entrega CHECK (((fecha_entrega IS NULL) OR (fecha_entrega >= fecha_pedido_realizado))),
     CONSTRAINT ck_pedido_modalidad CHECK (((modalidad_entrega)::text = ANY ((ARRAY['mensajero'::character varying, 'uber_flash'::character varying, 'correos_cr'::character varying, 'entrega_personal'::character varying])::text[])))
 );
@@ -441,7 +456,10 @@ CREATE VIEW reportes.v_registro_mercancia AS
     p.nombre,
     pa.fecha,
     pa.cantidad,
-    pa.correo_administrador
+    pa.correo_administrador,
+    pa.tipo,
+    pa.costo_unitario,
+    pa.motivo
    FROM (inventario.producto_administra pa
      JOIN catalogo.producto p ON (((p.sku)::text = (pa.sku)::text)));
 
@@ -550,7 +568,7 @@ ALTER TABLE ONLY facturacion.factura
 --
 
 ALTER TABLE ONLY inventario.producto_administra
-    ADD CONSTRAINT producto_administra_pkey PRIMARY KEY (sku, correo_administrador, fecha);
+    ADD CONSTRAINT producto_administra_pkey PRIMARY KEY (sku, fecha);
 
 
 --
@@ -632,6 +650,13 @@ CREATE INDEX ix_producto_categoria ON catalogo.producto USING btree (categoria);
 
 
 --
+-- Name: ix_producto_estado; Type: INDEX; Schema: catalogo; Owner: -
+--
+
+CREATE INDEX ix_producto_estado ON catalogo.producto USING btree (estado);
+
+
+--
 -- Name: ix_producto_administra_administrador; Type: INDEX; Schema: inventario; Owner: -
 --
 
@@ -650,6 +675,13 @@ CREATE INDEX ix_pago_pedido ON pagos.pago USING btree (correo_cliente, num_carri
 --
 
 CREATE INDEX ix_agrega_sku ON pedidos.agrega USING btree (sku);
+
+
+--
+-- Name: ix_pedido_creado_por; Type: INDEX; Schema: pedidos; Owner: -
+--
+
+CREATE INDEX ix_pedido_creado_por ON pedidos.pedido USING btree (creado_por);
 
 
 --
@@ -811,6 +843,14 @@ ALTER TABLE ONLY pedidos.pedido
 
 ALTER TABLE ONLY pedidos.pedido
     ADD CONSTRAINT pedido_correo_cliente_num_carrito_fkey FOREIGN KEY (correo_cliente, num_carrito) REFERENCES pedidos.carrito(correo_cliente, num_carrito) ON UPDATE CASCADE;
+
+
+--
+-- Name: pedido pedido_creado_por_fkey; Type: FK CONSTRAINT; Schema: pedidos; Owner: -
+--
+
+ALTER TABLE ONLY pedidos.pedido
+    ADD CONSTRAINT pedido_creado_por_fkey FOREIGN KEY (creado_por) REFERENCES admin.administrador(correo_usuario) ON UPDATE CASCADE;
 
 
 --

@@ -59,10 +59,11 @@ BEGIN
                                 precio_unitario, tasa_impuesto_aplicada)
     VALUES ('presencial@correo.test', 1, 'JUG-002', 1, 11960.00, 13);
 
+    -- Venta en la tienda física: la registró el administrador (014)
     INSERT INTO pedidos.pedido (correo_cliente, num_carrito, fecha_pedido_realizado, fecha_entrega,
-                                modalidad_entrega, costo_entrega)
+                                modalidad_entrega, costo_entrega, canal, creado_por)
     VALUES ('presencial@correo.test', 1, TIMESTAMPTZ '2026-09-12 13:00-06', TIMESTAMPTZ '2026-09-12 13:00-06',
-            'entrega_personal', 0);
+            'entrega_personal', 0, 'presencial', 'admin@dchobbies.test');
 
     INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado, fecha) VALUES
         ('presencial@correo.test', 1, 'colocado',   TIMESTAMPTZ '2026-09-12 13:00-06'),
