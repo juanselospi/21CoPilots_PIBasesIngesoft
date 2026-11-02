@@ -30,20 +30,24 @@ const montoDelPaso = (desglosePrecio, paso) =>
 
 // Producto del servidor → datos para la tarjeta, la tabla y los modales
 export const toAdminProduct = ({
-    sku, nombre, categoria, imagenUrl, precioFinal, existencias, admiteContrapedido, etiquetas = [],
-    costoItem, porcentajeImportacion, margenGanancia, tasaImpuesto, desglosePrecio,
+    sku, nombre, categoria, descripcion, proveedor, imagenUrl, precioFinal, existencias, admiteContrapedido,
+    etiquetas = [], costoItem, porcentajeImportacion, margenGanancia, heredado, tasaImpuesto, desglosePrecio,
 }) => ({
     sku,
     name: nombre,
     category: categoria,
+    description: descripcion,
+    supplier: proveedor,
     image: imagenUrl,
+    imageUrl: imagenUrl,
     price: precioFinal,
     stock: existencias,
     backorder: admiteContrapedido,
     labels: etiquetas.map((etiqueta) => ({ key: etiqueta, text: labelByEtiqueta[etiqueta] ?? etiqueta })),
     costoItem,
-    importacionPct: porcentajeImportacion,
-    margenPct: margenGanancia,
+    // null cuando el producto hereda el valor de su familia
+    importacionPct: heredado?.importacion ? null : porcentajeImportacion,
+    margenPct: heredado?.margen ? null : margenGanancia,
     taxRate: tasaImpuesto,
     breakdown: {
         costoTotal: montoDelPaso(desglosePrecio, 'importacion'),
@@ -52,7 +56,16 @@ export const toAdminProduct = ({
     },
 })
 
-// Valores de un modal → cuerpo que espera el servidor. Los campos vacíos no se envían.
+// Familia del servidor → opción del selector de familia del modal de editar
+export const toFamilyOption = ({ nombre, porcentajeImportacion, margenGanancia, activa }) => ({
+    name: nombre,
+    importacionPct: porcentajeImportacion,
+    margenPct: margenGanancia,
+    active: activa,
+})
+
+// Valores de un modal → cuerpo que espera el servidor. Los campos vacíos no se envían;
+// los null sí (al editar, heredar de la familia o borrar un dato opcional).
 export const toServerFields = (values) =>
     Object.fromEntries(
         Object.entries(values)

@@ -34,8 +34,14 @@ export function listarParaAdministracion(
     })
 }
 
-// Guarda el costo, la importación, el margen, las existencias o el contrapedido
-// de un producto (RF-01). El servidor recalcula el precio y devuelve el producto actualizado.
+// Familias del panel, incluidas las desactivadas, con su importación y su margen.
+export function listarFamiliasAdmin({ signal } = {}) {
+    return pedir('/api/catalogo/admin/familias', { signal })
+}
+
+// Guarda los datos generales, el costo, la importación, el margen, las existencias o el
+// contrapedido de un producto (RF-01, RF-18). Importación y margen en null heredan de la familia.
+// El servidor recalcula el precio y devuelve el producto actualizado.
 export function actualizarProducto(sku, cambios, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }
