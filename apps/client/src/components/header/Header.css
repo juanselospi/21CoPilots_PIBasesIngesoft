@@ -96,27 +96,6 @@
   font-weight: 800;
 }
 
-.header-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-texto);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.header-user-initials {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-principal);
-  color: var(--color-sobre-principal);
-  font-size: var(--texto-etiqueta);
-  font-weight: 700;
-}
-
 .header-categories {
   display: flex;
   gap: 32px;

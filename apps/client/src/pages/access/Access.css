@@ -107,9 +107,19 @@
   color: var(--color-texto-suave);
 }
 
+.access-notice,
 .access-error {
   padding: 12px 14px;
   border-radius: var(--radio-control);
+}
+
+/* Aviso en azul, por ejemplo cuando la sesion vencio */
+.access-notice {
+  background: var(--estado-info-fondo);
+  color: var(--estado-info-texto);
+}
+
+.access-error {
   background: var(--estado-error-fondo);
   color: var(--estado-error-texto);
 }
