@@ -31,6 +31,11 @@ export function validarCampos(valores, definicion) {
         if (!errores[campo] && reglas.patron && !new RegExp(reglas.patron).test(valor)) {
             errores[campo] = reglas.mensajePatron ?? 'Revise el formato de este campo.'
         }
+
+        // igualA: tiene que ser igual a otro campo, como al confirmar la contraseña
+        if (!errores[campo] && reglas.igualA && valor !== String(valores[reglas.igualA] ?? '').trim()) {
+            errores[campo] = reglas.mensajeIgualA ?? 'Los valores no coinciden.'
+        }
     }
     return errores
 }

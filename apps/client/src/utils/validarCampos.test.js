@@ -34,3 +34,17 @@ test('valida tipos, mínimos y patrones en el mismo envío', () => {
         assert.ok(validarCampos({ costo }, reglas).costo)
     }
 })
+
+test('igualA compara con otro campo y no tapa el obligatorio', () => {
+    const reglas = {
+        nueva: { obligatorio: true },
+        confirmar: { obligatorio: true, igualA: 'nueva', mensajeIgualA: 'Las contraseñas no coinciden.' },
+    }
+    assert.deepEqual(validarCampos({ nueva: 'Clave#2026', confirmar: 'Clave#2025' }, reglas), {
+        confirmar: 'Las contraseñas no coinciden.',
+    })
+    assert.deepEqual(validarCampos({ nueva: 'Clave#2026', confirmar: '' }, reglas), {
+        confirmar: 'Este campo es obligatorio',
+    })
+    assert.deepEqual(validarCampos({ nueva: 'Clave#2026', confirmar: 'Clave#2026' }, reglas), {})
+})

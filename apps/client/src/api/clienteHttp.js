@@ -4,6 +4,21 @@
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Revise su conexión e intente de nuevo.'
 const MENSAJE_POR_DEFECTO = 'Ocurrió un error inesperado. Intente de nuevo.'
 
+// Funciones que se llaman cuando el servidor ya no reconoce la sesión, por ahora solo la usa SessionProvider
+const oyentesDeSesion = new Set()
+
+/**
+ * Avisa cuando el servidor responde 401 porque no hay sesión.
+ * Una contraseña incorrecta también da 401 pero con otro código, así que esa no avisa.
+ * Devuelve la función para dejar de escuchar.
+ */
+export function alPerderSesion(oyente) {
+    oyentesDeSesion.add(oyente)
+    return () => {
+        oyentesDeSesion.delete(oyente)
+    }
+}
+
 // Error que respondió el servidor, con su estado HTTP, código y detalles (p. ej. campos inválidos).
 export class ErrorHttp extends Error {
     constructor(mensaje, { estado, codigo = null, detalles = null }) {
@@ -39,6 +54,9 @@ export async function pedir(ruta, { metodo = 'GET', parametros, cuerpo, signal, 
     const contenido = await respuesta.json().catch(() => null)
 
     if (!respuesta.ok) {
+        if (respuesta.status === 401 && contenido?.error?.codigo === 'NO_AUTENTICADO') {
+            oyentesDeSesion.forEach((oyente) => oyente())
+        }
         throw new ErrorHttp(contenido?.error?.mensaje ?? MENSAJE_POR_DEFECTO, {
             estado: respuesta.status,
             codigo: contenido?.error?.codigo ?? null,

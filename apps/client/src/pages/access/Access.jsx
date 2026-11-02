@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ChevronLeft, ChevronRight, Eye, EyeOff, ShoppingCart } from 'lucide-react'
 import './Access.css'
 import Logo from '../../components/logo/Logo.jsx'
@@ -42,6 +42,8 @@ function Access() {
 
 function LogInForm() {
     const navigate = useNavigate()
+    // Si se llega aqui porque la sesion vencio, SessionProvider manda el aviso en el state
+    const notice = useLocation().state?.aviso
     const { recargar: reloadSession } = useSesion()
     const {
         valores: { correo, contrasena }, errores, formularioRef, cambiarCampo,
@@ -81,6 +83,7 @@ function LogInForm() {
                 <p>Inicia sesión para dar seguimiento a tus pedidos.</p>
             </div>
 
+            {notice && !error && <p className='access-notice' role='status'>{notice}</p>}
             {error && <p className='access-error' role='alert'>{error}</p>}
 
             <label className='access-field'>

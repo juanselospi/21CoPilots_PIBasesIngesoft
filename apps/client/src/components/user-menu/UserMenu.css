@@ -1,0 +1,106 @@
+/* Menu de la cuenta: boton con las iniciales y el panel que se abre abajo */
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.user-menu-button:hover,
+.user-menu-button[aria-expanded='true'] {
+  color: var(--color-enlace);
+}
+
+.user-menu-initials {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+  font-size: var(--texto-etiqueta);
+  font-weight: 700;
+}
+
+/* El panel queda pegado al borde derecho del boton */
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: 6px 0;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+  text-align: left;
+}
+
+/* Nombre y correo arriba con una linea que los separa de las opciones */
+.user-menu-identity {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 6px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--color-borde);
+  color: var(--color-texto);
+}
+
+.user-menu-identity span {
+  overflow: hidden;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+  text-overflow: ellipsis;
+}
+
+.user-menu-item {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.user-menu-item:hover,
+.user-menu-item:focus-visible {
+  background: var(--color-tinte);
+}
+
+.user-menu-logout {
+  color: var(--estado-error-texto);
+}
+
+/* En celular el header se parte en varias filas y el boton puede quedar a la izquierda,
+   entonces el panel usa todo el ancho de la pantalla */
+@media (max-width: 640px) {
+  .user-menu-panel {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    left: 16px;
+    min-width: 0;
+    max-width: none;
+    margin-top: 8px;
+  }
+}

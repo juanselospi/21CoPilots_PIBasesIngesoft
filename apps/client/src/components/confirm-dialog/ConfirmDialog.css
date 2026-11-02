@@ -1,0 +1,87 @@
+/* Dialogo para confirmar una accion, por ahora solo cerrar sesion */
+
+/* Fondo oscuro de toda la pantalla, si se le da clic se cancela */
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  background: var(--color-overlay);
+}
+
+.confirm-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  border-radius: var(--radio-modal);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  box-shadow: var(--sombra);
+  text-align: left;
+}
+
+.confirm-dialog h2 {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-borde);
+  font-size: var(--texto-subtitulo);
+}
+
+.confirm-dialog p {
+  color: var(--color-texto-suave);
+}
+
+.confirm-dialog .confirm-dialog-error {
+  padding: 10px 12px;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+  font-size: var(--texto-pequeno);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.confirm-dialog-actions button {
+  padding: 10px 18px;
+  border-radius: var(--radio-control);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm-dialog-cancel {
+  border: 1.5px solid var(--color-borde);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+.confirm-dialog-cancel:hover {
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
+}
+
+/* Boton de confirmar en rojo, la letra usa el color de la superficie para que se lea en modo claro y en oscuro */
+.confirm-dialog-confirm {
+  border: 1.5px solid var(--estado-error-texto);
+  background: var(--estado-error-texto);
+  color: var(--color-superficie);
+}
+
+.confirm-dialog-confirm:hover {
+  background: color-mix(in srgb, var(--estado-error-texto) 85%, var(--color-oscuro));
+}
+
+.confirm-dialog-actions button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
