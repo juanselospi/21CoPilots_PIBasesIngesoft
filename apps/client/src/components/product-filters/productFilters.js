@@ -13,6 +13,7 @@ export const availabilityOptions = [
     { value: 'en_existencia', label: 'En existencia' },
     { value: 'por_contrapedido', label: 'Por contrapedido' },
     { value: 'no_disponible', label: 'No disponible (oculto en la tienda)' },
+    { value: 'descontinuado', label: 'Descontinuado' },
 ]
 
 // Etiquetas de los filtros aplicados, para mostrarlos y poder quitarlos uno por uno
