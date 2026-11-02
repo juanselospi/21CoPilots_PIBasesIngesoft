@@ -35,6 +35,14 @@ test('valida tipos, mínimos y patrones en el mismo envío', () => {
     }
 })
 
+test('una casilla obligatoria tiene que estar marcada', () => {
+    const reglas = { terminos: { obligatorio: true, tipo: 'casilla', mensajeCasilla: 'Debe aceptar los términos.' } }
+    assert.deepEqual(validarCampos({ terminos: false }, reglas), { terminos: 'Debe aceptar los términos.' })
+    assert.deepEqual(validarCampos({}, reglas), { terminos: 'Debe aceptar los términos.' })
+    assert.deepEqual(validarCampos({ terminos: true }, reglas), {})
+    assert.deepEqual(validarCampos({ terminos: false }, { terminos: { tipo: 'casilla' } }), {})
+})
+
 test('igualA compara con otro campo y no tapa el obligatorio', () => {
     const reglas = {
         nueva: { obligatorio: true },

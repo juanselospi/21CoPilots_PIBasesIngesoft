@@ -179,6 +179,66 @@
   font-size: var(--texto-pequeno);
 }
 
+/* Dos campos en la misma fila (telefono y cedula), en celular se apilan */
+.access-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Ayuda debajo de un campo, por ejemplo para que se pide la cedula */
+.access-hint {
+  margin-top: -12px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+.access-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.access-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.access-checkbox input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  cursor: pointer;
+}
+
+/* La casilla sin marcar al enviar se marca en rojo igual que los inputs */
+.access-checkbox input[aria-invalid='true'] {
+  outline: 2px solid var(--estado-error-texto);
+  outline-offset: 2px;
+}
+
+.access-terms-text summary {
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.access-terms-text p {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: var(--radio-control);
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
 /* Enlace chico de arriba para volver a iniciar sesion */
 .access-back-link {
   display: inline-flex;
@@ -246,6 +306,10 @@
 }
 
 @media (max-width: 640px) {
+  .access-row {
+    grid-template-columns: 1fr;
+  }
+
   .access-form {
     padding: 24px 20px;
   }
