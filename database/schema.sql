@@ -158,6 +158,22 @@ CREATE TABLE admin.administrador (
 
 
 --
+-- Name: bitacora; Type: TABLE; Schema: admin; Owner: -
+--
+
+CREATE TABLE admin.bitacora (
+    correo_usuario character varying(255) NOT NULL,
+    fecha timestamp with time zone DEFAULT clock_timestamp() NOT NULL,
+    evento character varying(40) NOT NULL,
+    entidad character varying(40),
+    entidad_id character varying(100),
+    valor_anterior jsonb,
+    valor_nuevo jsonb,
+    CONSTRAINT ck_bitacora_evento CHECK ((btrim((evento)::text) <> ''::text))
+);
+
+
+--
 -- Name: familia; Type: TABLE; Schema: catalogo; Owner: -
 --
 
@@ -508,6 +524,14 @@ ALTER TABLE ONLY admin.administrador
 
 
 --
+-- Name: bitacora bitacora_pkey; Type: CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.bitacora
+    ADD CONSTRAINT bitacora_pkey PRIMARY KEY (correo_usuario, fecha);
+
+
+--
 -- Name: familia familia_pkey; Type: CONSTRAINT; Schema: catalogo; Owner: -
 --
 
@@ -636,6 +660,20 @@ ALTER TABLE ONLY usuarios.usuario
 
 
 --
+-- Name: ix_bitacora_entidad; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_bitacora_entidad ON admin.bitacora USING btree (entidad, entidad_id);
+
+
+--
+-- Name: ix_bitacora_fecha; Type: INDEX; Schema: admin; Owner: -
+--
+
+CREATE INDEX ix_bitacora_fecha ON admin.bitacora USING btree (fecha);
+
+
+--
 -- Name: ux_administrador_unico; Type: INDEX; Schema: admin; Owner: -
 --
 
@@ -713,6 +751,13 @@ CREATE UNIQUE INDEX ux_sesion_token ON usuarios.sesion USING btree (token_hash);
 
 
 --
+-- Name: bitacora tg_bitacora_solo_insercion; Type: TRIGGER; Schema: admin; Owner: -
+--
+
+CREATE TRIGGER tg_bitacora_solo_insercion BEFORE DELETE OR UPDATE ON admin.bitacora FOR EACH ROW EXECUTE FUNCTION public.rechazar_modificacion();
+
+
+--
 -- Name: producto_administra tg_producto_administra_solo_insercion; Type: TRIGGER; Schema: inventario; Owner: -
 --
 
@@ -739,6 +784,14 @@ CREATE TRIGGER tg_historial_solo_insercion BEFORE DELETE OR UPDATE ON pedidos.hi
 
 ALTER TABLE ONLY admin.administrador
     ADD CONSTRAINT administrador_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: bitacora bitacora_correo_usuario_fkey; Type: FK CONSTRAINT; Schema: admin; Owner: -
+--
+
+ALTER TABLE ONLY admin.bitacora
+    ADD CONSTRAINT bitacora_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE;
 
 
 --

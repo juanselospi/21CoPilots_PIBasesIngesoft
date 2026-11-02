@@ -21,7 +21,7 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 | Esquema | Tablas | Migración |
 |---|---|---|
 | `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
-| `admin` | `administrador` | `003_admin.sql` |
+| `admin` | `administrador`, `bitacora` | `003_admin.sql`, `015_bitacora.sql` |
 | `clientes` | `cliente`, `cliente_telefono` | `004_clientes.sql` |
 | `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql` |
 | `inventario` | `producto_administra` | `006_inventario.sql` |
@@ -30,7 +30,7 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 | `facturacion` | `factura` | `008_pagos_facturacion.sql` |
 | `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia` | `009_reportes.sql` |
 
-En total son 15 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
+En total son 16 tablas y 5 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
 las funciones de los triggers técnicos.
 
 Convenciones: nombres en español, `snake_case` y sin tildes; **llaves naturales**
@@ -55,6 +55,7 @@ erDiagram
     PAGO ||--o| FACTURA : "Respalda (RF-41)"
     ADMINISTRADOR ||--o{ PRODUCTO_ADMINISTRA : "Administrar (RF-13)"
     PRODUCTO ||--o{ PRODUCTO_ADMINISTRA : Administrar
+    USUARIO ||--o{ BITACORA : "Registra (RF-52)"
 ```
 
 ---
@@ -92,6 +93,21 @@ Si se borra el usuario, se borran sus sesiones.
 **`admin.administrador`** — especialización de `usuario` sin atributos propios. Su
 llave es `correo_usuario`. Un índice único (`ux_administrador_unico`) impide que
 exista más de una fila (RF-49).
+
+**`admin.bitacora`** — registro de auditoría (RF-52, RNF-10, C-20). **Solo inserción.**
+Su llave es `(correo_usuario, fecha)`: solo se registran acciones de usuarios con
+sesión, así que el correo es obligatorio (llave foránea a `usuario`). `fecha` toma
+`clock_timestamp()`, para que dos registros del mismo usuario en una transacción no
+choquen. No se puede borrar un usuario que tenga registros en la bitácora.
+
+| Columna | Descripción |
+|---|---|
+| `correo_usuario`, `fecha` | Quién y cuándo; forman la llave |
+| `evento` | Qué pasó, por ejemplo `acceso_denegado` o `estado_pedido_cambiado`; no en blanco |
+| `entidad`, `entidad_id` | Qué registro se tocó (por ejemplo `pedido` y su llave); opcionales e indexados juntos (`ix_bitacora_entidad`) |
+| `valor_anterior`, `valor_nuevo` | El registro antes y después del cambio, en `JSONB`; opcionales |
+
+`ix_bitacora_fecha` sirve para consultar por rango de fechas sin filtrar por usuario.
 
 **`clientes.cliente`** — especialización de `usuario` con los datos del comprador
 (RF-33).
