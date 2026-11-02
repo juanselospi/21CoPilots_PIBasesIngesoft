@@ -77,9 +77,14 @@ personalizar los mensajes. Un opcional vacío no se valida y cero es válido.
 con `mensajeIgualA` para el mensaje. Para contraseñas, `reglasContrasena` de
 `utils/politicaContrasena.js` trae la política del cliente (PB-19) y
 `PasswordRules` la muestra con cada requisito marcado.
+`tipo: 'casilla'` es para un checkbox: si es obligatorio el valor tiene que ser
+`true` (`mensajeCasilla` cambia el mensaje). `reglasTelefono` y `reglasCedula` de
+`utils/reglasCliente.js` traen los formatos de los datos del cliente.
 `reiniciar(valores)` limpia los errores y restablece los valores.
 Si los nombres del servidor difieren de los inputs, convertir `detalles.campos`
 antes de pasarlos a `erroresServidor` (como `toModalFields` en Productos).
+`erroresServidor(campos, mensaje)` acepta un mensaje para esos campos, por
+ejemplo el de un correo que ya tiene cuenta; sin mensaje queda "Revise este valor.".
 Mantener también el mensaje general de error y el estado de envío de la pantalla.
 
 Comprobaciones:
