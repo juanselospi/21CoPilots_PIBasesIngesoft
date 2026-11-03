@@ -31,3 +31,14 @@ export const aResultadoDeImportacion = (resultado, reporte = null) => ({
     contenidoBase64: reporte.toString("base64"),
   },
 });
+
+/** Fila de la bitácora para el panel. */
+export const aRegistroDeBitacora = (registro) => ({
+  fecha: registro.fecha,
+  usuario: registro.correoUsuario,
+  evento: registro.evento,
+  entidad: registro.entidad,
+  entidadId: registro.entidadId,
+  valorAnterior: registro.valorAnterior,
+  valorNuevo: registro.valorNuevo,
+});

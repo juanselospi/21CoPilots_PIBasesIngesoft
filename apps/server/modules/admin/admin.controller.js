@@ -8,7 +8,7 @@ import {
   borrarCookieDeSesion,
   escribirCookieDeSesion,
 } from "../../shared/http/autenticacion.js";
-import { aUsuario, aResultadoDeImportacion } from "./admin.dto.js";
+import { aUsuario, aResultadoDeImportacion, aRegistroDeBitacora } from "./admin.dto.js";
 import { CAMPO_DEL_ARCHIVO } from "./importacion/recibir-excel.js";
 import { RUTA_DE_LA_PLANTILLA } from "./importacion/columnas.js";
 import { generarReporteDeRechazos } from "./importacion/reporte-de-rechazos.js";
@@ -74,6 +74,12 @@ export class AdminController {
       token: peticion.cookies?.[COOKIE_DE_SESION],
     });
     respuesta.status(204).end();
+  };
+
+  // GET /bitacora?entidad&entidadId&evento&correo&desde&hasta&pagina&limite
+  listarBitacora = async (peticion, respuesta) => {
+    const { registros, total, pagina, limite } = await this.#servicio.listarBitacora(peticion.query);
+    respuesta.json({ datos: registros.map(aRegistroDeBitacora), meta: { total, pagina, limite } });
   };
 
   /**

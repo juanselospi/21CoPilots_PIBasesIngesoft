@@ -44,5 +44,7 @@ export function crearRutasDeAdmin(controlador, { exigirRol, recibirExcel }) {
   );
   rutas.get("/importaciones/plantilla", ...soloAdministrador, controlador.descargarPlantilla);
 
+  rutas.get("/bitacora", ...soloAdministrador, asincrono(controlador.listarBitacora));
+
   return rutas;
 }
