@@ -8,6 +8,7 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -639,4 +640,44 @@ test("pedir el mismo estado no publica nada y un estado desconocido da 400", asy
   assert.deepEqual(eventos, []);
   await assert.rejects(servicio.cambiarEstado("PKM-001", { estado: "borrado" }), EntradaInvalida);
   await assert.rejects(servicio.cambiarEstado("NO-EXISTE", { estado: "activo" }), RecursoNoEncontrado);
+});
+
+// Eliminar
+
+function crearServicioParaEliminar(resultado) {
+  const eventos = [];
+  const repositorio = {
+    obtenerPorSku: async (sku) => (sku === "NO-EXISTE" ? null : { ...pkm001, sku }),
+    eliminar: async () => resultado,
+  };
+  const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
+  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), eventos };
+}
+
+test("borra un producto sin historial y lo publica para la bitácora", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("eliminado");
+
+  await servicio.eliminarProducto("NUEVO-1", { responsable: "admin@dchobbies.test" });
+
+  assert.equal(eventos[0].evento, "producto_eliminado");
+  assert.equal(eventos[0].datos.entidadId, "NUEVO-1");
+  assert.equal(eventos[0].datos.valorAnterior.nombre, pkm001.nombre);
+});
+
+test("un producto con ventas o movimientos no se borra y pide desactivarlo", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("con_historial");
+
+  await assert.rejects(servicio.eliminarProducto("PKM-001"), (error) => {
+    assert.ok(error instanceof ProductoConHistorial);
+    assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
+    assert.equal(error.message, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+    return true;
+  });
+  assert.deepEqual(eventos, []);
+});
+
+test("borrar un producto que no existe responde no encontrado", async () => {
+  const { servicio } = crearServicioParaEliminar("eliminado");
+
+  await assert.rejects(servicio.eliminarProducto("NO-EXISTE"), RecursoNoEncontrado);
 });

@@ -26,6 +26,8 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
   rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizar));
   // desactiva o reactiva; descontinuado sale de la tienda pero conserva su historial
   rutas.patch("/productos/:sku/estado", ...soloAdministrador, asincrono(controlador.cambiarEstado));
+  // solo si nunca se vendió ni tuvo movimientos; si no, 409 y hay que desactivarlo
+  rutas.delete("/productos/:sku", ...soloAdministrador, asincrono(controlador.eliminar));
 
   // familias del panel, con importación y margen; incluye las inactivas
   rutas.get("/admin/familias", ...soloAdministrador, asincrono(controlador.listarFamiliasParaAdministracion));

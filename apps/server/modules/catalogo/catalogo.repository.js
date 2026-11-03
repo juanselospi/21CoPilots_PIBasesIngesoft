@@ -172,6 +172,31 @@ export class CatalogoRepository {
   }
 
   /**
+   * Borra el producto solo si no tiene líneas de pedido ni movimientos.
+   * @returns "eliminado", "con_historial" o "no_existe"
+   */
+  async eliminar(sku) {
+    try {
+      const { rows } = await this.#pool.query(
+        `DELETE FROM catalogo.producto p
+          WHERE p.sku = $1
+            AND NOT EXISTS (SELECT 1 FROM pedidos.agrega a WHERE a.sku = p.sku)
+            AND NOT EXISTS (SELECT 1 FROM inventario.producto_administra m WHERE m.sku = p.sku)
+         RETURNING sku`,
+        [sku]
+      );
+      if (rows[0]) return "eliminado";
+    } catch (error) {
+      // Una venta entró entre la revisión y el borrado: la llave foránea lo frena
+      if (error.code === "23503") return "con_historial";
+      throw error;
+    }
+
+    const { rows } = await this.#pool.query(`SELECT 1 FROM catalogo.producto WHERE sku = $1`, [sku]);
+    return rows[0] ? "con_historial" : "no_existe";
+  }
+
+  /**
    * Guarda un producto de la importación: lo crea si el SKU no existe y lo
    * actualiza si ya existe, así reimportar la misma hoja no duplica nada.
    * Si su familia no existe la crea con la importación y el margen de la fila.
