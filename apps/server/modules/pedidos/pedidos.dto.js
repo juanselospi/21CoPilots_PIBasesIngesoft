@@ -2,7 +2,6 @@
  * DTO + Mapper de carrito y pedidos.
  *
  * POR IMPLEMENTAR
- *   aComprobante()       RF-31
  *   aPedidoAdministrativo()  RF-46 — agrega datos que el cliente no ve
  */
 
@@ -60,6 +59,7 @@ export const aPedidoConfirmado = (pedido) => ({
   total: pedido.total,
   moneda: "USD",
   pago: pedido.pago,
+  factura: pedido.factura ?? null,
 });
 
 /** RF-40: un pago del pedido. Nunca lleva datos de la tarjeta. */
@@ -70,4 +70,26 @@ export const aPago = (pago) => ({
   moneda: "USD",
   metodoPago: pago.metodoPago,
   estadoPago: pago.estadoPago,
+});
+
+/** RF-41: la factura como comprobante, con el emisor y el receptor. */
+export const aFactura = (factura) => ({
+  numFactura: factura.numFactura,
+  fecha: factura.fecha,
+  emisor: factura.emisor,
+  receptor: { nombre: factura.receptor?.nombre ?? null, cedula: factura.receptor?.cedula ?? null },
+  lineas: factura.lineas.map((linea) => ({
+    sku: linea.sku,
+    nombre: linea.nombre,
+    cantidad: linea.cantidad,
+    precioUnitario: linea.precioUnitario,
+    subtotal: linea.subtotal,
+  })),
+  subtotal: factura.subtotal,
+  impuesto: factura.impuesto,
+  envio: factura.costoEntrega,
+  total: factura.total,
+  moneda: "USD",
+  metodoPago: factura.metodoPago,
+  numReferencia: factura.numReferencia,
 });

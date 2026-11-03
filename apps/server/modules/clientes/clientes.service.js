@@ -71,6 +71,11 @@ export class ClientesService {
     return this.obtenerMiCuenta(correo);
   }
 
+  /** Para la factura: nombre y cédula del cliente. */
+  async datosParaFactura(correo) {
+    return this.#repositorio.datosFiscales(correo);
+  }
+
   /** Para pedidos, dentro de la transacción que confirma la compra. */
   async sumarCompra(cliente, correo) {
     await this.#repositorio.incrementarCompras(cliente, correo);

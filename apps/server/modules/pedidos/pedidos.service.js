@@ -37,6 +37,7 @@ export class PedidosService {
   #facturacionElectronica;
   #productosParaVenta;
   #pagos;
+  #facturas;
 
   constructor({
     repositorio,
@@ -48,6 +49,7 @@ export class PedidosService {
     facturacionElectronica,
     productosParaVenta,
     pagos,
+    facturas,
   }) {
     this.#repositorio = repositorio;
     this.#inventario = inventario;
@@ -58,6 +60,7 @@ export class PedidosService {
     this.#facturacionElectronica = facturacionElectronica;
     this.#productosParaVenta = productosParaVenta;
     this.#pagos = pagos;
+    this.#facturas = facturas;
   }
 
   /** Las modalidades en el orden en que se muestran, cada una con su costo. */
@@ -160,6 +163,17 @@ export class PedidosService {
         numCarrito: carrito.numCarrito,
       });
 
+      // RF-41: con el pago aprobado se emite la factura; contra entrega la tendrá al pagar
+      const factura =
+        pagoGuardado.estadoPago === "aprobado"
+          ? await this.#facturar(cliente, {
+              correo,
+              numCarrito: carrito.numCarrito,
+              numReferencia: pagoGuardado.numReferencia,
+              lineas,
+            })
+          : null;
+
       return {
         movimientos,
         pedido: {
@@ -173,6 +187,7 @@ export class PedidosService {
           lineas,
           ...montos,
           pago: { resultado: pagoGuardado.estadoPago, referencia: pagoGuardado.numReferencia },
+          factura: factura && { numFactura: factura.numFactura },
         },
       };
     });
@@ -195,6 +210,59 @@ export class PedidosService {
       throw new RecursoNoEncontrado("el pedido", numCarrito);
     }
     return this.#pagos.listarPorPedido(correo, numCarrito);
+  }
+
+  /**
+   * RF-41: la factura del pedido como comprobante. Los montos salen de lo
+   * que se cobró y de los precios congelados, no del precio de hoy.
+   */
+  async obtenerFactura(correo, numCarrito) {
+    const factura = await this.#facturas.buscarPorPedido(correo, numCarrito);
+    if (!factura) throw new RecursoNoEncontrado("la factura del pedido", numCarrito);
+
+    const [emisor, receptor, guardadas, costoEntrega] = await Promise.all([
+      this.#facturas.obtenerEmisor(),
+      this.#clientes.datosParaFactura(correo),
+      this.#repositorio.lineasDelPedido(correo, numCarrito),
+      this.#repositorio.costoDeEntrega(correo, numCarrito),
+    ]);
+    const nombres = await this.#productosParaVenta(guardadas.map(({ sku }) => sku));
+    const lineas = guardadas.map((linea) => ({
+      ...linea,
+      nombre: nombres.get(linea.sku)?.nombre ?? linea.sku,
+      subtotal: redondear(linea.precioUnitario * linea.cantidad),
+    }));
+
+    const subtotal = redondear(lineas.reduce((suma, linea) => suma + linea.subtotal, 0));
+    const total = factura.montoCobrado;
+    return {
+      ...factura,
+      emisor,
+      receptor,
+      lineas,
+      subtotal,
+      impuesto: redondear(total - costoEntrega - subtotal),
+      costoEntrega,
+      total,
+    };
+  }
+
+  // Si la facturación no está disponible el pedido sigue; la factura solo se guarda si se emitió
+  async #facturar(cliente, { correo, numCarrito, numReferencia, lineas }) {
+    const [emisor, receptor] = await Promise.all([
+      this.#facturas.obtenerEmisor(cliente),
+      this.#clientes.datosParaFactura(correo),
+    ]);
+    const resultado = await this.#facturacionElectronica.emitir({
+      correoCliente: correo,
+      numCarrito,
+      numReferencia,
+      emisor,
+      receptor,
+      lineas,
+    });
+    if (resultado.estado !== "emitida") return null;
+    return this.#facturas.registrar(cliente, { numFactura: resultado.consecutivo, numReferencia });
   }
 }
 

@@ -8,7 +8,7 @@
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
-import { aCarrito, aModalidad, aPago, aPedidoConfirmado } from "./pedidos.dto.js";
+import { aCarrito, aFactura, aModalidad, aPago, aPedidoConfirmado } from "./pedidos.dto.js";
 
 export class PedidosController {
   #servicio;
@@ -59,6 +59,13 @@ export class PedidosController {
   listarPagos = async (peticion, respuesta) => {
     const pagos = await this.#servicio.listarPagos(peticion.usuario.correo, leerNumeroDeCarrito(peticion.params.numCarrito));
     respuesta.json({ datos: pagos.map(aPago) });
+  };
+
+  // GET /:numCarrito/factura, del cliente dueño del pedido
+  verFactura = async (peticion, respuesta) => {
+    const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
+    const factura = await this.#servicio.obtenerFactura(peticion.usuario.correo, numCarrito);
+    respuesta.json({ datos: aFactura(factura) });
   };
 }
 

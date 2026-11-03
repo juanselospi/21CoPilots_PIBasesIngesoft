@@ -303,6 +303,22 @@ CREATE TABLE clientes.credito (
 
 
 --
+-- Name: emisor; Type: TABLE; Schema: facturacion; Owner: -
+--
+
+CREATE TABLE facturacion.emisor (
+    unica boolean DEFAULT true NOT NULL,
+    razon_social character varying(200) NOT NULL,
+    cedula_juridica character varying(20) NOT NULL,
+    direccion text NOT NULL,
+    CONSTRAINT ck_emisor_cedula CHECK ((btrim((cedula_juridica)::text) <> ''::text)),
+    CONSTRAINT ck_emisor_direccion CHECK ((btrim(direccion) <> ''::text)),
+    CONSTRAINT ck_emisor_razon_social CHECK ((btrim((razon_social)::text) <> ''::text)),
+    CONSTRAINT ck_emisor_unica CHECK (unica)
+);
+
+
+--
 -- Name: factura; Type: TABLE; Schema: facturacion; Owner: -
 --
 
@@ -666,6 +682,14 @@ ALTER TABLE ONLY clientes.credito
 
 ALTER TABLE ONLY clientes.cliente
     ADD CONSTRAINT ux_cliente_cedula UNIQUE (cedula);
+
+
+--
+-- Name: emisor emisor_pkey; Type: CONSTRAINT; Schema: facturacion; Owner: -
+--
+
+ALTER TABLE ONLY facturacion.emisor
+    ADD CONSTRAINT emisor_pkey PRIMARY KEY (unica);
 
 
 --
