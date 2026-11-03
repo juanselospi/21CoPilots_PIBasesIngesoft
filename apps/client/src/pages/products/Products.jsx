@@ -13,6 +13,7 @@ import ProductActionDialog from '../../components/product-form/ProductActionDial
 import { actualizarProducto, cambiarEstadoProducto, crearFamilia, crearProducto, eliminarProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
+import { avisarCambioDeInventario } from '../../hooks/useAlertasDeInventario.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toFamilyOption, toModalFields, toServerFields } from './toAdminProduct.js'
@@ -137,6 +138,7 @@ function Products() {
         try {
             const actualizado = await actualizarProducto(sku, toServerFields(values))
             listado.recargar()
+            if (Object.hasOwn(values, 'stock')) avisarCambioDeInventario()
             return { product: toAdminProduct(actualizado) }
         } catch (error) {
             return { error: error.message, fields: toModalFields(error.detalles?.campos ?? []) }
@@ -179,6 +181,8 @@ function Products() {
             else await cambiarEstadoProducto(product.sku, action === 'desactivar' ? 'descontinuado' : 'activo')
             setPendingAction(null)
             listado.recargar()
+            // Un producto descontinuado o eliminado deja de contar en las alertas
+            avisarCambioDeInventario()
             return {}
         } catch (error) {
             return { error: error.message, withHistory: action === 'eliminar' && error.estado === 409 }

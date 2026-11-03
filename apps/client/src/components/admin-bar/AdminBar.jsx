@@ -5,19 +5,21 @@ import './AdminBar.css'
 import Logo from '../logo/Logo.jsx'
 import UserMenu from '../user-menu/UserMenu.jsx'
 import InventoryAlerts from '../inventory-alerts/InventoryAlerts.jsx'
-import { useAlertasDeInventario } from '../../hooks/useAlertasDeInventario.js'
+import { alCambiarElInventario, useAlertasDeInventario } from '../../hooks/useAlertasDeInventario.js'
 
 // Pantallas del panel; NavLink marca con .active la que está abierta
 const sections = [
     { to: '/admin/productos', label: 'Productos' },
     { to: '/admin/familias', label: 'Familias' },
+    { to: '/admin/mercancia', label: 'Mercancía' },
 ]
 
 // Barra de arriba del panel con el logo, las pantallas, las alertas de inventario,
 // el enlace a la tienda y el menu de la cuenta
 function AdminBar({ user, onLogOut }) {
     // Las alertas se recalculan al cambiar de pantalla, al volver a la pestaña
-    // (por ejemplo, después de una venta en la tienda) y al abrir el modal
+    // (por ejemplo, después de una venta en la tienda), al abrir el modal
+    // y cuando otra pantalla avisa que cambiaron existencias
     const { pathname } = useLocation()
     const alerts = useAlertasDeInventario([pathname])
     const { recargar } = alerts
@@ -30,6 +32,8 @@ function AdminBar({ user, onLogOut }) {
         document.addEventListener('visibilitychange', reloadWhenVisible)
         return () => document.removeEventListener('visibilitychange', reloadWhenVisible)
     }, [recargar])
+
+    useEffect(() => alCambiarElInventario(recargar), [recargar])
 
     const openAlerts = () => {
         recargar()
