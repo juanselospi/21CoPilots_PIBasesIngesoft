@@ -46,6 +46,18 @@ export function actualizarProducto(sku, cambios, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
 }
 
+// Desactiva ('descontinuado': sale de la tienda y conserva su historial) o reactiva ('activo')
+// un producto (RF-18).
+export function cambiarEstadoProducto(sku, estado, { signal } = {}) {
+    return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}/estado`, { metodo: 'PATCH', cuerpo: { estado }, signal })
+}
+
+// Borra un producto sin historial. Si tiene ventas o movimientos el servidor responde 409
+// (PRODUCTO_CON_HISTORIAL) y hay que desactivarlo en su lugar.
+export function eliminarProducto(sku, { signal } = {}) {
+    return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'DELETE', signal })
+}
+
 // Registra un producto nuevo (el código no se puede repetir) y lo devuelve con su precio.
 export function crearProducto(producto, { signal } = {}) {
     return pedir('/api/catalogo/productos', { metodo: 'POST', cuerpo: producto, signal })

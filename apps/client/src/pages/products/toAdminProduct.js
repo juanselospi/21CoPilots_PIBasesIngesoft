@@ -22,6 +22,7 @@ const labelByEtiqueta = {
     margen_negativo: 'Margen negativo',
     existencias_bajas: 'Existencias bajas',
     oculto_en_tienda: 'Oculto en la tienda',
+    descontinuado: 'Descontinuado',
 }
 
 // Busca el monto de un paso del desglose del precio (costo, importacion, margen, impuesto)
@@ -44,6 +45,8 @@ export const toAdminProduct = ({
     stock: existencias,
     backorder: admiteContrapedido,
     labels: etiquetas.map((etiqueta) => ({ key: etiqueta, text: labelByEtiqueta[etiqueta] ?? etiqueta })),
+    // Desactivado: no se ve en la tienda, pero conserva su historial
+    discontinued: etiquetas.includes('descontinuado'),
     costoItem,
     // null cuando el producto hereda el valor de su familia
     importacionPct: heredado?.importacion ? null : porcentajeImportacion,

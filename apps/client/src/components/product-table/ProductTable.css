@@ -74,7 +74,14 @@
   gap: 6px;
 }
 
-/* Botón "Editar" de cada fila */
+/* Editar, desactivar o reactivar y eliminar, en una sola fila */
+.product-table-actions {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Botones de cada fila */
 .product-table-button {
   display: inline-flex;
   align-items: center;
@@ -93,4 +100,10 @@
 .product-table-button:hover {
   border-color: var(--color-enlace);
   color: var(--color-enlace);
+}
+
+/* "Eliminar" se pone rojo al pasar el mouse */
+.product-table-button-danger:hover {
+  border-color: var(--estado-error-texto);
+  color: var(--estado-error-texto);
 }

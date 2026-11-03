@@ -1,4 +1,4 @@
-import { Clock, EyeOff, Pencil, Tag, TrendingDown, TriangleAlert } from 'lucide-react'
+import { Archive, ArchiveRestore, Clock, EyeOff, Pencil, Tag, Trash2, TrendingDown, TriangleAlert } from 'lucide-react'
 import './ProductTable.css'
 
 // Color e icono de cada etiqueta que calcula el servidor; una etiqueta nueva sale en gris.
@@ -7,13 +7,15 @@ const chipByLabel = {
     margen_negativo: { className: 'chip chip-error', Icon: TrendingDown },
     existencias_bajas: { className: 'chip chip-aviso', Icon: TriangleAlert },
     oculto_en_tienda: { className: 'chip', Icon: EyeOff },
+    descontinuado: { className: 'chip', Icon: Archive },
 }
 
 const defaultChip = { className: 'chip', Icon: Tag }
 
 // Vista de tabla del listado de productos del panel.
-// Solo muestra lo que recibe; "Editar" avisa con `onEdit`.
-function ProductTable({ products, formatPrice, onEdit }) {
+// Solo muestra lo que recibe; "Editar" avisa con `onEdit` y
+// desactivar, reactivar o eliminar con `onAction(acción, producto)`.
+function ProductTable({ products, formatPrice, onEdit, onAction }) {
     return (
         <div className='product-table-wrapper'>
             <table className='product-table'>
@@ -50,14 +52,43 @@ function ProductTable({ products, formatPrice, onEdit }) {
                                 </div>
                             </td>
                             <td>
-                                <button
-                                    type='button'
-                                    className='product-table-button'
-                                    aria-label={`Editar ${product.name}`}
-                                    onClick={() => onEdit(product)}
-                                >
-                                    <Pencil size={16} />Editar
-                                </button>
+                                <div className='product-table-actions'>
+                                    <button
+                                        type='button'
+                                        className='product-table-button'
+                                        aria-label={`Editar ${product.name}`}
+                                        onClick={() => onEdit(product)}
+                                    >
+                                        <Pencil size={16} />Editar
+                                    </button>
+                                    {product.discontinued ? (
+                                        <button
+                                            type='button'
+                                            className='product-table-button'
+                                            aria-label={`Reactivar ${product.name}`}
+                                            onClick={() => onAction('reactivar', product)}
+                                        >
+                                            <ArchiveRestore size={16} />Reactivar
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type='button'
+                                            className='product-table-button'
+                                            aria-label={`Desactivar ${product.name}`}
+                                            onClick={() => onAction('desactivar', product)}
+                                        >
+                                            <Archive size={16} />Desactivar
+                                        </button>
+                                    )}
+                                    <button
+                                        type='button'
+                                        className='product-table-button product-table-button-danger'
+                                        aria-label={`Eliminar ${product.name}`}
+                                        onClick={() => onAction('eliminar', product)}
+                                    >
+                                        <Trash2 size={16} />Eliminar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
