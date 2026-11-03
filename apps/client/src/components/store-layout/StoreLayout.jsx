@@ -10,11 +10,11 @@ import { useSesion } from '../../hooks/useSesion.js'
 function StoreLayout() {
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
-    const { usuario, cargando } = useSesion()
+    const { usuario, cargando, cerrarSesion } = useSesion()
 
     return (
         <>
-            <Header categories={categoryNames} user={usuario} loadingSession={cargando} />
+            <Header categories={categoryNames} user={usuario} loadingSession={cargando} onLogOut={cerrarSesion} />
             <Outlet context={{ categorias, categoryNames }} />
             <Footer categories={categoryNames} />
         </>

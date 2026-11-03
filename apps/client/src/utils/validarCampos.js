@@ -2,6 +2,14 @@
 export function validarCampos(valores, definicion) {
     const errores = {}
     for (const [campo, reglas] of Object.entries(definicion)) {
+        // Una casilla sin marcar vale false, que como texto no esta vacio, por eso se revisa aparte
+        if (reglas.tipo === 'casilla') {
+            if (reglas.obligatorio && valores[campo] !== true) {
+                errores[campo] = reglas.mensajeCasilla ?? 'Debe marcar esta casilla.'
+            }
+            continue
+        }
+
         const valor = String(valores[campo] ?? '').trim()
         if (!valor) {
             if (reglas.obligatorio) errores[campo] = 'Este campo es obligatorio'
@@ -30,6 +38,11 @@ export function validarCampos(valores, definicion) {
 
         if (!errores[campo] && reglas.patron && !new RegExp(reglas.patron).test(valor)) {
             errores[campo] = reglas.mensajePatron ?? 'Revise el formato de este campo.'
+        }
+
+        // igualA: tiene que ser igual a otro campo, como al confirmar la contraseña
+        if (!errores[campo] && reglas.igualA && valor !== String(valores[reglas.igualA] ?? '').trim()) {
+            errores[campo] = reglas.mensajeIgualA ?? 'Los valores no coinciden.'
         }
     }
     return errores

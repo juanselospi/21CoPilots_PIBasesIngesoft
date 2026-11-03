@@ -6,11 +6,12 @@
  *
  * POR IMPLEMENTAR
  *   registrarIngreso     RF-13 — una sola pantalla, ≤ 4 interacciones (RNF-11)
- *   registrarVenta       RF-17 — venta de canal externo
- *   descontinuar         RF-18
+ *   registrarAjuste      RF-20 — siempre con motivo
  *   listarMovimientos    RF-19
  *   listarAlertas        RF-16 — existencias en el umbral o por debajo
  */
+
+import { aAlerta } from "./inventario.dto.js";
 
 export class InventarioController {
   #servicio;
@@ -18,4 +19,10 @@ export class InventarioController {
   constructor({ servicio }) {
     this.#servicio = servicio;
   }
+
+  // GET /alertas
+  listarAlertas = async (_peticion, respuesta) => {
+    const { umbral, productos } = await this.#servicio.listarAlertas();
+    respuesta.json({ datos: productos.map(aAlerta), meta: { umbral, total: productos.length } });
+  };
 }

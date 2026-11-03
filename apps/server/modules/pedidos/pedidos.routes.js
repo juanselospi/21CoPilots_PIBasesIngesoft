@@ -1,21 +1,33 @@
 /**
  * Rutas de carrito y pedidos.
  *
- * Rutas previstas — confirmar el contrato con el equipo antes de fijarlo:
- *   GET    /carrito                 RF-24
- *   POST   /carrito/lineas          RF-21, RF-22, RF-23
- *   DELETE /carrito/lineas/:id      RF-21
- *   POST   /                        RF-25  confirmar pedido
- *   GET    /:id                     RF-27  estado del pedido
- *   POST   /:id/cancelacion         RF-28
+ * Un pedido se identifica por el correo del cliente y el número de carrito.
+ * Rutas previstas, a confirmar con el equipo antes de fijarlas:
+ *   GET    /modalidades                     RF-62  pública
+ *   GET    /carrito                         RF-24
+ *   POST   /carrito/lineas                  RF-21, RF-22, RF-23
+ *   PATCH  /carrito/lineas/:sku             RF-21
+ *   DELETE /carrito/lineas/:sku             RF-21
+ *   POST   /                                RF-25  confirmar pedido
+ *   GET    /:numCarrito                     RF-27  estado del pedido propio
+ *   GET    /admin                           RF-46  pedidos para el administrador
+ *   POST   /admin/:correo/:numCarrito/estado  RF-26, RF-28
+ *
+ * El cliente no cancela sus pedidos: eso lo hace solo el administrador.
  */
 
 import { Router } from "express";
+import { asincrono } from "../../shared/http/envoltura-async.js";
+import { exigirSesion } from "../../shared/http/autenticacion.js";
+import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 
-export function crearRutasDePedidos(controlador, { exigirSesion }) {
+export function crearRutasDePedidos(controlador, { exigirRol }) {
   const rutas = Router();
 
-  rutas.use(exigirSesion);
+  rutas.get("/modalidades", asincrono(controlador.listarModalidades));
+
+  // El carrito es solo del cliente; sin sesión responde 401 y con otra cuenta 403.
+  rutas.use("/carrito", exigirSesion, exigirRol(ROLES.CLIENTE));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
 

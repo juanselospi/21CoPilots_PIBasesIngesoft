@@ -1,0 +1,235 @@
+/* Pagina de Mi cuenta */
+
+.my-account {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  text-align: left;
+}
+
+.my-account h1 {
+  font-size: var(--texto-seccion);
+}
+
+.my-account-card {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+/* Datos que solo se ven, la etiqueta a la izquierda y el valor a la derecha */
+.my-account-data {
+  margin: 0;
+}
+
+.my-account-data div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  padding: 16px 20px;
+}
+
+.my-account-data div + div {
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-account-data dt {
+  min-width: 180px;
+  color: var(--color-texto-suave);
+  font-weight: 600;
+}
+
+.my-account-data dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Fila que abre y cierra la seccion */
+.my-account-section-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: none;
+  color: var(--color-titulo);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.my-account-section-toggle:hover {
+  color: var(--color-enlace);
+}
+
+.my-account-section-toggle[aria-expanded='true'] {
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.my-account-saved,
+.my-account-error {
+  padding: 12px 14px;
+  border-radius: var(--radio-control);
+}
+
+.my-account-saved {
+  margin: 0 20px 16px;
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+}
+
+.my-account-error {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+.my-account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* La etiqueta va en una columna y el input, el error y los requisitos en la otra */
+.my-account-field {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  align-items: center;
+  gap: 8px 24px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+.my-account-field > :not(label) {
+  grid-column: 2;
+}
+
+.my-account-password {
+  position: relative;
+}
+
+.my-account-password input {
+  width: 100%;
+  padding: 12px 48px 12px 14px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  font: inherit;
+  font-size: var(--texto-general);
+  font-weight: 400;
+}
+
+.my-account-password input:focus {
+  outline: 2px solid var(--color-enlace);
+  outline-offset: -1px;
+}
+
+.my-account-password input[aria-invalid='true'] {
+  border-color: var(--estado-error-texto);
+}
+
+.my-account-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: flex;
+  padding: 6px;
+  border: none;
+  background: none;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.my-account-password-toggle:hover {
+  color: var(--color-enlace);
+}
+
+.my-account-field-error {
+  color: var(--estado-error-texto);
+  font-size: var(--texto-etiqueta);
+}
+
+/* El margen lo alinea con la columna de los inputs */
+.my-account-link {
+  align-self: flex-start;
+  margin-left: 204px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-enlace);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.my-account-link:hover {
+  text-decoration: underline;
+}
+
+.my-account-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.my-account-actions button {
+  padding: 10px 18px;
+  border-radius: var(--radio-control);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.my-account-cancel {
+  border: 1.5px solid var(--color-borde);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+}
+
+.my-account-cancel:hover {
+  border-color: var(--color-enlace);
+  color: var(--color-enlace);
+}
+
+.my-account-save {
+  border: 1.5px solid var(--color-principal);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+}
+
+.my-account-save:hover {
+  background: var(--color-principal-hover);
+}
+
+.my-account-actions button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+@media (max-width: 640px) {
+  .my-account {
+    padding: 24px 16px 40px;
+  }
+
+  .my-account-field {
+    grid-template-columns: 1fr;
+  }
+
+  .my-account-field > :not(label) {
+    grid-column: 1;
+  }
+
+  .my-account-link {
+    margin-left: 0;
+  }
+}

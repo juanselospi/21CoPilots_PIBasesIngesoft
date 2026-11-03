@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { AdminService } from "./admin.service.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { hashearToken } from "./seguridad/tokens-de-sesion.js";
-import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";
+import { CredencialesInvalidas, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 
 /** Repositorio en memoria con un administrador y un usuario que no es administrador ni cliente. */
 async function crearRepositorioFalso() {
@@ -33,11 +33,30 @@ async function crearRepositorioFalso() {
       sesiones.push(sesion);
     },
     async buscarUsuarioPorSesion(tokenHash) {
-      const sesion = sesiones.find((s) => s.tokenHash === tokenHash);
+      const sesion = sesiones.find((s) => s.tokenHash === tokenHash && s.venceEn > new Date());
       const usuario = usuarios.find((u) => u.correo === sesion?.correoUsuario);
-      return usuario ? { correo: usuario.correo, rol: usuario.rol } : null;
+      return usuario ? { correo: usuario.correo, rol: usuario.rol, venceEn: sesion.venceEn } : null;
+    },
+    async extenderSesion(tokenHash, venceEn) {
+      sesiones.find((s) => s.tokenHash === tokenHash).venceEn = venceEn;
+    },
+    async borrarSesion(tokenHash) {
+      quitarSesiones((s) => s.tokenHash === tokenHash);
+    },
+    async borrarSesionesVencidas(correoUsuario) {
+      quitarSesiones((s) => s.correoUsuario === correoUsuario && s.venceEn <= new Date());
+    },
+    async cambiarContrasena({ correo, contrasenaHash, sesionQueSeQueda }) {
+      usuarios.find((u) => u.correo === correo).contrasenaHash = contrasenaHash;
+      quitarSesiones((s) => s.correoUsuario === correo && s.tokenHash !== sesionQueSeQueda);
     },
   };
+
+  function quitarSesiones(condicion) {
+    for (let i = sesiones.length - 1; i >= 0; i--) {
+      if (condicion(sesiones[i])) sesiones.splice(i, 1);
+    }
+  }
 }
 
 test("RF-53: con credenciales válidas abre una sesión y devuelve el rol", async () => {
@@ -116,11 +135,143 @@ test("identifica al usuario a partir del token de la cookie", async () => {
   });
 
   assert.deepEqual(await servicio.identificarPorToken(token), {
-    correo: "admin@dchobbies.test",
-    rol: "administrador",
+    usuario: { correo: "admin@dchobbies.test", rol: "administrador" },
+    renovadaHasta: null,
   });
   assert.equal(await servicio.identificarPorToken("token-inventado"), null);
   assert.equal(await servicio.identificarPorToken(undefined), null);
+});
+
+const MINUTO = 60 * 1000;
+
+/** Inicia sesión como administrador y devuelve el token y la sesión guardada. */
+async function entrarComoAdministrador(servicio, repositorio) {
+  const { token } = await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" });
+  return { token, sesion: repositorio.sesiones.find((s) => s.tokenHash === hashearToken(token)) };
+}
+
+test("la duración de la sesión sale de la configuración", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio, duracionSesionMinutos: 90 });
+
+  const { venceEn } = await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" });
+
+  const minutos = (venceEn - Date.now()) / MINUTO;
+  assert.ok(minutos > 89.9 && minutos <= 90);
+});
+
+test("una sesión vencida ya no identifica a nadie", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token, sesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  sesion.venceEn = new Date(Date.now() - MINUTO);
+
+  assert.equal(await servicio.identificarPorToken(token), null);
+});
+
+test("con la renovación activa, una sesión que pasó la mitad de su duración se extiende", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio, duracionSesionMinutos: 20, renovarSesion: true });
+  const { token, sesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  sesion.venceEn = new Date(Date.now() + 5 * MINUTO);
+  const { renovadaHasta } = await servicio.identificarPorToken(token);
+
+  const minutos = (renovadaHasta - Date.now()) / MINUTO;
+  assert.ok(minutos > 19.9 && minutos <= 20);
+  assert.equal(sesion.venceEn, renovadaHasta);
+});
+
+test("una sesión con más de la mitad de su tiempo no se renueva", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio, duracionSesionMinutos: 20, renovarSesion: true });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  assert.equal((await servicio.identificarPorToken(token)).renovadaHasta, null);
+});
+
+test("sin la renovación activa la sesión vence a su hora aunque se use", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio, duracionSesionMinutos: 20 });
+  const { token, sesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  const venceAntes = new Date(Date.now() + 5 * MINUTO);
+  sesion.venceEn = venceAntes;
+
+  assert.equal((await servicio.identificarPorToken(token)).renovadaHasta, null);
+  assert.equal(sesion.venceEn, venceAntes);
+});
+
+test("cerrar sesión borra la sesión de ese token", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  await servicio.cerrarSesion(token);
+
+  assert.equal(await servicio.identificarPorToken(token), null);
+  assert.equal(repositorio.sesiones.length, 0);
+  await servicio.cerrarSesion(undefined);
+});
+
+test("al iniciar sesión se borran las sesiones vencidas del usuario", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  repositorio.sesiones.push({
+    correoUsuario: "admin@dchobbies.test",
+    tokenHash: "vieja",
+    venceEn: new Date(Date.now() - MINUTO),
+  });
+
+  const { sesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  assert.deepEqual(repositorio.sesiones, [sesion]);
+});
+
+test("RF-49: cambia la contraseña, deja esta sesión abierta y cierra las demás", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token: estaSesion } = await entrarComoAdministrador(servicio, repositorio);
+  const { token: otraSesion } = await entrarComoAdministrador(servicio, repositorio);
+
+  await servicio.cambiarContrasena({
+    correo: "admin@dchobbies.test",
+    actual: "Admin123!",
+    nueva: "Nueva#2026",
+    token: estaSesion,
+  });
+
+  assert.notEqual(await servicio.identificarPorToken(estaSesion), null);
+  assert.equal(await servicio.identificarPorToken(otraSesion), null);
+  await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Nueva#2026" });
+  await assert.rejects(
+    servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" }),
+    CredencialesInvalidas
+  );
+});
+
+test("con la contraseña actual equivocada no cambia nada", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  await assert.rejects(
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "otra", nueva: "Nueva#2026", token }),
+    (error) => error instanceof EntradaInvalida && error.detalles.campos[0] === "actual"
+  );
+  await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" });
+});
+
+test("una contraseña nueva que no cumple la política se rechaza con el motivo", async () => {
+  const repositorio = await crearRepositorioFalso();
+  const servicio = new AdminService({ repositorio });
+  const { token } = await entrarComoAdministrador(servicio, repositorio);
+
+  await assert.rejects(
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "Admin123!", nueva: "nueva#2026", token }),
+    { message: "La contraseña debe tener al menos una mayúscula." }
+  );
 });
 
 // Test de los servicios del administrador hecho con la ayuda de Claude

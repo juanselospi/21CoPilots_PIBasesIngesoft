@@ -42,6 +42,38 @@ export async function logIn(correo, contrasena) {
     return body.datos
 }
 
+// Cierra la sesión, el servidor la borra y quita la cookie
+export function logOut() {
+    return pedir('/api/admin/sesion', { metodo: 'DELETE' })
+}
+
+/**
+ * Cambia la contraseña del usuario que tiene la sesión.
+ * Si la actual está mal el servidor responde 400 y marca `contrasenaActual` en `detalles.campos`.
+ */
+export function cambiarContrasena(contrasenaActual, contrasenaNueva) {
+    return pedir('/api/admin/contrasena', {
+        metodo: 'PATCH',
+        cuerpo: { contrasenaActual, contrasenaNueva },
+    })
+}
+
+// Pide el enlace para restablecer la contraseña. El servidor responde igual exista o no el correo
+export function pedirEnlaceDeRecuperacion(correo) {
+    return pedir('/api/admin/contrasena/recuperacion', { metodo: 'POST', cuerpo: { correo } })
+}
+
+/**
+ * Cambia la contraseña con el token que llegó en el enlace del correo.
+ * Si el token no sirve (vencido, ya usado o inventado) el servidor responde 400 con el código TOKEN_INVALIDO.
+ */
+export function restablecerContrasena(token, contrasenaNueva) {
+    return pedir('/api/admin/contrasena/restablecimiento', {
+        metodo: 'POST',
+        cuerpo: { token, contrasenaNueva },
+    })
+}
+
 // Devuelve el usuario de la cookie, o null si no hay sesion.
 export async function getSession({ signal } = {}) {
     try {

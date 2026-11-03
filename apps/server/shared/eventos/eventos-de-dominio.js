@@ -21,6 +21,11 @@ export const EVENTOS = Object.freeze({
   /** RF-28 / RN-15 — las unidades regresan al inventario. */
   PEDIDO_CANCELADO: "pedido_cancelado",
 
+  /** RF-18: un producto pasa a descontinuado o vuelve a activo. */
+  ESTADO_DE_PRODUCTO_CAMBIADO: "estado_producto_cambiado",
+  /** Un producto sin historial se borró del catálogo. */
+  PRODUCTO_ELIMINADO: "producto_eliminado",
+
   /** RF-51 — cambio de precio, margen o descuento. */
   PARAMETRO_MODIFICADO: "parametro_modificado",
   /** RNF-10 — el 100 % de los intentos no autorizados debe registrarse. */

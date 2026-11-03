@@ -8,6 +8,7 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -19,30 +20,34 @@ const motorDePrecios = new MotorDePrecios([
 ]);
 
 // Base falsa: guarda los productos por SKU y, como la real, no deja
-// guardar dos con el mismo código. Llena la tasa con su valor por
-// defecto (13 %).
+// guardar dos con el mismo código. Llena el estado y la tasa con sus
+// valores por defecto (activo y 13 %).
 function crearServicio() {
   const productos = new Map();
 
   const repositorio = {
     crear: async (producto) => {
       if (productos.has(producto.sku)) return null;
-      productos.set(producto.sku, { ...producto, tasaImpuesto: 13 });
+      productos.set(producto.sku, { estado: "activo", ...producto, tasaImpuesto: 13 });
       return producto.sku;
     },
     obtenerPorSku: async (sku) => productos.get(sku) ?? null,
-    // Como el COALESCE del SQL: lo que no viene se queda como está.
+    // Existen todas las familias salvo "Sin familia", y se guardan con mayúscula inicial
+    buscarFamilia: async (nombre) =>
+      nombre === "Sin familia" ? null : { nombre: nombre[0].toUpperCase() + nombre.slice(1) },
+    // Como el UPDATE: cambia solo lo que viene, también a null.
     actualizar: async (sku, cambios) => {
       const producto = productos.get(sku);
       if (!producto) return null;
-      for (const [campo, valor] of Object.entries(cambios)) {
-        if (valor !== null && valor !== undefined) producto[campo] = valor;
-      }
+      productos.set(sku, { ...producto, ...cambios });
       return sku;
     },
   };
 
-  return { servicio: new CatalogoService({ repositorio, motorDePrecios }), productos };
+  const eventos = [];
+  const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
+
+  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), productos, eventos };
 }
 
 const pkm001 = {
@@ -405,4 +410,274 @@ test("una categoría con todos sus productos ocultos no aparece", async () => {
   assert.deepEqual(await servicio.listarCategorias(), [
     { nombre: "Video Juegos", cantidadDeProductos: 1 },
   ]);
+});
+
+// Familia Legos: 20 % de importación y 50 % de margen.
+const legos = { porcentajeImportacion: 20, margenGanancia: 50 };
+
+test("un producto sin valores propios toma la importación y el margen de su familia", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("LEG-001", "Legos", 3), porcentajeImportacion: null, margenGanancia: null, familia: legos },
+  ]);
+
+  const [leg001] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+
+  // 100 → 120 → 180 → 203,40
+  assert.equal(leg001.precioFinal, 203.4);
+  assert.equal(leg001.porcentajeImportacion, 20);
+  assert.equal(leg001.margenGanancia, 50);
+  assert.deepEqual(leg001.heredado, { porcentajeImportacion: true, margenGanancia: true });
+});
+
+test("un margen propio sobrescribe el de la familia y la importación se sigue heredando", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("LEG-002", "Legos", 3), porcentajeImportacion: null, margenGanancia: 25, familia: legos },
+  ]);
+
+  const [leg002] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+
+  // 100 → 120 → 150 → 169,50
+  assert.equal(leg002.precioFinal, 169.5);
+  assert.deepEqual(leg002.heredado, { porcentajeImportacion: true, margenGanancia: false });
+});
+
+test("un margen negativo heredado de la familia también lleva la etiqueta", async () => {
+  const repositorio = {
+    listarParaAdministracion: async () => [
+      {
+        ...producto("LEG-003", "Legos", 3),
+        porcentajeImportacion: null,
+        margenGanancia: null,
+        familia: { porcentajeImportacion: 0, margenGanancia: -10 },
+      },
+    ],
+  };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos } = await servicio.listarParaAdministracion({ limite: 24 });
+
+  assert.ok(productos[0].etiquetas.includes("margen_negativo"));
+});
+
+test("no registra un producto de una familia que no existe", async () => {
+  const { servicio, productos } = crearServicio();
+
+  await assert.rejects(servicio.crearProducto({ ...pkm001, categoria: "Sin familia" }), (error) => {
+    assert.ok(error instanceof EntradaInvalida);
+    assert.deepEqual(error.detalles.campos, ["categoria"]);
+    return true;
+  });
+  assert.equal(productos.size, 0);
+});
+
+test("el producto nuevo se guarda con el nombre de la familia como está guardado", async () => {
+  const { servicio } = crearServicio();
+
+  const producto = await servicio.crearProducto({ ...pkm001, categoria: "trading Cards" });
+
+  assert.equal(producto.categoria, "Trading Cards");
+});
+
+test("una familia inactiva saca sus productos de la tienda y los marca ocultos en el panel", async () => {
+  const inactiva = { porcentajeImportacion: 0, margenGanancia: 0, activa: false };
+  const productos = [
+    { ...producto("LEG-001", "Legos", 3), familia: inactiva },
+    producto("PKM-001", "Trading Cards", 3),
+  ];
+  const repositorio = {
+    listar: async () => productos,
+    listarParaAdministracion: async () => productos,
+    obtenerPorSku: async (sku) => productos.find((p) => p.sku === sku),
+  };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const tienda = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+  assert.deepEqual(tienda.map((p) => p.sku), ["PKM-001"]);
+  await assert.rejects(servicio.obtenerFicha("LEG-001"), RecursoNoEncontrado);
+  assert.deepEqual(await servicio.listarFamilias(), [{ nombre: "Trading Cards", cantidadDeProductos: 1 }]);
+
+  const { productos: panel } = await servicio.listarParaAdministracion({ limite: 24 });
+  assert.ok(panel.find((p) => p.sku === "LEG-001").etiquetas.includes("oculto_en_tienda"));
+});
+
+// Editar datos generales
+
+test("cambia el nombre, la descripción y el proveedor del producto", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarProducto("PKM-001", {
+    nombre: "Sobre Pokémon 151",
+    descripcion: "Expansión 151",
+    proveedor: "Distribuidora TCG",
+  });
+
+  assert.equal(producto.nombre, "Sobre Pokémon 151");
+  assert.equal(producto.descripcion, "Expansión 151");
+  assert.equal(producto.proveedor, "Distribuidora TCG");
+});
+
+test("mueve el producto a otra familia con el nombre como está guardado", async () => {
+  const { servicio } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  const producto = await servicio.actualizarProducto("PKM-001", { categoria: "coleccionables" });
+
+  assert.equal(producto.categoria, "Coleccionables");
+});
+
+test("no mueve el producto a una familia que no existe", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await assert.rejects(servicio.actualizarProducto("PKM-001", { categoria: "Sin familia" }), EntradaInvalida);
+  assert.equal(productos.get("PKM-001").categoria, "Trading Cards");
+});
+
+test("null en el margen hace que el producto vuelva a usar el de su familia", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+  productos.get("PKM-001").familia = { porcentajeImportacion: 0, margenGanancia: 50 };
+
+  const producto = await servicio.actualizarProducto("PKM-001", { margenGanancia: null });
+
+  assert.equal(producto.margenGanancia, 50);
+  assert.equal(producto.heredado.margenGanancia, true);
+});
+
+test("RF-52: cambiar el margen publica el valor anterior y el nuevo con quién lo cambió", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await servicio.actualizarProducto("PKM-001", { margenGanancia: 30 }, { responsable: "admin@dchobbies.test" });
+
+  assert.deepEqual(eventos, [
+    {
+      evento: "parametro_modificado",
+      datos: {
+        correoUsuario: "admin@dchobbies.test",
+        entidad: "producto",
+        entidadId: "PKM-001",
+        valorAnterior: { costoItem: 100, porcentajeImportacion: 20, margenGanancia: 25 },
+        valorNuevo: { costoItem: 100, porcentajeImportacion: 20, margenGanancia: 30 },
+      },
+    },
+  ]);
+});
+
+test("cambiar solo datos generales o existencias no publica cambio de parámetros", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+
+  await servicio.actualizarProducto("PKM-001", { nombre: "Otro nombre", existencias: 3 });
+  await servicio.actualizarProducto("PKM-001", { margenGanancia: 25 });
+
+  assert.deepEqual(eventos, []);
+});
+
+test("editar un producto que no existe responde no encontrado", async () => {
+  const { servicio } = crearServicio();
+
+  await assert.rejects(servicio.actualizarProducto("NO-EXISTE", { nombre: "X" }), RecursoNoEncontrado);
+});
+
+// Desactivar y reactivar (RF-18)
+
+test("RF-18: descontinuar un producto lo saca de la tienda, la ficha y las familias", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto({ ...pkm001, existencias: 5 });
+
+  await servicio.cambiarEstado("PKM-001", { estado: "descontinuado" });
+
+  assert.equal(productos.get("PKM-001").estado, "descontinuado");
+  const tienda = new CatalogoService({
+    repositorio: {
+      listar: async () => [...productos.values()],
+      obtenerPorSku: async (sku) => productos.get(sku),
+    },
+    motorDePrecios,
+  });
+  assert.deepEqual(await tienda.listarCatalogo({ limite: 10, desplazamiento: 0 }), []);
+  await assert.rejects(tienda.obtenerFicha("PKM-001"), RecursoNoEncontrado);
+  assert.deepEqual(await tienda.listarFamilias(), []);
+});
+
+test("en el panel sale con disponibilidad y etiqueta descontinuado, y se puede filtrar", async () => {
+  const descontinuado = { ...producto("PKM-001", "Trading Cards", 5), estado: "descontinuado" };
+  const repositorio = { listarParaAdministracion: async () => [descontinuado, producto("LEG-001", "Legos", 5)] };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos } = await servicio.listarParaAdministracion({ disponibilidad: "descontinuado", limite: 24 });
+
+  assert.deepEqual(productos.map((p) => p.sku), ["PKM-001"]);
+  assert.equal(productos[0].disponibilidad, "descontinuado");
+  assert.deepEqual(productos[0].etiquetas, ["oculto_en_tienda", "descontinuado"]);
+});
+
+test("reactivar devuelve el producto a la tienda y publica el cambio para la bitácora", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto({ ...pkm001, existencias: 5 });
+  await servicio.cambiarEstado("PKM-001", { estado: "descontinuado" }, { responsable: "admin@dchobbies.test" });
+
+  const producto = await servicio.cambiarEstado("PKM-001", { estado: "activo" });
+
+  assert.equal(producto.disponibilidad, "en_existencia");
+  assert.deepEqual(
+    eventos.map(({ evento, datos }) => [evento, datos.valorNuevo.estado]),
+    [
+      ["estado_producto_cambiado", "descontinuado"],
+      ["estado_producto_cambiado", "activo"],
+    ]
+  );
+  assert.equal(eventos[0].datos.correoUsuario, "admin@dchobbies.test");
+});
+
+test("pedir el mismo estado no publica nada y un estado desconocido da 400", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+  await servicio.cambiarEstado("PKM-001", { estado: "activo" });
+
+  assert.deepEqual(eventos, []);
+  await assert.rejects(servicio.cambiarEstado("PKM-001", { estado: "borrado" }), EntradaInvalida);
+  await assert.rejects(servicio.cambiarEstado("NO-EXISTE", { estado: "activo" }), RecursoNoEncontrado);
+});
+
+// Eliminar
+
+function crearServicioParaEliminar(resultado) {
+  const eventos = [];
+  const repositorio = {
+    obtenerPorSku: async (sku) => (sku === "NO-EXISTE" ? null : { ...pkm001, sku }),
+    eliminar: async () => resultado,
+  };
+  const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
+  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), eventos };
+}
+
+test("borra un producto sin historial y lo publica para la bitácora", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("eliminado");
+
+  await servicio.eliminarProducto("NUEVO-1", { responsable: "admin@dchobbies.test" });
+
+  assert.equal(eventos[0].evento, "producto_eliminado");
+  assert.equal(eventos[0].datos.entidadId, "NUEVO-1");
+  assert.equal(eventos[0].datos.valorAnterior.nombre, pkm001.nombre);
+});
+
+test("un producto con ventas o movimientos no se borra y pide desactivarlo", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("con_historial");
+
+  await assert.rejects(servicio.eliminarProducto("PKM-001"), (error) => {
+    assert.ok(error instanceof ProductoConHistorial);
+    assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
+    assert.equal(error.message, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+    return true;
+  });
+  assert.deepEqual(eventos, []);
+});
+
+test("borrar un producto que no existe responde no encontrado", async () => {
+  const { servicio } = crearServicioParaEliminar("eliminado");
+
+  await assert.rejects(servicio.eliminarProducto("NO-EXISTE"), RecursoNoEncontrado);
 });

@@ -23,6 +23,13 @@ export class RecursoNoEncontrado extends ErrorDeDominio {
   }
 }
 
+/** Un dato que tiene que ser único ya está registrado, como un correo o una cédula. */
+export class DatoDuplicado extends ErrorDeDominio {
+  constructor(mensaje, campos) {
+    super(mensaje, { codigo: "DATO_DUPLICADO", detalles: { campos } });
+  }
+}
+
 /** Una regla de negocio (RN-xx) impide completar la operación. */
 export class ReglaDeNegocioViolada extends ErrorDeDominio {
   constructor(mensaje, regla) {
@@ -54,9 +61,21 @@ export class NoAutorizado extends ErrorDeDominio {
   }
 }
 
-/** Datos de entrada inválidos. */
+/**
+ * Datos de entrada inválidos. `campos` es la lista de nombres que ya lee el
+ * cliente; `errores` trae además el mensaje de cada uno.
+ */
 export class EntradaInvalida extends ErrorDeDominio {
-  constructor(mensaje, campos = null) {
-    super(mensaje, { codigo: "ENTRADA_INVALIDA", detalles: { campos } });
+  constructor(mensaje, campos = null, errores = null) {
+    super(mensaje, { codigo: "ENTRADA_INVALIDA", detalles: { campos, errores } });
+  }
+}
+
+/** Un producto con ventas o movimientos no se borra: se desactiva (RF-18). */
+export class ProductoConHistorial extends ErrorDeDominio {
+  constructor() {
+    super("Este producto tiene ventas o movimientos; desactívelo en su lugar.", {
+      codigo: "PRODUCTO_CON_HISTORIAL",
+    });
   }
 }

@@ -2,16 +2,14 @@ import { Link } from 'react-router'
 import { LayoutDashboard, Search, ShoppingCart, UserRound } from 'lucide-react'
 import './Header.css'
 import Logo from '../logo/Logo.jsx'
+import UserMenu from '../user-menu/UserMenu.jsx'
 import { catalogPath } from '../../routes.js'
 
 const ADMIN_ROLE = 'administrador'
 
-// Iniciales para el circulo del usuario: "Juan Loaiza" -> "JL".
-const toInitials = (nombre) =>
-    nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((parte) => parte[0].toUpperCase()).join('')
-
 // `user` es el usuario de la sesion o null. Mientras que con `loadingSession` no se muestra ni el usuario ni el enlace de iniciar sesion para que no cambie de golpe.
-function Header({ categories, user, loadingSession }) {
+// `onLogOut` es lo que se llama al confirmar "Cerrar sesión" en el menu de la cuenta
+function Header({ categories, user, loadingSession, onLogOut }) {
     return (
         <header className='header'>
             <div className='header-top'>
@@ -26,10 +24,7 @@ function Header({ categories, user, loadingSession }) {
                     <Link to='/admin/productos' className='header-link'><LayoutDashboard size={20} />Panel</Link>
                 )}
                 {!loadingSession && (user ? (
-                    <span className='header-user'>
-                        <span className='header-user-initials' aria-hidden='true'>{toInitials(user.nombre)}</span>
-                        Hola, {user.nombre.split(/\s+/)[0]}
-                    </span>
+                    <UserMenu user={user} onLogOut={onLogOut} logOutMessage='Vas a salir de tu cuenta.' />
                 ) : (
                     <Link to='/acceso' className='header-link'><UserRound size={20} />Iniciar sesión</Link>
                 ))}

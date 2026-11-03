@@ -10,11 +10,11 @@ import { PedidosRepository } from "./pedidos.repository.js";
 import { PedidosService } from "./pedidos.service.js";
 import { PedidosController } from "./pedidos.controller.js";
 import { crearRutasDePedidos } from "./pedidos.routes.js";
-import { exigirSesion } from "../../shared/http/autenticacion.js";
 
 export function crearModuloPedidos({
   pool,
   busDeEventos,
+  exigirRol,
   inventario,
   clientes,
   motorDePrecios,
@@ -34,7 +34,7 @@ export function crearModuloPedidos({
   const controlador = new PedidosController({ servicio });
 
   return {
-    rutas: crearRutasDePedidos(controlador, { exigirSesion }),
+    rutas: crearRutasDePedidos(controlador, { exigirRol }),
     servicio,
   };
 }

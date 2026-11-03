@@ -38,11 +38,17 @@ export function componerSistema(configuracion) {
   // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
   const catalogo = crearModuloCatalogo({
     pool,
+    busDeEventos,
     exigirRol,
     umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
   });
 
-  const inventario = crearModuloInventario({ pool, busDeEventos, exigirRol });
+  const inventario = crearModuloInventario({
+    pool,
+    busDeEventos,
+    exigirRol,
+    umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
+  });
 
   const admin = crearModuloAdmin({
     pool,
@@ -55,15 +61,22 @@ export function componerSistema(configuracion) {
   });
 
   // Las sesiones son del admin, por eso admin es quien dice de quien es cada cookie
-  const identificarUsuario = crearIdentificarUsuario((token) =>
-    admin.servicio.identificarPorToken(token)
+  const identificarUsuario = crearIdentificarUsuario(
+    (token) => admin.servicio.identificarPorToken(token),
+    { cookieSegura: configuracion.sesion.cookieSegura }
   );
 
-  const clientes = crearModuloClientes({ pool, exigirRol });
+  const clientes = crearModuloClientes({
+    pool,
+    exigirRol,
+    cuentas: admin.cuentas,
+    cookieSegura: configuracion.sesion.cookieSegura,
+  });
 
   const pedidos = crearModuloPedidos({
     pool,
     busDeEventos,
+    exigirRol,
     inventario: inventario.servicio,
     clientes: clientes.servicio,
     motorDePrecios: catalogo.motorDePrecios,

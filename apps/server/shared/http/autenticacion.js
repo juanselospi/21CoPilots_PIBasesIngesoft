@@ -12,15 +12,35 @@ import { NoAutenticado } from "../errores/errores-de-dominio.js";
 
 export const COOKIE_DE_SESION = "sesion";
 
+// HttpOnly para que el JavaScript de la página no pueda leer la cookie
+const OPCIONES_DE_LA_COOKIE = Object.freeze({ httpOnly: true, sameSite: "lax", path: "/api" });
+
+/** `segura` solo en producción, que es donde hay HTTPS. */
+export function escribirCookieDeSesion(respuesta, token, venceEn, { segura = false } = {}) {
+  respuesta.cookie(COOKIE_DE_SESION, token, { ...OPCIONES_DE_LA_COOKIE, secure: segura, expires: venceEn });
+}
+
+export function borrarCookieDeSesion(respuesta, { segura = false } = {}) {
+  respuesta.clearCookie(COOKIE_DE_SESION, { ...OPCIONES_DE_LA_COOKIE, secure: segura });
+}
+
 /**
  * Identifica al usuario si viene la cookie; no bloquea si no viene.
- * La búsqueda por token se inyecta desde la raíz de composición.
+ * La búsqueda por token se inyecta desde la raíz de composición y devuelve
+ * `{ usuario, renovadaHasta }`, o null si la sesión no existe o venció.
  */
-export function crearIdentificarUsuario(buscarUsuarioPorToken) {
-  return async (peticion, _respuesta, siguiente) => {
+export function crearIdentificarUsuario(identificarPorToken, { cookieSegura = false } = {}) {
+  return async (peticion, respuesta, siguiente) => {
     try {
       const token = peticion.cookies?.[COOKIE_DE_SESION];
-      peticion.usuario = token ? await buscarUsuarioPorToken(token) : null;
+      const sesion = token ? await identificarPorToken(token) : null;
+      peticion.usuario = sesion?.usuario ?? null;
+
+      // Si la sesión se extendió hay que extender también la cookie, o el
+      // navegador la borraría a la hora de antes.
+      if (sesion?.renovadaHasta) {
+        escribirCookieDeSesion(respuesta, token, sesion.renovadaHasta, { segura: cookieSegura });
+      }
       siguiente();
     } catch (error) {
       siguiente(error);

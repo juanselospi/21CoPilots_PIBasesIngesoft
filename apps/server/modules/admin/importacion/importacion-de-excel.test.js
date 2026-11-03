@@ -238,6 +238,14 @@ test("RN-02: acepta margen negativo mayor que -100 %", async () => {
   assert.deepEqual(await motivosDe(conCambios(GOD_OF_WAR, { "%_margen_ganancia": -0.1 })), []);
 });
 
+test("el margen puede quedar vacío para usar el de la familia", async () => {
+  const fila = conCambios(GOD_OF_WAR, { "%_margen_ganancia": null });
+
+  assert.deepEqual(await motivosDe(fila), []);
+  const { guardados } = await importar([fila]);
+  assert.equal(guardados[0].margenGanancia, null);
+});
+
 test("informa todos los problemas de una fila, no solo el primero", async () => {
   const motivos = await motivosDe(conCambios(GOD_OF_WAR, { familia: null, costo_usd: "abc" }));
   assert.equal(motivos.length, 2);

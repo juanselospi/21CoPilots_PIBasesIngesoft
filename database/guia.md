@@ -46,7 +46,7 @@ Debe terminar con `✔ BD reconstruida desde cero.`
 npm run db:test
 ```
 
-Debe terminar con `✔ 175 prueba(s) aprobada(s).`
+Debe terminar con `✔ 180 prueba(s) aprobada(s).`
 
 Listo: la base de datos está corriendo.
 
@@ -85,6 +85,19 @@ Pruebe con `SELECT sku, stock FROM reportes.v_existencias;` y salga con `\q`.
 | Volver a encenderla | `npm run db:up` |
 | Borrar todo y empezar de cero | `npm run db:reset` |
 | Aplicar cambios que bajé con `git pull` | `npm run db:migrate` |
+
+---
+
+## Sesiones del servidor
+
+Las sesiones se guardan en `usuarios.sesion` y se configuran en `apps/server/.env`:
+
+| Variable | Qué hace | Valor por defecto |
+|---|---|---|
+| `DURACION_SESION_MINUTOS` | Minutos que dura una sesión desde que se inicia. | `25` |
+| `SESION_RENOVAR` | Con `true`, una sesión que se usa cuando le queda menos de la mitad se extiende otra duración completa. Con cualquier otro valor vence a su hora. | apagada |
+
+Cerrar sesión (`DELETE /api/admin/sesion`) borra la fila de la sesión, y al iniciar sesión se borran las vencidas de ese usuario. Después de cambiar el `.env` hay que reiniciar el servidor.
 
 ---
 

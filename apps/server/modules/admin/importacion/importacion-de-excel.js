@@ -95,11 +95,13 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
       maximo: LIMITES.porcentaje,
     });
     // El margen puede ser negativo (liquidaciones), pero con -100 % el
-    // precio quedaría en cero.
-    exigirNumero(motivos, fila.margenGanancia, "%_margen_ganancia", {
-      mayorQue: -100,
-      maximo: LIMITES.porcentaje,
-    });
+    // precio quedaría en cero. Vacío significa usar el de la familia.
+    if (fila.margenGanancia !== null) {
+      exigirNumero(motivos, fila.margenGanancia, "%_margen_ganancia", {
+        mayorQue: -100,
+        maximo: LIMITES.porcentaje,
+      });
+    }
 
     if (fila.porcentajeIva !== null && fila.porcentajeIva !== this.#porcentajeIva) {
       motivos.push(

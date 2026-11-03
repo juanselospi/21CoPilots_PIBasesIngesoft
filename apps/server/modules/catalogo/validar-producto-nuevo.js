@@ -2,78 +2,68 @@
  * Revisa y normaliza los datos de un producto nuevo que llegan del panel.
  */
 
-import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { crearValidacion, texto } from "../../shared/validacion/validar-campos.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
 import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
-
-const LIMITES = Object.freeze({
-  sku: 50,
-  nombre: 200,
-  categoria: 100,
-  proveedor: 150,
-  imagenUrl: 500,
-});
+import {
+  LIMITES_DE_TEXTO as LIMITES,
+  problemaDelNombre,
+  problemaDeLaCategoria,
+  problemaDelProveedor,
+  problemaDeLaImagen,
+} from "./reglas-de-datos-generales.js";
 
 /**
  * @returns el producto listo para guardar
  * @throws {EntradaInvalida} con la lista de campos que tienen problemas
  */
 export function validarProductoNuevo(datos = {}) {
-  const problemas = [];
-  const campos = [];
-  const anotar = (campo, mensaje) => {
-    campos.push(campo);
-    problemas.push(mensaje);
-  };
+  const validacion = crearValidacion();
 
   // El SKU se guarda en mayúsculas y sin espacios
   const sku = texto(datos.sku)?.toUpperCase() ?? null;
-  if (!sku) anotar("sku", "El código es obligatorio.");
-  else if (sku.length > LIMITES.sku) anotar("sku", `El código no puede pasar de ${LIMITES.sku} caracteres.`);
+  if (!sku) validacion.anotar("sku", "El código es obligatorio.");
+  else if (sku.length > LIMITES.sku) validacion.anotar("sku", `El código no puede pasar de ${LIMITES.sku} caracteres.`);
 
   const nombre = texto(datos.nombre);
-  if (!nombre) anotar("nombre", "El nombre es obligatorio.");
-  else if (nombre.length > LIMITES.nombre) anotar("nombre", `El nombre no puede pasar de ${LIMITES.nombre} caracteres.`);
+  const problemaDeNombre = problemaDelNombre(nombre);
+  if (problemaDeNombre) validacion.anotar("nombre", problemaDeNombre);
 
   const categoria = texto(datos.categoria);
-  if (!categoria) anotar("categoria", "La categoría es obligatoria.");
-  else if (categoria.length > LIMITES.categoria) anotar("categoria", `La categoría no puede pasar de ${LIMITES.categoria} caracteres.`);
+  const problemaDeCategoria = problemaDeLaCategoria(categoria);
+  if (problemaDeCategoria) validacion.anotar("categoria", problemaDeCategoria);
 
   const costoItem = numero(datos.costoItem);
   const problemaDeCosto = problemaDelCosto(costoItem);
-  if (problemaDeCosto) anotar("costoItem", problemaDeCosto);
+  if (problemaDeCosto) validacion.anotar("costoItem", problemaDeCosto);
 
-  // Al crear, importación y margen son opcionales y valen 0 si no vienen.
-  const porcentajeImportacion = numero(datos.porcentajeImportacion) ?? 0;
-  const problemaDeImportacion = problemaDeLaImportacion(porcentajeImportacion);
-  if (problemaDeImportacion) anotar("porcentajeImportacion", problemaDeImportacion);
+  // Si no vienen, el producto usa la importación y el margen de su familia (null).
+  const porcentajeImportacion = numero(datos.porcentajeImportacion);
+  const problemaDeImportacion = porcentajeImportacion !== null && problemaDeLaImportacion(porcentajeImportacion);
+  if (problemaDeImportacion) validacion.anotar("porcentajeImportacion", problemaDeImportacion);
 
-  const margenGanancia = numero(datos.margenGanancia) ?? 0;
-  const problemaDeMargen = problemaDelMargen(margenGanancia);
-  if (problemaDeMargen) anotar("margenGanancia", problemaDeMargen);
+  const margenGanancia = numero(datos.margenGanancia);
+  const problemaDeMargen = margenGanancia !== null && problemaDelMargen(margenGanancia);
+  if (problemaDeMargen) validacion.anotar("margenGanancia", problemaDeMargen);
 
   // Si no se indican, el producto nace sin existencias.
   const existencias = numero(datos.existencias) ?? 0;
   const problemaDeExistencias = problemaDeLasExistencias(existencias);
-  if (problemaDeExistencias) anotar("existencias", problemaDeExistencias);
+  if (problemaDeExistencias) validacion.anotar("existencias", problemaDeExistencias);
 
   const admiteContrapedido = datos.admiteContrapedido ?? false;
   const problemaDeContrapedido = problemaDelContrapedido(admiteContrapedido);
-  if (problemaDeContrapedido) anotar("admiteContrapedido", problemaDeContrapedido);
+  if (problemaDeContrapedido) validacion.anotar("admiteContrapedido", problemaDeContrapedido);
 
   const imagenUrl = texto(datos.imagenUrl);
-  if (imagenUrl && (!esUrlWeb(imagenUrl) || imagenUrl.length > LIMITES.imagenUrl)) {
-    anotar("imagenUrl", "La imagen tiene que ser una dirección web (http o https).");
-  }
+  const problemaDeImagen = problemaDeLaImagen(imagenUrl);
+  if (problemaDeImagen) validacion.anotar("imagenUrl", problemaDeImagen);
 
   const proveedor = texto(datos.proveedor);
-  if (proveedor && proveedor.length > LIMITES.proveedor) {
-    anotar("proveedor", `El proveedor no puede pasar de ${LIMITES.proveedor} caracteres.`);
-  }
+  const problemaDeProveedor = problemaDelProveedor(proveedor);
+  if (problemaDeProveedor) validacion.anotar("proveedor", problemaDeProveedor);
 
-  if (problemas.length > 0) {
-    throw new EntradaInvalida(problemas.join(" "), campos);
-  }
+  validacion.lanzarSiHayProblemas();
 
   return {
     sku,
@@ -88,19 +78,4 @@ export function validarProductoNuevo(datos = {}) {
     existencias,
     admiteContrapedido,
   };
-}
-
-/** Texto sin espacios en los extremos, o null si viene vacío. */
-function texto(valor) {
-  if (typeof valor !== "string") return null;
-  return valor.trim() || null;
-}
-
-function esUrlWeb(valor) {
-  try {
-    const { protocol } = new URL(valor);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
 }

@@ -13,6 +13,7 @@ import { crearRutasDeAdmin } from "./admin.routes.js";
 import { ImportacionDeExcel } from "./importacion/importacion-de-excel.js";
 import { crearRecibirExcel } from "./importacion/recibir-excel.js";
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
+import { hashearContrasena } from "./seguridad/contrasenas.js";
 
 export function crearModuloAdmin({
   pool,
@@ -34,6 +35,7 @@ export function crearModuloAdmin({
     repositorio,
     busDeEventos,
     duracionSesionMinutos: sesion.duracionMinutos,
+    renovarSesion: sesion.renovar,
     importacionDeExcel,
   });
   const controlador = new AdminController({
@@ -47,5 +49,10 @@ export function crearModuloAdmin({
       recibirExcel: crearRecibirExcel({ tamanoMaximoMb: importacion.tamanoMaximoMb }),
     }),
     servicio,
+    // El registro de clientes guarda la contraseña y abre la sesión igual que aquí
+    cuentas: {
+      hashearContrasena,
+      abrirSesion: (usuario) => servicio.abrirSesion(usuario),
+    },
   };
 }

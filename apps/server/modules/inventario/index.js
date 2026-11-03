@@ -8,9 +8,9 @@ import { InventarioService } from "./inventario.service.js";
 import { InventarioController } from "./inventario.controller.js";
 import { crearRutasDeInventario } from "./inventario.routes.js";
 
-export function crearModuloInventario({ pool, busDeEventos, exigirRol }) {
+export function crearModuloInventario({ pool, busDeEventos, exigirRol, umbralDeExistenciasBajas }) {
   const repositorio = new InventarioRepository({ pool });
-  const servicio = new InventarioService({ repositorio, busDeEventos });
+  const servicio = new InventarioService({ repositorio, busDeEventos, umbralDeExistenciasBajas });
   const controlador = new InventarioController({ servicio });
 
   return {

@@ -4,10 +4,13 @@ import express from "express";
 
 import { crearRutasDeCatalogo } from "./catalogo.routes.js";
 import { CatalogoController } from "./catalogo.controller.js";
+import { validarProductoNuevo } from "./validar-producto-nuevo.js";
+import { FamiliasService } from "./familias.service.js";
 import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -28,6 +31,8 @@ const fun003 = {
   costoItem: 15000,
   porcentajeImportacion: 15,
   margenGanancia: 40,
+  // la importación sale de la familia y el margen es propio
+  heredado: { porcentajeImportacion: true, margenGanancia: false },
   tasaImpuesto: 13,
   existencias: 0,
   desglosePrecio: [
@@ -45,6 +50,7 @@ const skusEditados = [];
 
 const servicio = {
   listarCatalogo: async () => [],
+  listarFamilias: async () => [{ nombre: "Legos", cantidadDeProductos: 3 }],
   listarParaAdministracion: async (filtros) => {
     filtrosDelPanel.push(filtros);
     return { productos: [fun003], total: 14 };
@@ -77,8 +83,30 @@ const servicio = {
   },
 };
 
+// Familias reales sobre una base en memoria: Legos tiene productos y
+// Funkos no. Cada servidor arranca con las dos.
+function crearFamilias() {
+  const familias = new Map([
+    ["legos", { nombre: "Legos", descripcion: null, porcentajeImportacion: 15, margenGanancia: 18, activa: true, totalDeProductos: 2 }],
+    ["funkos", { nombre: "Funkos", descripcion: null, porcentajeImportacion: 0, margenGanancia: 0, activa: true, totalDeProductos: 0 }],
+  ]);
+  const clave = (nombre) => nombre.trim().toLowerCase();
+  const repositorio = {
+    listarFamilias: async () => [...familias.values()],
+    buscarFamilia: async (nombre) => familias.get(clave(nombre)) ?? null,
+    crearFamilia: async (familia) => familias.set(clave(familia.nombre), { ...familia, activa: true, totalDeProductos: 0 }),
+    actualizarFamilia: async (nombre, cambios) => {
+      const familia = { ...familias.get(clave(nombre)), ...cambios };
+      familias.delete(clave(nombre));
+      familias.set(clave(familia.nombre), familia);
+    },
+    eliminarFamilia: async (nombre) => familias.delete(clave(nombre)),
+  };
+  return new FamiliasService({ repositorio });
+}
+
 // La cabecera x-rol simula la sesión; sin ella no hay usuario.
-async function levantarServidor() {
+async function levantarServidor(servicioDePrueba = servicio) {
   const aplicacion = express();
   aplicacion.use(express.json());
   aplicacion.use((peticion, _respuesta, siguiente) => {
@@ -88,7 +116,7 @@ async function levantarServidor() {
   });
   aplicacion.use(
     "/api/catalogo",
-    crearRutasDeCatalogo(new CatalogoController({ servicio }), {
+    crearRutasDeCatalogo(new CatalogoController({ servicio: servicioDePrueba, familias: crearFamilias() }), {
       exigirRol: crearExigirRol({ publicar: async () => {} }),
     })
   );
@@ -98,7 +126,8 @@ async function levantarServidor() {
   await new Promise((resolver) => servidor.once("listening", resolver));
   const url = `http://localhost:${servidor.address().port}/api/catalogo/productos`;
   const urlDelPanel = `http://localhost:${servidor.address().port}/api/catalogo/admin/productos`;
-  return { url, urlDelPanel, cerrar: () => new Promise((resolver) => servidor.close(resolver)) };
+  const base = `http://localhost:${servidor.address().port}/api/catalogo`;
+  return { url, urlDelPanel, base, cerrar: () => new Promise((resolver) => servidor.close(resolver)) };
 }
 
 async function listarEnElPanel(url, rol) {
@@ -164,6 +193,21 @@ test("datos inválidos responden 400 con los campos a corregir", async (t) => {
   assert.deepEqual(cuerpo.error.detalles.campos, ["sku"]);
 });
 
+test("tres campos faltantes responden 400 con los tres y el mensaje de cada uno", async (t) => {
+  const { url, cerrar } = await levantarServidor({ ...servicio, crearProducto: async (datos) => validarProductoNuevo(datos) });
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await registrar(url, { sku: "NUEVO-1" }, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 400);
+  assert.deepEqual(cuerpo.error.detalles.campos, ["nombre", "categoria", "costoItem"]);
+  assert.deepEqual(
+    cuerpo.error.detalles.errores.map(({ campo }) => campo),
+    ["nombre", "categoria", "costoItem"]
+  );
+  assert.equal(cuerpo.error.detalles.errores[0].mensaje, "El nombre es obligatorio.");
+});
+
 test("las consultas del catálogo siguen siendo públicas", async (t) => {
   const { url, cerrar } = await levantarServidor();
   t.after(cerrar);
@@ -194,7 +238,7 @@ test("el administrador ve el listado del panel con costo, desglose, etiquetas y 
     assert.equal(typeof producto.costoItem, "number");
     assert.equal(producto.desglosePrecio.length, 4);
   }
-  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "USD" });
+  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "USD", heredado: { importacion: true, margen: false } });
 });
 
 test("el listado del panel le pasa al servicio los filtros de la consulta", async (t) => {
@@ -301,4 +345,158 @@ test("el SKU de la URL se normaliza antes de editar el precio", async (t) => {
   assert.equal(estado, 200);
   assert.deepEqual(skusEditados, ["PKM-001"]);
   assert.equal(cuerpo.datos.sku, "PKM-001");
+});
+
+// Familias
+
+async function pedir(url, { metodo = "GET", rol, cuerpo } = {}) {
+  const respuesta = await fetch(url, {
+    method: metodo,
+    headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+    body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+  });
+  const texto = await respuesta.text();
+  return { estado: respuesta.status, cuerpo: texto ? JSON.parse(texto) : null };
+}
+
+test("las familias de la tienda son públicas y /categorias sigue respondiendo lo mismo", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const familias = await pedir(`${base}/familias`);
+  const categorias = await pedir(`${base}/categorias`);
+
+  assert.equal(familias.estado, 200);
+  assert.deepEqual(familias.cuerpo.datos, [{ nombre: "Legos", cantidadDeProductos: 3 }]);
+  assert.deepEqual(categorias.cuerpo, familias.cuerpo);
+});
+
+test("el listado de familias del panel trae importación, margen y total de productos", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await pedir(`${base}/admin/familias`, { rol: ROLES.ADMINISTRADOR });
+
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.datos[0], {
+    nombre: "Legos",
+    descripcion: null,
+    porcentajeImportacion: 15,
+    margenGanancia: 18,
+    activa: true,
+    totalDeProductos: 2,
+  });
+});
+
+test("crear, editar y eliminar familias exige sesión de administrador", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const operaciones = [
+    { url: `${base}/admin/familias` },
+    { url: `${base}/familias`, metodo: "POST", cuerpo: { nombre: "Peluches" } },
+    { url: `${base}/familias/Legos`, metodo: "PATCH", cuerpo: { margenGanancia: 30 } },
+    { url: `${base}/familias/Funkos`, metodo: "DELETE" },
+  ];
+  for (const operacion of operaciones) {
+    assert.equal((await pedir(operacion.url, operacion)).estado, 401);
+    assert.equal((await pedir(operacion.url, { ...operacion, rol: ROLES.CLIENTE })).estado, 403);
+  }
+});
+
+test("crear una familia responde 201; repetida responde 409 y sin nombre 400", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  const comoAdministrador = { metodo: "POST", rol: ROLES.ADMINISTRADOR };
+
+  const creada = await pedir(`${base}/familias`, { ...comoAdministrador, cuerpo: { nombre: "Peluches", margenGanancia: 40 } });
+  const repetida = await pedir(`${base}/familias`, { ...comoAdministrador, cuerpo: { nombre: " legos " } });
+  const sinNombre = await pedir(`${base}/familias`, { ...comoAdministrador, cuerpo: { margenGanancia: -100 } });
+
+  assert.equal(creada.estado, 201);
+  assert.equal(creada.cuerpo.datos.margenGanancia, 40);
+  assert.equal(repetida.estado, 409);
+  assert.equal(sinNombre.estado, 400);
+  assert.deepEqual(sinNombre.cuerpo.error.detalles.campos, ["nombre", "margenGanancia"]);
+});
+
+test("editar una familia responde con sus datos nuevos; una que no existe da 404", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  const comoAdministrador = { metodo: "PATCH", rol: ROLES.ADMINISTRADOR };
+
+  const editada = await pedir(`${base}/familias/Legos`, { ...comoAdministrador, cuerpo: { nombre: "LEGO", activa: false } });
+  const noExiste = await pedir(`${base}/familias/Peluches`, { ...comoAdministrador, cuerpo: { activa: false } });
+
+  assert.equal(editada.estado, 200);
+  assert.equal(editada.cuerpo.datos.nombre, "LEGO");
+  assert.equal(editada.cuerpo.datos.activa, false);
+  assert.equal(noExiste.estado, 404);
+});
+
+test("eliminar una familia sin productos responde 204 y con productos 409", async (t) => {
+  const { base, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  const comoAdministrador = { metodo: "DELETE", rol: ROLES.ADMINISTRADOR };
+
+  assert.equal((await pedir(`${base}/familias/Funkos`, comoAdministrador)).estado, 204);
+  const conProductos = await pedir(`${base}/familias/Legos`, comoAdministrador);
+  assert.equal(conProductos.estado, 409);
+  assert.match(conProductos.cuerpo.error.mensaje, /tiene 2 productos/);
+});
+
+// Desactivar y reactivar (RF-18)
+
+test("cambiar el estado de un producto exige administrador y responde el producto con su etiqueta", async (t) => {
+  const estados = [];
+  const { url, cerrar } = await levantarServidor({
+    ...servicio,
+    cambiarEstado: async (sku, datos) => {
+      estados.push([sku, datos.estado]);
+      return { ...fun003, sku, disponibilidad: "descontinuado", etiquetas: ["oculto_en_tienda", "descontinuado"] };
+    },
+  });
+  t.after(cerrar);
+  const cambiar = (rol) =>
+    fetch(`${url}/vdj-002/estado`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+      body: JSON.stringify({ estado: "descontinuado" }),
+    });
+
+  assert.equal((await cambiar()).status, 401);
+  assert.equal((await cambiar(ROLES.CLIENTE)).status, 403);
+  const respuesta = await cambiar(ROLES.ADMINISTRADOR);
+  const { datos } = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(estados, [["VDJ-002", "descontinuado"]]);
+  assert.ok(datos.etiquetas.includes("descontinuado"));
+});
+
+// Eliminar
+
+test("eliminar responde 204 sin cuerpo, 409 si tiene historial y exige administrador", async (t) => {
+  const { url, cerrar } = await levantarServidor({
+    ...servicio,
+    eliminarProducto: async (sku) => {
+      if (sku === "PKM-001") throw new ProductoConHistorial();
+    },
+  });
+  t.after(cerrar);
+  const eliminar = (sku, rol) =>
+    fetch(`${url}/${sku}`, { method: "DELETE", headers: rol ? { "x-rol": rol } : {} });
+
+  assert.equal((await eliminar("NUEVO-1")).status, 401);
+  assert.equal((await eliminar("NUEVO-1", ROLES.CLIENTE)).status, 403);
+
+  const borrado = await eliminar("nuevo-1", ROLES.ADMINISTRADOR);
+  assert.equal(borrado.status, 204);
+  assert.equal(await borrado.text(), "");
+
+  const conHistorial = await eliminar("PKM-001", ROLES.ADMINISTRADOR);
+  const { error } = await conHistorial.json();
+  assert.equal(conHistorial.status, 409);
+  assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
+  assert.equal(error.mensaje, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
 });

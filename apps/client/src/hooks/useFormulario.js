@@ -34,9 +34,10 @@ export function useFormulario(iniciales, definicion) {
         return Object.keys(encontrados).length === 0
     }
 
-    const erroresServidor = (campos = []) => {
+    // `mensaje` sirve cuando el servidor explica que paso, por ejemplo un correo que ya tiene cuenta
+    const erroresServidor = (campos = [], mensaje = 'Revise este valor.') => {
         enfocarRef.current = true
-        setErrores(Object.fromEntries(campos.map((campo) => [campo, 'Revise este valor.'])))
+        setErrores(Object.fromEntries(campos.map((campo) => [campo, mensaje])))
     }
 
     const reiniciar = (siguientes = iniciales) => {

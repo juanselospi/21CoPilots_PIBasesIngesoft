@@ -5,6 +5,7 @@ import { MotorDePrecios } from "./motor-de-precios.js";
 import { ImportacionPorAranceles } from "./pasos/importacion-por-aranceles.js";
 import { MargenDeGanancia } from "./pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./pasos/impuesto-de-venta.js";
+import { conValoresDeLaFamilia } from "../herencia-de-familia.js";
 
 const motor = new MotorDePrecios([
   new ImportacionPorAranceles(),
@@ -95,6 +96,36 @@ test("la tasa de impuesto sale de cada producto", () => {
 
   assert.equal(conImpuesto.precioFinal, 113);
   assert.equal(exento.precioFinal, 100);
+});
+
+test("con importación y margen heredados calcula con los de la familia", () => {
+  const { precioFinal, desglose } = motor.calcular(
+    conValoresDeLaFamilia({
+      costoItem: 100,
+      porcentajeImportacion: null,
+      margenGanancia: null,
+      tasaImpuesto: 13,
+      familia: { porcentajeImportacion: 20, margenGanancia: 50 },
+    })
+  );
+
+  // El costo total (costo más importación) es el monto del paso de importación
+  assert.equal(desglose.find((paso) => paso.paso === "importacion").monto, 120);
+  assert.equal(precioFinal, 203.4);
+});
+
+test("un margen propio gana sobre el de la familia", () => {
+  const { precioFinal } = motor.calcular(
+    conValoresDeLaFamilia({
+      costoItem: 100,
+      porcentajeImportacion: null,
+      margenGanancia: 25,
+      tasaImpuesto: 13,
+      familia: { porcentajeImportacion: 20, margenGanancia: 50 },
+    })
+  );
+
+  assert.equal(precioFinal, 169.5);
 });
 
 test("el motor exige al menos un paso", () => {

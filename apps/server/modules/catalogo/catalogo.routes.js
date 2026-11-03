@@ -15,13 +15,25 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
   // el visitante ve el catálogo sin iniciar sesión
   rutas.get("/productos", asincrono(controlador.listar));
   rutas.get("/productos/:sku", asincrono(controlador.obtenerFicha));
-  rutas.get("/categorias", asincrono(controlador.listarCategorias));
+  rutas.get("/familias", asincrono(controlador.listarFamilias));
+  // la tienda todavía pide las familias con este nombre
+  rutas.get("/categorias", asincrono(controlador.listarFamilias));
 
   // listado del panel, incluye los ocultos en la tienda y los costos
   rutas.get("/admin/productos", ...soloAdministrador, asincrono(controlador.listarParaAdministracion));
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
-  // cambia el precio, las existencias o el contrapedido, lo que no venga se queda igual
+  // cambia los datos generales, el precio, las existencias o el contrapedido; lo que no venga se queda igual
   rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizar));
+  // desactiva o reactiva; descontinuado sale de la tienda pero conserva su historial
+  rutas.patch("/productos/:sku/estado", ...soloAdministrador, asincrono(controlador.cambiarEstado));
+  // solo si nunca se vendió ni tuvo movimientos; si no, 409 y hay que desactivarlo
+  rutas.delete("/productos/:sku", ...soloAdministrador, asincrono(controlador.eliminar));
+
+  // familias del panel, con importación y margen; incluye las inactivas
+  rutas.get("/admin/familias", ...soloAdministrador, asincrono(controlador.listarFamiliasParaAdministracion));
+  rutas.post("/familias", ...soloAdministrador, asincrono(controlador.crearFamilia));
+  rutas.patch("/familias/:nombre", ...soloAdministrador, asincrono(controlador.actualizarFamilia));
+  rutas.delete("/familias/:nombre", ...soloAdministrador, asincrono(controlador.eliminarFamilia));
 
   return rutas;
 }
