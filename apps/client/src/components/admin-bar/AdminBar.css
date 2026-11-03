@@ -14,6 +14,30 @@
   text-decoration: none;
 }
 
+/* Pantallas del panel; la abierta va resaltada */
+.admin-bar-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.admin-bar-nav a {
+  padding: 6px 12px;
+  border-radius: var(--radio-control);
+  color: var(--color-texto);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-bar-nav a:hover {
+  color: var(--color-enlace);
+}
+
+.admin-bar-nav a.active {
+  background: var(--color-tinte);
+  color: var(--color-enlace);
+}
+
 /* El margen empuja el menu de la cuenta a la derecha */
 .admin-bar-link {
   display: inline-flex;
