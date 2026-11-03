@@ -10,6 +10,7 @@ import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -471,4 +472,31 @@ test("cambiar el estado de un producto exige administrador y responde el product
   assert.equal(respuesta.status, 200);
   assert.deepEqual(estados, [["VDJ-002", "descontinuado"]]);
   assert.ok(datos.etiquetas.includes("descontinuado"));
+});
+
+// Eliminar
+
+test("eliminar responde 204 sin cuerpo, 409 si tiene historial y exige administrador", async (t) => {
+  const { url, cerrar } = await levantarServidor({
+    ...servicio,
+    eliminarProducto: async (sku) => {
+      if (sku === "PKM-001") throw new ProductoConHistorial();
+    },
+  });
+  t.after(cerrar);
+  const eliminar = (sku, rol) =>
+    fetch(`${url}/${sku}`, { method: "DELETE", headers: rol ? { "x-rol": rol } : {} });
+
+  assert.equal((await eliminar("NUEVO-1")).status, 401);
+  assert.equal((await eliminar("NUEVO-1", ROLES.CLIENTE)).status, 403);
+
+  const borrado = await eliminar("nuevo-1", ROLES.ADMINISTRADOR);
+  assert.equal(borrado.status, 204);
+  assert.equal(await borrado.text(), "");
+
+  const conHistorial = await eliminar("PKM-001", ROLES.ADMINISTRADOR);
+  const { error } = await conHistorial.json();
+  assert.equal(conHistorial.status, 409);
+  assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
+  assert.equal(error.mensaje, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
 });

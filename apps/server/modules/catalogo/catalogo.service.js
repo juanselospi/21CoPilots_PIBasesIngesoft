@@ -8,6 +8,7 @@
 
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -226,6 +227,27 @@ export class CatalogoService {
     }
 
     return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(sku));
+  }
+
+  /**
+   * Borra un producto que nunca se vendió ni tuvo movimientos. Si tiene
+   * historial hay que desactivarlo, para no perder los reportes.
+   */
+  async eliminarProducto(sku, { responsable = null } = {}) {
+    const producto = await this.#repositorio.obtenerPorSku(sku);
+    if (!producto) throw new RecursoNoEncontrado("el producto", sku);
+
+    const resultado = await this.#repositorio.eliminar(sku);
+    if (resultado === "no_existe") throw new RecursoNoEncontrado("el producto", sku);
+    if (resultado === "con_historial") throw new ProductoConHistorial();
+
+    await this.#busDeEventos.publicar(EVENTOS.PRODUCTO_ELIMINADO, {
+      correoUsuario: responsable,
+      entidad: "producto",
+      entidadId: sku,
+      valorAnterior: { nombre: producto.nombre, categoria: producto.categoria, costoItem: producto.costoItem },
+      valorNuevo: null,
+    });
   }
 
   // Devuelve el nombre como está guardado, así "legos" entra en "Legos"
