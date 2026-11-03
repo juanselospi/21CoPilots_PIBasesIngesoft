@@ -38,6 +38,7 @@ export function componerSistema(configuracion) {
   // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
   const catalogo = crearModuloCatalogo({
     pool,
+    busDeEventos,
     exigirRol,
     umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
   });

@@ -34,14 +34,29 @@ export const aProductoAdministrativo = (producto) => ({
   costoItem: producto.costoItem,
   porcentajeImportacion: producto.porcentajeImportacion,
   margenGanancia: producto.margenGanancia,
+  // true si el valor sale de la familia y no del producto
+  heredado: {
+    importacion: producto.heredado?.porcentajeImportacion ?? false,
+    margen: producto.heredado?.margenGanancia ?? false,
+  },
   tasaImpuesto: producto.tasaImpuesto,
   existencias: producto.existencias,
   desglosePrecio: producto.desglosePrecio,
   etiquetas: producto.etiquetas ?? [],
 });
 
-/** Categoria para la barra de categorias de Inicio, se filtra por su nombre. */
-export const aCategoriaPublica = (categoria) => ({
-  nombre: categoria.nombre,
-  cantidadDeProductos: categoria.cantidadDeProductos,
+/** Familia para la barra de categorías de Inicio, se filtra por su nombre. */
+export const aFamiliaPublica = (familia) => ({
+  nombre: familia.nombre,
+  cantidadDeProductos: familia.cantidadDeProductos,
+});
+
+/** Familia del panel, con los valores que heredan sus productos. */
+export const aFamiliaAdministrativa = (familia) => ({
+  nombre: familia.nombre,
+  descripcion: familia.descripcion,
+  porcentajeImportacion: familia.porcentajeImportacion,
+  margenGanancia: familia.margenGanancia,
+  activa: familia.activa,
+  totalDeProductos: familia.totalDeProductos,
 });

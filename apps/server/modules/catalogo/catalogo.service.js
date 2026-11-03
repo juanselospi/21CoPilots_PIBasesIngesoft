@@ -7,11 +7,13 @@
  */
 
 import {
+  EntradaInvalida,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
 import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
+import { conValoresDeLaFamilia } from "./herencia-de-familia.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -117,10 +119,10 @@ export class CatalogoService {
   }
 
   /**
-   * Categorías con su cantidad de productos visibles; las que solo tienen
-   * productos ocultos no aparecen en la tienda.
+   * Familias de la tienda con su cantidad de productos visibles. Las
+   * inactivas y las que solo tienen productos ocultos no aparecen.
    */
-  async listarCategorias() {
+  async listarFamilias() {
     const productos = await this.#repositorio.listar();
 
     const cantidades = new Map();
@@ -133,6 +135,11 @@ export class CatalogoService {
       .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
   }
 
+  // La tienda todavía pide /categorias
+  async listarCategorias() {
+    return this.listarFamilias();
+  }
+
   /**
    * Registra un producto nuevo desde el panel. 
    * @returns el producto guardado, con su precio calculado
@@ -140,7 +147,13 @@ export class CatalogoService {
   async crearProducto(datos) {
     const producto = validarProductoNuevo(datos);
 
-    const sku = await this.#repositorio.crear(producto);
+    // Se guarda con el nombre de la familia tal como está, "legos" entra en "Legos"
+    const familia = await this.#repositorio.buscarFamilia(producto.categoria);
+    if (!familia) {
+      throw new EntradaInvalida(`No existe la familia ${producto.categoria}. Créela primero.`, ["categoria"]);
+    }
+
+    const sku = await this.#repositorio.crear({ ...producto, categoria: familia.nombre });
     if (sku === null) {
       throw new ReglaDeNegocioViolada(`Ya existe un producto con el código ${producto.sku}.`, "RF-01");
     }
@@ -164,7 +177,8 @@ export class CatalogoService {
     return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(actualizado));
   }
 
-  #conPrecioYDisponibilidad(producto) {
+  #conPrecioYDisponibilidad(guardado) {
+    const producto = conValoresDeLaFamilia(guardado);
     const { precioFinal, desglose } = this.#motorDePrecios.calcular(producto);
     const disponibilidad = determinarDisponibilidad(producto);
 
@@ -178,9 +192,10 @@ export class CatalogoService {
   }
 }
 
-// Sirve para el producto tal como sale del repositorio o ya compuesto
+// Sirve para el producto tal como sale del repositorio o ya compuesto.
+// Desactivar una familia saca todos sus productos de la tienda.
 const esVisible = (producto) =>
-  determinarDisponibilidad(producto) !== DISPONIBILIDAD.NO_DISPONIBLE;
+  producto.familia?.activa !== false && determinarDisponibilidad(producto) !== DISPONIBILIDAD.NO_DISPONIBLE;
 
 const porSku = (a, b) => (a.sku < b.sku ? -1 : a.sku > b.sku ? 1 : 0);
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, "es");
@@ -204,7 +219,8 @@ export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
   if (producto.admiteContrapedido) etiquetas.push(ETIQUETAS.CONTRAPEDIDO);
   if (producto.margenGanancia < 0) etiquetas.push(ETIQUETAS.MARGEN_NEGATIVO);
   if (producto.existencias <= umbralDeExistenciasBajas) etiquetas.push(ETIQUETAS.EXISTENCIAS_BAJAS);
-  if (producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE) etiquetas.push(ETIQUETAS.OCULTO_EN_TIENDA);
+  const oculto = producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE || producto.familia?.activa === false;
+  if (oculto) etiquetas.push(ETIQUETAS.OCULTO_EN_TIENDA);
 
   return etiquetas;
 }
