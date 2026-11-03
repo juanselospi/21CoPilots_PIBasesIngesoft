@@ -61,3 +61,13 @@ export const aPedidoConfirmado = (pedido) => ({
   moneda: "USD",
   pago: pedido.pago,
 });
+
+/** RF-40: un pago del pedido. Nunca lleva datos de la tarjeta. */
+export const aPago = (pago) => ({
+  numReferencia: pago.numReferencia,
+  fecha: pago.fecha,
+  monto: pago.monto,
+  moneda: "USD",
+  metodoPago: pago.metodoPago,
+  estadoPago: pago.estadoPago,
+});

@@ -23,6 +23,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     },
     stock: stock ?? { "LEG-001": 3, "BOO-001": 1 },
     pedidos: [],
+    pagos: [],
     movimientos: [],
     compras: 0,
     precios: {},
@@ -76,6 +77,12 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     publicarMovimientos: async (movimientos) => movimientos.forEach((m) => eventos.push(["movimiento", m.sku])),
   };
   const clientes = { sumarCompra: async () => (estado.compras += 1) };
+  const pagos = {
+    registrar: async (_c, pago) => {
+      estado.pagos.push(pago);
+      return { ...pago, fecha: new Date() };
+    },
+  };
   const pasarelaDePago = {
     cobrar: async ({ monto }) => ({
       resultado: resultadoDelPago,
@@ -93,6 +100,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     busDeEventos,
     pasarelaDePago,
     productosParaVenta,
+    pagos,
   });
   return { servicio, estado, eventos, catalogo };
 }
@@ -194,4 +202,35 @@ test("revisa todos los datos del checkout a la vez", async () => {
     assert.deepEqual(error.detalles.campos, ["direccion", "datosTarjeta"]);
     return true;
   });
+});
+
+// Pagos (SCRUM-133)
+
+test("un pago aprobado queda guardado con la referencia de la pasarela y sin datos de la tarjeta", async () => {
+  const { servicio, estado } = crearEscenario();
+
+  const pedido = await servicio.confirmar(ANA, checkout);
+
+  assert.equal(estado.pagos.length, 1);
+  assert.equal(estado.pagos[0].estadoPago, "aprobado");
+  assert.equal(estado.pagos[0].numReferencia, pedido.pago.referencia);
+  assert.equal(estado.pagos[0].monto, pedido.total);
+  assert.ok(!JSON.stringify(estado.pagos[0]).includes("4111"));
+});
+
+test("contra entrega guarda el pago pendiente con una referencia local", async () => {
+  const { servicio, estado } = crearEscenario({ resultadoDelPago: "pendiente" });
+
+  await servicio.confirmar(ANA, { ...checkout, metodoPago: "contra_entrega", datosTarjeta: undefined });
+
+  assert.equal(estado.pagos[0].estadoPago, "pendiente");
+  assert.match(estado.pagos[0].numReferencia, /^LOCAL-/);
+});
+
+test("un pago rechazado no deja ni pedido ni pago", async () => {
+  const { servicio, estado } = crearEscenario({ resultadoDelPago: "rechazado" });
+
+  await assert.rejects(servicio.confirmar(ANA, checkout), PagoRechazado);
+
+  assert.deepEqual(estado.pagos, []);
 });

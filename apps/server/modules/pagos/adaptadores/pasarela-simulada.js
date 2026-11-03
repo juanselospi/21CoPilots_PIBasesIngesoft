@@ -12,7 +12,7 @@ import { PasarelaDePago } from "../pasarela-de-pago.port.js";
 export class PasarelaSimulada extends PasarelaDePago {
   #cobros = new Map();
 
-  async cobrar({ monto, metodo }) {
+  async cobrar({ monto, metodo, datosTarjeta = null }) {
     // El pago contra entrega no cobra en línea: queda pendiente hasta que
     // el mensajero entrega (RN-11, RF-69).
     if (metodo === "contra_entrega") {
@@ -21,9 +21,12 @@ export class PasarelaSimulada extends PasarelaDePago {
 
     // La referencia es la llave de pagos.pago, así que no se puede repetir.
     const referencia = `SIM-${randomUUID()}`;
-    const resultado = monto > 0
-      ? { resultado: "aprobado", referencia, motivo: null }
-      : { resultado: "rechazado", referencia, motivo: "MONTO_INVALIDO" };
+    const resultado =
+      monto <= 0
+        ? { resultado: "rechazado", referencia, motivo: "MONTO_INVALIDO" }
+        : esTarjetaDeRechazo(metodo, datosTarjeta)
+          ? { resultado: "rechazado", referencia, motivo: "TARJETA_RECHAZADA" }
+          : { resultado: "aprobado", referencia, motivo: null };
 
     this.#cobros.set(referencia, resultado);
     return resultado;
@@ -39,3 +42,7 @@ export class PasarelaSimulada extends PasarelaDePago {
     );
   }
 }
+
+// Para la demo: una tarjeta que termina en 0000 siempre se rechaza
+const esTarjetaDeRechazo = (metodo, datosTarjeta) =>
+  metodo === "tarjeta" && String(datosTarjeta?.numero ?? "").endsWith("0000");

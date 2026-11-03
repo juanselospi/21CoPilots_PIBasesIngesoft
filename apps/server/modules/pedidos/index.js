@@ -21,6 +21,7 @@ export function crearModuloPedidos({
   motorDePrecios,
   productosParaVenta,
   pasarelaDePago,
+  pagos,
   facturacionElectronica,
 }) {
   const repositorio = new PedidosRepository({ pool });
@@ -33,6 +34,7 @@ export function crearModuloPedidos({
     pasarelaDePago,
     facturacionElectronica,
     productosParaVenta,
+    pagos,
   });
   const carrito = new CarritoService({ repositorio, productosParaVenta });
   const controlador = new PedidosController({ servicio, carrito });

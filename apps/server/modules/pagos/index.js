@@ -28,3 +28,5 @@ export function crearPasarelaDePago(nombre) {
 
   return construir();
 }
+
+export { PagosRepository } from "./pagos.repository.js";
