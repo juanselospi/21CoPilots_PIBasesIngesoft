@@ -317,6 +317,37 @@
 
 /* Solo "Agregar producto" */
 
+/* Etiqueta "Familia" a la izquierda y "Crear familia" a la derecha */
+.product-form-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* Botón con aspecto de enlace (ej. "Crear familia") */
+.product-form-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-enlace);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-form-link:hover {
+  text-decoration: underline;
+}
+
+.product-form-link:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* Texto "(opcional)" junto a la etiqueta del campo */
 .product-form-optional {
   color: var(--color-texto-suave);
