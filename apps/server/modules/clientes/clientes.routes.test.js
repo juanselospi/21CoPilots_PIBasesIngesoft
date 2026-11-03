@@ -13,8 +13,19 @@ const VENCE = new Date("2030-01-01T12:00:00Z");
 
 // Servicio real con una base falsa donde cliente@correo.test ya existe.
 async function levantarServidor() {
+  const cuenta = {
+    correo: "cliente@correo.test",
+    nombre: "Cliente",
+    cedula: "111111111",
+    direccion: "San Pedro",
+    telefonos: ["8888-0001"],
+    numeroDeCompras: 0,
+    fechaAceptacionTerminos: null,
+  };
   const repositorio = {
     registrar: async ({ correo }) => (correo === "cliente@correo.test" ? ["correo"] : []),
+    obtenerPorCorreo: async (correo) => (correo === cuenta.correo ? { ...cuenta } : null),
+    actualizarContacto: async (_correo, cambios) => Object.assign(cuenta, cambios),
   };
   const servicio = new ClientesService({
     repositorio,
@@ -24,6 +35,12 @@ async function levantarServidor() {
 
   const aplicacion = express();
   aplicacion.use(express.json());
+  // La cabecera x-rol simula la sesión del cliente de prueba
+  aplicacion.use((peticion, _respuesta, siguiente) => {
+    const rol = peticion.get("x-rol");
+    peticion.usuario = rol ? { correo: "cliente@correo.test", rol } : null;
+    siguiente();
+  });
   aplicacion.use(
     "/api/clientes",
     crearRutasDeClientes(new ClientesController({ servicio }), {
@@ -98,4 +115,51 @@ test("crear cuenta no pide sesión", async (t) => {
   t.after(cerrar);
 
   assert.notEqual((await registrar(url, formulario)).estado, 401);
+});
+
+// Mi cuenta
+
+const miCuenta = (url, { rol, metodo = "GET", cuerpo } = {}) =>
+  fetch(`${url}/me`, {
+    method: metodo,
+    headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+    body: cuerpo && JSON.stringify(cuerpo),
+  });
+
+test("Mi cuenta es solo del cliente: sin sesión 401 y un administrador 403", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  assert.equal((await miCuenta(url)).status, 401);
+  assert.equal((await miCuenta(url, { rol: "administrador" })).status, 403);
+});
+
+test("el cliente ve sus datos y corrige la dirección y los teléfonos", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const antes = await (await miCuenta(url, { rol: "cliente" })).json();
+  assert.equal(antes.datos.direccion, "San Pedro");
+  assert.equal(antes.datos.cedula, "111111111");
+
+  const respuesta = await miCuenta(url, {
+    rol: "cliente",
+    metodo: "PATCH",
+    cuerpo: { direccion: "Heredia", telefonos: ["8888 0002"] },
+  });
+  const { datos } = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.equal(datos.direccion, "Heredia");
+  assert.deepEqual(datos.telefonos, ["8888-0002"]);
+});
+
+test("intentar cambiar la cédula desde Mi cuenta responde 400", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const respuesta = await miCuenta(url, { rol: "cliente", metodo: "PATCH", cuerpo: { cedula: "222222222" } });
+
+  assert.equal(respuesta.status, 400);
+  assert.deepEqual((await respuesta.json()).error.detalles.campos, ["cedula"]);
 });

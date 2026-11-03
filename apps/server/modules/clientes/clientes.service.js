@@ -6,16 +6,17 @@
  * POR IMPLEMENTAR
  *   RF-34         Cálculo del nivel por recompra (RN-08)
  *   RF-35, RF-36  Descuento y pago adelantado (RN-09, RN-10)
- *   RF-37         Consulta de la cuenta y sus pedidos
+ *   RF-37         Los pedidos del cliente en su cuenta
  *
  * El descuento sale de `pedidos.oferta` (vigencia, monto mínimo y nivel
  * mínimo), no de un porcentaje fijo por nivel: esa estrategia se hace
  * desde cero cuando se implemente.
  */
 
-import { DatoDuplicado } from "../../shared/errores/errores-de-dominio.js";
+import { DatoDuplicado, RecursoNoEncontrado } from "../../shared/errores/errores-de-dominio.js";
 import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { validarRegistro } from "./validar-registro.js";
+import { validarCambiosDeContacto } from "./validar-cambios-de-contacto.js";
 
 const MENSAJE_DE_REPETIDO = Object.freeze({
   correo: "Ya existe una cuenta con ese correo.",
@@ -52,5 +53,21 @@ export class ClientesService {
     }
 
     return this.#abrirSesion({ correo: cliente.correo, nombre: cliente.nombre, rol: ROLES.CLIENTE });
+  }
+
+  /** RF-37: lo que el cliente ve de sí mismo en "Mi cuenta" y lo que precarga el checkout. */
+  async obtenerMiCuenta(correo) {
+    const cliente = await this.#repositorio.obtenerPorCorreo(correo);
+    if (!cliente) throw new RecursoNoEncontrado("el cliente", correo);
+    return cliente;
+  }
+
+  /** Cambia la dirección o los teléfonos y devuelve la cuenta actualizada. */
+  async actualizarMiCuenta(correo, datos) {
+    const cambios = validarCambiosDeContacto(datos);
+    await this.obtenerMiCuenta(correo);
+
+    await this.#repositorio.actualizarContacto(correo, cambios);
+    return this.obtenerMiCuenta(correo);
   }
 }

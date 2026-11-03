@@ -11,7 +11,7 @@
  */
 
 import { escribirCookieDeSesion } from "../../shared/http/autenticacion.js";
-import { aUsuarioRegistrado } from "./clientes.dto.js";
+import { aClientePropio, aUsuarioRegistrado } from "./clientes.dto.js";
 
 export class ClientesController {
   #servicio;
@@ -28,5 +28,17 @@ export class ClientesController {
 
     escribirCookieDeSesion(respuesta, token, venceEn, { segura: this.#cookieSegura });
     respuesta.status(201).json({ datos: aUsuarioRegistrado(usuario) });
+  };
+
+  // GET /me
+  verMiCuenta = async (peticion, respuesta) => {
+    const cliente = await this.#servicio.obtenerMiCuenta(peticion.usuario.correo);
+    respuesta.json({ datos: aClientePropio(cliente) });
+  };
+
+  // PATCH /me con { direccion?, telefonos? }
+  corregirMiCuenta = async (peticion, respuesta) => {
+    const cliente = await this.#servicio.actualizarMiCuenta(peticion.usuario.correo, peticion.body);
+    respuesta.json({ datos: aClientePropio(cliente) });
   };
 }

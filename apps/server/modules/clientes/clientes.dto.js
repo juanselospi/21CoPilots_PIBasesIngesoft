@@ -6,7 +6,6 @@
  * ninguna circunstancia se incluye el hash de la contraseña.
  *
  * POR IMPLEMENTAR
- *   aClientePropio()          RF-37 — lo que el cliente ve de sí mismo
  *   aClienteAdministrativo()  aprobado #2 — lista de clientes del panel
  *   aNivelDeFidelidad()       RF-34 — nivel, compras acumuladas, descuento
  */
@@ -16,4 +15,15 @@ export const aUsuarioRegistrado = (usuario) => ({
   correo: usuario.correo,
   nombre: usuario.nombre,
   rol: usuario.rol,
+});
+
+/** RF-37: lo que el cliente ve de sí mismo. */
+export const aClientePropio = (cliente) => ({
+  nombre: cliente.nombre,
+  correo: cliente.correo,
+  cedula: cliente.cedula,
+  direccion: cliente.direccion,
+  telefonos: cliente.telefonos,
+  numeroDeCompras: cliente.numeroDeCompras,
+  fechaAceptacionTerminos: cliente.fechaAceptacionTerminos,
 });

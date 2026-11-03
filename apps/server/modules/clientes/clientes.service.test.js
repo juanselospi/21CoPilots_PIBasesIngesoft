@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { ClientesService } from "./clientes.service.js";
-import { DatoDuplicado, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { DatoDuplicado, EntradaInvalida, RecursoNoEncontrado } from "../../shared/errores/errores-de-dominio.js";
 
 const datos = {
   nombre: "Ana Mora",
@@ -72,4 +72,53 @@ test("datos inválidos no llegan a la base", async () => {
 
   await assert.rejects(servicio.registrar({ ...datos, aceptaTerminos: false }), EntradaInvalida);
   assert.equal(registrados.length, 0);
+});
+
+// Mi cuenta
+
+function crearServicioConCuenta() {
+  const cuenta = {
+    correo: "cliente@correo.test",
+    nombre: "Cliente de Prueba",
+    cedula: "1-1111-1111",
+    direccion: "San Pedro",
+    telefonos: ["8888-0001"],
+    numeroDeCompras: 2,
+    fechaAceptacionTerminos: new Date("2026-09-01T16:00:00Z"),
+  };
+  const repositorio = {
+    obtenerPorCorreo: async (correo) => (correo === cuenta.correo ? { ...cuenta } : null),
+    actualizarContacto: async (_correo, cambios) => Object.assign(cuenta, cambios),
+  };
+  return { servicio: new ClientesService({ repositorio }), cuenta };
+}
+
+test("RF-37: devuelve los datos de la cuenta del cliente", async () => {
+  const { servicio } = crearServicioConCuenta();
+
+  const cuenta = await servicio.obtenerMiCuenta("cliente@correo.test");
+
+  assert.equal(cuenta.direccion, "San Pedro");
+  assert.deepEqual(cuenta.telefonos, ["8888-0001"]);
+  await assert.rejects(servicio.obtenerMiCuenta("nadie@correo.test"), RecursoNoEncontrado);
+});
+
+test("cambiar la dirección se ve en la siguiente consulta", async () => {
+  const { servicio } = crearServicioConCuenta();
+
+  const actualizada = await servicio.actualizarMiCuenta("cliente@correo.test", {
+    direccion: "Heredia",
+    telefonos: ["8888 0002"],
+  });
+
+  assert.equal(actualizada.direccion, "Heredia");
+  assert.deepEqual(actualizada.telefonos, ["8888-0002"]);
+  assert.equal((await servicio.obtenerMiCuenta("cliente@correo.test")).direccion, "Heredia");
+});
+
+test("cambios inválidos no tocan la cuenta", async () => {
+  const { servicio, cuenta } = crearServicioConCuenta();
+
+  await assert.rejects(servicio.actualizarMiCuenta("cliente@correo.test", { direccion: "" }), EntradaInvalida);
+  assert.equal(cuenta.direccion, "San Pedro");
 });
