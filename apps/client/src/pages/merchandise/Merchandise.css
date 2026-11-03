@@ -1,0 +1,170 @@
+/* Estilos propios de la pantalla «Ingreso de mercancía» (Merchandise.jsx).
+   El resto viene de Products.css, ProductTable.css y ProductForm.css. */
+
+/* Tarjeta blanca: producto elegido, ingreso y ajuste */
+.merchandise-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+}
+
+.merchandise-card h2,
+.merchandise-history h2 {
+  margin: 0;
+  font-size: var(--texto-subtitulo);
+}
+
+.merchandise-help {
+  margin: 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.merchandise-sku {
+  display: block;
+  color: var(--color-texto-suave);
+}
+
+/* Producto elegido: datos, existencias y «Cambiar producto» en una fila */
+.merchandise-selected {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.merchandise-selected > div:first-child {
+  flex: 1;
+}
+
+.merchandise-stock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.merchandise-stock strong {
+  color: var(--color-titulo);
+  font-size: var(--texto-subtitulo);
+}
+
+/* Lupa dentro de la caja del buscador */
+.merchandise-search-icon {
+  margin-left: 12px;
+  color: var(--color-texto-suave);
+}
+
+/* Resultados del buscador: cada uno es un botón para elegirlo */
+.merchandise-results {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  list-style: none;
+}
+
+.merchandise-results li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+.merchandise-results button {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--color-texto);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  text-align: left;
+  cursor: pointer;
+}
+
+.merchandise-results button:hover {
+  background: var(--color-tinte);
+}
+
+.merchandise-result-name {
+  font-weight: 600;
+}
+
+/* Selector «Ingreso | Ajuste» y debajo solo el formulario elegido; no hace falta todo el ancho */
+.merchandise-operation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+}
+
+/* Mismo selector que «Cuadrícula | Tabla» de Productos, pero a la izquierda */
+.merchandise-toggle {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
+.merchandise-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.merchandise-card .products-button {
+  align-self: flex-start;
+}
+
+.merchandise-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sin producto elegido, cada movimiento elige su producto */
+.merchandise-row-selectable {
+  cursor: pointer;
+}
+
+/* Nombre del producto como enlace dentro de la fila */
+.merchandise-product-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-enlace);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.merchandise-product-link:hover {
+  text-decoration: underline;
+}
+
+.merchandise-nowrap {
+  white-space: nowrap;
+}
+
+.merchandise-reason {
+  min-width: 180px;
+  color: var(--color-texto-suave);
+}
+
+@media (max-width: 860px) {
+  .merchandise-selected {
+    flex-wrap: wrap;
+  }
+
+  .merchandise-results button {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
