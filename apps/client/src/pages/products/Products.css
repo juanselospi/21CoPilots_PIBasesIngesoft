@@ -250,9 +250,32 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Separación del botón dentro de la tarjeta */
-.products-card .products-button {
+/* Botones de la tarjeta: "Editar" a todo el ancho; desactivar o reactivar y eliminar debajo */
+.products-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 12px;
+}
+
+.products-card-actions .products-button {
+  flex: 1;
+  padding: 8px 10px;
+}
+
+.products-card-actions .products-button:first-child {
+  flex-basis: 100%;
+}
+
+/* "Eliminar" se pone rojo al pasar el mouse */
+.products-button-danger:hover {
+  border-color: var(--estado-error-texto);
+  color: var(--estado-error-texto);
+}
+
+/* Chip "Descontinuado": no se estira a todo el ancho de la tarjeta */
+.products-card-chip {
+  align-self: flex-start;
 }
 
 /* Estados */

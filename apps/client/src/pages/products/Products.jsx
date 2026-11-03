@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, X } from 'lucide-react'
+import {
+    Archive, ArchiveRestore, ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
+} from 'lucide-react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
@@ -7,7 +9,8 @@ import { activeFilterTags, emptyFilters } from '../../components/product-filters
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
 import EditProduct from '../../components/product-form/EditProduct.jsx'
-import { actualizarProducto, crearProducto } from '../../api/catalogo.js'
+import ProductActionDialog from '../../components/product-form/ProductActionDialog.jsx'
+import { actualizarProducto, cambiarEstadoProducto, crearProducto, eliminarProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
@@ -52,6 +55,8 @@ function Products() {
     const [showFilters, setShowFilters] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [creating, setCreating] = useState(false)
+    // Acción esperando confirmación: { action: 'desactivar' | 'reactivar' | 'eliminar', product }
+    const [pendingAction, setPendingAction] = useState(null)
 
     // Busca después de la pausa y vuelve a la primera página
     useEffect(() => {
@@ -152,6 +157,22 @@ function Products() {
             return { error: error.message, fields }
         }
     }
+
+    // Desactiva, reactiva o elimina el producto, cierra el diálogo y recarga el listado.
+    // Si falla, le devuelve al diálogo el error; un 409 al eliminar es que tiene historial.
+    const handleAction = async (action, product) => {
+        try {
+            if (action === 'eliminar') await eliminarProducto(product.sku)
+            else await cambiarEstadoProducto(product.sku, action === 'desactivar' ? 'descontinuado' : 'activo')
+            setPendingAction(null)
+            listado.recargar()
+            return {}
+        } catch (error) {
+            return { error: error.message, withHistory: action === 'eliminar' && error.estado === 409 }
+        }
+    }
+
+    const askAction = (action, product) => setPendingAction({ action, product })
 
     return (
         <main className='products'>
@@ -284,14 +305,43 @@ function Products() {
                                         <p className='products-card-sku codigo'>{product.sku}</p>
                                         <h3 className='products-card-name'>{product.name}</h3>
                                         <p className='products-card-category'>{product.category}</p>
+                                        {product.discontinued && (
+                                            <span className='chip products-card-chip'><Archive size={16} />Descontinuado</span>
+                                        )}
                                         <p className='products-card-price'>{priceFormat.format(product.price)}</p>
-                                        <button
-                                            type='button'
-                                            className='products-button'
-                                            onClick={() => setEditingProduct(product)}
-                                        >
-                                            <Pencil size={16} />Editar
-                                        </button>
+                                        <div className='products-card-actions'>
+                                            <button
+                                                type='button'
+                                                className='products-button'
+                                                onClick={() => setEditingProduct(product)}
+                                            >
+                                                <Pencil size={16} />Editar
+                                            </button>
+                                            {product.discontinued ? (
+                                                <button
+                                                    type='button'
+                                                    className='products-button'
+                                                    onClick={() => askAction('reactivar', product)}
+                                                >
+                                                    <ArchiveRestore size={16} />Reactivar
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type='button'
+                                                    className='products-button'
+                                                    onClick={() => askAction('desactivar', product)}
+                                                >
+                                                    <Archive size={16} />Desactivar
+                                                </button>
+                                            )}
+                                            <button
+                                                type='button'
+                                                className='products-button products-button-danger'
+                                                onClick={() => askAction('eliminar', product)}
+                                            >
+                                                <Trash2 size={16} />Eliminar
+                                            </button>
+                                        </div>
                                     </div>
                                 </article>
                             ))}
@@ -301,6 +351,7 @@ function Products() {
                             products={products}
                             formatPrice={priceFormat.format}
                             onEdit={setEditingProduct}
+                            onAction={askAction}
                         />
                     )}
                 </>
@@ -347,6 +398,15 @@ function Products() {
                     formatPrice={priceFormat.format}
                     onClose={() => setEditingProduct(null)}
                     onSave={handleSave}
+                />
+            )}
+
+            {pendingAction && (
+                <ProductActionDialog
+                    action={pendingAction.action}
+                    product={pendingAction.product}
+                    onClose={() => setPendingAction(null)}
+                    onConfirm={handleAction}
                 />
             )}
 

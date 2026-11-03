@@ -1,5 +1,6 @@
-/* Estilos de los formularios de producto: "Editar producto" (EditProduct.jsx)
-   y "Agregar producto" (AddProduct.jsx) */
+/* Estilos de los formularios de producto: "Editar producto" (EditProduct.jsx),
+   "Agregar producto" (AddProduct.jsx) y la confirmación de desactivar, reactivar
+   o eliminar (ProductActionDialog.jsx) */
 
 /* Fondo oscuro que cubre la pantalla y centra el modal; un clic sobre él lo cierra */
 .product-form-overlay {
@@ -190,6 +191,26 @@
 .product-form-error {
   color: var(--estado-error-texto);
   font-size: var(--texto-etiqueta);
+}
+
+/* Botón que confirma algo que no se puede deshacer (ej. "Eliminar"): relleno rojo */
+.product-form-button-danger {
+  border-color: var(--estado-error-texto);
+  background: var(--estado-error-texto);
+  color: var(--color-superficie);
+  font-weight: 700;
+}
+
+.product-form-button-danger:hover {
+  border-color: var(--estado-error-texto);
+  opacity: 0.9;
+  color: var(--color-superficie);
+}
+
+/* Explicación del diálogo de confirmación (ProductActionDialog.jsx) */
+.product-form-message {
+  margin: 0;
+  font-size: var(--texto-pequeno);
 }
 
 /* Botones e inputs mientras se guarda, y "Guardar" sin cambios */
