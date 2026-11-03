@@ -8,12 +8,13 @@
  *   - recuperación de contraseña
  *
  * A tener en cuenta:
- *   - Las contraseñas se guardan siempre con hash. Deben tener de 8 a 12
- *     caracteres, con mayúscula, número y carácter especial como nos pidió el cliente.
+ *   - Las contraseñas se guardan siempre con hash. Las nuevas siguen la
+ *     política de seguridad/politica-de-contrasenas.js.
  */
 
-import { CredencialesInvalidas } from "../../shared/errores/errores-de-dominio.js";
-import { verificarContrasena } from "./seguridad/contrasenas.js";
+import { CredencialesInvalidas, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { hashearContrasena, verificarContrasena } from "./seguridad/contrasenas.js";
+import { exigirPoliticaDeContrasenas } from "./seguridad/politica-de-contrasenas.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
 
 // Si el correo no existe se compara igual contra este hash para que la respuesta tarde lo mismo y no se pueda adivinar qué correos existen.
@@ -89,6 +90,26 @@ export class AdminService {
   async cerrarSesion(token) {
     if (!token) return;
     await this.#repositorio.borrarSesion(hashearToken(token));
+  }
+
+  /**
+   * Cambia la contraseña de quien tiene la sesión. La sesión desde la que
+   * se cambia sigue abierta y las demás se cierran.
+   */
+  async cambiarContrasena({ correo, actual, nueva, token }) {
+    const usuario = await this.#repositorio.buscarUsuarioPorCorreo(correo);
+    const actualCorrecta = usuario && (await verificarContrasena(actual, usuario.contrasenaHash));
+    if (!actualCorrecta) {
+      throw new EntradaInvalida("La contraseña actual no es correcta.", ["actual"]);
+    }
+
+    exigirPoliticaDeContrasenas(nueva, "nueva");
+
+    await this.#repositorio.cambiarContrasena({
+      correo: usuario.correo,
+      contrasenaHash: await hashearContrasena(nueva),
+      sesionQueSeQueda: hashearToken(token),
+    });
   }
 
   // Importa la hoja de productos
