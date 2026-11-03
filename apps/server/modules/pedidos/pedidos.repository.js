@@ -6,7 +6,6 @@
  * estado vigente se lee de `reportes.v_estado_pedido`, no de una columna.
  *
  * POR IMPLEMENTAR
- *   crearPedido()                       RF-25 — carrito a `convertido` con `fecha_cierre`
  *   cambiarEstado()                     RF-26, RF-27 — inserta en historial_estado
  *   listarPorCliente()                  RF-29, RF-37
  */
@@ -96,6 +95,65 @@ export class PedidosRepository {
     await this.#pool.query(
       `DELETE FROM pedidos.agrega WHERE correo_cliente = $1 AND num_carrito = $2 AND sku = $3`,
       [correo, numCarrito, sku]
+    );
+  }
+
+  // Lo que sigue corre dentro de la transacción de confirmar el pedido
+
+  /**
+   * Bloquea el carrito activo para que dos confirmaciones del mismo cliente
+   * no lo conviertan dos veces.
+   * @returns el carrito con sus líneas, o null si no tiene
+   */
+  async bloquearCarritoActivo(cliente, correo) {
+    const { rows } = await cliente.query(
+      `SELECT num_carrito FROM pedidos.carrito
+        WHERE correo_cliente = $1 AND estado_carrito = 'activo'
+          FOR UPDATE`,
+      [correo]
+    );
+    if (!rows[0]) return null;
+
+    const numCarrito = rows[0].num_carrito;
+    const { rows: lineas } = await cliente.query(
+      `SELECT sku, cantidad_solicitada FROM pedidos.agrega
+        WHERE correo_cliente = $1 AND num_carrito = $2
+        ORDER BY sku`,
+      [correo, numCarrito]
+    );
+    return { numCarrito, lineas: lineas.map((fila) => ({ sku: fila.sku, cantidad: fila.cantidad_solicitada })) };
+  }
+
+  /** Desde aquí el precio no cambia: el pedido respeta el precio pagado. */
+  async congelarPrecio(cliente, correo, numCarrito, { sku, precioUnitario, tasaImpuesto }) {
+    await cliente.query(
+      `UPDATE pedidos.agrega SET precio_unitario = $4, tasa_impuesto_aplicada = $5
+        WHERE correo_cliente = $1 AND num_carrito = $2 AND sku = $3`,
+      [correo, numCarrito, sku, precioUnitario, tasaImpuesto]
+    );
+  }
+
+  /** RF-25: el carrito pasa a convertido y nace el pedido con su primer estado, colocado. */
+  async crearPedido(cliente, { correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal = "web" }) {
+    await cliente.query(
+      `UPDATE pedidos.carrito SET estado_carrito = 'convertido', fecha_cierre = now()
+        WHERE correo_cliente = $1 AND num_carrito = $2`,
+      [correo, numCarrito]
+    );
+    const { rows } = await cliente.query(
+      `INSERT INTO pedidos.pedido (correo_cliente, num_carrito, modalidad_entrega, direccion, costo_entrega, canal)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING fecha_pedido_realizado`,
+      [correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal]
+    );
+    await this.registrarEstado(cliente, correo, numCarrito, "colocado");
+    return rows[0].fecha_pedido_realizado;
+  }
+
+  async registrarEstado(cliente, correo, numCarrito, estado) {
+    await cliente.query(
+      `INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado) VALUES ($1, $2, $3)`,
+      [correo, numCarrito, estado]
     );
   }
 }

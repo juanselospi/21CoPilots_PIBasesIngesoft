@@ -79,3 +79,26 @@ export class ProductoConHistorial extends ErrorDeDominio {
     });
   }
 }
+
+/**
+ * Al confirmar, alguna línea ya no tiene las unidades que pide (otro cliente
+ * compró antes). `lineas` dice cuáles para marcarlas en el carrito.
+ */
+export class SinExistencias extends ErrorDeDominio {
+  constructor(lineas) {
+    super("Algunos productos ya no tienen las unidades que pidió. Revise su carrito.", {
+      codigo: "SIN_EXISTENCIAS",
+      detalles: { lineas },
+    });
+  }
+}
+
+/** La pasarela rechazó el cobro; no se creó el pedido y el carrito sigue igual (RF-39). */
+export class PagoRechazado extends ErrorDeDominio {
+  constructor(motivo) {
+    super("El pago fue rechazado. Su carrito sigue igual; puede intentar con otro medio de pago.", {
+      codigo: "PAGO_RECHAZADO",
+      detalles: { motivo },
+    });
+  }
+}

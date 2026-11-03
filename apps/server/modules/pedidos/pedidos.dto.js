@@ -2,7 +2,6 @@
  * DTO + Mapper de carrito y pedidos.
  *
  * POR IMPLEMENTAR
- *   aPedido()            RF-25, RF-27 — estado visible para el cliente
  *   aComprobante()       RF-31
  *   aPedidoAdministrativo()  RF-46 — agrega datos que el cliente no ve
  */
@@ -37,4 +36,28 @@ export const aCarrito = (carrito) => ({
   impuesto: carrito.impuesto,
   total: carrito.total,
   moneda: "USD",
+});
+
+/** RF-25: el pedido recién confirmado, con el precio congelado de cada línea. */
+export const aPedidoConfirmado = (pedido) => ({
+  numCarrito: pedido.numCarrito,
+  fecha: pedido.fecha,
+  estado: pedido.estado,
+  modalidadEntrega: pedido.modalidadEntrega,
+  direccion: pedido.direccion,
+  metodoPago: pedido.metodoPago,
+  lineas: pedido.lineas.map((linea) => ({
+    sku: linea.sku,
+    nombre: linea.nombre,
+    cantidad: linea.cantidad,
+    precioUnitario: linea.precioUnitario,
+    precioFinal: linea.precioFinal,
+    tasaImpuesto: linea.tasaImpuesto,
+  })),
+  subtotal: pedido.subtotal,
+  impuesto: pedido.impuesto,
+  costoEntrega: pedido.costoEntrega,
+  total: pedido.total,
+  moneda: "USD",
+  pago: pedido.pago,
 });

@@ -2,13 +2,12 @@
  * CAPA DE API — Controlador de carrito y pedidos.
  *
  * POR IMPLEMENTAR
- *   confirmar                                                   RF-25
  *   consultarEstado                                             RF-27
  *   listarMisPedidos                                            RF-37
  *   listarParaAdministracion / cambiarEstado                    RF-26, RF-28, RF-46
  */
 
-import { aCarrito, aModalidad } from "./pedidos.dto.js";
+import { aCarrito, aModalidad, aPedidoConfirmado } from "./pedidos.dto.js";
 
 export class PedidosController {
   #servicio;
@@ -47,5 +46,11 @@ export class PedidosController {
   listarModalidades = async (_peticion, respuesta) => {
     const modalidades = await this.#servicio.listarModalidades();
     respuesta.json({ datos: modalidades.map(aModalidad) });
+  };
+
+  // POST / con { modalidadEntrega, direccion, metodoPago, datosTarjeta? }
+  confirmar = async (peticion, respuesta) => {
+    const pedido = await this.#servicio.confirmar(peticion.usuario.correo, peticion.body ?? {});
+    respuesta.status(201).json({ datos: aPedidoConfirmado(pedido) });
   };
 }
