@@ -4,6 +4,7 @@ import express from "express";
 
 import { crearRutasDeCatalogo } from "./catalogo.routes.js";
 import { CatalogoController } from "./catalogo.controller.js";
+import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import {
@@ -78,7 +79,7 @@ const servicio = {
 };
 
 // La cabecera x-rol simula la sesión; sin ella no hay usuario.
-async function levantarServidor() {
+async function levantarServidor(servicioDePrueba = servicio) {
   const aplicacion = express();
   aplicacion.use(express.json());
   aplicacion.use((peticion, _respuesta, siguiente) => {
@@ -88,7 +89,7 @@ async function levantarServidor() {
   });
   aplicacion.use(
     "/api/catalogo",
-    crearRutasDeCatalogo(new CatalogoController({ servicio }), {
+    crearRutasDeCatalogo(new CatalogoController({ servicio: servicioDePrueba }), {
       exigirRol: crearExigirRol({ publicar: async () => {} }),
     })
   );
@@ -162,6 +163,21 @@ test("datos inválidos responden 400 con los campos a corregir", async (t) => {
 
   assert.equal(estado, 400);
   assert.deepEqual(cuerpo.error.detalles.campos, ["sku"]);
+});
+
+test("tres campos faltantes responden 400 con los tres y el mensaje de cada uno", async (t) => {
+  const { url, cerrar } = await levantarServidor({ ...servicio, crearProducto: async (datos) => validarProductoNuevo(datos) });
+  t.after(cerrar);
+
+  const { estado, cuerpo } = await registrar(url, { sku: "NUEVO-1" }, ROLES.ADMINISTRADOR);
+
+  assert.equal(estado, 400);
+  assert.deepEqual(cuerpo.error.detalles.campos, ["nombre", "categoria", "costoItem"]);
+  assert.deepEqual(
+    cuerpo.error.detalles.errores.map(({ campo }) => campo),
+    ["nombre", "categoria", "costoItem"]
+  );
+  assert.equal(cuerpo.error.detalles.errores[0].mensaje, "El nombre es obligatorio.");
 });
 
 test("las consultas del catálogo siguen siendo públicas", async (t) => {

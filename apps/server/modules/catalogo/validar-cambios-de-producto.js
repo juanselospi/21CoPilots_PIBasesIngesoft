@@ -4,6 +4,7 @@
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { crearValidacion } from "../../shared/validacion/validar-campos.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
 import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
 
@@ -36,22 +37,18 @@ export function validarCambiosDeProducto(datos) {
     throw new EntradaInvalida(`Mande un objeto con ${NOMBRES_DE_CAMPOS.join(", ")}.`);
   }
 
-  const problemas = [];
-  const campos = [];
-  const anotar = (campo, mensaje) => {
-    campos.push(campo);
-    problemas.push(mensaje);
-  };
+  const validacion = crearValidacion();
 
   const sobrantes = Object.keys(datos).filter((clave) => !Object.hasOwn(CAMPOS, clave));
   if (sobrantes.length > 0) {
-    campos.push(...sobrantes);
-    problemas.push(`Solo se pueden cambiar ${NOMBRES_DE_CAMPOS.join(", ")}; no se aceptan: ${sobrantes.join(", ")}.`);
+    validacion.anotar(
+      sobrantes,
+      `Solo se pueden cambiar ${NOMBRES_DE_CAMPOS.join(", ")}; no se aceptan: ${sobrantes.join(", ")}.`
+    );
   }
 
   if (!NOMBRES_DE_CAMPOS.some((campo) => Object.hasOwn(datos, campo))) {
-    campos.push(...NOMBRES_DE_CAMPOS);
-    problemas.push(`Indique al menos uno de: ${NOMBRES_DE_CAMPOS.join(", ")}.`);
+    validacion.anotar(NOMBRES_DE_CAMPOS, `Indique al menos uno de: ${NOMBRES_DE_CAMPOS.join(", ")}.`);
   }
 
   const cambios = {};
@@ -60,13 +57,11 @@ export function validarCambiosDeProducto(datos) {
 
     const valor = leer(datos[campo]);
     const problema = valor === null ? siVieneVacio : problemaCon(valor);
-    if (problema) anotar(campo, problema);
+    if (problema) validacion.anotar(campo, problema);
     else cambios[campo] = valor;
   }
 
-  if (problemas.length > 0) {
-    throw new EntradaInvalida(problemas.join(" "), campos);
-  }
+  validacion.lanzarSiHayProblemas();
 
   return cambios;
 }

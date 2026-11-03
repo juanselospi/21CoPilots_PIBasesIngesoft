@@ -54,9 +54,12 @@ export class NoAutorizado extends ErrorDeDominio {
   }
 }
 
-/** Datos de entrada inválidos. */
+/**
+ * Datos de entrada inválidos. `campos` es la lista de nombres que ya lee el
+ * cliente; `errores` trae además el mensaje de cada uno.
+ */
 export class EntradaInvalida extends ErrorDeDominio {
-  constructor(mensaje, campos = null) {
-    super(mensaje, { codigo: "ENTRADA_INVALIDA", detalles: { campos } });
+  constructor(mensaje, campos = null, errores = null) {
+    super(mensaje, { codigo: "ENTRADA_INVALIDA", detalles: { campos, errores } });
   }
 }
