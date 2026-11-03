@@ -114,6 +114,17 @@ export class CatalogoRepository {
     return rows.map(aProducto);
   }
 
+  /** Varios productos por SKU de una vez, para el carrito. */
+  async obtenerVarios(skus) {
+    const { rows } = await this.#pool.query(
+      `SELECT ${COLUMNAS_DE_PRODUCTO}
+         FROM ${PRODUCTO_CON_FAMILIA}
+        WHERE p.sku = ANY($1::text[])`,
+      [skus]
+    );
+    return rows.map(aProducto);
+  }
+
   async obtenerPorSku(sku) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}

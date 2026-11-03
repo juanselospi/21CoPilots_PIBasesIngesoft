@@ -36,6 +36,8 @@ export function crearModuloCatalogo({ pool, busDeEventos, exigirRol, umbralDeExi
     // Carrito y pedidos usan el mismo motor para no calcular el precio de
     // otra forma.
     motorDePrecios,
+    // Pedidos pide aquí el precio y las existencias de lo que va al carrito
+    productosParaVenta: (skus) => servicio.productosParaVenta(skus),
     // La importación del Excel guarda los productos por aquí, porque las
     // tablas de catálogo solo las escribe este módulo.
     guardarProductoPorSku: (cliente, producto) => repositorio.guardarPorSku(cliente, producto),

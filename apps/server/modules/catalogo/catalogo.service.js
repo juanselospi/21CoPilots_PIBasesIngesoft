@@ -262,6 +262,36 @@ export class CatalogoService {
     });
   }
 
+  /**
+   * Lo que pedidos necesita de cada producto para el carrito y la compra:
+   * el precio con y sin impuesto del motor de precios, las existencias y si
+   * está a la venta (activo, de una familia activa y disponible, RN-03).
+   * @returns un Map por SKU; los que no existen no aparecen
+   */
+  async productosParaVenta(skus) {
+    const productos = await this.#repositorio.obtenerVarios([...new Set(skus)]);
+    return new Map(
+      productos.map((guardado) => {
+        const producto = this.#conPrecioYDisponibilidad(guardado);
+        const precioSinImpuesto = producto.desglosePrecio.find(({ paso }) => paso === "margen")?.monto ?? 0;
+        return [
+          producto.sku,
+          {
+            sku: producto.sku,
+            nombre: producto.nombre,
+            imagenUrl: producto.imagenUrl,
+            precioFinal: producto.precioFinal,
+            precioSinImpuesto,
+            tasaImpuesto: producto.tasaImpuesto,
+            existencias: producto.existencias,
+            admiteContrapedido: producto.admiteContrapedido,
+            aLaVenta: esVisible(producto),
+          },
+        ];
+      })
+    );
+  }
+
   // Devuelve el nombre como está guardado, así "legos" entra en "Legos"
   async #familiaExistente(nombre) {
     const familia = await this.#repositorio.buscarFamilia(nombre);
