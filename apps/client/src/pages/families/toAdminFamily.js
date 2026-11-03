@@ -26,4 +26,11 @@ export const toServerFamily = (values) =>
 export const toModalFields = (serverFields = []) =>
     Object.keys(serverFieldByModalField).filter((field) => serverFields.includes(serverFieldByModalField[field]))
 
-export const productCountText = (count) => (count === 1 ? '1 producto' : `${count} productos`)
+// Campos del modal que marcar cuando el servidor rechaza una familia.
+// Nombre repetido: el servidor no indica el campo, pero siempre es el nombre.
+export const familyErrorFields = (error) =>
+    error.detalles?.regla === 'FAMILIA_REPETIDA' || error.codigo === 'REGISTRO_DUPLICADO'
+        ? ['name']
+        : toModalFields(error.detalles?.campos ?? [])
+
+export const productCountText =(count) => (count === 1 ? '1 producto' : `${count} productos`)

@@ -10,12 +10,13 @@ import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
 import EditProduct from '../../components/product-form/EditProduct.jsx'
 import ProductActionDialog from '../../components/product-form/ProductActionDialog.jsx'
-import { actualizarProducto, cambiarEstadoProducto, crearProducto, eliminarProducto } from '../../api/catalogo.js'
+import { actualizarProducto, cambiarEstadoProducto, crearFamilia, crearProducto, eliminarProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toFamilyOption, toModalFields, toServerFields } from './toAdminProduct.js'
+import { familyErrorFields, toServerFamily } from '../families/toAdminFamily.js'
 
 // Opciones de orden; el value es lo que entiende el servidor
 const sortOptions = [
@@ -83,11 +84,11 @@ function Products() {
     const firstShown = page * pageSize + 1
     const lastShown = page * pageSize + products.length
 
-    // Categorías que ya existen: opciones del filtro y sugerencias al agregar un producto
+    // Categorías que ya existen: opciones del filtro
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
 
-    // Familias con su importación y margen: selector y precios heredados al editar
+    // Familias con su importación y margen: selector y precios heredados al agregar y al editar
     const familias = useFamilias()
     const families = familias.datos?.map(toFamilyOption) ?? []
 
@@ -155,6 +156,18 @@ function Products() {
                 ? ['sku']
                 : toModalFields(error.detalles?.campos ?? [])
             return { error: error.message, fields }
+        }
+    }
+
+    // Crea una familia desde «Agregar producto» y recarga las familias.
+    // Le devuelve al modal la familia creada o el error.
+    const handleCreateFamily = async (values) => {
+        try {
+            const creada = await crearFamilia(toServerFamily(values))
+            familias.recargar()
+            return { family: toFamilyOption(creada) }
+        } catch (error) {
+            return { error: error.message, fields: familyErrorFields(error) }
         }
     }
 
@@ -412,10 +425,11 @@ function Products() {
 
             {creating && (
                 <AddProduct
-                    categories={categoryNames}
+                    families={families}
                     formatPrice={priceFormat.format}
                     onClose={() => setCreating(false)}
                     onCreate={handleCreate}
+                    onCreateFamily={handleCreateFamily}
                 />
             )}
         </main>

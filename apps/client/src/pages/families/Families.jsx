@@ -8,7 +8,7 @@ import FamilyForm from '../../components/family-form/FamilyForm.jsx'
 import ConfirmDialog from '../../components/confirm-dialog/ConfirmDialog.jsx'
 import { actualizarFamilia, crearFamilia, eliminarFamilia } from '../../api/catalogo.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
-import { productCountText, toAdminFamily, toModalFields, toServerFamily } from './toAdminFamily.js'
+import { familyErrorFields, productCountText, toAdminFamily, toServerFamily } from './toAdminFamily.js'
 
 // Texto del diálogo de confirmación de cada acción
 const dialogByAction = {
@@ -63,9 +63,7 @@ function Families() {
             familias.recargar()
             return {}
         } catch (error) {
-            // Nombre repetido: el servidor no indica el campo, pero siempre es el nombre
-            const repeated = error.detalles?.regla === 'FAMILIA_REPETIDA' || error.codigo === 'REGISTRO_DUPLICADO'
-            return { error: error.message, fields: repeated ? ['name'] : toModalFields(error.detalles?.campos ?? []) }
+            return { error: error.message, fields: familyErrorFields(error) }
         }
     }
 

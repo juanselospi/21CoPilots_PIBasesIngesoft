@@ -1,25 +1,29 @@
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { useEffect, useId, useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
+import FamilyForm from '../family-form/FamilyForm.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 
-const CATEGORY_LIST_ID = 'add-product-categories'
-
-// Datos del producto; los marcados como obligatorios también los exige el servidor
-const textFields = [
+// Datos del producto; los marcados como obligatorios también los exige el servidor.
+// El selector de familia va entre los dos grupos.
+const identityFields = [
     { key: 'sku', label: 'Código', required: true, placeholder: 'Ej. LEG-001' },
     { key: 'name', label: 'Nombre', required: true },
-    { key: 'category', label: 'Categoría', required: true, list: CATEGORY_LIST_ID },
+]
+const detailFields = [
     { key: 'supplier', label: 'Proveedor' },
     { key: 'imageUrl', label: 'Imagen (dirección web)', type: 'url', placeholder: 'https://…' },
 ]
 
-// Al crear, importación y margen son opcionales: si quedan vacíos valen 0
-const optionalPrices = ['importacionPct', 'margenPct']
+// Importación y margen vacíos: el producto usa los de su familia
+const inheritableFields = ['importacionPct', 'margenPct']
+const inheritedLabel = { importacionPct: 'la importación', margenPct: 'el margen' }
+
 const fieldRules = {
-    ...Object.fromEntries(textFields.map(({ key, required, type }) => [key, { obligatorio: required, tipo: type }])),
+    ...Object.fromEntries([...identityFields, ...detailFields].map(({ key, required, type }) => [key, { obligatorio: required, tipo: type }])),
+    category: { obligatorio: true },
     ...priceRules,
     importacionPct: { ...priceRules.importacionPct, obligatorio: false },
     margenPct: { ...priceRules.margenPct, obligatorio: false },
@@ -40,9 +44,11 @@ const emptyProduct = {
     backorder: false,
 }
 
-// No llama a la API: usa `onCreate`, que devuelve
-// { product } si se guardó o { error, fields } si el servidor lo rechazó.
-function AddProduct({ categories, formatPrice, onClose, onCreate }) {
+const hasValue = (value) => value !== null && value !== undefined
+
+// No llama a la API: usa `onCreate`, que devuelve { product } si se guardó o { error, fields }
+// si el servidor lo rechazó, y `onCreateFamily`, que devuelve { family } o { error, fields }.
+function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }) {
     const {
         valores: values, errores: errors, formularioRef, cambiarCampo, validar,
         erroresServidor, reiniciar, atributosCampo, idError,
@@ -50,17 +56,28 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const [created, setCreated] = useState(null)
+    const [creatingFamily, setCreatingFamily] = useState(false)
+    // Familias creadas desde aquí; se muestran aunque la lista todavía se esté recargando
+    const [newFamilies, setNewFamilies] = useState([])
+    const familySelectId = useId()
 
-    // No se cierra mientras guarda
+    const familyOptions = [
+        ...families.filter(({ active }) => active),
+        ...newFamilies.filter(({ name }) => !families.some((family) => family.name === name)),
+    ]
+    // Puede no haber ninguna elegida todavía
+    const family = familyOptions.find(({ name }) => name === values.category)
+
+    // No se cierra mientras guarda; con el modal de familia abierto, Escape cierra solo ese
     const close = () => {
         if (!saving) onClose()
     }
 
     useEffect(() => {
-        const closeOnEscape = (event) => event.key === 'Escape' && !saving && onClose()
+        const closeOnEscape = (event) => event.key === 'Escape' && !saving && !creatingFamily && onClose()
         window.addEventListener('keydown', closeOnEscape)
         return () => window.removeEventListener('keydown', closeOnEscape)
-    }, [saving, onClose])
+    }, [saving, creatingFamily, onClose])
 
     const setField = (key, value) => {
         cambiarCampo(key, value)
@@ -70,6 +87,24 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     const handlePriceChange = (key, allowNegative, input) => {
         const value = readPriceInput(input, allowNegative)
         if (value !== null) setField(key, value)
+    }
+
+    // La familia creada queda elegida en el selector
+    const handleFamilySave = async (familyValues) => {
+        const result = await onCreateFamily(familyValues)
+        if (!result.error) {
+            setNewFamilies((current) => [...current, result.family])
+            setField('category', result.family.name)
+            setCreatingFamily(false)
+        }
+        return result
+    }
+
+    // «Hereda 25 % de Coleccionables» debajo de importación y margen cuando quedan vacíos
+    const inheritHint = (key) => {
+        if (!inheritableFields.includes(key) || values[key] !== '') return null
+        if (!hasValue(family?.[key])) return 'Vacío: usa el de la familia.'
+        return `Hereda ${family[key]} % de ${family.name}`
     }
 
     const handleSubmit = async (event) => {
@@ -95,7 +130,34 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
         setCreated(null)
     }
 
+    const fieldError = (key) => errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>
+
+    const renderTextField = ({ key, label, required, placeholder, type = 'text' }) => (
+        <label key={key} className='product-form-field'>
+            <span>{label}{!required && <small className='product-form-optional'> (opcional)</small>}</span>
+            <div className='product-form-input'>
+                <input
+                    type={type}
+                    disabled={saving}
+                    placeholder={placeholder}
+                    {...atributosCampo(key)}
+                    value={values[key]}
+                    onChange={(event) => setField(key, event.target.value)}
+                />
+            </div>
+            {fieldError(key)}
+        </label>
+    )
+
     if (created) {
+        // Lo que el producto tomó de su familia, con el valor de la familia si se conoce
+        const createdFamily = familyOptions.find(({ name }) => name === created.category)
+        const inherited = inheritableFields
+            .filter((key) => created[key] === null)
+            .map((key) => (hasValue(createdFamily?.[key])
+                ? `${inheritedLabel[key]} (${createdFamily[key]} %)`
+                : inheritedLabel[key]))
+
         return (
             <div className='product-form-overlay' onClick={close}>
                 <div
@@ -118,6 +180,7 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
                     <p className='product-form-success' role='status'>
                         Se guardó con precio final de {formatPrice(created.price)} y{' '}
                         {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
+                        {inherited.length > 0 && ` Usa ${inherited.join(' y ')} de la familia ${created.category}.`}
                     </p>
 
                     <footer className='product-form-actions'>
@@ -132,108 +195,127 @@ function AddProduct({ categories, formatPrice, onClose, onCreate }) {
     }
 
     return (
-        <div className='product-form-overlay' onClick={close}>
-            <form
-                ref={formularioRef}
-                noValidate
-                className='product-form-modal product-form-wide'
-                role='dialog'
-                aria-modal='true'
-                aria-labelledby='add-product-title'
-                onClick={(event) => event.stopPropagation()}
-                onSubmit={handleSubmit}
-            >
-                <header className='product-form-header'>
-                    <div>
-                        <h2 id='add-product-title'>Agregar producto</h2>
-                        <p>El precio final lo calcula el sistema al guardar.</p>
-                    </div>
-                    <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
-                        <X size={20} />
-                    </button>
-                </header>
+        <>
+            <div className='product-form-overlay' onClick={close}>
+                <form
+                    ref={formularioRef}
+                    noValidate
+                    className='product-form-modal product-form-wide'
+                    role='dialog'
+                    aria-modal='true'
+                    aria-labelledby='add-product-title'
+                    onClick={(event) => event.stopPropagation()}
+                    onSubmit={handleSubmit}
+                >
+                    <header className='product-form-header'>
+                        <div>
+                            <h2 id='add-product-title'>Agregar producto</h2>
+                            <p>El precio final lo calcula el sistema al guardar.</p>
+                        </div>
+                        <button type='button' className='product-form-close' aria-label='Cerrar' disabled={saving} onClick={close}>
+                            <X size={20} />
+                        </button>
+                    </header>
 
-                {textFields.map(({ key, label, required, placeholder, list, type = 'text' }) => (
-                    <label key={key} className='product-form-field'>
-                        <span>{label}{!required && <small className='product-form-optional'> (opcional)</small>}</span>
-                        <div className='product-form-input'>
-                            <input
-                                type={type}
+                    {identityFields.map(renderTextField)}
+
+                    {/* No es un <label> que envuelve: el botón «Crear familia» quedaría asociado a la etiqueta */}
+                    <div className='product-form-field'>
+                        <div className='product-form-label-row'>
+                            <label htmlFor={familySelectId}>Familia</label>
+                            <button
+                                type='button'
+                                className='product-form-link'
                                 disabled={saving}
-                                placeholder={placeholder}
-                                list={list}
-                                {...atributosCampo(key)}
-                                value={values[key]}
-                                onChange={(event) => setField(key, event.target.value)}
+                                onClick={() => setCreatingFamily(true)}
+                            >
+                                <Plus size={14} />Crear familia
+                            </button>
+                        </div>
+                        <div className='product-form-input'>
+                            <select
+                                id={familySelectId}
+                                disabled={saving}
+                                {...atributosCampo('category')}
+                                value={values.category}
+                                onChange={(event) => setField('category', event.target.value)}
+                            >
+                                <option value=''>Seleccione una familia</option>
+                                {familyOptions.map(({ name }) => <option key={name} value={name}>{name}</option>)}
+                            </select>
+                        </div>
+                        {fieldError('category')}
+                    </div>
+
+                    {detailFields.map(renderTextField)}
+
+                    <label className='product-form-field'>
+                        <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
+                        <div className='product-form-input'>
+                            <textarea
+                                rows={3}
+                                disabled={saving}
+                                {...atributosCampo('description')}
+                                value={values.description}
+                                onChange={(event) => setField('description', event.target.value)}
                             />
                         </div>
-                        {errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>}
+                        {fieldError('description')}
                     </label>
-                ))}
 
-                {/* Sugerencias con las categorías que ya existen; se puede escribir otra */}
-                <datalist id={CATEGORY_LIST_ID}>
-                    {categories.map((name) => <option key={name} value={name} />)}
-                </datalist>
+                    <section className='product-form-prices'>
+                        {priceFields.map(({ key, label, unit, allowNegative }) => {
+                            const hint = inheritHint(key)
+                            return (
+                                <label key={key} className='product-form-field'>
+                                    <span>{label}</span>
+                                    <div className='product-form-input'>
+                                        <input
+                                            type='text'
+                                            inputMode='decimal'
+                                            disabled={saving}
+                                            placeholder={inheritableFields.includes(key) && hasValue(family?.[key]) ? String(family[key]) : undefined}
+                                            {...atributosCampo(key)}
+                                            value={values[key]}
+                                            onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
+                                        />
+                                        <span>{unit}</span>
+                                    </div>
+                                    {fieldError(key) || (hint && <p className='product-form-hint'>{hint}</p>)}
+                                </label>
+                            )
+                        })}
+                    </section>
 
-                <label className='product-form-field'>
-                    <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
-                    <div className='product-form-input'>
-                        <textarea
-                            rows={3}
-                            disabled={saving}
-                            {...atributosCampo('description')}
-                            value={values.description}
-                            onChange={(event) => setField('description', event.target.value)}
-                        />
-                    </div>
-                    {errors.description && <p id={idError('description')} className='product-form-error'>{errors.description}</p>}
-                </label>
+                    <StockFields
+                        stock={values.stock}
+                        backorder={values.backorder}
+                        error={errors.stock}
+                        inputProps={atributosCampo('stock')}
+                        errorId={idError('stock')}
+                        disabled={saving}
+                        optional
+                        onChange={setField}
+                    />
 
-                <section className='product-form-prices'>
-                    {priceFields.map(({ key, label, unit, allowNegative }) => (
-                        <label key={key} className='product-form-field'>
-                            <span>{label}</span>
-                            <div className='product-form-input'>
-                                <input
-                                    type='text'
-                                    inputMode='decimal'
-                                    disabled={saving}
-                                    placeholder={optionalPrices.includes(key) ? '0' : undefined}
-                                    {...atributosCampo(key)}
-                                    value={values[key]}
-                                    onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
-                                />
-                                <span>{unit}</span>
-                            </div>
-                            {errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>}
-                        </label>
-                    ))}
-                </section>
+                    {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
 
-                <StockFields
-                    stock={values.stock}
-                    backorder={values.backorder}
-                    error={errors.stock}
-                    inputProps={atributosCampo('stock')}
-                    errorId={idError('stock')}
-                    disabled={saving}
-                    optional
-                    onChange={setField}
-                />
+                    <footer className='product-form-actions'>
+                        <button type='button' className='product-form-button' disabled={saving} onClick={close}>
+                            Cancelar
+                        </button>
+                        <button type='submit' className='product-form-button product-form-button-primary' disabled={saving}>
+                            {saving ? 'Guardando…' : 'Agregar'}
+                        </button>
+                    </footer>
+                </form>
+            </div>
 
-                {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
-
-                <footer className='product-form-actions'>
-                    <button type='button' className='product-form-button' disabled={saving} onClick={close}>
-                        Cancelar
-                    </button>
-                    <button type='submit' className='product-form-button product-form-button-primary' disabled={saving}>
-                        {saving ? 'Guardando…' : 'Agregar'}
-                    </button>
-                </footer>
-            </form>
-        </div>
+            {/* Fuera del <form> del producto: un formulario no puede ir dentro de otro */}
+            {creatingFamily && (
+                <FamilyForm family={null} onClose={() => setCreatingFamily(false)} onSave={handleFamilySave} />
+            )}
+        </>
     )
 }
 
