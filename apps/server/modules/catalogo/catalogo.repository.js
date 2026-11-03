@@ -25,11 +25,34 @@ const COLUMNAS_DE_PRODUCTO = `
        p.categoria,
        p.proveedor,
        f.importacion     AS importacion_familia,
-       f.margen_ganancia AS margen_familia`;
+       f.margen_ganancia AS margen_familia,
+       f.activa          AS familia_activa`;
 
 const PRODUCTO_CON_FAMILIA = `
        catalogo.producto p
   JOIN catalogo.familia  f ON f.nombre = p.categoria`;
+
+// "Legos", "legos" y " Legos  " son la misma familia: se comparan sin
+// mayúsculas y con los espacios normalizados.
+const nombreComparable = (expresion) => `lower(regexp_replace(btrim(${expresion}), '\\s+', ' ', 'g'))`;
+const MISMA_FAMILIA = `${nombreComparable("f.nombre")} = ${nombreComparable("$1")}`;
+
+const COLUMNAS_DE_FAMILIA = `
+       f.nombre,
+       f.descripcion,
+       f.importacion,
+       f.margen_ganancia,
+       f.activa,
+       (SELECT count(*) FROM catalogo.producto p WHERE p.categoria = f.nombre)::int AS total_de_productos`;
+
+// Campo del dominio → columna, para armar el UPDATE solo con lo que cambia.
+const COLUMNA_DE_FAMILIA = Object.freeze({
+  nombre: "nombre",
+  descripcion: "descripcion",
+  porcentajeImportacion: "importacion",
+  margenGanancia: "margen_ganancia",
+  activa: "activa",
+});
 
 
 
@@ -184,6 +207,52 @@ export class CatalogoRepository {
 
     return { sku: rows[0].sku, insertado: rows[0].insertado };
   }
+
+  async listarFamilias() {
+    const { rows } = await this.#pool.query(
+      `SELECT ${COLUMNAS_DE_FAMILIA}
+         FROM catalogo.familia f
+        ORDER BY f.nombre`
+    );
+    return rows.map(aFamilia);
+  }
+
+  /** Busca sin importar mayúsculas ni espacios; null si no existe. */
+  async buscarFamilia(nombre) {
+    const { rows } = await this.#pool.query(
+      `SELECT ${COLUMNAS_DE_FAMILIA}
+         FROM catalogo.familia f
+        WHERE ${MISMA_FAMILIA}`,
+      [nombre]
+    );
+    return rows[0] ? aFamilia(rows[0]) : null;
+  }
+
+  async crearFamilia({ nombre, descripcion, porcentajeImportacion, margenGanancia }) {
+    await this.#pool.query(
+      `INSERT INTO catalogo.familia (nombre, descripcion, importacion, margen_ganancia)
+       VALUES ($1, $2, $3, $4)`,
+      [nombre, descripcion, porcentajeImportacion, margenGanancia]
+    );
+  }
+
+  /**
+   * Cambia solo los campos que vienen. Renombrar arrastra a sus productos
+   * por el ON UPDATE CASCADE de la llave foránea.
+   */
+  async actualizarFamilia(nombre, cambios) {
+    const campos = Object.keys(cambios);
+    const asignaciones = campos.map((campo, indice) => `${COLUMNA_DE_FAMILIA[campo]} = $${indice + 2}`);
+
+    await this.#pool.query(
+      `UPDATE catalogo.familia SET ${asignaciones.join(", ")} WHERE nombre = $1`,
+      [nombre, ...campos.map((campo) => cambios[campo])]
+    );
+  }
+
+  async eliminarFamilia(nombre) {
+    await this.#pool.query(`DELETE FROM catalogo.familia WHERE nombre = $1`, [nombre]);
+  }
 }
 
 /**
@@ -191,10 +260,9 @@ export class CatalogoRepository {
  * "Legos " son la misma familia, así una hoja escrita a mano no duplica.
  */
 async function asegurarFamilia(cliente, { categoria, porcentajeImportacion, margenGanancia }) {
-  const { rows } = await cliente.query(
-    `SELECT nombre FROM catalogo.familia WHERE lower(btrim(nombre)) = lower(btrim($1))`,
-    [categoria]
-  );
+  const { rows } = await cliente.query(`SELECT f.nombre FROM catalogo.familia f WHERE ${MISMA_FAMILIA}`, [
+    categoria,
+  ]);
   if (rows[0]) return rows[0].nombre;
 
   await cliente.query(
@@ -219,6 +287,7 @@ const aProducto = (fila) => ({
   familia: {
     porcentajeImportacion: Number(fila.importacion_familia),
     margenGanancia: Number(fila.margen_familia),
+    activa: fila.familia_activa,
   },
   tasaImpuesto: Number(fila.tasa_impuesto),
   admiteContrapedido: fila.contrapedido,
@@ -228,3 +297,12 @@ const aProducto = (fila) => ({
 });
 
 const numeroONulo = (valor) => (valor === null ? null : Number(valor));
+
+const aFamilia = (fila) => ({
+  nombre: fila.nombre,
+  descripcion: fila.descripcion,
+  porcentajeImportacion: Number(fila.importacion),
+  margenGanancia: Number(fila.margen_ganancia),
+  activa: fila.activa,
+  totalDeProductos: fila.total_de_productos,
+});

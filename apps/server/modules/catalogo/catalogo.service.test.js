@@ -31,6 +31,9 @@ function crearServicio() {
       return producto.sku;
     },
     obtenerPorSku: async (sku) => productos.get(sku) ?? null,
+    // Existen todas las familias salvo "Sin familia", y se guardan con mayúscula inicial
+    buscarFamilia: async (nombre) =>
+      nombre === "Sin familia" ? null : { nombre: nombre[0].toUpperCase() + nombre.slice(1) },
     // Como el COALESCE del SQL: lo que no viene se queda como está.
     actualizar: async (sku, cambios) => {
       const producto = productos.get(sku);
@@ -452,4 +455,45 @@ test("un margen negativo heredado de la familia también lleva la etiqueta", asy
   const { productos } = await servicio.listarParaAdministracion({ limite: 24 });
 
   assert.ok(productos[0].etiquetas.includes("margen_negativo"));
+});
+
+test("no registra un producto de una familia que no existe", async () => {
+  const { servicio, productos } = crearServicio();
+
+  await assert.rejects(servicio.crearProducto({ ...pkm001, categoria: "Sin familia" }), (error) => {
+    assert.ok(error instanceof EntradaInvalida);
+    assert.deepEqual(error.detalles.campos, ["categoria"]);
+    return true;
+  });
+  assert.equal(productos.size, 0);
+});
+
+test("el producto nuevo se guarda con el nombre de la familia como está guardado", async () => {
+  const { servicio } = crearServicio();
+
+  const producto = await servicio.crearProducto({ ...pkm001, categoria: "trading Cards" });
+
+  assert.equal(producto.categoria, "Trading Cards");
+});
+
+test("una familia inactiva saca sus productos de la tienda y los marca ocultos en el panel", async () => {
+  const inactiva = { porcentajeImportacion: 0, margenGanancia: 0, activa: false };
+  const productos = [
+    { ...producto("LEG-001", "Legos", 3), familia: inactiva },
+    producto("PKM-001", "Trading Cards", 3),
+  ];
+  const repositorio = {
+    listar: async () => productos,
+    listarParaAdministracion: async () => productos,
+    obtenerPorSku: async (sku) => productos.find((p) => p.sku === sku),
+  };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const tienda = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+  assert.deepEqual(tienda.map((p) => p.sku), ["PKM-001"]);
+  await assert.rejects(servicio.obtenerFicha("LEG-001"), RecursoNoEncontrado);
+  assert.deepEqual(await servicio.listarFamilias(), [{ nombre: "Trading Cards", cantidadDeProductos: 1 }]);
+
+  const { productos: panel } = await servicio.listarParaAdministracion({ limite: 24 });
+  assert.ok(panel.find((p) => p.sku === "LEG-001").etiquetas.includes("oculto_en_tienda"));
 });
