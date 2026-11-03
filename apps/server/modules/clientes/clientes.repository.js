@@ -5,7 +5,6 @@
  * cuenta en `usuarios.usuario`. La cédula se guarda solo con dígitos.
  *
  * POR IMPLEMENTAR
- *   obtenerPorCorreo()             RF-37
  *   incrementarCompras()           RF-34 — `num_compras` es el insumo del nivel (RN-08)
  *   actualizarDatosFiscales()      aprobado #3 — cédula para la factura (RN-18)
  */
@@ -58,6 +57,49 @@ export class ClientesRepository {
       if (campo) return [campo];
       throw error;
     }
+  }
+
+  /** RF-37: los datos del cliente con sus teléfonos, o null si el correo no es de un cliente. */
+  async obtenerPorCorreo(correo) {
+    const { rows } = await this.#pool.query(
+      `SELECT u.correo, u.nombre, c.cedula, c.direccion, c.num_compras, c.fecha_aceptacion_terminos,
+              coalesce(array_agg(t.telefono ORDER BY t.telefono) FILTER (WHERE t.telefono IS NOT NULL), '{}') AS telefonos
+         FROM clientes.cliente c
+         JOIN usuarios.usuario u ON u.correo = c.correo_usuario
+         LEFT JOIN clientes.cliente_telefono t ON t.correo_usuario = c.correo_usuario
+        WHERE c.correo_usuario = $1
+        GROUP BY u.correo, u.nombre, c.cedula, c.direccion, c.num_compras, c.fecha_aceptacion_terminos`,
+      [correo]
+    );
+    if (!rows[0]) return null;
+
+    const fila = rows[0];
+    return {
+      correo: fila.correo,
+      nombre: fila.nombre,
+      cedula: fila.cedula,
+      direccion: fila.direccion,
+      telefonos: fila.telefonos,
+      numeroDeCompras: fila.num_compras,
+      fechaAceptacionTerminos: fila.fecha_aceptacion_terminos,
+    };
+  }
+
+  /** Cambia la dirección y reemplaza los teléfonos, lo que venga, en una transacción. */
+  async actualizarContacto(correo, { direccion, telefonos }) {
+    await enTransaccion(this.#pool, async (cliente) => {
+      if (direccion !== undefined) {
+        await cliente.query(`UPDATE clientes.cliente SET direccion = $2 WHERE correo_usuario = $1`, [correo, direccion]);
+      }
+      if (telefonos !== undefined) {
+        await cliente.query(`DELETE FROM clientes.cliente_telefono WHERE correo_usuario = $1`, [correo]);
+        await cliente.query(
+          `INSERT INTO clientes.cliente_telefono (correo_usuario, telefono)
+           SELECT $1, unnest($2::text[])`,
+          [correo, telefonos]
+        );
+      }
+    });
   }
 }
 

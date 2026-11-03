@@ -7,12 +7,11 @@
 
 import { crearValidacion, texto } from "../../shared/validacion/validar-campos.js";
 import { problemaDeLaContrasena } from "../admin/seguridad/politica-de-contrasenas.js";
+import { normalizarTelefono, problemaDelTelefono, problemaDeLaDireccion } from "./reglas-de-contacto.js";
 
-const LIMITES = Object.freeze({ nombre: 150, correo: 255, direccion: 500 });
+const LIMITES = Object.freeze({ nombre: 150, correo: 255 });
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// 8 dígitos de Costa Rica, con o sin guion o espacio en medio
-const TELEFONO = /^(\d{4})[- ]?(\d{4})$/;
 // De 9 a 12 dígitos con o sin guiones: física, jurídica y DIMEX
 const CEDULA = /^(?=(?:\D*\d){9,12}\D*$)\d[\d-]*\d$/;
 
@@ -48,18 +47,12 @@ export function validarRegistro(datos = {}) {
   if (!cedulaEscrita) validacion.anotar("cedula", "La cédula es obligatoria.");
   else if (!CEDULA.test(cedulaEscrita)) validacion.anotar("cedula", "La cédula tiene que tener de 9 a 12 dígitos.");
 
-  const telefonoEscrito = texto(datos.telefono);
-  const partesDelTelefono = telefonoEscrito?.match(TELEFONO);
-  if (!telefonoEscrito) validacion.anotar("telefono", "El teléfono es obligatorio.");
-  else if (!partesDelTelefono) {
-    validacion.anotar("telefono", "El teléfono tiene que tener 8 dígitos, por ejemplo 8888-8888.");
-  }
+  const problemaDeTelefono = problemaDelTelefono(datos.telefono);
+  if (problemaDeTelefono) validacion.anotar("telefono", problemaDeTelefono);
 
   const direccion = texto(datos.direccion);
-  if (!direccion) validacion.anotar("direccion", "La dirección es obligatoria.");
-  else if (direccion.length > LIMITES.direccion) {
-    validacion.anotar("direccion", `La dirección no puede pasar de ${LIMITES.direccion} caracteres.`);
-  }
+  const problemaDeDireccion = problemaDeLaDireccion(direccion);
+  if (problemaDeDireccion) validacion.anotar("direccion", problemaDeDireccion);
 
   // RF-38: sin aceptar los términos no se crea la cuenta
   if (datos.aceptaTerminos !== true) {
@@ -74,7 +67,7 @@ export function validarRegistro(datos = {}) {
     contrasena,
     // Una sola forma de guardarla, así 1-1111-1111 y 111111111 son la misma
     cedula: cedulaEscrita.replace(/-/g, ""),
-    telefono: `${partesDelTelefono[1]}-${partesDelTelefono[2]}`,
+    telefono: normalizarTelefono(datos.telefono),
     direccion,
   };
 }
