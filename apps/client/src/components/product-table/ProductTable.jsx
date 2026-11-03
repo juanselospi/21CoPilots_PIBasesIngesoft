@@ -1,16 +1,6 @@
-import { Archive, ArchiveRestore, Clock, EyeOff, Pencil, Tag, Trash2, TrendingDown, TriangleAlert } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Trash2 } from 'lucide-react'
 import './ProductTable.css'
-
-// Color e icono de cada etiqueta que calcula el servidor; una etiqueta nueva sale en gris.
-const chipByLabel = {
-    contrapedido: { className: 'chip chip-info', Icon: Clock },
-    margen_negativo: { className: 'chip chip-error', Icon: TrendingDown },
-    existencias_bajas: { className: 'chip chip-aviso', Icon: TriangleAlert },
-    oculto_en_tienda: { className: 'chip', Icon: EyeOff },
-    descontinuado: { className: 'chip', Icon: Archive },
-}
-
-const defaultChip = { className: 'chip', Icon: Tag }
+import { chipByLabel, defaultChip } from './labelChips.js'
 
 // Vista de tabla del listado de productos del panel.
 // Solo muestra lo que recibe; "Editar" avisa con `onEdit` y

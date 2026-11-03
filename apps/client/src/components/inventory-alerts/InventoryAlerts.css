@@ -1,0 +1,55 @@
+/* Modal «Alertas de inventario» (InventoryAlerts.jsx).
+   El resto viene de ProductForm.css y ProductTable.css. */
+
+/* Más ancho que los modales de producto: es una tabla de cinco columnas */
+.inventory-alerts {
+  max-width: 960px;
+}
+
+/* Título con el icono de alerta */
+.inventory-alerts-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inventory-alerts-title svg {
+  color: var(--estado-aviso-texto);
+}
+
+/* La lista puede ser larga: se desplaza por dentro y el encabezado queda fijo */
+.inventory-alerts-list {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.inventory-alerts-list th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Que el nombre no se parta en muchas líneas */
+.inventory-alerts-name {
+  min-width: 200px;
+}
+
+/* Familia debajo del nombre, en gris */
+.inventory-alerts-family {
+  display: block;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+/* Enlace con aspecto de botón y sin subrayado */
+.inventory-alerts-link {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.inventory-alerts-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
