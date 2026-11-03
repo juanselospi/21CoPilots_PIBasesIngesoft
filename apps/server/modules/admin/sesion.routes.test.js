@@ -30,7 +30,25 @@ async function levantarServidor() {
     if (!usuario) return null;
     return { usuario, renovadaHasta: token === "token-por-vencer" ? RENOVADA_HASTA : null };
   };
-  const servicio = { cerrarSesion: async (token) => sesiones.delete(token) };
+  const servicio = {
+    cerrarSesion: async (token) => sesiones.delete(token),
+    listarBitacora: async () => ({
+      registros: [
+        {
+          correoUsuario: "admin@dchobbies.test",
+          fecha: "2026-11-03T18:00:00.000Z",
+          evento: "parametro_modificado",
+          entidad: "familia",
+          entidadId: "Legos",
+          valorAnterior: { margenGanancia: 18 },
+          valorNuevo: { margenGanancia: 25 },
+        },
+      ],
+      total: 1,
+      pagina: 0,
+      limite: 50,
+    }),
+  };
 
   const aplicacion = express();
   aplicacion.use(cookieParser());
@@ -143,6 +161,23 @@ test("una sesión que no se renueva no reescribe la cookie", async (t) => {
   const respuesta = await fetch(url, { headers: { cookie: `${COOKIE_DE_SESION}=token-admin` } });
 
   assert.equal(respuesta.headers.get("set-cookie"), null);
+});
+
+test("la bitácora es solo del administrador y viene paginada", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  const bitacora = url.replace("/sesion", "/bitacora");
+  const pedir = (token) => fetch(bitacora, { headers: token ? { cookie: `${COOKIE_DE_SESION}=${token}` } : {} });
+
+  assert.equal((await pedir()).status, 401);
+  assert.equal((await pedir("token-cliente")).status, 403);
+  const respuesta = await pedir("token-admin");
+  const cuerpo = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(cuerpo.meta, { total: 1, pagina: 0, limite: 50 });
+  assert.equal(cuerpo.datos[0].usuario, "admin@dchobbies.test");
+  assert.deepEqual(cuerpo.datos[0].valorNuevo, { margenGanancia: 25 });
 });
 
 // Test de la consulta de la sesión actual hecho con la ayuda de Claude

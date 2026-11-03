@@ -105,4 +105,46 @@ export class AdminRepository {
       [correo, contrasenaHash, sesionQueSeQueda]
     );
   }
+
+  /** RF-52: una fila de la bitácora. La fecha la pone la base con clock_timestamp(). */
+  async registrarEnBitacora({ correoUsuario, evento, entidad, entidadId, valorAnterior, valorNuevo }) {
+    await this.#pool.query(
+      `INSERT INTO admin.bitacora (correo_usuario, evento, entidad, entidad_id, valor_anterior, valor_nuevo)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)`,
+      [correoUsuario, evento, entidad, entidadId, aJson(valorAnterior), aJson(valorNuevo)]
+    );
+  }
+
+  /** La bitácora filtrada, de lo más nuevo a lo más viejo, con el total para paginar. */
+  async listarBitacora({ entidad, entidadId, evento, correoUsuario, desde, hasta, limite, pagina }) {
+    const { rows } = await this.#pool.query(
+      `SELECT correo_usuario, fecha, evento, entidad, entidad_id, valor_anterior, valor_nuevo,
+              count(*) OVER () AS total
+         FROM admin.bitacora
+        WHERE ($1::text IS NULL OR entidad = $1)
+          AND ($2::text IS NULL OR entidad_id = $2)
+          AND ($3::text IS NULL OR evento = $3)
+          AND ($4::text IS NULL OR correo_usuario = $4)
+          AND ($5::timestamptz IS NULL OR fecha >= $5)
+          AND ($6::timestamptz IS NULL OR fecha < $6)
+        ORDER BY fecha DESC
+        LIMIT $7 OFFSET $8`,
+      [entidad, entidadId, evento, correoUsuario, desde, hasta, limite, pagina * limite]
+    );
+
+    return {
+      registros: rows.map((fila) => ({
+        correoUsuario: fila.correo_usuario,
+        fecha: fila.fecha,
+        evento: fila.evento,
+        entidad: fila.entidad,
+        entidadId: fila.entidad_id,
+        valorAnterior: fila.valor_anterior,
+        valorNuevo: fila.valor_nuevo,
+      })),
+      total: Number(rows[0]?.total ?? 0),
+    };
+  }
 }
+
+const aJson = (valor) => (valor === null || valor === undefined ? null : JSON.stringify(valor));

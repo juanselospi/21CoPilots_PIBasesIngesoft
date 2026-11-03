@@ -19,6 +19,8 @@ export function registrarAlertaDeExistenciasBajas(busDeEventos, { umbral }) {
       if (!cruzaElUmbral(movimiento, umbral)) return;
 
       await busDeEventos.publicar(EVENTOS.EXISTENCIAS_BAJAS, {
+        // Quien hizo el movimiento, para que la bitácora sepa a quién atribuirlo
+        correoUsuario: movimiento.correoUsuario ?? null,
         sku: movimiento.sku,
         existencias: movimiento.existenciasResultantes,
         umbral,

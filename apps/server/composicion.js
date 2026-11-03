@@ -18,6 +18,7 @@ import { crearModuloPedidos } from "./modules/pedidos/index.js";
 import { crearModuloReportes } from "./modules/reportes/index.js";
 
 import { registrarAlertaDeExistenciasBajas } from "./modules/inventario/suscriptores/alerta-de-existencias-bajas.js";
+import { registrarSuscriptorDeBitacora } from "./shared/bitacora/suscriptor-de-bitacora.js";
 
 export function componerSistema(configuracion) {
   const pool = crearPool(configuracion.baseDeDatos);
@@ -91,7 +92,9 @@ export function componerSistema(configuracion) {
   });
 
   // Observadores del bus de eventos para registros
-  // No hay suscriptor de bitacora hasta definir donde se guarda, ver cambios-siguiente-sprint.md
+  registrarSuscriptorDeBitacora(busDeEventos, {
+    guardar: (registro) => admin.servicio.registrarEnBitacora(registro),
+  });
   registrarAlertaDeExistenciasBajas(busDeEventos, {
     umbral: configuracion.negocio.umbralDeExistenciasBajas,
   });

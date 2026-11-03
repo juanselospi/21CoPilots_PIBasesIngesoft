@@ -4,7 +4,6 @@
  * Falta implementar:
  *   - cuenta de administrador y acceso por rol
  *   - modificar precios, descuentos y márgenes
- *   - consultar la bitacora, queda pendiente porque el modelo no tiene tabla de bitacora
  *   - recuperación de contraseña
  *
  * A tener en cuenta:
@@ -15,6 +14,7 @@
 import { CredencialesInvalidas, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import { hashearContrasena, verificarContrasena } from "./seguridad/contrasenas.js";
 import { exigirPoliticaDeContrasenas } from "./seguridad/politica-de-contrasenas.js";
+import { validarConsultaDeBitacora } from "./bitacora/validar-consulta-de-bitacora.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
 
 // Si el correo no existe se compara igual contra este hash para que la respuesta tarde lo mismo y no se pueda adivinar qué correos existen.
@@ -123,6 +123,18 @@ export class AdminService {
   // Importa la hoja de productos
   async importarCatalogo(archivo) {
     return this.#importacionDeExcel.importar(archivo);
+  }
+
+  // Lo llama el suscriptor de la bitácora con cada evento que hay que guardar
+  async registrarEnBitacora(registro) {
+    await this.#repositorio.registrarEnBitacora(registro);
+  }
+
+  /** RF-52: la bitácora para el panel, con el total para paginar. */
+  async listarBitacora(consulta) {
+    const filtros = validarConsultaDeBitacora(consulta);
+    const { registros, total } = await this.#repositorio.listarBitacora(filtros);
+    return { registros, total, pagina: filtros.pagina, limite: filtros.limite };
   }
 
   #duracionMs() {
