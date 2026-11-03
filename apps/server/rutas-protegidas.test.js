@@ -61,7 +61,7 @@ test("con el rol correcto pasa el candado y llega a la ruta, que todavía no exi
   t.after(cerrar);
 
   assert.equal(await estadoDe(`${base}/api/inventario/ruta-inexistente`, ROLES.ADMINISTRADOR), 404);
-  assert.equal(await estadoDe(`${base}/api/pedidos/carrito`, ROLES.CLIENTE), 404);
+  assert.equal(await estadoDe(`${base}/api/pedidos/carrito/ruta-inexistente`, ROLES.CLIENTE), 404);
 });
 
 test("las alertas de inventario responden al administrador con el umbral", async (t) => {

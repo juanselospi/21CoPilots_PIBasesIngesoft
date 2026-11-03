@@ -8,6 +8,7 @@
 
 import { PedidosRepository } from "./pedidos.repository.js";
 import { PedidosService } from "./pedidos.service.js";
+import { CarritoService } from "./carrito/carrito.service.js";
 import { PedidosController } from "./pedidos.controller.js";
 import { crearRutasDePedidos } from "./pedidos.routes.js";
 
@@ -18,6 +19,7 @@ export function crearModuloPedidos({
   inventario,
   clientes,
   motorDePrecios,
+  productosParaVenta,
   pasarelaDePago,
   facturacionElectronica,
 }) {
@@ -31,7 +33,8 @@ export function crearModuloPedidos({
     pasarelaDePago,
     facturacionElectronica,
   });
-  const controlador = new PedidosController({ servicio });
+  const carrito = new CarritoService({ repositorio, productosParaVenta });
+  const controlador = new PedidosController({ servicio, carrito });
 
   return {
     rutas: crearRutasDePedidos(controlador, { exigirRol }),

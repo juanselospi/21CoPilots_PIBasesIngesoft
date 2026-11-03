@@ -28,6 +28,10 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
 
   // El carrito es solo del cliente; sin sesión responde 401 y con otra cuenta 403.
   rutas.use("/carrito", exigirSesion, exigirRol(ROLES.CLIENTE));
+  rutas.get("/carrito", asincrono(controlador.verCarrito));
+  rutas.post("/carrito/lineas", asincrono(controlador.agregarLinea));
+  rutas.patch("/carrito/lineas/:sku", asincrono(controlador.cambiarCantidad));
+  rutas.delete("/carrito/lineas/:sku", asincrono(controlador.quitarLinea));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
 

@@ -83,6 +83,7 @@ export function componerSistema(configuracion) {
     inventario: inventario.servicio,
     clientes: clientes.servicio,
     motorDePrecios: catalogo.motorDePrecios,
+    productosParaVenta: catalogo.productosParaVenta,
     pasarelaDePago,
     facturacionElectronica,
   });
