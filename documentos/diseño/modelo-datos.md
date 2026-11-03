@@ -306,6 +306,13 @@ descuento y el total se derivan de las líneas del pedido.
 
 **No existe ninguna columna para datos de tarjeta** (RNF-09).
 
+**`facturacion.emisor`** — los datos fiscales del negocio que salen en cada factura
+(C-24, RF-41, RN-18). Tiene una sola fila: su llave `unica` solo puede ser `true`.
+
+| Columna | Descripción |
+|---|---|
+| `razon_social`, `cedula_juridica`, `direccion` | Obligatorios; empiezan en «POR DEFINIR» hasta que el cliente los dé |
+
 ### 2.7 `reportes`
 
 | Vista | Uso |
