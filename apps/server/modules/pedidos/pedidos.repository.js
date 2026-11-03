@@ -164,4 +164,29 @@ export class PedidosRepository {
     );
     return rows.length > 0;
   }
+
+  /** Las líneas del pedido con el precio que quedó congelado al confirmar. */
+  async lineasDelPedido(correo, numCarrito) {
+    const { rows } = await this.#pool.query(
+      `SELECT sku, cantidad_solicitada, precio_unitario, tasa_impuesto_aplicada
+         FROM pedidos.agrega
+        WHERE correo_cliente = $1 AND num_carrito = $2
+        ORDER BY sku`,
+      [correo, numCarrito]
+    );
+    return rows.map((fila) => ({
+      sku: fila.sku,
+      cantidad: fila.cantidad_solicitada,
+      precioUnitario: Number(fila.precio_unitario),
+      tasaImpuesto: Number(fila.tasa_impuesto_aplicada),
+    }));
+  }
+
+  async costoDeEntrega(correo, numCarrito) {
+    const { rows } = await this.#pool.query(
+      `SELECT costo_entrega FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2`,
+      [correo, numCarrito]
+    );
+    return rows[0] ? Number(rows[0].costo_entrega) : null;
+  }
 }

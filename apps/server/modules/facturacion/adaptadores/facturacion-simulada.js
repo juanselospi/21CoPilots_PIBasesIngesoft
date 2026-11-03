@@ -6,6 +6,7 @@ import { FacturacionElectronica } from "../facturacion-electronica.port.js";
 
 export class FacturacionSimulada extends FacturacionElectronica {
   async emitir({ numReferencia, emisor, receptor, lineas }) {
+    // correoCliente y numCarrito también llegan; la simulada no los necesita
     const faltantes = [];
     if (!emisor?.razonSocial) faltantes.push("razón social del emisor");
     if (!emisor?.cedulaJuridica) faltantes.push("cédula jurídica del emisor");

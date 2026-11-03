@@ -27,3 +27,5 @@ export function crearFacturacionElectronica(nombre) {
 
   return construir();
 }
+
+export { FacturacionRepository } from "./facturacion.repository.js";

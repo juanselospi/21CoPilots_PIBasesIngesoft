@@ -24,6 +24,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     stock: stock ?? { "LEG-001": 3, "BOO-001": 1 },
     pedidos: [],
     pagos: [],
+    facturas: [],
     movimientos: [],
     compras: 0,
     precios: {},
@@ -76,7 +77,23 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     },
     publicarMovimientos: async (movimientos) => movimientos.forEach((m) => eventos.push(["movimiento", m.sku])),
   };
-  const clientes = { sumarCompra: async () => (estado.compras += 1) };
+  const clientes = {
+    sumarCompra: async () => (estado.compras += 1),
+    datosParaFactura: async () => ({ nombre: "Ana Mora", cedula: "123456789" }),
+  };
+  const facturas = {
+    obtenerEmisor: async () => ({ razonSocial: "DC Hobbies", cedulaJuridica: "3-101-123456", direccion: "San José" }),
+    registrar: async (_c, factura) => {
+      estado.facturas.push(factura);
+      return { ...factura, fecha: new Date() };
+    },
+  };
+  const facturacionElectronica = {
+    emitir: async ({ numReferencia, emisor, receptor }) => {
+      estado.emitidaCon = { emisor, receptor };
+      return { estado: "emitida", consecutivo: `FAC-${numReferencia}`, motivo: null };
+    },
+  };
   const pagos = {
     registrar: async (_c, pago) => {
       estado.pagos.push(pago);
@@ -101,6 +118,8 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     pasarelaDePago,
     productosParaVenta,
     pagos,
+    facturas,
+    facturacionElectronica,
   });
   return { servicio, estado, eventos, catalogo };
 }
@@ -233,4 +252,26 @@ test("un pago rechazado no deja ni pedido ni pago", async () => {
   await assert.rejects(servicio.confirmar(ANA, checkout), PagoRechazado);
 
   assert.deepEqual(estado.pagos, []);
+});
+
+// Factura (SCRUM-134)
+
+test("RF-41: con el pago aprobado se emite la factura con el emisor y la cédula del cliente", async () => {
+  const { servicio, estado } = crearEscenario();
+
+  const pedido = await servicio.confirmar(ANA, checkout);
+
+  assert.equal(estado.facturas.length, 1);
+  assert.equal(pedido.factura.numFactura, `FAC-${pedido.pago.referencia}`);
+  assert.equal(estado.emitidaCon.emisor.cedulaJuridica, "3-101-123456");
+  assert.equal(estado.emitidaCon.receptor.cedula, "123456789");
+});
+
+test("contra entrega no emite factura todavía", async () => {
+  const { servicio, estado } = crearEscenario({ resultadoDelPago: "pendiente" });
+
+  const pedido = await servicio.confirmar(ANA, { ...checkout, metodoPago: "contra_entrega", datosTarjeta: undefined });
+
+  assert.equal(pedido.factura, null);
+  assert.deepEqual(estado.facturas, []);
 });

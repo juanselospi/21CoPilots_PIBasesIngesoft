@@ -37,6 +37,7 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   const soloCliente = [exigirSesion, exigirRol(ROLES.CLIENTE)];
   rutas.post("/", ...soloCliente, asincrono(controlador.confirmar));
   rutas.get("/:numCarrito/pagos", ...soloCliente, asincrono(controlador.listarPagos));
+  rutas.get("/:numCarrito/factura", ...soloCliente, asincrono(controlador.verFactura));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
 

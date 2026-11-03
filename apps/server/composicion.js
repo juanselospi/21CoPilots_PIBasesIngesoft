@@ -8,7 +8,7 @@ import { crearExigirRol } from "./shared/http/autorizacion-por-rol.js";
 import { crearIdentificarUsuario } from "./shared/http/autenticacion.js";
 
 import { crearPasarelaDePago, PagosRepository } from "./modules/pagos/index.js";
-import { crearFacturacionElectronica } from "./modules/facturacion/index.js";
+import { crearFacturacionElectronica, FacturacionRepository } from "./modules/facturacion/index.js";
 
 import { crearModuloAdmin } from "./modules/admin/index.js";
 import { crearModuloCatalogo } from "./modules/catalogo/index.js";
@@ -86,6 +86,7 @@ export function componerSistema(configuracion) {
     productosParaVenta: catalogo.productosParaVenta,
     pasarelaDePago,
     pagos: new PagosRepository({ pool }),
+    facturas: new FacturacionRepository({ pool }),
     facturacionElectronica,
   });
 

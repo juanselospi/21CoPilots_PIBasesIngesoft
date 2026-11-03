@@ -5,7 +5,7 @@
  * cuenta en `usuarios.usuario`. La cédula se guarda solo con dígitos.
  *
  * POR IMPLEMENTAR
- *   actualizarDatosFiscales()      aprobado #3 — cédula para la factura (RN-18)
+ *   actualizarDatosFiscales()      aprobado #3 — corregir la cédula (solo administrador)
  */
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
@@ -22,6 +22,18 @@ export class ClientesRepository {
 
   constructor({ pool }) {
     this.#pool = pool;
+  }
+
+  /** RN-18: el nombre y la cédula que van como receptor en la factura. */
+  async datosFiscales(correo) {
+    const { rows } = await this.#pool.query(
+      `SELECT u.nombre, c.cedula
+         FROM clientes.cliente c
+         JOIN usuarios.usuario u ON u.correo = c.correo_usuario
+        WHERE c.correo_usuario = $1`,
+      [correo]
+    );
+    return rows[0] ?? null;
   }
 
   /**
