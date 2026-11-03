@@ -24,6 +24,8 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
   // cambia los datos generales, el precio, las existencias o el contrapedido; lo que no venga se queda igual
   rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizar));
+  // desactiva o reactiva; descontinuado sale de la tienda pero conserva su historial
+  rutas.patch("/productos/:sku/estado", ...soloAdministrador, asincrono(controlador.cambiarEstado));
 
   // familias del panel, con importación y margen; incluye las inactivas
   rutas.get("/admin/familias", ...soloAdministrador, asincrono(controlador.listarFamiliasParaAdministracion));

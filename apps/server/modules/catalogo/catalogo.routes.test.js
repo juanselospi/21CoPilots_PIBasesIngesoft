@@ -443,3 +443,32 @@ test("eliminar una familia sin productos responde 204 y con productos 409", asyn
   assert.equal(conProductos.estado, 409);
   assert.match(conProductos.cuerpo.error.mensaje, /tiene 2 productos/);
 });
+
+// Desactivar y reactivar (RF-18)
+
+test("cambiar el estado de un producto exige administrador y responde el producto con su etiqueta", async (t) => {
+  const estados = [];
+  const { url, cerrar } = await levantarServidor({
+    ...servicio,
+    cambiarEstado: async (sku, datos) => {
+      estados.push([sku, datos.estado]);
+      return { ...fun003, sku, disponibilidad: "descontinuado", etiquetas: ["oculto_en_tienda", "descontinuado"] };
+    },
+  });
+  t.after(cerrar);
+  const cambiar = (rol) =>
+    fetch(`${url}/vdj-002/estado`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+      body: JSON.stringify({ estado: "descontinuado" }),
+    });
+
+  assert.equal((await cambiar()).status, 401);
+  assert.equal((await cambiar(ROLES.CLIENTE)).status, 403);
+  const respuesta = await cambiar(ROLES.ADMINISTRADOR);
+  const { datos } = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(estados, [["VDJ-002", "descontinuado"]]);
+  assert.ok(datos.etiquetas.includes("descontinuado"));
+});

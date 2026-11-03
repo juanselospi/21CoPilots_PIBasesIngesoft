@@ -24,6 +24,7 @@ const COLUMNAS_DE_PRODUCTO = `
        p.stock,
        p.categoria,
        p.proveedor,
+       p.estado,
        f.importacion     AS importacion_familia,
        f.margen_ganancia AS margen_familia,
        f.activa          AS familia_activa`;
@@ -57,6 +58,7 @@ const COLUMNA_DE_PRODUCTO = Object.freeze({
   margenGanancia: "margen_ganancia",
   existencias: "stock",
   admiteContrapedido: "contrapedido",
+  estado: "estado",
 });
 
 const COLUMNA_DE_FAMILIA = Object.freeze({
@@ -294,6 +296,7 @@ const aProducto = (fila) => ({
   existencias: fila.stock,
   categoria: fila.categoria,
   proveedor: fila.proveedor,
+  estado: fila.estado,
 });
 
 const numeroONulo = (valor) => (valor === null ? null : Number(valor));

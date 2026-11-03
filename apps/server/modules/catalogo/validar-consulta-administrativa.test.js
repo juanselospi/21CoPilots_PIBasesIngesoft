@@ -81,7 +81,11 @@ test("acepta los seis valores de 'orden' y rechaza cualquier otro", () => {
 });
 
 test("rechaza una disponibilidad desconocida", () => {
-  assert.deepEqual(camposConProblemas({ disponibilidad: "descontinuado" }), ["disponibilidad"]);
+  assert.deepEqual(camposConProblemas({ disponibilidad: "agotado" }), ["disponibilidad"]);
+});
+
+test("RF-18: acepta filtrar los descontinuados", () => {
+  assert.equal(validarConsultaAdministrativa({ disponibilidad: "descontinuado" }).disponibilidad, "descontinuado");
 });
 
 test("'limite' solo puede ser 24, 48 o 96", () => {
