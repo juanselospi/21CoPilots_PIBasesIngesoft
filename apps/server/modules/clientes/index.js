@@ -8,10 +8,14 @@ import { ClientesController } from "./clientes.controller.js";
 import { crearRutasDeClientes } from "./clientes.routes.js";
 import { exigirSesion } from "../../shared/http/autenticacion.js";
 
-export function crearModuloClientes({ pool, exigirRol }) {
+export function crearModuloClientes({ pool, exigirRol, cuentas, cookieSegura }) {
   const repositorio = new ClientesRepository({ pool });
-  const servicio = new ClientesService({ repositorio });
-  const controlador = new ClientesController({ servicio });
+  const servicio = new ClientesService({
+    repositorio,
+    hashearContrasena: cuentas.hashearContrasena,
+    abrirSesion: cuentas.abrirSesion,
+  });
+  const controlador = new ClientesController({ servicio, cookieSegura });
 
   return {
     rutas: crearRutasDeClientes(controlador, { exigirSesion, exigirRol }),

@@ -10,3 +10,10 @@
  *   aClienteAdministrativo()  aprobado #2 — lista de clientes del panel
  *   aNivelDeFidelidad()       RF-34 — nivel, compras acumuladas, descuento
  */
+
+/** Lo mismo que devuelve iniciar sesión, para que la tienda lo trate igual. */
+export const aUsuarioRegistrado = (usuario) => ({
+  correo: usuario.correo,
+  nombre: usuario.nombre,
+  rol: usuario.rol,
+});

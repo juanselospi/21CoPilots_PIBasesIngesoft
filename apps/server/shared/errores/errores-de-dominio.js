@@ -23,6 +23,13 @@ export class RecursoNoEncontrado extends ErrorDeDominio {
   }
 }
 
+/** Un dato que tiene que ser único ya está registrado, como un correo o una cédula. */
+export class DatoDuplicado extends ErrorDeDominio {
+  constructor(mensaje, campos) {
+    super(mensaje, { codigo: "DATO_DUPLICADO", detalles: { campos } });
+  }
+}
+
 /** Una regla de negocio (RN-xx) impide completar la operación. */
 export class ReglaDeNegocioViolada extends ErrorDeDominio {
   constructor(mensaje, regla) {
