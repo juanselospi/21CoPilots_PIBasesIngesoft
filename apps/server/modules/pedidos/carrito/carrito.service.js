@@ -1,9 +1,9 @@
 /**
  * CAPA DE DOMINIO — Carrito del cliente (HU-10, RF-21 a RF-24).
  *
- * El carrito vive en la base y se conserva entre sesiones (RN-14). El
- * precio y el impuesto se guardan al agregar; el catálogo dice si el
- * producto está a la venta y cuántas unidades hay.
+ * El carrito vive en la base y se conserva entre sesiones (RN-14). En el
+ * carrito el precio es siempre el vigente: cada consulta lo recalcula con el
+ * motor de precios y lo actualiza. Solo se congela al confirmar el pedido.
  */
 
 import {
@@ -14,6 +14,13 @@ import { validarCantidad, validarLinea } from "./validar-linea.js";
 
 const CARRITO_VACIO = Object.freeze({ numCarrito: null, lineas: [], subtotal: 0, impuesto: 0, total: 0 });
 
+/** Cómo está cada línea frente a las existencias de hoy. */
+export const DISPONIBILIDAD_DE_LINEA = Object.freeze({
+  EN_EXISTENCIA: "en_existencia",
+  CONTRAPEDIDO: "contrapedido",
+  FUERA_DE_STOCK: "fuera_de_stock",
+});
+
 export class CarritoService {
   #repositorio;
   #productosParaVenta;
@@ -23,13 +30,25 @@ export class CarritoService {
     this.#productosParaVenta = productosParaVenta;
   }
 
-  /** RF-24: el carrito activo con sus líneas y totales, o uno vacío. */
+  /**
+   * RF-24: el carrito activo con el precio vigente de cada línea, su
+   * disponibilidad y los totales, o uno vacío. Si el precio cambió desde
+   * que se agregó, se guarda el nuevo.
+   */
   async verCarrito(correo) {
     const carrito = await this.#repositorio.obtenerCarritoActivo(correo);
     if (!carrito || carrito.lineas.length === 0) return { ...CARRITO_VACIO, numCarrito: carrito?.numCarrito ?? null };
 
     const productos = await this.#productosParaVenta(carrito.lineas.map(({ sku }) => sku));
-    const lineas = carrito.lineas.map((linea) => conDatosDelProducto(linea, productos.get(linea.sku)));
+    const lineas = [];
+    for (const guardada of carrito.lineas) {
+      const producto = productos.get(guardada.sku);
+      const linea = conPrecioVigente(guardada, producto);
+      if (linea.precioUnitario !== guardada.precioUnitario || linea.tasaImpuesto !== guardada.tasaImpuesto) {
+        await this.#repositorio.guardarLinea(correo, carrito.numCarrito, linea);
+      }
+      lineas.push(conDatosDelProducto(linea, producto));
+    }
     return { numCarrito: carrito.numCarrito, lineas, ...totales(lineas) };
   }
 
@@ -96,20 +115,43 @@ function exigirExistencias(producto, cantidad) {
   }
 }
 
+// Un producto que ya no existe conserva el último precio guardado
+function conPrecioVigente(linea, producto) {
+  if (!producto) return linea;
+  return { ...linea, precioUnitario: producto.precioSinImpuesto, tasaImpuesto: producto.tasaImpuesto };
+}
+
 function conDatosDelProducto(linea, producto) {
   const subtotal = redondear(linea.precioUnitario * linea.cantidad);
+  // El total sale del precio final del catálogo, para que cuadre al centavo con la tienda
+  const total = producto
+    ? redondear(producto.precioFinal * linea.cantidad)
+    : redondear(subtotal * (1 + linea.tasaImpuesto / 100));
+  const disponibilidad = disponibilidadDeLinea(linea, producto);
   return {
     sku: linea.sku,
     nombre: producto?.nombre ?? linea.sku,
     imagenUrl: producto?.imagenUrl ?? null,
     cantidad: linea.cantidad,
     precioUnitario: linea.precioUnitario,
+    precioFinal: producto?.precioFinal ?? null,
     tasaImpuesto: linea.tasaImpuesto,
     subtotal,
-    impuesto: redondear((subtotal * linea.tasaImpuesto) / 100),
-    // RF-23: lo que pasa de las existencias se entrega por contrapedido
-    contrapedido: producto ? linea.cantidad > producto.existencias : false,
+    impuesto: redondear(total - subtotal),
+    disponibilidad,
+    contrapedido: disponibilidad === DISPONIBILIDAD_DE_LINEA.CONTRAPEDIDO,
+    existencias: producto?.existencias ?? 0,
   };
+}
+
+/**
+ * RF-23: lo que pasa de las existencias va por contrapedido si el producto
+ * lo admite; si no, o si ya no está a la venta, la línea no se puede comprar.
+ */
+function disponibilidadDeLinea(linea, producto) {
+  if (!producto || !producto.aLaVenta) return DISPONIBILIDAD_DE_LINEA.FUERA_DE_STOCK;
+  if (linea.cantidad <= producto.existencias) return DISPONIBILIDAD_DE_LINEA.EN_EXISTENCIA;
+  return producto.admiteContrapedido ? DISPONIBILIDAD_DE_LINEA.CONTRAPEDIDO : DISPONIBILIDAD_DE_LINEA.FUERA_DE_STOCK;
 }
 
 function totales(lineas) {
