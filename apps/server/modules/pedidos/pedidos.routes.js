@@ -3,6 +3,7 @@
  *
  * Un pedido se identifica por el correo del cliente y el número de carrito.
  * Rutas previstas, a confirmar con el equipo antes de fijarlas:
+ *   GET    /modalidades                     RF-62  pública
  *   GET    /carrito                         RF-24
  *   POST   /carrito/lineas                  RF-21, RF-22, RF-23
  *   PATCH  /carrito/lineas/:sku             RF-21
@@ -16,11 +17,14 @@
  */
 
 import { Router } from "express";
+import { asincrono } from "../../shared/http/envoltura-async.js";
 import { exigirSesion } from "../../shared/http/autenticacion.js";
 import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 
 export function crearRutasDePedidos(controlador, { exigirRol }) {
   const rutas = Router();
+
+  rutas.get("/modalidades", asincrono(controlador.listarModalidades));
 
   // El carrito es solo del cliente; sin sesión responde 401 y con otra cuenta 403.
   rutas.use("/carrito", exigirSesion, exigirRol(ROLES.CLIENTE));
