@@ -4,6 +4,19 @@ import assert from "node:assert/strict";
 import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 
+const TODOS_LOS_CAMPOS = [
+  "nombre",
+  "descripcion",
+  "categoria",
+  "proveedor",
+  "imagenUrl",
+  "costoItem",
+  "porcentajeImportacion",
+  "margenGanancia",
+  "existencias",
+  "admiteContrapedido",
+];
+
 /** Campos marcados como malos, o [] si los cambios pasan. */
 function camposConProblemas(datos) {
   try {
@@ -43,13 +56,7 @@ test("acepta los números como texto, como los manda el modal", () => {
 });
 
 test("un cuerpo vacío se rechaza y marca todos los campos", () => {
-  assert.deepEqual(camposConProblemas({}), [
-    "costoItem",
-    "porcentajeImportacion",
-    "margenGanancia",
-    "existencias",
-    "admiteContrapedido",
-  ]);
+  assert.deepEqual(camposConProblemas({}), TODOS_LOS_CAMPOS);
 });
 
 test("un cuerpo que no es un objeto se rechaza", () => {
@@ -58,35 +65,39 @@ test("un cuerpo que no es un objeto se rechaza", () => {
   }
 });
 
-test("rechaza las claves que no son de precio y las nombra", () => {
+test("rechaza las claves que no se pueden cambiar y las nombra", () => {
   assert.deepEqual(camposConProblemas({ costoItem: 1000, precioFinal: 5000 }), ["precioFinal"]);
-  assert.deepEqual(camposConProblemas({ margenGanancia: 25, nombre: "Otro", costoTotal: 1200 }), ["nombre", "costoTotal"]);
+  assert.deepEqual(camposConProblemas({ margenGanancia: 25, sku: "OTRO-1", costoTotal: 1200 }), ["sku", "costoTotal"]);
 });
 
 test("solo claves no permitidas: las nombra y pide al menos un campo", () => {
-  assert.deepEqual(camposConProblemas({ precioFinal: 5000 }), [
-    "precioFinal",
-    "costoItem",
-    "porcentajeImportacion",
-    "margenGanancia",
-    "existencias",
-    "admiteContrapedido",
-  ]);
+  assert.deepEqual(camposConProblemas({ precioFinal: 5000 }), ["precioFinal", ...TODOS_LOS_CAMPOS]);
 });
 
 test("un campo presente pero vacío es un error, no 'dejarlo igual'", () => {
   for (const vacio of [null, "", "   "]) {
     assert.deepEqual(camposConProblemas({ costoItem: vacio }), ["costoItem"]);
+    assert.deepEqual(camposConProblemas({ existencias: vacio }), ["existencias"]);
+    assert.deepEqual(camposConProblemas({ nombre: vacio }), ["nombre"]);
+    assert.deepEqual(camposConProblemas({ categoria: vacio }), ["categoria"]);
+  }
+  for (const vacio of ["", "   "]) {
     assert.deepEqual(camposConProblemas({ porcentajeImportacion: vacio }), ["porcentajeImportacion"]);
     assert.deepEqual(camposConProblemas({ margenGanancia: vacio }), ["margenGanancia"]);
-    assert.deepEqual(camposConProblemas({ existencias: vacio }), ["existencias"]);
   }
   assert.deepEqual(camposConProblemas({ admiteContrapedido: null }), ["admiteContrapedido"]);
 });
 
+test("null en importación o margen vuelve a usar los de la familia", () => {
+  assert.deepEqual(validarCambiosDeProducto({ porcentajeImportacion: null, margenGanancia: null }), {
+    porcentajeImportacion: null,
+    margenGanancia: null,
+  });
+});
+
 test("los mensajes de un campo vacío", () => {
   assert.throws(
-    () => validarCambiosDeProducto({ costoItem: null, porcentajeImportacion: "", margenGanancia: null }),
+    () => validarCambiosDeProducto({ costoItem: null, porcentajeImportacion: "", margenGanancia: " " }),
     {
       message: "El costo es obligatorio. El porcentaje de importación es obligatorio. El margen es obligatorio.",
     }
@@ -148,4 +159,38 @@ test("el contrapedido tiene que ser true o false", () => {
   for (const admiteContrapedido of ["sí", "true", 1, ""]) {
     assert.deepEqual(camposConProblemas({ admiteContrapedido }), ["admiteContrapedido"]);
   }
+});
+
+test("acepta los datos generales y limpia los espacios", () => {
+  assert.deepEqual(
+    validarCambiosDeProducto({
+      nombre: "  God of War Ragnarök ",
+      descripcion: "Edición estándar",
+      categoria: " Video Juegos",
+      proveedor: "Sony",
+      imagenUrl: "https://placehold.co/500x500",
+    }),
+    {
+      nombre: "God of War Ragnarök",
+      descripcion: "Edición estándar",
+      categoria: "Video Juegos",
+      proveedor: "Sony",
+      imagenUrl: "https://placehold.co/500x500",
+    }
+  );
+});
+
+test("descripción, proveedor e imagen vacíos se borran", () => {
+  assert.deepEqual(validarCambiosDeProducto({ descripcion: "", proveedor: null, imagenUrl: "  " }), {
+    descripcion: null,
+    proveedor: null,
+    imagenUrl: null,
+  });
+});
+
+test("los datos generales usan los mismos límites que al crear", () => {
+  assert.deepEqual(camposConProblemas({ nombre: "X".repeat(201) }), ["nombre"]);
+  assert.deepEqual(camposConProblemas({ categoria: "X".repeat(101) }), ["categoria"]);
+  assert.deepEqual(camposConProblemas({ proveedor: "X".repeat(151) }), ["proveedor"]);
+  assert.deepEqual(camposConProblemas({ imagenUrl: "foto.png" }), ["imagenUrl"]);
 });

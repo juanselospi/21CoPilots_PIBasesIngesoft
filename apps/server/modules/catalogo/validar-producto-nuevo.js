@@ -5,14 +5,13 @@
 import { crearValidacion, texto } from "../../shared/validacion/validar-campos.js";
 import { numero, problemaDelCosto, problemaDeLaImportacion, problemaDelMargen } from "./reglas-de-precio.js";
 import { problemaDeLasExistencias, problemaDelContrapedido } from "./reglas-de-existencias.js";
-
-const LIMITES = Object.freeze({
-  sku: 50,
-  nombre: 200,
-  categoria: 100,
-  proveedor: 150,
-  imagenUrl: 500,
-});
+import {
+  LIMITES_DE_TEXTO as LIMITES,
+  problemaDelNombre,
+  problemaDeLaCategoria,
+  problemaDelProveedor,
+  problemaDeLaImagen,
+} from "./reglas-de-datos-generales.js";
 
 /**
  * @returns el producto listo para guardar
@@ -27,28 +26,24 @@ export function validarProductoNuevo(datos = {}) {
   else if (sku.length > LIMITES.sku) validacion.anotar("sku", `El código no puede pasar de ${LIMITES.sku} caracteres.`);
 
   const nombre = texto(datos.nombre);
-  if (!nombre) validacion.anotar("nombre", "El nombre es obligatorio.");
-  else if (nombre.length > LIMITES.nombre) {
-    validacion.anotar("nombre", `El nombre no puede pasar de ${LIMITES.nombre} caracteres.`);
-  }
+  const problemaDeNombre = problemaDelNombre(nombre);
+  if (problemaDeNombre) validacion.anotar("nombre", problemaDeNombre);
 
   const categoria = texto(datos.categoria);
-  if (!categoria) validacion.anotar("categoria", "La categoría es obligatoria.");
-  else if (categoria.length > LIMITES.categoria) {
-    validacion.anotar("categoria", `La categoría no puede pasar de ${LIMITES.categoria} caracteres.`);
-  }
+  const problemaDeCategoria = problemaDeLaCategoria(categoria);
+  if (problemaDeCategoria) validacion.anotar("categoria", problemaDeCategoria);
 
   const costoItem = numero(datos.costoItem);
   const problemaDeCosto = problemaDelCosto(costoItem);
   if (problemaDeCosto) validacion.anotar("costoItem", problemaDeCosto);
 
-  // Al crear, importación y margen son opcionales y valen 0 si no vienen.
-  const porcentajeImportacion = numero(datos.porcentajeImportacion) ?? 0;
-  const problemaDeImportacion = problemaDeLaImportacion(porcentajeImportacion);
+  // Si no vienen, el producto usa la importación y el margen de su familia (null).
+  const porcentajeImportacion = numero(datos.porcentajeImportacion);
+  const problemaDeImportacion = porcentajeImportacion !== null && problemaDeLaImportacion(porcentajeImportacion);
   if (problemaDeImportacion) validacion.anotar("porcentajeImportacion", problemaDeImportacion);
 
-  const margenGanancia = numero(datos.margenGanancia) ?? 0;
-  const problemaDeMargen = problemaDelMargen(margenGanancia);
+  const margenGanancia = numero(datos.margenGanancia);
+  const problemaDeMargen = margenGanancia !== null && problemaDelMargen(margenGanancia);
   if (problemaDeMargen) validacion.anotar("margenGanancia", problemaDeMargen);
 
   // Si no se indican, el producto nace sin existencias.
@@ -61,14 +56,12 @@ export function validarProductoNuevo(datos = {}) {
   if (problemaDeContrapedido) validacion.anotar("admiteContrapedido", problemaDeContrapedido);
 
   const imagenUrl = texto(datos.imagenUrl);
-  if (imagenUrl && (!esUrlWeb(imagenUrl) || imagenUrl.length > LIMITES.imagenUrl)) {
-    validacion.anotar("imagenUrl", "La imagen tiene que ser una dirección web (http o https).");
-  }
+  const problemaDeImagen = problemaDeLaImagen(imagenUrl);
+  if (problemaDeImagen) validacion.anotar("imagenUrl", problemaDeImagen);
 
   const proveedor = texto(datos.proveedor);
-  if (proveedor && proveedor.length > LIMITES.proveedor) {
-    validacion.anotar("proveedor", `El proveedor no puede pasar de ${LIMITES.proveedor} caracteres.`);
-  }
+  const problemaDeProveedor = problemaDelProveedor(proveedor);
+  if (problemaDeProveedor) validacion.anotar("proveedor", problemaDeProveedor);
 
   validacion.lanzarSiHayProblemas();
 
@@ -85,13 +78,4 @@ export function validarProductoNuevo(datos = {}) {
     existencias,
     admiteContrapedido,
   };
-}
-
-function esUrlWeb(valor) {
-  try {
-    const { protocol } = new URL(valor);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
 }

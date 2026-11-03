@@ -77,7 +77,9 @@ export class CatalogoController {
   // PATCH /productos/:sku, solo administrador
   actualizar = async (peticion, respuesta) => {
     const sku = peticion.params.sku.trim().toUpperCase();
-    const producto = await this.#servicio.actualizarProducto(sku, peticion.body);
+    const producto = await this.#servicio.actualizarProducto(sku, peticion.body, {
+      responsable: peticion.usuario.correo,
+    });
     respuesta.json({ datos: aProductoAdministrativo(producto) });
   };
 
