@@ -94,6 +94,29 @@ export class InventarioService {
     return this.#ajustar(sku, (stock) => existencias - stock, { responsable, motivo });
   }
 
+  /**
+   * Para pedidos, dentro de su propia transacción: bloquea los productos en
+   * orden de SKU y devuelve su stock.
+   */
+  async bloquearEnTransaccion(cliente, skus) {
+    return this.#repositorio.bloquearProductos(cliente, skus);
+  }
+
+  /**
+   * Para pedidos, dentro de su propia transacción. No publica nada: quien
+   * llama publica los movimientos después de confirmar.
+   */
+  async registrarEnTransaccion(cliente, movimiento) {
+    return this.#repositorio.registrarMovimiento(cliente, movimiento);
+  }
+
+  /** Avisa de movimientos ya confirmados por otra transacción, para la alerta y la bitácora. */
+  async publicarMovimientos(movimientos, { responsable = null } = {}) {
+    for (const movimiento of movimientos) {
+      await this.#busDeEventos.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, { correoUsuario: responsable, ...movimiento });
+    }
+  }
+
   /** RF-19: el historial con su total para paginar. */
   async listarMovimientos(consulta) {
     const filtros = validarConsultaDeMovimientos(consulta);

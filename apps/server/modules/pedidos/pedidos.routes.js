@@ -33,6 +33,9 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   rutas.patch("/carrito/lineas/:sku", asincrono(controlador.cambiarCantidad));
   rutas.delete("/carrito/lineas/:sku", asincrono(controlador.quitarLinea));
 
+  // Confirmar la compra del carrito; también solo del cliente
+  rutas.post("/", exigirSesion, exigirRol(ROLES.CLIENTE), asincrono(controlador.confirmar));
+
   // Las rutas se agregan conforme se implementen los RF de arriba.
 
   return rutas;

@@ -32,6 +32,7 @@ export function crearModuloPedidos({
     motorDePrecios,
     pasarelaDePago,
     facturacionElectronica,
+    productosParaVenta,
   });
   const carrito = new CarritoService({ repositorio, productosParaVenta });
   const controlador = new PedidosController({ servicio, carrito });

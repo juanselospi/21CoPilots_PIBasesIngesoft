@@ -5,7 +5,6 @@
  * cuenta en `usuarios.usuario`. La cédula se guarda solo con dígitos.
  *
  * POR IMPLEMENTAR
- *   incrementarCompras()           RF-34 — `num_compras` es el insumo del nivel (RN-08)
  *   actualizarDatosFiscales()      aprobado #3 — cédula para la factura (RN-18)
  */
 
@@ -100,6 +99,13 @@ export class ClientesRepository {
         );
       }
     });
+  }
+
+  /** RF-34: una compra más; es el insumo del nivel de fidelidad (RN-08). */
+  async incrementarCompras(cliente, correo) {
+    await cliente.query(`UPDATE clientes.cliente SET num_compras = num_compras + 1 WHERE correo_usuario = $1`, [
+      correo,
+    ]);
   }
 }
 

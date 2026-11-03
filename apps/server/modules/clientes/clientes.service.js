@@ -70,4 +70,9 @@ export class ClientesService {
     await this.#repositorio.actualizarContacto(correo, cambios);
     return this.obtenerMiCuenta(correo);
   }
+
+  /** Para pedidos, dentro de la transacción que confirma la compra. */
+  async sumarCompra(cliente, correo) {
+    await this.#repositorio.incrementarCompras(cliente, correo);
+  }
 }
