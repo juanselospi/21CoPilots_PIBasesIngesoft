@@ -14,6 +14,7 @@ const producto = (sku, nombre, precioSinImpuesto, existencias, admiteContrapedid
   sku,
   nombre,
   precioSinImpuesto,
+  precioFinal: Math.round(precioSinImpuesto * 113) / 100,
   tasaImpuesto: 13,
   existencias,
   admiteContrapedido,
@@ -26,7 +27,7 @@ const CATALOGO = {
 };
 
 // Base falsa de carritos que se conserva entre "sesiones"
-function crearServicio() {
+function crearServicio(catalogo = structuredClone(CATALOGO)) {
   const carritos = new Map();
   const repositorio = {
     obtenerCarritoActivo: async (correo) => {
@@ -44,8 +45,8 @@ function crearServicio() {
     quitarLinea: async (correo, _num, sku) => carritos.get(correo).lineas.delete(sku),
   };
   const productosParaVenta = async (skus) =>
-    new Map(skus.filter((sku) => CATALOGO[sku]).map((sku) => [sku, CATALOGO[sku]]));
-  return { servicio: new CarritoService({ repositorio, productosParaVenta }), carritos };
+    new Map(skus.filter((sku) => catalogo[sku]).map((sku) => [sku, catalogo[sku]]));
+  return { servicio: new CarritoService({ repositorio, productosParaVenta }), carritos, catalogo };
 }
 
 const ANA = "ana@correo.test";
@@ -126,4 +127,49 @@ test("sin carrito devuelve uno vacío y una cantidad inválida responde con el c
     assert.deepEqual(error.detalles.campos, ["cantidad"]);
     return true;
   });
+});
+
+// Precio vigente y disponibilidad (SCRUM-128)
+
+test("subir el margen cambia el total del carrito en la siguiente consulta y guarda el precio nuevo", async () => {
+  const { servicio, carritos, catalogo } = crearServicio();
+  await servicio.agregarLinea(ANA, { sku: "LEG-001", cantidad: 2 });
+
+  catalogo["LEG-001"].precioSinImpuesto = 120;
+  catalogo["LEG-001"].precioFinal = 135.6;
+  const carrito = await servicio.verCarrito(ANA);
+
+  assert.equal(carrito.lineas[0].precioUnitario, 120);
+  assert.deepEqual([carrito.subtotal, carrito.impuesto, carrito.total], [240, 31.2, 271.2]);
+  assert.equal(carritos.get(ANA).lineas.get("LEG-001").precioUnitario, 120);
+});
+
+test("el total cuadra al centavo con el precio final de la tienda", async () => {
+  const { servicio, catalogo } = crearServicio();
+  catalogo["LEG-001"].precioSinImpuesto = 71.99;
+  catalogo["LEG-001"].precioFinal = 81.34;
+
+  const carrito = await servicio.agregarLinea(ANA, { sku: "LEG-001", cantidad: 3 });
+
+  assert.equal(carrito.total, 244.02);
+});
+
+test("una línea cuyo stock se agotó aparece fuera de stock", async () => {
+  const { servicio, catalogo } = crearServicio();
+  await servicio.agregarLinea(ANA, { sku: "LEG-001", cantidad: 2 });
+  assert.equal((await servicio.verCarrito(ANA)).lineas[0].disponibilidad, "en_existencia");
+
+  catalogo["LEG-001"].existencias = 1;
+
+  assert.equal((await servicio.verCarrito(ANA)).lineas[0].disponibilidad, "fuera_de_stock");
+});
+
+test("con contrapedido la línea que pasa del stock queda por contrapedido; si sale de la venta, fuera de stock", async () => {
+  const { servicio, catalogo } = crearServicio();
+  await servicio.agregarLinea(ANA, { sku: "BOO-001", cantidad: 2 });
+  assert.equal((await servicio.verCarrito(ANA)).lineas[0].disponibilidad, "contrapedido");
+
+  catalogo["BOO-001"].aLaVenta = false;
+
+  assert.equal((await servicio.verCarrito(ANA)).lineas[0].disponibilidad, "fuera_de_stock");
 });
