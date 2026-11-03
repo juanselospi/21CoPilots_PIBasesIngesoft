@@ -66,17 +66,24 @@ export class CatalogoService {
   #motorDePrecios;
   #umbralDeExistenciasBajas;
   #busDeEventos;
+  #fijarExistencias;
 
+  /**
+   * `fijarExistencias` viene de inventario: el stock no se cambia sin dejar
+   * el movimiento en el historial.
+   */
   constructor({
     repositorio,
     motorDePrecios,
     umbralDeExistenciasBajas = UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO,
     busDeEventos = BUS_SIN_SUSCRIPTORES,
+    fijarExistencias,
   }) {
     this.#repositorio = repositorio;
     this.#motorDePrecios = motorDePrecios;
     this.#umbralDeExistenciasBajas = umbralDeExistenciasBajas;
     this.#busDeEventos = busDeEventos;
+    this.#fijarExistencias = fijarExistencias;
   }
 
   async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
@@ -178,7 +185,7 @@ export class CatalogoService {
    * @returns el producto actualizado, con su precio y disponibilidad recalculados
    */
   async actualizarProducto(sku, datos, { responsable = null } = {}) {
-    const cambios = validarCambiosDeProducto(datos);
+    const { existencias, ...cambios } = validarCambiosDeProducto(datos);
 
     const anterior = await this.#repositorio.obtenerPorSku(sku);
     if (!anterior) throw new RecursoNoEncontrado("el producto", sku);
@@ -186,10 +193,15 @@ export class CatalogoService {
 
     if (cambios.categoria !== undefined) cambios.categoria = await this.#familiaExistente(cambios.categoria);
 
-    const actualizado = await this.#repositorio.actualizar(sku, cambios);
-    if (actualizado === null) throw new RecursoNoEncontrado("el producto", sku);
+    // Corregir las existencias deja un ajuste con motivo, como cualquier otro cambio de stock
+    if (existencias !== undefined) await this.#fijarExistencias(sku, existencias, { responsable });
 
-    const producto = await this.#repositorio.obtenerPorSku(actualizado);
+    if (Object.keys(cambios).length > 0) {
+      const actualizado = await this.#repositorio.actualizar(sku, cambios);
+      if (actualizado === null) throw new RecursoNoEncontrado("el producto", sku);
+    }
+
+    const producto = await this.#repositorio.obtenerPorSku(sku);
     const precioNuevo = parametrosDePrecio(producto);
     if (JSON.stringify(precioAnterior) !== JSON.stringify(precioNuevo)) {
       await this.#busDeEventos.publicar(EVENTOS.PARAMETRO_MODIFICADO, {

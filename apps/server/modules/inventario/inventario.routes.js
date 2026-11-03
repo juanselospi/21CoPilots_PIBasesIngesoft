@@ -22,6 +22,8 @@ export function crearRutasDeInventario(controlador, { exigirRol }) {
 
   rutas.get("/alertas", asincrono(controlador.listarAlertas));
   rutas.post("/ingresos", asincrono(controlador.registrarIngreso));
+  rutas.post("/ajustes", asincrono(controlador.registrarAjuste));
+  rutas.get("/movimientos", asincrono(controlador.listarMovimientos));
 
   // Las demás rutas se agregan conforme se implementen los RF de arriba.
 

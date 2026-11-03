@@ -7,16 +7,19 @@
  *
  * POR IMPLEMENTAR
  *   RF-15  Registrar movimiento por cualquiera de sus orígenes
- *   RF-19  Consultar el historial de movimientos
- *   RF-20  Rechazar ajustes sin justificación
  *
  * Pedidos descuenta y repone stock a través de este servicio, también en
  * las ventas de otros canales (RF-17).
  */
 
-import { RecursoNoEncontrado } from "../../shared/errores/errores-de-dominio.js";
+import { RecursoNoEncontrado, ReglaDeNegocioViolada } from "../../shared/errores/errores-de-dominio.js";
 import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { validarIngreso } from "./validar-ingreso.js";
+import { validarAjuste } from "./validar-ajuste.js";
+import { validarConsultaDeMovimientos } from "./validar-consulta-de-movimientos.js";
+
+// Así queda el movimiento cuando las existencias se corrigen en el modal "Editar producto"
+export const MOTIVO_DE_CORRECCION_DESDE_EL_PANEL = "Corrección desde el panel";
 
 /** Tipos de movimiento que admite inventario.producto_administra. */
 export const TIPOS_DE_MOVIMIENTO = Object.freeze({
@@ -72,6 +75,60 @@ export class InventarioService {
 
     // Se publica después de confirmar, para no avisar de algo que se revirtió
     await this.#busDeEventos.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, { correoUsuario: responsable, ...movimiento });
+    return movimiento;
+  }
+
+  /** RF-20: suma o resta unidades con un motivo; nunca deja el stock en negativo. */
+  async registrarAjuste(datos, { responsable }) {
+    const { sku, cantidad, motivo } = validarAjuste(datos);
+    return this.#ajustar(sku, () => cantidad, { responsable, motivo });
+  }
+
+  /**
+   * Deja las existencias en un número exacto registrando la diferencia como
+   * ajuste, para que ningún cambio de stock quede sin historial. La usa el
+   * modal "Editar producto".
+   * @returns el movimiento, o null si ya tenía esas existencias
+   */
+  async fijarExistencias(sku, existencias, { responsable, motivo = MOTIVO_DE_CORRECCION_DESDE_EL_PANEL }) {
+    return this.#ajustar(sku, (stock) => existencias - stock, { responsable, motivo });
+  }
+
+  /** RF-19: el historial con su total para paginar. */
+  async listarMovimientos(consulta) {
+    const filtros = validarConsultaDeMovimientos(consulta);
+    const { movimientos, total } = await this.#repositorio.listarMovimientos(filtros);
+    return { movimientos, total, pagina: filtros.pagina, limite: filtros.limite };
+  }
+
+  // La cantidad se calcula con el stock ya bloqueado, así nadie lo cambia en medio
+  async #ajustar(sku, calcularCantidad, { responsable, motivo }) {
+    const movimiento = await this.#repositorio.enTransaccion(async (cliente) => {
+      const productos = await this.#repositorio.bloquearProductos(cliente, [sku]);
+      const producto = productos.get(sku);
+      if (!producto) throw new RecursoNoEncontrado("el producto", sku);
+
+      const cantidad = calcularCantidad(producto.stock);
+      if (cantidad === 0) return null;
+      if (producto.stock + cantidad < 0) {
+        throw new ReglaDeNegocioViolada(
+          `Solo hay ${producto.stock} unidades de ${sku}; no se pueden restar ${-cantidad}.`,
+          "RF-20"
+        );
+      }
+
+      return this.#repositorio.registrarMovimiento(cliente, {
+        sku,
+        cantidad,
+        tipo: TIPOS_DE_MOVIMIENTO.AJUSTE,
+        correoAdministrador: responsable,
+        motivo,
+      });
+    });
+
+    if (movimiento) {
+      await this.#busDeEventos.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, { correoUsuario: responsable, ...movimiento });
+    }
     return movimiento;
   }
 }
