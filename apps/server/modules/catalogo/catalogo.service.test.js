@@ -8,6 +8,7 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -19,15 +20,15 @@ const motorDePrecios = new MotorDePrecios([
 ]);
 
 // Base falsa: guarda los productos por SKU y, como la real, no deja
-// guardar dos con el mismo código. Llena la tasa con su valor por
-// defecto (13 %).
+// guardar dos con el mismo código. Llena el estado y la tasa con sus
+// valores por defecto (activo y 13 %).
 function crearServicio() {
   const productos = new Map();
 
   const repositorio = {
     crear: async (producto) => {
       if (productos.has(producto.sku)) return null;
-      productos.set(producto.sku, { ...producto, tasaImpuesto: 13 });
+      productos.set(producto.sku, { estado: "activo", ...producto, tasaImpuesto: 13 });
       return producto.sku;
     },
     obtenerPorSku: async (sku) => productos.get(sku) ?? null,
@@ -578,4 +579,105 @@ test("editar un producto que no existe responde no encontrado", async () => {
   const { servicio } = crearServicio();
 
   await assert.rejects(servicio.actualizarProducto("NO-EXISTE", { nombre: "X" }), RecursoNoEncontrado);
+});
+
+// Desactivar y reactivar (RF-18)
+
+test("RF-18: descontinuar un producto lo saca de la tienda, la ficha y las familias", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto({ ...pkm001, existencias: 5 });
+
+  await servicio.cambiarEstado("PKM-001", { estado: "descontinuado" });
+
+  assert.equal(productos.get("PKM-001").estado, "descontinuado");
+  const tienda = new CatalogoService({
+    repositorio: {
+      listar: async () => [...productos.values()],
+      obtenerPorSku: async (sku) => productos.get(sku),
+    },
+    motorDePrecios,
+  });
+  assert.deepEqual(await tienda.listarCatalogo({ limite: 10, desplazamiento: 0 }), []);
+  await assert.rejects(tienda.obtenerFicha("PKM-001"), RecursoNoEncontrado);
+  assert.deepEqual(await tienda.listarFamilias(), []);
+});
+
+test("en el panel sale con disponibilidad y etiqueta descontinuado, y se puede filtrar", async () => {
+  const descontinuado = { ...producto("PKM-001", "Trading Cards", 5), estado: "descontinuado" };
+  const repositorio = { listarParaAdministracion: async () => [descontinuado, producto("LEG-001", "Legos", 5)] };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos } = await servicio.listarParaAdministracion({ disponibilidad: "descontinuado", limite: 24 });
+
+  assert.deepEqual(productos.map((p) => p.sku), ["PKM-001"]);
+  assert.equal(productos[0].disponibilidad, "descontinuado");
+  assert.deepEqual(productos[0].etiquetas, ["oculto_en_tienda", "descontinuado"]);
+});
+
+test("reactivar devuelve el producto a la tienda y publica el cambio para la bitácora", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto({ ...pkm001, existencias: 5 });
+  await servicio.cambiarEstado("PKM-001", { estado: "descontinuado" }, { responsable: "admin@dchobbies.test" });
+
+  const producto = await servicio.cambiarEstado("PKM-001", { estado: "activo" });
+
+  assert.equal(producto.disponibilidad, "en_existencia");
+  assert.deepEqual(
+    eventos.map(({ evento, datos }) => [evento, datos.valorNuevo.estado]),
+    [
+      ["estado_producto_cambiado", "descontinuado"],
+      ["estado_producto_cambiado", "activo"],
+    ]
+  );
+  assert.equal(eventos[0].datos.correoUsuario, "admin@dchobbies.test");
+});
+
+test("pedir el mismo estado no publica nada y un estado desconocido da 400", async () => {
+  const { servicio, eventos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+  await servicio.cambiarEstado("PKM-001", { estado: "activo" });
+
+  assert.deepEqual(eventos, []);
+  await assert.rejects(servicio.cambiarEstado("PKM-001", { estado: "borrado" }), EntradaInvalida);
+  await assert.rejects(servicio.cambiarEstado("NO-EXISTE", { estado: "activo" }), RecursoNoEncontrado);
+});
+
+// Eliminar
+
+function crearServicioParaEliminar(resultado) {
+  const eventos = [];
+  const repositorio = {
+    obtenerPorSku: async (sku) => (sku === "NO-EXISTE" ? null : { ...pkm001, sku }),
+    eliminar: async () => resultado,
+  };
+  const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
+  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), eventos };
+}
+
+test("borra un producto sin historial y lo publica para la bitácora", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("eliminado");
+
+  await servicio.eliminarProducto("NUEVO-1", { responsable: "admin@dchobbies.test" });
+
+  assert.equal(eventos[0].evento, "producto_eliminado");
+  assert.equal(eventos[0].datos.entidadId, "NUEVO-1");
+  assert.equal(eventos[0].datos.valorAnterior.nombre, pkm001.nombre);
+});
+
+test("un producto con ventas o movimientos no se borra y pide desactivarlo", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar("con_historial");
+
+  await assert.rejects(servicio.eliminarProducto("PKM-001"), (error) => {
+    assert.ok(error instanceof ProductoConHistorial);
+    assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
+    assert.equal(error.message, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+    return true;
+  });
+  assert.deepEqual(eventos, []);
+});
+
+test("borrar un producto que no existe responde no encontrado", async () => {
+  const { servicio } = crearServicioParaEliminar("eliminado");
+
+  await assert.rejects(servicio.eliminarProducto("NO-EXISTE"), RecursoNoEncontrado);
 });

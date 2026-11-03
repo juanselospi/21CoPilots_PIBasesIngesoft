@@ -63,3 +63,12 @@ export class EntradaInvalida extends ErrorDeDominio {
     super(mensaje, { codigo: "ENTRADA_INVALIDA", detalles: { campos, errores } });
   }
 }
+
+/** Un producto con ventas o movimientos no se borra: se desactiva (RF-18). */
+export class ProductoConHistorial extends ErrorDeDominio {
+  constructor() {
+    super("Este producto tiene ventas o movimientos; desactívelo en su lugar.", {
+      codigo: "PRODUCTO_CON_HISTORIAL",
+    });
+  }
+}

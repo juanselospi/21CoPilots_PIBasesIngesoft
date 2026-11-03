@@ -8,6 +8,7 @@
 
 import {
   EntradaInvalida,
+  ProductoConHistorial,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -15,13 +16,21 @@ import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
 import { conValoresDeLaFamilia } from "./herencia-de-familia.js";
 import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
+import { validarEstadoDeProducto } from "./validar-estado-de-producto.js";
 
-/** Estados de disponibilidad que ve el visitante (RF-07). */
+/**
+ * Estados de disponibilidad (RF-07). El visitante solo ve los dos primeros;
+ * `descontinuado` solo aparece en el panel.
+ */
 export const DISPONIBILIDAD = Object.freeze({
   EN_EXISTENCIA: "en_existencia",
   POR_CONTRAPEDIDO: "por_contrapedido",
   NO_DISPONIBLE: "no_disponible",
+  DESCONTINUADO: "descontinuado",
 });
+
+/** Estado del producto (RF-18): uno descontinuado sale de la tienda pero conserva su historial. */
+export const ESTADOS_DE_PRODUCTO = Object.freeze({ ACTIVO: "activo", DESCONTINUADO: "descontinuado" });
 
 /** Avisos que el panel dibuja junto al producto (RF-43). */
 export const ETIQUETAS = Object.freeze({
@@ -29,6 +38,7 @@ export const ETIQUETAS = Object.freeze({
   MARGEN_NEGATIVO: "margen_negativo",
   EXISTENCIAS_BAJAS: "existencias_bajas",
   OCULTO_EN_TIENDA: "oculto_en_tienda",
+  DESCONTINUADO: "descontinuado",
 });
 
 const UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO = 2;
@@ -194,6 +204,52 @@ export class CatalogoService {
     return this.#conPrecioYDisponibilidad(producto);
   }
 
+  /**
+   * RF-18: desactiva o reactiva un producto. Descontinuado sale de la tienda
+   * pero sigue en el panel y en los reportes.
+   * @returns el producto con su estado nuevo
+   */
+  async cambiarEstado(sku, datos, { responsable = null } = {}) {
+    const estado = validarEstadoDeProducto(datos);
+
+    const anterior = await this.#repositorio.obtenerPorSku(sku);
+    if (!anterior) throw new RecursoNoEncontrado("el producto", sku);
+
+    if (anterior.estado !== estado) {
+      await this.#repositorio.actualizar(sku, { estado });
+      await this.#busDeEventos.publicar(EVENTOS.ESTADO_DE_PRODUCTO_CAMBIADO, {
+        correoUsuario: responsable,
+        entidad: "producto",
+        entidadId: sku,
+        valorAnterior: { estado: anterior.estado },
+        valorNuevo: { estado },
+      });
+    }
+
+    return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(sku));
+  }
+
+  /**
+   * Borra un producto que nunca se vendió ni tuvo movimientos. Si tiene
+   * historial hay que desactivarlo, para no perder los reportes.
+   */
+  async eliminarProducto(sku, { responsable = null } = {}) {
+    const producto = await this.#repositorio.obtenerPorSku(sku);
+    if (!producto) throw new RecursoNoEncontrado("el producto", sku);
+
+    const resultado = await this.#repositorio.eliminar(sku);
+    if (resultado === "no_existe") throw new RecursoNoEncontrado("el producto", sku);
+    if (resultado === "con_historial") throw new ProductoConHistorial();
+
+    await this.#busDeEventos.publicar(EVENTOS.PRODUCTO_ELIMINADO, {
+      correoUsuario: responsable,
+      entidad: "producto",
+      entidadId: sku,
+      valorAnterior: { nombre: producto.nombre, categoria: producto.categoria, costoItem: producto.costoItem },
+      valorNuevo: null,
+    });
+  }
+
   // Devuelve el nombre como está guardado, así "legos" entra en "Legos"
   async #familiaExistente(nombre) {
     const familia = await this.#repositorio.buscarFamilia(nombre);
@@ -225,8 +281,14 @@ const parametrosDePrecio = ({ costoItem, porcentajeImportacion, margenGanancia }
 
 // Sirve para el producto tal como sale del repositorio o ya compuesto.
 // Desactivar una familia saca todos sus productos de la tienda.
-const esVisible = (producto) =>
-  producto.familia?.activa !== false && determinarDisponibilidad(producto) !== DISPONIBILIDAD.NO_DISPONIBLE;
+const esVisible = (producto) => {
+  const disponibilidad = determinarDisponibilidad(producto);
+  return (
+    producto.familia?.activa !== false &&
+    disponibilidad !== DISPONIBILIDAD.NO_DISPONIBLE &&
+    disponibilidad !== DISPONIBILIDAD.DESCONTINUADO
+  );
+};
 
 const porSku = (a, b) => (a.sku < b.sku ? -1 : a.sku > b.sku ? 1 : 0);
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, "es");
@@ -250,13 +312,17 @@ export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
   if (producto.admiteContrapedido) etiquetas.push(ETIQUETAS.CONTRAPEDIDO);
   if (producto.margenGanancia < 0) etiquetas.push(ETIQUETAS.MARGEN_NEGATIVO);
   if (producto.existencias <= umbralDeExistenciasBajas) etiquetas.push(ETIQUETAS.EXISTENCIAS_BAJAS);
-  const oculto = producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE || producto.familia?.activa === false;
+  const descontinuado = producto.disponibilidad === DISPONIBILIDAD.DESCONTINUADO;
+  const oculto =
+    producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE || descontinuado || producto.familia?.activa === false;
   if (oculto) etiquetas.push(ETIQUETAS.OCULTO_EN_TIENDA);
+  if (descontinuado) etiquetas.push(ETIQUETAS.DESCONTINUADO);
 
   return etiquetas;
 }
 
 function determinarDisponibilidad(producto) {
+  if (producto.estado === ESTADOS_DE_PRODUCTO.DESCONTINUADO) return DISPONIBILIDAD.DESCONTINUADO;
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;
   if (producto.admiteContrapedido) return DISPONIBILIDAD.POR_CONTRAPEDIDO;
   return DISPONIBILIDAD.NO_DISPONIBLE;

@@ -24,6 +24,7 @@ const COLUMNAS_DE_PRODUCTO = `
        p.stock,
        p.categoria,
        p.proveedor,
+       p.estado,
        f.importacion     AS importacion_familia,
        f.margen_ganancia AS margen_familia,
        f.activa          AS familia_activa`;
@@ -57,6 +58,7 @@ const COLUMNA_DE_PRODUCTO = Object.freeze({
   margenGanancia: "margen_ganancia",
   existencias: "stock",
   admiteContrapedido: "contrapedido",
+  estado: "estado",
 });
 
 const COLUMNA_DE_FAMILIA = Object.freeze({
@@ -167,6 +169,31 @@ export class CatalogoRepository {
     );
 
     return rows[0]?.sku ?? null;
+  }
+
+  /**
+   * Borra el producto solo si no tiene líneas de pedido ni movimientos.
+   * @returns "eliminado", "con_historial" o "no_existe"
+   */
+  async eliminar(sku) {
+    try {
+      const { rows } = await this.#pool.query(
+        `DELETE FROM catalogo.producto p
+          WHERE p.sku = $1
+            AND NOT EXISTS (SELECT 1 FROM pedidos.agrega a WHERE a.sku = p.sku)
+            AND NOT EXISTS (SELECT 1 FROM inventario.producto_administra m WHERE m.sku = p.sku)
+         RETURNING sku`,
+        [sku]
+      );
+      if (rows[0]) return "eliminado";
+    } catch (error) {
+      // Una venta entró entre la revisión y el borrado: la llave foránea lo frena
+      if (error.code === "23503") return "con_historial";
+      throw error;
+    }
+
+    const { rows } = await this.#pool.query(`SELECT 1 FROM catalogo.producto WHERE sku = $1`, [sku]);
+    return rows[0] ? "con_historial" : "no_existe";
   }
 
   /**
@@ -294,6 +321,7 @@ const aProducto = (fila) => ({
   existencias: fila.stock,
   categoria: fila.categoria,
   proveedor: fila.proveedor,
+  estado: fila.estado,
 });
 
 const numeroONulo = (valor) => (valor === null ? null : Number(valor));

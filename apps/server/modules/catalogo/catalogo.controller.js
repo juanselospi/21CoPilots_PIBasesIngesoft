@@ -83,6 +83,20 @@ export class CatalogoController {
     respuesta.json({ datos: aProductoAdministrativo(producto) });
   };
 
+  // PATCH /productos/:sku/estado, solo administrador
+  cambiarEstado = async (peticion, respuesta) => {
+    const sku = peticion.params.sku.trim().toUpperCase();
+    const producto = await this.#servicio.cambiarEstado(sku, peticion.body, { responsable: peticion.usuario.correo });
+    respuesta.json({ datos: aProductoAdministrativo(producto) });
+  };
+
+  // DELETE /productos/:sku, solo administrador. 204 sin cuerpo
+  eliminar = async (peticion, respuesta) => {
+    const sku = peticion.params.sku.trim().toUpperCase();
+    await this.#servicio.eliminarProducto(sku, { responsable: peticion.usuario.correo });
+    respuesta.status(204).end();
+  };
+
   // GET /admin/familias, solo administrador
   listarFamiliasParaAdministracion = async (_peticion, respuesta) => {
     const familias = await this.#familias.listarParaAdministracion();
