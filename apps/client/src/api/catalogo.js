@@ -39,6 +39,22 @@ export function listarFamiliasAdmin({ signal } = {}) {
     return pedir('/api/catalogo/admin/familias', { signal })
 }
 
+// Registra una familia; importación y margen vacíos valen 0. El nombre no se puede repetir.
+export function crearFamilia(familia, { signal } = {}) {
+    return pedir('/api/catalogo/familias', { metodo: 'POST', cuerpo: familia, signal })
+}
+
+// Cambia el nombre, la descripción, la importación, el margen o si está activa.
+// Desactivarla oculta sus productos de la tienda.
+export function actualizarFamilia(nombre, cambios, { signal } = {}) {
+    return pedir(`/api/catalogo/familias/${encodeURIComponent(nombre)}`, { metodo: 'PATCH', cuerpo: cambios, signal })
+}
+
+// Borra una familia sin productos. Si tiene, el servidor responde 409 con el motivo.
+export function eliminarFamilia(nombre, { signal } = {}) {
+    return pedir(`/api/catalogo/familias/${encodeURIComponent(nombre)}`, { metodo: 'DELETE', signal })
+}
+
 // Guarda los datos generales, el costo, la importación, el margen, las existencias o el
 // contrapedido de un producto (RF-01, RF-18). Importación y margen en null heredan de la familia.
 // El servidor recalcula el precio y devuelve el producto actualizado.

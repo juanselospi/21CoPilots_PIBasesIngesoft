@@ -1,0 +1,31 @@
+/* Estilos propios de la pantalla «Familias» (Families.jsx).
+   El resto viene de Products.css y ProductTable.css. */
+
+/* Explicación debajo del título */
+.families-intro {
+  margin: 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+/* Aviso de que se guardó, desactivó o eliminó una familia */
+.families-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radio-control);
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+  font-size: var(--texto-pequeno);
+}
+
+.families-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Descripción en gris; las largas bajan de línea sin ensanchar la tabla */
+.families-description {
+  min-width: 200px;
+  max-width: 360px;
+  color: var(--color-texto-suave);
+}
