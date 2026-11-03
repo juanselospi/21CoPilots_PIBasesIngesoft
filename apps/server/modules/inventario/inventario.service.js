@@ -1,14 +1,19 @@
 /**
  * CAPA DE DOMINIO — Inventario. NÚCLEO DEL SISTEMA.
  *
+ * El stock vive en `catalogo.producto.stock` y cada cambio deja una fila
+ * en `inventario.producto_administra`. Los productos se identifican por
+ * `sku`, también en los eventos.
+ *
  * POR IMPLEMENTAR
  *   RF-13  Registrar ingreso de mercadería (producto, cantidad, costo)
  *   RF-14  Conservar el histórico de costos sin sobrescribir (RN-06)
  *   RF-15  Registrar movimiento por cualquiera de sus orígenes
- *   RF-17  Registrar venta de canal externo
- *   RF-18  Descontinuar un producto (se pide a la fachada de catalogo)
  *   RF-19  Consultar el historial de movimientos
  *   RF-20  Rechazar ajustes sin justificación
+ *
+ * Pedidos descuenta y repone stock a través de este servicio, también en
+ * las ventas de otros canales (RF-17).
  */
 
 export class InventarioService {

@@ -19,7 +19,7 @@ export class PasarelaSimulada extends PasarelaDePago {
       return { resultado: "pendiente", referencia: null, motivo: "PAGO_CONTRA_ENTREGA" };
     }
 
-    // La referencia debe ser única: `referencia_externa` es UNIQUE.
+    // La referencia es la llave de pagos.pago, así que no se puede repetir.
     const referencia = `SIM-${randomUUID()}`;
     const resultado = monto > 0
       ? { resultado: "aprobado", referencia, motivo: null }
