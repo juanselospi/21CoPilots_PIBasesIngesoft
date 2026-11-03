@@ -5,7 +5,7 @@
  * El usuario se identifica por su correo, que la base guarda en minusculas y sin espacios.
  * El rol no es una columna, sale de si el correo esta en admin.administrador o en clientes.cliente.
  *
- * Falta por implementar en otro sprint: crearUsuario() y borrarSesion()
+ * Falta por implementar ne otro spint: crearUsuario() y borrarSesion()
  *
  * La contraseña llega ya transformada con hash; este repositorio jamás recibe ni devuelve una contraseña en limpio.
  */
