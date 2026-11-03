@@ -56,8 +56,9 @@ export function componerSistema(configuracion) {
   });
 
   // Las sesiones son del admin, por eso admin es quien dice de quien es cada cookie
-  const identificarUsuario = crearIdentificarUsuario((token) =>
-    admin.servicio.identificarPorToken(token)
+  const identificarUsuario = crearIdentificarUsuario(
+    (token) => admin.servicio.identificarPorToken(token),
+    { cookieSegura: configuracion.sesion.cookieSegura }
   );
 
   const clientes = crearModuloClientes({ pool, exigirRol });

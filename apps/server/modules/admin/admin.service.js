@@ -24,12 +24,14 @@ export class AdminService {
   #repositorio;
   #busDeEventos;
   #duracionSesionMinutos;
+  #renovarSesion;
   #importacionDeExcel;
 
-  constructor({ repositorio, busDeEventos, duracionSesionMinutos = 25, importacionDeExcel }) {
+  constructor({ repositorio, busDeEventos, duracionSesionMinutos = 25, renovarSesion = false, importacionDeExcel }) {
     this.#repositorio = repositorio;
     this.#busDeEventos = busDeEventos;
     this.#duracionSesionMinutos = duracionSesionMinutos;
+    this.#renovarSesion = renovarSesion;
     this.#importacionDeExcel = importacionDeExcel;
   }
 
@@ -45,8 +47,10 @@ export class AdminService {
       throw new CredencialesInvalidas();
     }
 
+    await this.#repositorio.borrarSesionesVencidas(usuario.correo);
+
     const token = generarToken();
-    const venceEn = new Date(Date.now() + this.#duracionSesionMinutos * 60 * 1000);
+    const venceEn = this.#nuevoVencimiento();
 
     await this.#repositorio.crearSesion({
       correoUsuario: usuario.correo,
@@ -58,15 +62,46 @@ export class AdminService {
     return { token, venceEn, usuario: datosDelUsuario };
   }
 
-  // Identifica la usuario si es dueño de la cookie o tira null si no hay token
+  /**
+   * Busca al dueño de la cookie, o null si no hay sesión vigente.
+   * Con la renovación activa, una sesión que ya pasó la mitad de su duración
+   * se extiende; `renovadaHasta` trae la fecha nueva para la cookie.
+   */
   async identificarPorToken(token) {
     if (!token) return null;
-    return this.#repositorio.buscarUsuarioPorSesion(hashearToken(token));
+
+    const tokenHash = hashearToken(token);
+    const encontrado = await this.#repositorio.buscarUsuarioPorSesion(tokenHash);
+    if (!encontrado) return null;
+
+    const { venceEn, ...usuario } = encontrado;
+    const quedanMs = new Date(venceEn) - Date.now();
+    if (!this.#renovarSesion || quedanMs >= this.#duracionMs() / 2) {
+      return { usuario, renovadaHasta: null };
+    }
+
+    const renovadaHasta = this.#nuevoVencimiento();
+    await this.#repositorio.extenderSesion(tokenHash, renovadaHasta);
+    return { usuario, renovadaHasta };
+  }
+
+  // Sin token no hay nada que borrar, así que cerrar dos veces no es un error
+  async cerrarSesion(token) {
+    if (!token) return;
+    await this.#repositorio.borrarSesion(hashearToken(token));
   }
 
   // Importa la hoja de productos
   async importarCatalogo(archivo) {
     return this.#importacionDeExcel.importar(archivo);
+  }
+
+  #duracionMs() {
+    return this.#duracionSesionMinutos * 60 * 1000;
+  }
+
+  #nuevoVencimiento() {
+    return new Date(Date.now() + this.#duracionMs());
   }
 }
 

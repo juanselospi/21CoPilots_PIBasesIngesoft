@@ -15,16 +15,29 @@ const USUARIOS_POR_TOKEN = {
   "token-cliente": { correo: "cliente@correo.test", nombre: "Cliente", rol: ROLES.CLIENTE },
 };
 
+// Una sesión que el servidor renueva al usarla, hasta esta fecha.
+const RENOVADA_HASTA = new Date("2030-01-01T12:00:00Z");
+
 // Levanta las rutas reales de admin detrás de la misma cadena que app.js:
 // cookie → identificarUsuario → rutas → manejador de errores.
 async function levantarServidor() {
   const accesosDenegados = [];
+  const sesiones = new Map(Object.entries(USUARIOS_POR_TOKEN));
+  sesiones.set("token-por-vencer", USUARIOS_POR_TOKEN["token-admin"]);
+
+  const identificar = async (token) => {
+    const usuario = sesiones.get(token);
+    if (!usuario) return null;
+    return { usuario, renovadaHasta: token === "token-por-vencer" ? RENOVADA_HASTA : null };
+  };
+  const servicio = { cerrarSesion: async (token) => sesiones.delete(token) };
+
   const aplicacion = express();
   aplicacion.use(cookieParser());
-  aplicacion.use(crearIdentificarUsuario(async (token) => USUARIOS_POR_TOKEN[token] ?? null));
+  aplicacion.use(crearIdentificarUsuario(identificar));
   aplicacion.use(
     "/api/admin",
-    crearRutasDeAdmin(new AdminController({ servicio: {} }), {
+    crearRutasDeAdmin(new AdminController({ servicio }), {
       exigirRol: crearExigirRol({ publicar: async (evento) => accesosDenegados.push(evento) }),
       recibirExcel: (_peticion, _respuesta, siguiente) => siguiente(),
     })
@@ -81,6 +94,55 @@ test("con una cookie que no corresponde a ninguna sesión responde 401", async (
 
   const { estado } = await consultarSesion(url, "token-inventado");
   assert.equal(estado, 401);
+});
+
+async function cerrarSesion(url, token) {
+  const respuesta = await fetch(url, {
+    method: "DELETE",
+    headers: token ? { cookie: `${COOKIE_DE_SESION}=${token}` } : {},
+  });
+  return { estado: respuesta.status, cookie: respuesta.headers.get("set-cookie") };
+}
+
+test("RF-53: cerrar sesión borra la cookie y después responde 401", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const { estado, cookie } = await cerrarSesion(url, "token-admin");
+
+  assert.equal(estado, 204);
+  assert.match(cookie, /^sesion=;/);
+  assert.match(cookie, /Expires=Thu, 01 Jan 1970/);
+  assert.equal((await consultarSesion(url, "token-admin")).estado, 401);
+});
+
+test("cerrar sesión sin cookie también responde 204", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  assert.equal((await cerrarSesion(url)).estado, 204);
+});
+
+test("una sesión renovada devuelve la cookie con el vencimiento nuevo", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const respuesta = await fetch(url, { headers: { cookie: `${COOKIE_DE_SESION}=token-por-vencer` } });
+  const cookie = respuesta.headers.get("set-cookie");
+
+  assert.equal(respuesta.status, 200);
+  assert.match(cookie, /^sesion=token-por-vencer;/);
+  assert.match(cookie, new RegExp(`Expires=${RENOVADA_HASTA.toUTCString()}`));
+  assert.match(cookie, /HttpOnly/);
+});
+
+test("una sesión que no se renueva no reescribe la cookie", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const respuesta = await fetch(url, { headers: { cookie: `${COOKIE_DE_SESION}=token-admin` } });
+
+  assert.equal(respuesta.headers.get("set-cookie"), null);
 });
 
 // Test de la consulta de la sesión actual hecho con la ayuda de Claude
