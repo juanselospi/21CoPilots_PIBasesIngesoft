@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 
 import { crearRutasDeInventario } from "./modules/inventario/inventario.routes.js";
+import { InventarioController } from "./modules/inventario/inventario.controller.js";
 import { crearRutasDeReportes } from "./modules/reportes/reportes.routes.js";
 import { crearRutasDePedidos } from "./modules/pedidos/pedidos.routes.js";
 import { crearExigirRol, ROLES } from "./shared/http/autorizacion-por-rol.js";
@@ -59,6 +60,33 @@ test("con el rol correcto pasa el candado y llega a la ruta, que todavía no exi
   const { base, cerrar } = await levantarServidor();
   t.after(cerrar);
 
-  assert.equal(await estadoDe(`${base}/api/inventario/alertas`, ROLES.ADMINISTRADOR), 404);
+  assert.equal(await estadoDe(`${base}/api/inventario/ruta-inexistente`, ROLES.ADMINISTRADOR), 404);
   assert.equal(await estadoDe(`${base}/api/pedidos/carrito`, ROLES.CLIENTE), 404);
+});
+
+test("las alertas de inventario responden al administrador con el umbral", async (t) => {
+  const aplicacion = express();
+  aplicacion.use((peticion, _respuesta, siguiente) => {
+    peticion.usuario = { correo: "admin@dchobbies.test", rol: ROLES.ADMINISTRADOR };
+    siguiente();
+  });
+  const controlador = new InventarioController({
+    servicio: {
+      listarAlertas: async () => ({
+        umbral: 2,
+        productos: [{ sku: "LEG-001", nombre: "Halcón", familia: "Legos", existencias: 2, admiteContrapedido: false }],
+      }),
+    },
+  });
+  aplicacion.use("/api/inventario", crearRutasDeInventario(controlador, { exigirRol: crearExigirRol({ publicar: async () => {} }) }));
+  const servidor = aplicacion.listen(0);
+  await new Promise((resolver) => servidor.once("listening", resolver));
+  t.after(() => new Promise((resolver) => servidor.close(resolver)));
+
+  const respuesta = await fetch(`http://localhost:${servidor.address().port}/api/inventario/alertas`);
+  const cuerpo = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(cuerpo.meta, { umbral: 2, total: 1 });
+  assert.deepEqual(cuerpo.datos[0], { sku: "LEG-001", nombre: "Halcón", familia: "Legos", existencias: 2, admiteContrapedido: false });
 });

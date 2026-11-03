@@ -11,10 +11,18 @@
  *   listarAlertas        RF-16 — existencias en el umbral o por debajo
  */
 
+import { aAlerta } from "./inventario.dto.js";
+
 export class InventarioController {
   #servicio;
 
   constructor({ servicio }) {
     this.#servicio = servicio;
   }
+
+  // GET /alertas
+  listarAlertas = async (_peticion, respuesta) => {
+    const { umbral, productos } = await this.#servicio.listarAlertas();
+    respuesta.json({ datos: productos.map(aAlerta), meta: { umbral, total: productos.length } });
+  };
 }

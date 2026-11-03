@@ -10,6 +10,7 @@
  */
 
 import { Router } from "express";
+import { asincrono } from "../../shared/http/envoltura-async.js";
 import { exigirSesion } from "../../shared/http/autenticacion.js";
 import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 
@@ -19,7 +20,9 @@ export function crearRutasDeInventario(controlador, { exigirRol }) {
   // Primero la sesión: sin ella la respuesta tiene que ser 401, no 403.
   rutas.use(exigirSesion, exigirRol(ROLES.ADMINISTRADOR));
 
-  // Las rutas se agregan conforme se implementen los RF de arriba.
+  rutas.get("/alertas", asincrono(controlador.listarAlertas));
+
+  // Las demás rutas se agregan conforme se implementen los RF de arriba.
 
   return rutas;
 }
