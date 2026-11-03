@@ -43,7 +43,7 @@ function FamilyForm({ family, onClose, onSave }) {
     // Al editar solo se envía lo que cambió
     const initial = valuesOf(family)
     const changedFields = Object.keys(initial).filter((key) => (percentKeys.includes(key)
-        ? values[key] === '' || Number(values[key]) !== family[key]
+        ? values[key] === '' || Number(values[key]) !== family?.[key]
         : values[key].trim() !== initial[key]))
     const hasChanges = !editing || changedFields.length > 0
 
