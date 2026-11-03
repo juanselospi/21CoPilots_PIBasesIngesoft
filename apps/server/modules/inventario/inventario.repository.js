@@ -48,4 +48,49 @@ export class InventarioRepository {
       admiteContrapedido: fila.contrapedido,
     }));
   }
+
+  /**
+   * Bloquea las filas de los productos hasta que termine la transacción, en
+   * orden de SKU para que dos transacciones no se esperen una a la otra.
+   * @returns un Map por SKU con el stock y el estado actuales
+   */
+  async bloquearProductos(cliente, skus) {
+    const { rows } = await cliente.query(
+      `SELECT sku, nombre, stock, estado, contrapedido
+         FROM catalogo.producto
+        WHERE sku = ANY($1::text[])
+        ORDER BY sku
+          FOR UPDATE`,
+      [[...new Set(skus)].sort()]
+    );
+    return new Map(rows.map((fila) => [fila.sku, fila]));
+  }
+
+  /**
+   * Mueve el stock y deja el movimiento en el historial (RF-15). La cantidad
+   * es positiva si entra mercancía y negativa si sale.
+   * @returns el movimiento con la fecha y las existencias que quedaron
+   */
+  async registrarMovimiento(
+    cliente,
+    { sku, cantidad, tipo, correoAdministrador = null, costoUnitario = null, motivo = null }
+  ) {
+    const { rows: [producto] } = await cliente.query(
+      `UPDATE catalogo.producto SET stock = stock + $2 WHERE sku = $1 RETURNING stock`,
+      [sku, cantidad]
+    );
+    const { rows: [movimiento] } = await cliente.query(
+      `INSERT INTO inventario.producto_administra
+              (sku, correo_administrador, cantidad, tipo, costo_unitario, motivo)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING fecha`,
+      [sku, correoAdministrador, cantidad, tipo, costoUnitario, motivo]
+    );
+    return { sku, cantidad, tipo, costoUnitario, motivo, fecha: movimiento.fecha, existenciasResultantes: producto.stock };
+  }
+
+  /** RF-14: el costo de la última compra pasa a ser el costo del producto; el anterior queda en el historial. */
+  async actualizarCosto(cliente, sku, costoUnitario) {
+    await cliente.query(`UPDATE catalogo.producto SET item = $2 WHERE sku = $1`, [sku, costoUnitario]);
+  }
 }

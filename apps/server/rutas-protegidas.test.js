@@ -90,3 +90,53 @@ test("las alertas de inventario responden al administrador con el umbral", async
   assert.deepEqual(cuerpo.meta, { umbral: 2, total: 1 });
   assert.deepEqual(cuerpo.datos[0], { sku: "LEG-001", nombre: "Halcón", familia: "Legos", existencias: 2, admiteContrapedido: false });
 });
+
+test("registrar un ingreso responde 201 con el movimiento y exige administrador", async (t) => {
+  const aplicacion = express();
+  aplicacion.use(express.json());
+  aplicacion.use((peticion, _respuesta, siguiente) => {
+    const rol = peticion.get("x-rol");
+    peticion.usuario = rol ? { correo: "admin@dchobbies.test", rol } : null;
+    siguiente();
+  });
+  const ingresos = [];
+  const controlador = new InventarioController({
+    servicio: {
+      registrarIngreso: async (datos, { responsable }) => {
+        ingresos.push(responsable);
+        return {
+          sku: datos.sku,
+          tipo: "ingreso",
+          cantidad: datos.cantidad,
+          costoUnitario: 120,
+          motivo: null,
+          fecha: "2026-11-03T18:00:00.000Z",
+          existenciasResultantes: 13,
+        };
+      },
+    },
+  });
+  aplicacion.use(
+    "/api/inventario",
+    crearRutasDeInventario(controlador, { exigirRol: crearExigirRol({ publicar: async () => {} }) })
+  );
+  aplicacion.use(manejadorDeErrores);
+  const servidor = aplicacion.listen(0);
+  await new Promise((resolver) => servidor.once("listening", resolver));
+  t.after(() => new Promise((resolver) => servidor.close(resolver)));
+  const ingresar = (rol) =>
+    fetch(`http://localhost:${servidor.address().port}/api/inventario/ingresos`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(rol ? { "x-rol": rol } : {}) },
+      body: JSON.stringify({ sku: "LEG-001", cantidad: 10, costoUnitario: 120 }),
+    });
+
+  assert.equal((await ingresar()).status, 401);
+  assert.equal((await ingresar(ROLES.CLIENTE)).status, 403);
+  const respuesta = await ingresar(ROLES.ADMINISTRADOR);
+  const { datos } = await respuesta.json();
+
+  assert.equal(respuesta.status, 201);
+  assert.equal(datos.existencias, 13);
+  assert.deepEqual(ingresos, ["admin@dchobbies.test"]);
+});
