@@ -14,6 +14,7 @@ import {
 import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
 import { conValoresDeLaFamilia } from "./herencia-de-familia.js";
+import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -31,6 +32,7 @@ export const ETIQUETAS = Object.freeze({
 });
 
 const UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO = 2;
+const BUS_SIN_SUSCRIPTORES = { publicar: async () => {} };
 
 
 /**
@@ -53,15 +55,18 @@ export class CatalogoService {
   #repositorio;
   #motorDePrecios;
   #umbralDeExistenciasBajas;
+  #busDeEventos;
 
   constructor({
     repositorio,
     motorDePrecios,
     umbralDeExistenciasBajas = UMBRAL_DE_EXISTENCIAS_BAJAS_POR_DEFECTO,
+    busDeEventos = BUS_SIN_SUSCRIPTORES,
   }) {
     this.#repositorio = repositorio;
     this.#motorDePrecios = motorDePrecios;
     this.#umbralDeExistenciasBajas = umbralDeExistenciasBajas;
+    this.#busDeEventos = busDeEventos;
   }
 
   async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
@@ -147,13 +152,8 @@ export class CatalogoService {
   async crearProducto(datos) {
     const producto = validarProductoNuevo(datos);
 
-    // Se guarda con el nombre de la familia tal como está, "legos" entra en "Legos"
-    const familia = await this.#repositorio.buscarFamilia(producto.categoria);
-    if (!familia) {
-      throw new EntradaInvalida(`No existe la familia ${producto.categoria}. Créela primero.`, ["categoria"]);
-    }
-
-    const sku = await this.#repositorio.crear({ ...producto, categoria: familia.nombre });
+    const categoria = await this.#familiaExistente(producto.categoria);
+    const sku = await this.#repositorio.crear({ ...producto, categoria });
     if (sku === null) {
       throw new ReglaDeNegocioViolada(`Ya existe un producto con el código ${producto.sku}.`, "RF-01");
     }
@@ -162,19 +162,43 @@ export class CatalogoService {
   }
 
   /**
-   * Cambia el costo, la importación, el margen, las existencias o el
-   * contrapedido de un producto desde el modal "Editar producto" del panel
+   * Cambia los datos generales, el precio, las existencias o el contrapedido
+   * desde el modal "Editar producto" del panel. Un cambio de costo,
+   * importación o margen se publica para la bitácora (RF-52).
    * @returns el producto actualizado, con su precio y disponibilidad recalculados
    */
-  async actualizarProducto(sku, datos) {
+  async actualizarProducto(sku, datos, { responsable = null } = {}) {
     const cambios = validarCambiosDeProducto(datos);
 
+    const anterior = await this.#repositorio.obtenerPorSku(sku);
+    if (!anterior) throw new RecursoNoEncontrado("el producto", sku);
+    const precioAnterior = parametrosDePrecio(anterior);
+
+    if (cambios.categoria !== undefined) cambios.categoria = await this.#familiaExistente(cambios.categoria);
+
     const actualizado = await this.#repositorio.actualizar(sku, cambios);
-    if (actualizado === null) {
-      throw new RecursoNoEncontrado("el producto", sku);
+    if (actualizado === null) throw new RecursoNoEncontrado("el producto", sku);
+
+    const producto = await this.#repositorio.obtenerPorSku(actualizado);
+    const precioNuevo = parametrosDePrecio(producto);
+    if (JSON.stringify(precioAnterior) !== JSON.stringify(precioNuevo)) {
+      await this.#busDeEventos.publicar(EVENTOS.PARAMETRO_MODIFICADO, {
+        correoUsuario: responsable,
+        entidad: "producto",
+        entidadId: sku,
+        valorAnterior: precioAnterior,
+        valorNuevo: precioNuevo,
+      });
     }
 
-    return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(actualizado));
+    return this.#conPrecioYDisponibilidad(producto);
+  }
+
+  // Devuelve el nombre como está guardado, así "legos" entra en "Legos"
+  async #familiaExistente(nombre) {
+    const familia = await this.#repositorio.buscarFamilia(nombre);
+    if (!familia) throw new EntradaInvalida(`No existe la familia ${nombre}. Créela primero.`, ["categoria"]);
+    return familia.nombre;
   }
 
   #conPrecioYDisponibilidad(guardado) {
@@ -191,6 +215,13 @@ export class CatalogoService {
     };
   }
 }
+
+// Los valores propios del producto, null si usa los de la familia
+const parametrosDePrecio = ({ costoItem, porcentajeImportacion, margenGanancia }) => ({
+  costoItem,
+  porcentajeImportacion: porcentajeImportacion ?? null,
+  margenGanancia: margenGanancia ?? null,
+});
 
 // Sirve para el producto tal como sale del repositorio o ya compuesto.
 // Desactivar una familia saca todos sus productos de la tienda.

@@ -22,7 +22,7 @@ export function crearRutasDeCatalogo(controlador, { exigirRol }) {
   // listado del panel, incluye los ocultos en la tienda y los costos
   rutas.get("/admin/productos", ...soloAdministrador, asincrono(controlador.listarParaAdministracion));
   rutas.post("/productos", ...soloAdministrador, asincrono(controlador.crear));
-  // cambia el precio, las existencias o el contrapedido, lo que no venga se queda igual
+  // cambia los datos generales, el precio, las existencias o el contrapedido; lo que no venga se queda igual
   rutas.patch("/productos/:sku", ...soloAdministrador, asincrono(controlador.actualizar));
 
   // familias del panel, con importación y margen; incluye las inactivas

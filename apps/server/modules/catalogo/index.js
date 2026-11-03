@@ -21,7 +21,7 @@ export function crearModuloCatalogo({ pool, busDeEventos, exigirRol, umbralDeExi
   ]);
 
   const repositorio = new CatalogoRepository({ pool });
-  const servicio = new CatalogoService({ repositorio, motorDePrecios, umbralDeExistenciasBajas });
+  const servicio = new CatalogoService({ repositorio, motorDePrecios, umbralDeExistenciasBajas, busDeEventos });
   const familias = new FamiliasService({ repositorio, busDeEventos });
   const controlador = new CatalogoController({ servicio, familias });
 

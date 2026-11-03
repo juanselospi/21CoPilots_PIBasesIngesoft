@@ -24,4 +24,28 @@ export class InventarioRepository {
   enTransaccion(trabajo) {
     return enTransaccion(this.#pool, trabajo);
   }
+
+  /**
+   * Productos activos con el stock en el umbral o por debajo, los más
+   * urgentes primero. Uno descontinuado no se va a reponer, así que no avisa.
+   */
+  async listarExistenciasBajas(umbral) {
+    const { rows } = await this.#pool.query(
+      `SELECT e.sku, e.nombre, e.categoria, e.stock, e.contrapedido
+         FROM reportes.v_existencias e
+         JOIN catalogo.producto p ON p.sku = e.sku
+        WHERE p.estado = 'activo'
+          AND e.stock <= $1
+        ORDER BY e.stock, e.nombre`,
+      [umbral]
+    );
+
+    return rows.map((fila) => ({
+      sku: fila.sku,
+      nombre: fila.nombre,
+      familia: fila.categoria,
+      existencias: fila.stock,
+      admiteContrapedido: fila.contrapedido,
+    }));
+  }
 }

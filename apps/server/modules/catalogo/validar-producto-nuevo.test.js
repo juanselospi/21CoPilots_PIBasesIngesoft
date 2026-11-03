@@ -54,15 +54,15 @@ test("acepta los números como texto, como los manda un formulario, y limpia los
   assert.equal(producto.categoria, "Trading Cards");
 });
 
-test("sin importación ni margen, los deja en 0", () => {
+test("sin importación ni margen, los deja en null para usar los de la familia", () => {
   const { porcentajeImportacion, margenGanancia } = validarProductoNuevo({
     ...valido,
     porcentajeImportacion: undefined,
     margenGanancia: "  ",
   });
 
-  assert.equal(porcentajeImportacion, 0);
-  assert.equal(margenGanancia, 0);
+  assert.equal(porcentajeImportacion, null);
+  assert.equal(margenGanancia, null);
 });
 
 const CASOS_INVALIDOS = [
