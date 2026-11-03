@@ -27,12 +27,16 @@ export function incumplimientosDeLaPolitica(contrasena) {
   return REGLAS.filter(({ cumple }) => !cumple(contrasena)).map(({ falta }) => falta);
 }
 
+/** El mensaje con todo lo que le falta, o null si cumple. */
+export function problemaDeLaContrasena(contrasena) {
+  const faltan = incumplimientosDeLaPolitica(contrasena);
+  return faltan.length > 0 ? `La contraseña debe tener ${unirConY(faltan)}.` : null;
+}
+
 /** @throws {EntradaInvalida} sobre `campo`, con todo lo que le falta */
 export function exigirPoliticaDeContrasenas(contrasena, campo = "contrasena") {
-  const faltan = incumplimientosDeLaPolitica(contrasena);
-  if (faltan.length > 0) {
-    throw new EntradaInvalida(`La contraseña debe tener ${unirConY(faltan)}.`, [campo]);
-  }
+  const problema = problemaDeLaContrasena(contrasena);
+  if (problema) throw new EntradaInvalida(problema, [campo]);
 }
 
 // ["a", "b", "c"] → "a, b y c"

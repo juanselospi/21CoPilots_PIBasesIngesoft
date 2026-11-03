@@ -48,6 +48,14 @@ export class AdminService {
       throw new CredencialesInvalidas();
     }
 
+    return this.abrirSesion(usuario);
+  }
+
+  /**
+   * Abre una sesión para alguien que ya se identificó. El registro de
+   * clientes también la usa para dejar la sesión iniciada.
+   */
+  async abrirSesion(usuario) {
     await this.#repositorio.borrarSesionesVencidas(usuario.correo);
 
     const token = generarToken();

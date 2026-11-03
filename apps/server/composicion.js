@@ -66,7 +66,12 @@ export function componerSistema(configuracion) {
     { cookieSegura: configuracion.sesion.cookieSegura }
   );
 
-  const clientes = crearModuloClientes({ pool, exigirRol });
+  const clientes = crearModuloClientes({
+    pool,
+    exigirRol,
+    cuentas: admin.cuentas,
+    cookieSegura: configuracion.sesion.cookieSegura,
+  });
 
   const pedidos = crearModuloPedidos({
     pool,
