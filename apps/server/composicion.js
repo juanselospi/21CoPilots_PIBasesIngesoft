@@ -37,18 +37,20 @@ export function componerSistema(configuracion) {
 
   // Los modulos van en orden de dependencia
   // Catalogo va antes que admin porque la importacion del excel guarda los productos a traves del catalogo
-  const catalogo = crearModuloCatalogo({
+  // Inventario va primero porque catálogo le pide los cambios de stock
+  const inventario = crearModuloInventario({
     pool,
     busDeEventos,
     exigirRol,
     umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
   });
 
-  const inventario = crearModuloInventario({
+  const catalogo = crearModuloCatalogo({
     pool,
     busDeEventos,
     exigirRol,
     umbralDeExistenciasBajas: configuracion.negocio.umbralDeExistenciasBajas,
+    fijarExistencias: (sku, existencias, opciones) => inventario.servicio.fijarExistencias(sku, existencias, opciones),
   });
 
   const admin = crearModuloAdmin({

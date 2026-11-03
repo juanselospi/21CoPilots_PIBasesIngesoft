@@ -12,7 +12,7 @@ import { ImportacionPorAranceles } from "./precio/pasos/importacion-por-arancele
 import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 
-export function crearModuloCatalogo({ pool, busDeEventos, exigirRol, umbralDeExistenciasBajas }) {
+export function crearModuloCatalogo({ pool, busDeEventos, exigirRol, umbralDeExistenciasBajas, fijarExistencias }) {
   // El orden de estos pasos es la fórmula del precio
   const motorDePrecios = new MotorDePrecios([
     new ImportacionPorAranceles(),
@@ -21,7 +21,13 @@ export function crearModuloCatalogo({ pool, busDeEventos, exigirRol, umbralDeExi
   ]);
 
   const repositorio = new CatalogoRepository({ pool });
-  const servicio = new CatalogoService({ repositorio, motorDePrecios, umbralDeExistenciasBajas, busDeEventos });
+  const servicio = new CatalogoService({
+    repositorio,
+    motorDePrecios,
+    umbralDeExistenciasBajas,
+    busDeEventos,
+    fijarExistencias,
+  });
   const familias = new FamiliasService({ repositorio, busDeEventos });
   const controlador = new CatalogoController({ servicio, familias });
 

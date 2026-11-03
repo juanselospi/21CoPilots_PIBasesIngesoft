@@ -93,4 +93,34 @@ export class InventarioRepository {
   async actualizarCosto(cliente, sku, costoUnitario) {
     await cliente.query(`UPDATE catalogo.producto SET item = $2 WHERE sku = $1`, [sku, costoUnitario]);
   }
+
+  /** RF-19: el historial de movimientos, de lo más nuevo a lo más viejo. */
+  async listarMovimientos({ sku, tipo, desde, hasta, limite, pagina }) {
+    const { rows } = await this.#pool.query(
+      `SELECT sku, nombre, fecha, cantidad, correo_administrador, tipo, costo_unitario, motivo,
+              count(*) OVER () AS total
+         FROM reportes.v_registro_mercancia
+        WHERE ($1::text IS NULL OR sku = $1)
+          AND ($2::text IS NULL OR tipo = $2)
+          AND ($3::timestamptz IS NULL OR fecha >= $3)
+          AND ($4::timestamptz IS NULL OR fecha < $4)
+        ORDER BY fecha DESC
+        LIMIT $5 OFFSET $6`,
+      [sku, tipo, desde, hasta, limite, pagina * limite]
+    );
+
+    return {
+      movimientos: rows.map((fila) => ({
+        sku: fila.sku,
+        nombre: fila.nombre,
+        fecha: fila.fecha,
+        cantidad: fila.cantidad,
+        tipo: fila.tipo,
+        costoUnitario: fila.costo_unitario === null ? null : Number(fila.costo_unitario),
+        motivo: fila.motivo,
+        responsable: fila.correo_administrador,
+      })),
+      total: Number(rows[0]?.total ?? 0),
+    };
+  }
 }

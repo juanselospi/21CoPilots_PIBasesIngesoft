@@ -47,7 +47,16 @@ function crearServicio() {
   const eventos = [];
   const busDeEventos = { publicar: async (evento, datos) => eventos.push({ evento, datos }) };
 
-  return { servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos }), productos, eventos };
+  // Como inventario: deja las existencias en el número pedido
+  const fijarExistencias = async (sku, existencias) => {
+    productos.set(sku, { ...productos.get(sku), existencias });
+  };
+
+  return {
+    servicio: new CatalogoService({ repositorio, motorDePrecios, busDeEventos, fijarExistencias }),
+    productos,
+    eventos,
+  };
 }
 
 const pkm001 = {
@@ -680,4 +689,25 @@ test("borrar un producto que no existe responde no encontrado", async () => {
   const { servicio } = crearServicioParaEliminar("eliminado");
 
   await assert.rejects(servicio.eliminarProducto("NO-EXISTE"), RecursoNoEncontrado);
+});
+
+test("editar las existencias en el panel pasa por inventario con quién lo hizo", async () => {
+  const fijadas = [];
+  const productos = new Map([["PKM-001", { ...pkm001, existencias: 3, tasaImpuesto: 13 }]]);
+  const repositorio = {
+    obtenerPorSku: async (sku) => productos.get(sku) ?? null,
+    actualizar: async () => {
+      throw new Error("no debería escribir el stock directo");
+    },
+  };
+  const fijarExistencias = async (sku, existencias, opciones) => {
+    fijadas.push({ sku, existencias, ...opciones });
+    productos.get(sku).existencias = existencias;
+  };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios, fijarExistencias });
+
+  const producto = await servicio.actualizarProducto("PKM-001", { existencias: 8 }, { responsable: "admin@dchobbies.test" });
+
+  assert.deepEqual(fijadas, [{ sku: "PKM-001", existencias: 8, responsable: "admin@dchobbies.test" }]);
+  assert.equal(producto.existencias, 8);
 });

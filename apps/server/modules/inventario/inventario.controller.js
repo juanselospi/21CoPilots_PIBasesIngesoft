@@ -5,12 +5,10 @@
  * la base y no decide reglas.
  *
  * POR IMPLEMENTAR
- *   registrarAjuste      RF-20 — siempre con motivo
- *   listarMovimientos    RF-19
  *   listarAlertas        RF-16 — existencias en el umbral o por debajo
  */
 
-import { aAlerta, aMovimientoRegistrado } from "./inventario.dto.js";
+import { aAlerta, aMovimiento, aMovimientoRegistrado } from "./inventario.dto.js";
 
 export class InventarioController {
   #servicio;
@@ -31,5 +29,19 @@ export class InventarioController {
       responsable: peticion.usuario.correo,
     });
     respuesta.status(201).json({ datos: aMovimientoRegistrado(movimiento) });
+  };
+
+  // POST /ajustes con { sku, cantidad, motivo }
+  registrarAjuste = async (peticion, respuesta) => {
+    const movimiento = await this.#servicio.registrarAjuste(peticion.body ?? {}, {
+      responsable: peticion.usuario.correo,
+    });
+    respuesta.status(201).json({ datos: aMovimientoRegistrado(movimiento) });
+  };
+
+  // GET /movimientos?sku&tipo&desde&hasta&pagina&limite
+  listarMovimientos = async (peticion, respuesta) => {
+    const { movimientos, total, pagina, limite } = await this.#servicio.listarMovimientos(peticion.query);
+    respuesta.json({ datos: movimientos.map(aMovimiento), meta: { total, pagina, limite } });
   };
 }

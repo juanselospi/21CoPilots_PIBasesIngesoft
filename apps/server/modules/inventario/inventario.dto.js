@@ -5,7 +5,6 @@
  * son administrativas: se sirven detrás de `exigirRol` (RNF-10).
  *
  * POR IMPLEMENTAR
- *   aMovimiento()      RF-19 — fecha, origen, cantidad, responsable
  *   aExistencias()     RF-16 — producto, existencias, estado de alerta
  */
 
@@ -27,4 +26,16 @@ export const aMovimientoRegistrado = (movimiento) => ({
   motivo: movimiento.motivo,
   fecha: movimiento.fecha,
   existencias: movimiento.existenciasResultantes,
+});
+
+/** RF-19: una fila del historial. */
+export const aMovimiento = (movimiento) => ({
+  sku: movimiento.sku,
+  nombre: movimiento.nombre,
+  fecha: movimiento.fecha,
+  tipo: movimiento.tipo,
+  cantidad: movimiento.cantidad,
+  costoUnitario: movimiento.costoUnitario,
+  motivo: movimiento.motivo,
+  responsable: movimiento.responsable,
 });

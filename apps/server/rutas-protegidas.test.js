@@ -140,3 +140,52 @@ test("registrar un ingreso responde 201 con el movimiento y exige administrador"
   assert.equal(datos.existencias, 13);
   assert.deepEqual(ingresos, ["admin@dchobbies.test"]);
 });
+
+test("un ajuste sin motivo responde 400 y el historial se consulta con su total", async (t) => {
+  const { InventarioService } = await import("./modules/inventario/inventario.service.js");
+  const aplicacion = express();
+  aplicacion.use(express.json());
+  aplicacion.use((peticion, _respuesta, siguiente) => {
+    peticion.usuario = { correo: "admin@dchobbies.test", rol: ROLES.ADMINISTRADOR };
+    siguiente();
+  });
+  const repositorio = {
+    listarMovimientos: async () => ({
+      movimientos: [
+        {
+          sku: "LEG-001",
+          nombre: "Halcón",
+          fecha: "2026-11-03T18:00:00.000Z",
+          cantidad: 10,
+          tipo: "ingreso",
+          costoUnitario: 120,
+          motivo: null,
+          responsable: "admin@dchobbies.test",
+        },
+      ],
+      total: 1,
+    }),
+  };
+  const controlador = new InventarioController({ servicio: new InventarioService({ repositorio }) });
+  aplicacion.use(
+    "/api/inventario",
+    crearRutasDeInventario(controlador, { exigirRol: crearExigirRol({ publicar: async () => {} }) })
+  );
+  aplicacion.use(manejadorDeErrores);
+  const servidor = aplicacion.listen(0);
+  await new Promise((resolver) => servidor.once("listening", resolver));
+  t.after(() => new Promise((resolver) => servidor.close(resolver)));
+  const base = `http://localhost:${servidor.address().port}/api/inventario`;
+
+  const ajuste = await fetch(`${base}/ajustes`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ sku: "LEG-001", cantidad: -1 }),
+  });
+  assert.equal(ajuste.status, 400);
+  assert.deepEqual((await ajuste.json()).error.detalles.campos, ["motivo"]);
+
+  const historial = await (await fetch(`${base}/movimientos?sku=LEG-001`)).json();
+  assert.deepEqual(historial.meta, { total: 1, pagina: 0, limite: 50 });
+  assert.equal(historial.datos[0].tipo, "ingreso");
+});
