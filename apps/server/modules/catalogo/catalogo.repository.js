@@ -3,8 +3,12 @@
  *
  * Es el único archivo del módulo con SQL. Devuelve objetos en camelCase.
  *
- * Solo escribe en el esquema `catalogo`. El producto se identifica por su SKU,
- * la categoria es texto plano.
+ * Solo escribe en el esquema `catalogo`. El producto se identifica por su SKU
+ * y su categoría es el nombre de una familia.
+ *
+ * La importación y el margen del producto salen tal como están guardados
+ * (null si usa los de la familia) junto con los de su familia; cuál vale lo
+ * decide el dominio.
  */
 
 const COLUMNAS_DE_PRODUCTO = `
@@ -19,7 +23,13 @@ const COLUMNAS_DE_PRODUCTO = `
        p.contrapedido,
        p.stock,
        p.categoria,
-       p.proveedor`;
+       p.proveedor,
+       f.importacion     AS importacion_familia,
+       f.margen_ganancia AS margen_familia`;
+
+const PRODUCTO_CON_FAMILIA = `
+       catalogo.producto p
+  JOIN catalogo.familia  f ON f.nombre = p.categoria`;
 
 
 
@@ -29,12 +39,6 @@ const COLUMNAS_DE_PRODUCTO = `
  */
 
 /** Ficha de un producto por su SKU, que tiene que venir normalizado. */
-
-/**
- * Guarda un producto de la importación: lo crea si el SKU no existe y lo
- * actualiza si ya existe, así reimportar la misma hoja no duplica nada.
- */
-
 
 export class CatalogoRepository {
   #pool;
@@ -46,7 +50,7 @@ export class CatalogoRepository {
   async listar({ categoria = null, termino = null } = {}) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
-         FROM catalogo.producto p
+         FROM ${PRODUCTO_CON_FAMILIA}
         WHERE ($1::text IS NULL OR p.categoria = $1)
           AND ($2::text IS NULL OR p.nombre ILIKE '%' || $2 || '%')
         ORDER BY p.nombre`,
@@ -60,7 +64,7 @@ export class CatalogoRepository {
   async listarParaAdministracion({ termino = null, categoria = null, proveedor = null } = {}) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
-         FROM catalogo.producto p
+         FROM ${PRODUCTO_CON_FAMILIA}
         WHERE ($1::text IS NULL OR p.nombre ILIKE '%' || $1 || '%'
                                 OR p.sku ILIKE '%' || $1 || '%')
           AND ($2::text IS NULL OR p.categoria = $2)
@@ -75,7 +79,7 @@ export class CatalogoRepository {
   async obtenerPorSku(sku) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
-         FROM catalogo.producto p
+         FROM ${PRODUCTO_CON_FAMILIA}
         WHERE p.sku = $1`,
       [sku]
     );
@@ -115,7 +119,6 @@ export class CatalogoRepository {
   /**
    * Cambia el precio (costo, importación y margen), el stock o el
    * contrapedido de un producto.
-   * costo_total no se manda porque es una columna generada.
    * @returns el SKU, o null si no existe el producto
    */
   async actualizar(
@@ -143,7 +146,14 @@ export class CatalogoRepository {
     return rows[0]?.sku ?? null;
   }
 
+  /**
+   * Guarda un producto de la importación: lo crea si el SKU no existe y lo
+   * actualiza si ya existe, así reimportar la misma hoja no duplica nada.
+   * Si su familia no existe la crea con la importación y el margen de la fila.
+   */
   async guardarPorSku(cliente, producto) {
+    const categoria = await asegurarFamilia(cliente, producto);
+
     const { rows } = await cliente.query(
       `INSERT INTO catalogo.producto
               (sku, nombre, descripcion, categoria, imagen,
@@ -163,7 +173,7 @@ export class CatalogoRepository {
         producto.sku,
         producto.nombre,
         producto.descripcion,
-        producto.categoria,
+        categoria,
         producto.imagenUrl,
         producto.costoItem,
         producto.porcentajeImportacion,
@@ -176,6 +186,26 @@ export class CatalogoRepository {
   }
 }
 
+/**
+ * Devuelve el nombre de la familia tal como está guardado. "legos" y
+ * "Legos " son la misma familia, así una hoja escrita a mano no duplica.
+ */
+async function asegurarFamilia(cliente, { categoria, porcentajeImportacion, margenGanancia }) {
+  const { rows } = await cliente.query(
+    `SELECT nombre FROM catalogo.familia WHERE lower(btrim(nombre)) = lower(btrim($1))`,
+    [categoria]
+  );
+  if (rows[0]) return rows[0].nombre;
+
+  await cliente.query(
+    `INSERT INTO catalogo.familia (nombre, importacion, margen_ganancia)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (nombre) DO NOTHING`,
+    [categoria, porcentajeImportacion ?? 0, margenGanancia ?? 0]
+  );
+  return categoria;
+}
+
 // Pasa la fila de la base a camelCase.
 // PostgreSQL devuelve NUMERIC como texto, aqui se convierten a numero.
 const aProducto = (fila) => ({
@@ -184,11 +214,17 @@ const aProducto = (fila) => ({
   descripcion: fila.descripcion,
   imagenUrl: fila.imagen,
   costoItem: Number(fila.item),
-  porcentajeImportacion: Number(fila.importacion),
-  margenGanancia: Number(fila.margen_ganancia),
+  porcentajeImportacion: numeroONulo(fila.importacion),
+  margenGanancia: numeroONulo(fila.margen_ganancia),
+  familia: {
+    porcentajeImportacion: Number(fila.importacion_familia),
+    margenGanancia: Number(fila.margen_familia),
+  },
   tasaImpuesto: Number(fila.tasa_impuesto),
   admiteContrapedido: fila.contrapedido,
   existencias: fila.stock,
   categoria: fila.categoria,
   proveedor: fila.proveedor,
 });
+
+const numeroONulo = (valor) => (valor === null ? null : Number(valor));

@@ -29,6 +29,8 @@ const fun003 = {
   costoItem: 15000,
   porcentajeImportacion: 15,
   margenGanancia: 40,
+  // la importación sale de la familia y el margen es propio
+  heredado: { porcentajeImportacion: true, margenGanancia: false },
   tasaImpuesto: 13,
   existencias: 0,
   desglosePrecio: [
@@ -210,7 +212,7 @@ test("el administrador ve el listado del panel con costo, desglose, etiquetas y 
     assert.equal(typeof producto.costoItem, "number");
     assert.equal(producto.desglosePrecio.length, 4);
   }
-  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "USD" });
+  assert.deepEqual(cuerpo.datos[0], { ...fun003, moneda: "USD", heredado: { importacion: true, margen: false } });
 });
 
 test("el listado del panel le pasa al servicio los filtros de la consulta", async (t) => {

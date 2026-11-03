@@ -12,6 +12,7 @@ import {
 } from "../../shared/errores/errores-de-dominio.js";
 import { validarProductoNuevo } from "./validar-producto-nuevo.js";
 import { validarCambiosDeProducto } from "./validar-cambios-de-producto.js";
+import { conValoresDeLaFamilia } from "./herencia-de-familia.js";
 
 /** Estados de disponibilidad que ve el visitante (RF-07). */
 export const DISPONIBILIDAD = Object.freeze({
@@ -164,7 +165,8 @@ export class CatalogoService {
     return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(actualizado));
   }
 
-  #conPrecioYDisponibilidad(producto) {
+  #conPrecioYDisponibilidad(guardado) {
+    const producto = conValoresDeLaFamilia(guardado);
     const { precioFinal, desglose } = this.#motorDePrecios.calcular(producto);
     const disponibilidad = determinarDisponibilidad(producto);
 

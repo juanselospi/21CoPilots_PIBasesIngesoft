@@ -406,3 +406,50 @@ test("una categoría con todos sus productos ocultos no aparece", async () => {
     { nombre: "Video Juegos", cantidadDeProductos: 1 },
   ]);
 });
+
+// Familia Legos: 20 % de importación y 50 % de margen.
+const legos = { porcentajeImportacion: 20, margenGanancia: 50 };
+
+test("un producto sin valores propios toma la importación y el margen de su familia", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("LEG-001", "Legos", 3), porcentajeImportacion: null, margenGanancia: null, familia: legos },
+  ]);
+
+  const [leg001] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+
+  // 100 → 120 → 180 → 203,40
+  assert.equal(leg001.precioFinal, 203.4);
+  assert.equal(leg001.porcentajeImportacion, 20);
+  assert.equal(leg001.margenGanancia, 50);
+  assert.deepEqual(leg001.heredado, { porcentajeImportacion: true, margenGanancia: true });
+});
+
+test("un margen propio sobrescribe el de la familia y la importación se sigue heredando", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("LEG-002", "Legos", 3), porcentajeImportacion: null, margenGanancia: 25, familia: legos },
+  ]);
+
+  const [leg002] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+
+  // 100 → 120 → 150 → 169,50
+  assert.equal(leg002.precioFinal, 169.5);
+  assert.deepEqual(leg002.heredado, { porcentajeImportacion: true, margenGanancia: false });
+});
+
+test("un margen negativo heredado de la familia también lleva la etiqueta", async () => {
+  const repositorio = {
+    listarParaAdministracion: async () => [
+      {
+        ...producto("LEG-003", "Legos", 3),
+        porcentajeImportacion: null,
+        margenGanancia: null,
+        familia: { porcentajeImportacion: 0, margenGanancia: -10 },
+      },
+    ],
+  };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos } = await servicio.listarParaAdministracion({ limite: 24 });
+
+  assert.ok(productos[0].etiquetas.includes("margen_negativo"));
+});
