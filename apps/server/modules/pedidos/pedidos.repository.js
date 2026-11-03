@@ -156,4 +156,12 @@ export class PedidosRepository {
       [correo, numCarrito, estado]
     );
   }
+
+  async existePedido(correo, numCarrito) {
+    const { rows } = await this.#pool.query(
+      `SELECT 1 FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2`,
+      [correo, numCarrito]
+    );
+    return rows.length > 0;
+  }
 }

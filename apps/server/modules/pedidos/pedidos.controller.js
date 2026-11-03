@@ -7,7 +7,8 @@
  *   listarParaAdministracion / cambiarEstado                    RF-26, RF-28, RF-46
  */
 
-import { aCarrito, aModalidad, aPedidoConfirmado } from "./pedidos.dto.js";
+import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import { aCarrito, aModalidad, aPago, aPedidoConfirmado } from "./pedidos.dto.js";
 
 export class PedidosController {
   #servicio;
@@ -53,4 +54,18 @@ export class PedidosController {
     const pedido = await this.#servicio.confirmar(peticion.usuario.correo, peticion.body ?? {});
     respuesta.status(201).json({ datos: aPedidoConfirmado(pedido) });
   };
+
+  // GET /:numCarrito/pagos, del cliente dueño del pedido
+  listarPagos = async (peticion, respuesta) => {
+    const pagos = await this.#servicio.listarPagos(peticion.usuario.correo, leerNumeroDeCarrito(peticion.params.numCarrito));
+    respuesta.json({ datos: pagos.map(aPago) });
+  };
+}
+
+function leerNumeroDeCarrito(valor) {
+  const numero = Number(valor);
+  if (!Number.isSafeInteger(numero) || numero < 1) {
+    throw new EntradaInvalida("El número de pedido tiene que ser un entero mayor que 0.", ["numCarrito"]);
+  }
+  return numero;
 }

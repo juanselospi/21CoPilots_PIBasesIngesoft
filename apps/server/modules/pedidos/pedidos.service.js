@@ -22,6 +22,7 @@ import {
   ReglaDeNegocioViolada,
   SinExistencias,
 } from "../../shared/errores/errores-de-dominio.js";
+import { randomUUID } from "node:crypto";
 import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { MODALIDADES, totalConEntrega, validarEntrega } from "./entrega/modalidades-de-entrega.js";
 import { validarConfirmacion } from "./confirmacion/validar-confirmacion.js";
@@ -35,6 +36,7 @@ export class PedidosService {
   #pasarelaDePago;
   #facturacionElectronica;
   #productosParaVenta;
+  #pagos;
 
   constructor({
     repositorio,
@@ -45,6 +47,7 @@ export class PedidosService {
     pasarelaDePago,
     facturacionElectronica,
     productosParaVenta,
+    pagos,
   }) {
     this.#repositorio = repositorio;
     this.#inventario = inventario;
@@ -54,6 +57,7 @@ export class PedidosService {
     this.#pasarelaDePago = pasarelaDePago;
     this.#facturacionElectronica = facturacionElectronica;
     this.#productosParaVenta = productosParaVenta;
+    this.#pagos = pagos;
   }
 
   /** Las modalidades en el orden en que se muestran, cada una con su costo. */
@@ -146,6 +150,16 @@ export class PedidosService {
       // Lanzar aquí revierte la transacción completa
       if (pago.resultado === "rechazado") throw new PagoRechazado(pago.motivo);
 
+      // Sin referencia de la pasarela (contra entrega o no disponible) se usa una local
+      const pagoGuardado = await this.#pagos.registrar(cliente, {
+        numReferencia: pago.referencia ?? `LOCAL-${randomUUID()}`,
+        monto: montos.total,
+        metodoPago,
+        estadoPago: pago.resultado === "aprobado" ? "aprobado" : "pendiente",
+        correoCliente: correo,
+        numCarrito: carrito.numCarrito,
+      });
+
       return {
         movimientos,
         pedido: {
@@ -158,7 +172,7 @@ export class PedidosService {
           metodoPago,
           lineas,
           ...montos,
-          pago: { resultado: pago.resultado === "aprobado" ? "aprobado" : "pendiente", referencia: pago.referencia },
+          pago: { resultado: pagoGuardado.estadoPago, referencia: pagoGuardado.numReferencia },
         },
       };
     });
@@ -173,6 +187,14 @@ export class PedidosService {
       valorNuevo: { total: pedido.total, metodoPago, pago: pedido.pago.resultado },
     });
     return pedido;
+  }
+
+  /** RF-40: los pagos de un pedido del cliente; 404 si el pedido no es suyo. */
+  async listarPagos(correo, numCarrito) {
+    if (!(await this.#repositorio.existePedido(correo, numCarrito))) {
+      throw new RecursoNoEncontrado("el pedido", numCarrito);
+    }
+    return this.#pagos.listarPorPedido(correo, numCarrito);
   }
 }
 
