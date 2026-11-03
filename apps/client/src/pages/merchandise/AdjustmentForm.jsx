@@ -1,46 +1,80 @@
 import { useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
+import { readStockInput } from '../../components/product-form/stockInput.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
-import { signedUnitsText, unitsText } from './merchandiseFormat.js'
+import { adjustmentModes, signedUnitsText, unitsText } from './merchandiseFormat.js'
 
-const rules = {
-    cantidad: {
-        obligatorio: true,
-        tipo: 'entero',
-        patron: '^-?[1-9]\\d*$',
-        mensajePatron: 'Use un entero distinto de 0: positivo suma y negativo resta.',
-    },
+// «Dejar en» acepta 0 (se acabó todo); sumar y restar piden al menos una unidad
+const rulesFor = (mode) => ({
+    cantidad: mode === 'fijar'
+        ? { obligatorio: true, tipo: 'entero', minimo: 0 }
+        : { obligatorio: true, tipo: 'entero', minimo: 1, mensajeMinimo: 'La cantidad tiene que ser mayor que 0.' },
     motivo: { obligatorio: true },
+})
+
+// Cantidad entera de 0 o más, o null mientras no lo sea
+const wholeNumber = (text) => (/^\d+$/.test(text) ? Number(text) : null)
+
+// Lo que no se puede mandar aunque los campos estén bien
+const problemWith = (mode, quantity, stock) => {
+    if (mode === 'restar' && quantity > stock) return `Solo hay ${unitsText(stock)}; no se pueden restar ${quantity}.`
+    if (mode === 'fijar' && quantity === stock) return `Ya tiene ${unitsText(stock)}; no hay nada que ajustar.`
+    return null
 }
 
-// Solo dígitos, con un signo negativo opcional al inicio
-const readSignedInput = (input) => (/^-?\d*$/.test(input) ? input : null)
-
-// Ajuste de existencias (RF-20): suma o resta unidades y siempre lleva motivo.
+// Ajuste de existencias (RF-20): sumar, restar o dejar una cantidad exacta, siempre con motivo.
 // No llama a la API: usa onRegister(values), que devuelve { movement } o { error, fields }.
-function AdjustmentForm({ onRegister }) {
+// onPreview(existencias) le dice a la página cuántas quedarían, o null si todavía no se sabe.
+function AdjustmentForm({ product, onRegister, onPreview }) {
+    const [mode, setMode] = useState('restar')
     const {
         valores: values, errores: errors, formularioRef, cambiarCampo, validar,
         erroresServidor, reiniciar, atributosCampo, idError,
-    } = useFormulario({ cantidad: '', motivo: '' }, rules)
+    } = useFormulario({ cantidad: '', motivo: '' }, rulesFor(mode))
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const [registered, setRegistered] = useState(null)
+    const { quantityLabel, reasonPlaceholder, toChange } = adjustmentModes[mode]
+
+    const preview = (nextMode, text) => {
+        const quantity = wholeNumber(text)
+        onPreview(quantity === null ? null : product.stock + adjustmentModes[nextMode].toChange(quantity, product.stock))
+    }
 
     const setField = (key, value) => {
         if (value === null) return
         cambiarCampo(key, value)
         setSaveError(null)
         setRegistered(null)
+        if (key === 'cantidad') preview(mode, value)
+    }
+
+    const changeMode = (nextMode) => {
+        setMode(nextMode)
+        setSaveError(null)
+        setRegistered(null)
+        // Limpia el error de la cantidad del modo anterior
+        cambiarCampo('cantidad', values.cantidad)
+        preview(nextMode, values.cantidad)
     }
 
     const handleSubmit = async (event) => {
         event.preventDefault()
         if (saving || !validar()) return
 
+        const quantity = Number(values.cantidad)
+        const problem = problemWith(mode, quantity, product.stock)
+        if (problem) {
+            setSaveError(problem)
+            erroresServidor(['cantidad'])
+            return
+        }
+
         setSaving(true)
         setSaveError(null)
-        const result = await onRegister({ cantidad: values.cantidad, motivo: values.motivo.trim() })
+        // «Dejar en» se manda como la diferencia con las existencias que se ven en pantalla;
+        // si alguien vendió mientras tanto, el servidor igual impide quedar en negativo
+        const result = await onRegister({ cantidad: toChange(quantity, product.stock), motivo: values.motivo.trim() })
         setSaving(false)
 
         if (result.error) {
@@ -49,6 +83,7 @@ function AdjustmentForm({ onRegister }) {
         } else {
             setRegistered(result.movement)
             reiniciar({ cantidad: '', motivo: '' })
+            onPreview(null)
         }
     }
 
@@ -56,20 +91,36 @@ function AdjustmentForm({ onRegister }) {
 
     return (
         <form ref={formularioRef} noValidate className='merchandise-card' aria-label='Ajuste de existencias' onSubmit={handleSubmit}>
-            <p className='merchandise-help'>Corrige las existencias (conteo, daño, pérdida). Positivo suma y negativo resta.</p>
+            <p className='merchandise-help'>Corrige las existencias sin una compra: un conteo, un daño o una pérdida. Siempre lleva motivo.</p>
+
+            <fieldset className='merchandise-modes'>
+                <legend>Tipo de ajuste</legend>
+                {Object.entries(adjustmentModes).map(([key, { label }]) => (
+                    <label key={key} className='product-form-check'>
+                        <input
+                            type='radio'
+                            name='modo-de-ajuste'
+                            disabled={saving}
+                            checked={mode === key}
+                            onChange={() => changeMode(key)}
+                        />
+                        <span>{label}</span>
+                    </label>
+                ))}
+            </fieldset>
 
             <div className='merchandise-fields'>
                 <label className='product-form-field'>
-                    <span>Cantidad</span>
+                    <span>{quantityLabel}</span>
                     <div className='product-form-input'>
                         <input
                             type='text'
                             inputMode='numeric'
                             disabled={saving}
-                            placeholder='Ej. -2'
+                            placeholder={mode === 'fijar' ? `Hoy: ${product.stock}` : 'Ej. 2'}
                             {...atributosCampo('cantidad')}
                             value={values.cantidad}
-                            onChange={(event) => setField('cantidad', readSignedInput(event.target.value))}
+                            onChange={(event) => setField('cantidad', readStockInput(event.target.value))}
                         />
                         <span>unidades</span>
                     </div>
@@ -82,7 +133,7 @@ function AdjustmentForm({ onRegister }) {
                         <input
                             type='text'
                             disabled={saving}
-                            placeholder='Ej. Unidad dañada en bodega'
+                            placeholder={reasonPlaceholder}
                             maxLength={500}
                             {...atributosCampo('motivo')}
                             value={values.motivo}
@@ -96,11 +147,11 @@ function AdjustmentForm({ onRegister }) {
             {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
             {registered && (
                 <p className='product-form-success' role='status'>
-                    Ajuste de {signedUnitsText(registered.cantidad)} registrado. Quedan {unitsText(registered.existencias)}.
+                    Ajuste registrado: {signedUnitsText(registered.cantidad)}. Quedan {unitsText(registered.existencias)}.
                 </p>
             )}
 
-            <button type='submit' className='products-button' disabled={saving}>
+            <button type='submit' className='products-button products-button-primary' disabled={saving}>
                 <SlidersHorizontal size={18} />{saving ? 'Registrando…' : 'Registrar ajuste'}
             </button>
         </form>

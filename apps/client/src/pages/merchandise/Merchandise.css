@@ -1,7 +1,7 @@
 /* Estilos propios de la pantalla «Ingreso de mercancía» (Merchandise.jsx).
    El resto viene de Products.css, ProductTable.css y ProductForm.css. */
 
-/* Tarjeta blanca: producto elegido, ingreso y ajuste */
+/* Tarjeta blanca: producto elegido, formulario y resumen */
 .merchandise-card {
   display: flex;
   flex-direction: column;
@@ -29,7 +29,7 @@
   color: var(--color-texto-suave);
 }
 
-/* Producto elegido: datos, existencias y «Cambiar producto» en una fila */
+/* Producto elegido: código, familia y nombre a la izquierda; «Cambiar producto» a la derecha */
 .merchandise-selected {
   display: flex;
   align-items: center;
@@ -40,17 +40,14 @@
   flex: 1;
 }
 
-.merchandise-stock {
+/* Buscador y botón «Filtros» en una fila */
+.merchandise-search-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  color: var(--color-texto-suave);
-  font-size: var(--texto-pequeno);
+  gap: 12px;
 }
 
-.merchandise-stock strong {
-  color: var(--color-titulo);
-  font-size: var(--texto-subtitulo);
+.merchandise-search-row .product-form-input {
+  flex: 1;
 }
 
 /* Lupa dentro de la caja del buscador */
@@ -98,12 +95,35 @@
   font-weight: 600;
 }
 
-/* Selector «Ingreso | Ajuste» y debajo solo el formulario elegido; no hace falta todo el ancho */
+/* Familia debajo del nombre, en gris */
+.merchandise-result-family {
+  display: block;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+/* Selector arriba; debajo, formulario y resumen */
 .merchandise-operation {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 720px;
+}
+
+/* Mitad y mitad, empezando a la misma altura y con la misma altura */
+.merchandise-operation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* La tarjeta del formulario llena su mitad, igual que el resumen */
+.merchandise-operation-grid > [role='tabpanel'] {
+  display: flex;
+}
+
+.merchandise-operation-grid > [role='tabpanel'] > form {
+  flex: 1;
 }
 
 /* Mismo selector que «Cuadrícula | Tabla» de Productos, pero a la izquierda */
@@ -118,14 +138,124 @@
   gap: 12px;
 }
 
+/* Costo total de la compra, calculado mientras se escribe */
+.merchandise-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px;
+  border-radius: var(--radio-control);
+  background: var(--color-fondo);
+  font-size: var(--texto-pequeno);
+}
+
+.merchandise-total strong {
+  color: var(--color-titulo);
+  font-size: var(--texto-subtitulo);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sumar / Restar / Dejar en, en una fila */
+.merchandise-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.merchandise-modes legend {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 0;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
 .merchandise-card .products-button {
   align-self: flex-start;
 }
 
+.products-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Resumen: existencias actuales y las que quedarían */
+.merchandise-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-borde);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.merchandise-summary-row strong {
+  color: var(--color-titulo);
+  font-size: var(--texto-seccion);
+  font-variant-numeric: tabular-nums;
+}
+
+.merchandise-summary-row .merchandise-up {
+  color: var(--estado-ok-texto);
+}
+
+.merchandise-summary-row .merchandise-down {
+  color: var(--estado-aviso-texto);
+}
+
+.merchandise-summary-row .merchandise-negative {
+  color: var(--estado-error-texto);
+}
+
+.merchandise-summary-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.merchandise-summary-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Historial: título y filtro por tipo en una fila; paginación debajo */
 .merchandise-history {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.merchandise-history-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.merchandise-history-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+/* La paginación viene de Products.css; aquí no lleva la línea de arriba porque va pegada a la tabla */
+.merchandise-pagination {
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Total a la derecha, como «24 por página» en Productos */
+.merchandise-pagination .pagination-summary {
+  margin-left: auto;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
 }
 
 /* Sin producto elegido, cada movimiento elige su producto */
@@ -159,6 +289,10 @@
 }
 
 @media (max-width: 860px) {
+  .merchandise-operation-grid {
+    grid-template-columns: 1fr;
+  }
+
   .merchandise-selected {
     flex-wrap: wrap;
   }
