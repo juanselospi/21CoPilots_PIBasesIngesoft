@@ -14,3 +14,9 @@ SELECT pg_temp.debe_fallar('La columna única no puede ser false',
 
 SELECT pg_temp.debe_fallar('La cédula jurídica no puede quedar vacía',
     $$UPDATE facturacion.emisor SET cedula_juridica = ' '$$, '23514');
+
+SELECT pg_temp.debe_fallar('La razón social no puede quedar vacía',
+    $$UPDATE facturacion.emisor SET razon_social = ' '$$, '23514');
+
+SELECT pg_temp.debe_fallar('La dirección fiscal no puede quedar vacía',
+    $$UPDATE facturacion.emisor SET direccion = ''$$, '23514');

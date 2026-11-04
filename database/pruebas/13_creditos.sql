@@ -73,3 +73,11 @@ SELECT pg_temp.debe_funcionar('Al editar un pago con crédito no se cuenta su mo
 SELECT pg_temp.debe_cumplirse('El crédito quedó usado por completo',
     (SELECT saldo = 0 FROM reportes.v_saldo_credito
      WHERE correo_cliente = pg_temp.cliente_prueba()));
+
+SELECT pg_temp.debe_funcionar('Cambiar el correo del cliente se propaga a sus créditos',
+    $$UPDATE usuarios.usuario SET correo = 'cliente.credito@prueba.test'
+      WHERE correo = pg_temp.cliente_prueba()$$);
+
+SELECT pg_temp.debe_cumplirse('Los créditos y su pedido de origen quedaron con el correo nuevo',
+    (SELECT count(*) = 2 FROM clientes.credito
+     WHERE correo_cliente = 'cliente.credito@prueba.test'));

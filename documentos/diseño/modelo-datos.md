@@ -337,7 +337,12 @@ cruzan varias tablas y que por eso garantiza el servicio y no un `CHECK`:
 - todo pedido viene de un carrito convertido;
 - todo pedido tiene al menos un producto;
 - el historial de cada pedido empieza en `colocado` (RF-26);
-- solo se factura un pago aprobado (RF-41).
+- solo se factura un pago aprobado (RF-41);
+- un pedido en línea no tiene creador y uno manual sí (C-18);
+- todo pedido en línea es de un cliente que aceptó los términos antes de comprar (RF-38);
+- un pedido cancelado no vuelve a cambiar de estado (RN-15);
+- si hay administradores, exactamente uno es el propietario (C-21);
+- un crédito que viene de un pedido es de un pedido con un pago aprobado (C-22).
 
 Un pago con crédito que pasa del saldo a favor sí lo rechaza la base de datos, con el
 trigger `tg_pago_saldo_credito` (C-22).

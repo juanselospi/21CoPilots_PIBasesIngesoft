@@ -85,7 +85,7 @@ cp .env.example .env       # en Windows PowerShell: copy .env.example .env
 npm install                # instala las herramientas de BD (pg, dotenv)
 npm run db:up              # descarga y levanta PostgreSQL 17 en Docker (puerto 5433)
 npm run db:reset           # crea todos los esquemas y tablas y carga las semillas
-npm run db:test            # debe terminar con "✔ N prueba(s) aprobada(s)"
+npm run db:test            # debe terminar con "✔ 197 prueba(s) aprobada(s)" (§ 5.6)
 ```
 
 Desde la raíz del repositorio también funciona con `--prefix`, por ejemplo
@@ -300,6 +300,31 @@ SELECT pg_temp.debe_funcionar('El margen negativo se acepta (RN-02)',
 
 Códigos de error más usados: `23505` unicidad, `23514` `CHECK`, `23503` llave
 foránea, `23001` registro de solo inserción.
+
+Hay una prueba por restricción. Los invariantes de `06_invariantes.sql` son las reglas
+que cruzan varias tablas y que garantiza el servicio, no un `CHECK`; con las semillas
+cargadas, comprueban además que los datos de prueba son coherentes.
+
+| Archivo | Qué prueba | Migraciones | Pruebas |
+|---|---|---|---|
+| `01_catalogo.sql` | Producto | 005 | 12 |
+| `02_inventario.sql` | Registro de mercancía: tipo, costo y motivo | 006, 013 | 19 |
+| `03_usuarios_clientes.sql` | Usuarios, administradores y clientes | 002–004, 010 | 16 |
+| `04_pedidos.sql` | Carritos, ofertas, pedidos e historial | 007, 010 | 28 |
+| `05_pagos_facturacion.sql` | Pagos y facturas | 008 | 10 |
+| `06_invariantes.sql` | Reglas entre tablas | — | 11 |
+| `07_sesion.sql` | Sesiones | 002 | 8 |
+| `08_familias.sql` | Familias y herencia de importación y margen | 011 | 17 |
+| `09_estado_producto.sql` | Estado del producto y eliminación | 012 | 9 |
+| `10_pedidos_y_terminos.sql` | En disputa, canal, creador y términos | 014 | 10 |
+| `11_bitacora.sql` | Bitácora | 015 | 11 |
+| `12_empleados.sql` | Varios administradores y un propietario | 016 | 14 |
+| `13_creditos.sql` | Créditos a favor y su uso en el pago | 017 | 20 |
+| `14_tarifas.sql` | Tarifas de envío | 018 | 5 |
+| `15_emisor.sql` | Emisor de las facturas | 019 | 7 |
+| **Total** | | | **197** |
+
+Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
 
 ---
 
