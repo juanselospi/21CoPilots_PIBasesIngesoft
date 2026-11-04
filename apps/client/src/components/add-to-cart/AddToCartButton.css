@@ -1,0 +1,36 @@
+/* Boton de agregar al carrito con sus mensajes, el estilo del boton lo pone quien lo usa */
+
+/* Sin gap porque el contenedor de los mensajes siempre esta, aunque este vacio */
+.add-to-cart {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.add-to-cart button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.add-to-cart-message {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: var(--radio-control);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+.add-to-cart-ok {
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+}
+
+.add-to-cart-backorder {
+  background: var(--estado-aviso-fondo);
+  color: var(--estado-aviso-texto);
+}
+
+.add-to-cart-error {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}

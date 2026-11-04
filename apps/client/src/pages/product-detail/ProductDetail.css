@@ -76,6 +76,81 @@
   font-size: var(--texto-pequeno);
 }
 
+/* Cantidad y boton de agregar, el boton usa el acento igual que en la tarjeta */
+.product-detail-buy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 360px);
+}
+
+.product-detail-quantity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--color-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+.product-detail-stepper {
+  display: flex;
+  overflow: hidden;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.product-detail-stepper button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  border: none;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+
+.product-detail-stepper button:hover:not(:disabled) {
+  color: var(--color-enlace);
+}
+
+.product-detail-stepper button:disabled {
+  color: var(--color-texto-suave);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.product-detail-stepper input {
+  width: 56px;
+  padding: 10px 4px;
+  border: none;
+  border-inline: 1.5px solid var(--color-borde);
+  font: inherit;
+  font-size: var(--texto-general);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.product-detail-stepper input:focus {
+  outline: 2px solid var(--color-enlace);
+  outline-offset: -2px;
+}
+
+.product-detail-add {
+  padding: 12px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: var(--color-acento);
+  color: var(--color-sobre-acento);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.product-detail-add:hover:not(:disabled) {
+  background: var(--color-acento-hover);
+}
+
 .product-detail-description {
   margin: 0;
   color: var(--color-texto);

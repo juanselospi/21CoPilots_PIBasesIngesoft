@@ -9,7 +9,8 @@ const ADMIN_ROLE = 'administrador'
 
 // `user` es el usuario de la sesion o null. Mientras que con `loadingSession` no se muestra ni el usuario ni el enlace de iniciar sesion para que no cambie de golpe.
 // `onLogOut` es lo que se llama al confirmar "Cerrar sesión" en el menu de la cuenta
-function Header({ categories, user, loadingSession, onLogOut }) {
+// `cartCount` son las unidades del carrito, el visitante y el administrador siempre ven 0
+function Header({ categories, user, loadingSession, onLogOut, cartCount }) {
     return (
         <header className='header'>
             <div className='header-top'>
@@ -28,11 +29,11 @@ function Header({ categories, user, loadingSession, onLogOut }) {
                 ) : (
                     <Link to='/acceso' className='header-link'><UserRound size={20} />Iniciar sesión</Link>
                 ))}
-                <a href='#' className='header-cart' aria-label='Carrito, 0 productos'>
+                <Link to='/carrito' className='header-cart' aria-label={`Carrito, ${cartCount} ${cartCount === 1 ? 'producto' : 'productos'}`}>
                     <ShoppingCart size={20} />
                     Carrito
-                    <span className='header-cart-count'>0</span>
-                </a>
+                    <span className='header-cart-count'>{cartCount}</span>
+                </Link>
             </div>
 
             <nav className='header-categories'>
