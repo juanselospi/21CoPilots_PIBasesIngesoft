@@ -16,10 +16,6 @@ const ADMINISTRADOR = { correo: 'admin@dchobbies.test', contrasena: 'Admin123!' 
 const EXISTENCIAS_INICIALES = 1;
 // Sacar el stock de los productos de prueba es un ajuste, y la BD exige su motivo (013)
 const MOTIVO_OCULTAR_PRUEBA = 'Se ocultan los productos de prueba al cargar el catálogo del cliente';
-// Familias de la columna «familia» del Excel. producto.categoria es llave foránea a
-// familia (011) y la importación todavía no las crea (SCRUM-107), así que van antes.
-// Empiezan en 0 %: cada fila del Excel trae su propia importación y margen.
-const FAMILIAS_DEL_CLIENTE = ['Video Juegos', 'Legos', 'Trading Cards'];
 
 (async () => {
   if (!isLocalHost()) {
@@ -47,12 +43,14 @@ const FAMILIAS_DEL_CLIENTE = ['Video Juegos', 'Legos', 'Trading Cards'];
     const deprueba = await ocultarProductosDePrueba(client);
     console.log(`✔ ${deprueba.length} producto(s) de prueba ocultos (siguen en la base).`);
 
-    const familiasNuevas = await crearFamiliasDelCliente(client);
-    console.log(`✔ ${familiasNuevas} familia(s) del cliente creadas.`);
+    // La importación crea las familias de la columna «familia» que no existan,
+    // con la importación y el margen de su primera fila (SCRUM-107)
+    const familiasAntes = await contarFamilias(client);
 
     console.log(`→ Importando ${path.basename(archivo)} por ${SERVIDOR_URL} ...`);
     const resumen = await importarPorElServidor(archivo);
     console.log(`✔ Filas leídas: ${resumen.leidas}, importadas: ${resumen.importadas}, rechazadas: ${resumen.rechazadas.length}.`);
+    console.log(`✔ ${(await contarFamilias(client)) - familiasAntes} familia(s) nueva(s) creada(s) desde la hoja.`);
     for (const { fila, codigoSku, motivos } of resumen.rechazadas) {
       console.log(`  · Fila ${fila} (${codigoSku ?? 'sin código'}): ${motivos.join('; ')}`);
     }
@@ -130,15 +128,9 @@ async function ocultarProductosDePrueba(client) {
   }
 }
 
-// Devuelve cuántas se crearon; las que ya existen se dejan como están
-async function crearFamiliasDelCliente(client) {
-  const { rowCount } = await client.query(
-    `INSERT INTO catalogo.familia (nombre)
-     SELECT unnest($1::text[])
-     ON CONFLICT (nombre) DO NOTHING`,
-    [FAMILIAS_DEL_CLIENTE]
-  );
-  return rowCount;
+async function contarFamilias(client) {
+  const { rows } = await client.query('SELECT count(*)::int AS total FROM catalogo.familia');
+  return rows[0].total;
 }
 
 // Inicia sesión como administrador y sube el Excel, igual que "Cargar Excel"

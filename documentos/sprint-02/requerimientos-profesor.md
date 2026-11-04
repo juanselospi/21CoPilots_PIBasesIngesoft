@@ -76,4 +76,4 @@
 - [ ] Reposición automática de inventario al cancelar/eliminar ítems
 - [ ] Tabla de créditos a favor y uso (total o parcial) en el pago
 - [ ] Margen y costo de importación por familia, con sobrescritura por producto
-- [ ] 2 familias nuevas × 5 productos en datos de prueba
+- [x] 2 familias nuevas × 5 productos en datos de prueba

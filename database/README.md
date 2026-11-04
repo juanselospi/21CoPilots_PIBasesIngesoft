@@ -106,16 +106,34 @@ dchobbies=# \q
 
 **Casos de prueba preparados en las semillas:**
 
+Montos en dólares. Hay 6 familias y 21 productos: «Funko Pop» y «Discos de vinilo»
+son las dos familias nuevas que pidió el profesor, con 5 productos cada una.
+
 | SKU | Caso | Requerimiento |
 |---|---|---|
-| `MTG-002` | Sin stock, admite contrapedido: debe verse | RF-07, RN-03 |
+| `MTG-002`, `VIN-005` | Sin stock, admite contrapedido: debe verse | RF-07, RN-03 |
 | `FUN-003` | Sin stock ni contrapedido: no debe verse | RF-08, RN-03 |
 | `LIQ-001` | Margen negativo (liquidación) | RN-02, RF-43 |
-| `FUN-001`, `ANI-001` | En 2 unidades: disparan la alerta | RF-16, RN-04 |
+| `FUN-001`, `ANI-001`, `VIN-003` | En 2 unidades: disparan la alerta | RF-16, RN-04 |
 | `PKM-001` | Dos ingresos a costos distintos | RN-06, RF-14 |
+| La mayoría | Sin importación ni margen propios: heredan los de su familia | C-15 |
+| `MTG-001`, `JUG-002`, `FUN-003`, `VIN-004` | Margen propio, que sobrescribe el de la familia | C-15 |
+| `ANI-001` | Importación propia, que sobrescribe la de la familia | C-15 |
 
-Hay además un pedido en línea finalizado, pagado y facturado, y una venta presencial,
-para ver los reportes con datos.
+**Pedidos de ejemplo**, con sus pagos, facturas y movimientos de inventario:
+
+| Cliente | Carrito | Canal | Estado actual | Pago |
+|---|---|---|---|---|
+| `cliente@correo.test` | 1 | web | finalizado | tarjeta: un intento rechazado y uno aprobado |
+| `presencial@correo.test` | 1 | presencial | finalizado | efectivo |
+| `cliente@correo.test` | 2 | web | cancelado | tarjeta; se le otorgó un crédito a favor por lo pagado y el inventario se repuso |
+| `cliente@correo.test` | 3 | web | en disputa | tarjeta |
+| `presencial@correo.test` | 2 | WhatsApp (lo registró el empleado, a nombre de otra persona) | en tránsito | SINPE Móvil |
+| `cliente@correo.test` | 4 | web | colocado | contra entrega, pendiente |
+
+`cliente@correo.test` tiene además un carrito activo y $94,35 de crédito a favor. Las
+tarifas de envío de prueba son $3,50 (mensajero), $5 (Uber Flash), $4 (Correos de
+Costa Rica) y $0 (entrega personal); la semilla solo llena las que siguen en 0.
 
 **Conectarse con DBeaver / VS Code:** host `localhost`, puerto `5433`, BD `dchobbies`,
 usuario `dchobbies`, clave `dchobbies_dev`. O levante Adminer con
@@ -333,7 +351,7 @@ Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
 | Necesidad | Solución |
 |---|---|
 | Todos necesitan los mismos productos de prueba | Agréguelos a `database/semillas/demo/` vía PR. |
-| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57) y le da 1 unidad de existencia a cada producto importado. |
+| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57), que crea las familias de la hoja que no existan, y le da 1 unidad de existencia a cada producto importado. |
 | Demo del sprint | En la laptop de quien presenta: `npm run db:reset`, para partir de un estado conocido. |
 | Ambiente compartido de staging (opcional, sprints futuros) | Un PostgreSQL alojado al que **solo** se le aplican cambios con `npm run db:migrate` y `npm run db:seed -- --solo-referencia`, usando otro `.env`. Nunca se desarrolla contra él. |
 
