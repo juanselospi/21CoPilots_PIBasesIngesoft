@@ -1,12 +1,17 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
-import { ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp, Eye, EyeOff, Package } from 'lucide-react'
 import './MyAccount.css'
+import ContactSection from './ContactSection.jsx'
 import PasswordRules from '../../components/password-rules/PasswordRules.jsx'
+import { obtenerMiCuenta } from '../../api/clientes.js'
 import { cambiarContrasena } from '../../api/sesion.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
+import { useRecursoRemoto } from '../../hooks/useRecursoRemoto.js'
 import { useSesion } from '../../hooks/useSesion.js'
 import { reglasContrasena } from '../../utils/politicaContrasena.js'
+
+const CLIENT_ROLE = 'cliente'
 
 const passwordFields = {
     contrasenaActual: { obligatorio: true },
@@ -20,7 +25,7 @@ const passwordFields = {
 const emptyPasswords = { contrasenaActual: '', contrasenaNueva: '', confirmarContrasena: '' }
 
 // Pagina de Mi cuenta con los datos de la cuenta y el cambio de contraseña.
-// Los datos de contacto del cliente quedan para otra tarea
+// El administrador tambien entra aqui, pero los datos de contacto y Mis pedidos son solo del cliente
 function MyAccount() {
     const { usuario } = useSesion()
 
@@ -28,21 +33,72 @@ function MyAccount() {
         <main className='my-account'>
             <h1>Mi cuenta</h1>
 
-            <section className='my-account-card' aria-label='Datos de la cuenta'>
-                <dl className='my-account-data'>
-                    <div>
-                        <dt>Nombre</dt>
-                        <dd>{usuario.nombre}</dd>
-                    </div>
-                    <div>
-                        <dt>Correo electrónico</dt>
-                        <dd>{usuario.correo}</dd>
-                    </div>
-                </dl>
-            </section>
+            {usuario.rol === CLIENT_ROLE
+                ? <ClientData email={usuario.correo} />
+                : <AccountData rows={[['Nombre', usuario.nombre], ['Correo electrónico', usuario.correo]]} />}
 
             <PasswordSection email={usuario.correo} />
         </main>
+    )
+}
+
+// Datos del cliente que vienen del servidor: los de solo lectura, los de contacto y el enlace a sus pedidos
+function ClientData({ email }) {
+    const cuenta = useRecursoRemoto((signal) => obtenerMiCuenta({ signal }), [email])
+    // Despues de guardar se usa lo que devolvio el servidor, asi no hay que volver a pedir la cuenta
+    const [updated, setUpdated] = useState(null)
+    const account = updated ?? cuenta.datos
+
+    if (cuenta.cargando) {
+        return <p className='my-account-card my-account-status' role='status'>Cargando tus datos…</p>
+    }
+
+    if (cuenta.error) {
+        return (
+            <div className='my-account-card my-account-status my-account-status-error' role='alert'>
+                <p>{cuenta.error}</p>
+                <button type='button' className='my-account-save' onClick={cuenta.recargar}>
+                    Reintentar
+                </button>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            <AccountData rows={[
+                ['Nombre', account.nombre],
+                ['Correo electrónico', account.correo],
+                ['Cédula', account.cedula],
+            ]} />
+
+            <ContactSection account={account} onSaved={setUpdated} />
+
+            <Link to='/mis-pedidos' className='my-account-card my-account-orders'>
+                <Package size={22} aria-hidden='true' />
+                <span>
+                    <strong>Mis pedidos</strong>
+                    <span>Revisa el estado de tus compras</span>
+                </span>
+                <ChevronRight size={20} aria-hidden='true' />
+            </Link>
+        </>
+    )
+}
+
+// Datos que solo se ven, `rows` es una lista de [etiqueta, valor]
+function AccountData({ rows }) {
+    return (
+        <section className='my-account-card' aria-label='Datos de la cuenta'>
+            <dl className='my-account-data'>
+                {rows.map(([label, value]) => (
+                    <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                    </div>
+                ))}
+            </dl>
+        </section>
     )
 }
 
