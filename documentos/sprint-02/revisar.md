@@ -91,3 +91,58 @@ Guardar las capturas en `evidencias/mi-cuenta/`.
 ### Fecha límite
 
 Antes del congelamiento de funcionalidades del jueves 5 de noviembre.
+
+## «Agregar al carrito» y contador: prueba manual y capturas
+
+El botón de la tarjeta y de la ficha, y los contadores del header y de `/acceso`
+(SCRUM-129) ya están hechos. Lint, build y pruebas unitarias pasan, pero falta
+probarlos en el navegador con la base de datos y el servidor levantados, y guardar
+la evidencia.
+
+| Tarea | Estado al 3/11 |
+|---|---|
+| SCRUM-129: «Agregar al carrito» en la tarjeta y la ficha; contador del carrito | Código listo, falta la prueba manual y las capturas |
+
+### Cómo se verifica
+
+Como visitante (sin sesión):
+
+1. Darle «Agregar al carrito» en una tarjeta del inicio o del catálogo: lleva a
+   `/acceso?volver=` con la página donde estaba.
+2. Iniciar sesión como cliente: regresa a esa misma página. El producto no se
+   agrega solo, hay que volver a darle al botón.
+
+Como cliente:
+
+3. Agregar desde una tarjeta: sale «Agregado al carrito», se quita solo y el
+   contador del header sube en 1.
+4. En la ficha, subir la cantidad con «+» (o escribirla) y agregar: el contador
+   sube esa cantidad y el selector vuelve a 1.
+5. Agregar el mismo producto otra vez: el contador suma las unidades (cuenta
+   unidades, no productos distintos).
+6. Con un producto que no admite contrapedido, pedir más de lo que hay: sale el
+   mensaje del servidor «El máximo disponible es N.» y el contador no cambia.
+7. Con un producto por contrapedido, pedir más de lo que hay: se agrega y sale el
+   aviso de cuántas unidades van por contrapedido.
+8. Entrar a `/acceso` con la sesión abierta: «Carrito (N)» muestra la misma
+   cantidad que el header.
+9. Cerrar el navegador, volver a abrirlo y entrar a la tienda: el contador sigue
+   igual. Cerrar sesión (queda en 0), volver a iniciar sesión y confirmar que
+   el carrito sigue ahí.
+
+Como administrador:
+
+10. En la tienda el botón «Agregar al carrito» se ve pero no hace nada, y el
+    contador queda en 0. El carrito del administrador queda para un sprint
+    posterior (ver `cambios-siguiente-sprint.md`).
+
+Guardar las capturas en `evidencias/carrito/`.
+
+### Pendiente que depende de otras tareas
+
+- El enlace «Carrito» del header y de `/acceso` lleva a `/carrito`, que todavía
+  no existe (página en blanco). Se completa con SCRUM-130.
+
+### Fecha límite
+
+Antes del congelamiento de funcionalidades del jueves 5 de noviembre.

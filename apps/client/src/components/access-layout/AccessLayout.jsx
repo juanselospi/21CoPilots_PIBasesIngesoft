@@ -2,16 +2,19 @@ import { Link, Outlet } from 'react-router'
 import { ChevronLeft, ShoppingCart } from 'lucide-react'
 import './AccessLayout.css'
 import Logo from '../logo/Logo.jsx'
+import { useCarrito } from '../../hooks/useCarrito.js'
 
 // Estructura de las pantallas de acceso: iniciar sesion, pedir el enlace y restablecer la contraseña.
 // Todas van en la misma tarjeta, cada pagina pone lo de adentro
 function AccessLayout() {
+    const { cantidad } = useCarrito()
+
     return (
         <div className='access'>
             <header className='access-topbar'>
                 <Link to='/' className='access-logo'><Logo /></Link>
                 <Link to='/' className='access-back'><ChevronLeft size={20} />Volver a la tienda</Link>
-                <a href='#' className='access-cart'><ShoppingCart size={20} />Carrito (0)</a>
+                <Link to='/carrito' className='access-cart'><ShoppingCart size={20} />Carrito ({cantidad})</Link>
             </header>
 
             <main className='access-main'>
