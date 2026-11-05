@@ -6,7 +6,6 @@
  * estado vigente se lee de `reportes.v_estado_pedido`, no de una columna.
  *
  * POR IMPLEMENTAR
- *   cambiarEstado()                     RF-26, RF-27 — inserta en historial_estado
  *   listarPorCliente()                  RF-29, RF-37
  */
 
@@ -150,6 +149,18 @@ export class PedidosRepository {
     return rows[0].fecha_pedido_realizado;
   }
 
+  /**
+   * Bloquea el pedido para que dos cambios a la vez no lean el mismo estado.
+   * @returns false si el pedido no existe
+   */
+  async bloquearPedido(cliente, correo, numCarrito) {
+    const { rows } = await cliente.query(
+      `SELECT 1 FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2 FOR UPDATE`,
+      [correo, numCarrito]
+    );
+    return rows.length > 0;
+  }
+
   async registrarEstado(cliente, correo, numCarrito, estado) {
     await cliente.query(
       `INSERT INTO pedidos.historial_estado (correo_cliente, num_carrito, estado) VALUES ($1, $2, $3)`,
@@ -271,8 +282,8 @@ export class PedidosRepository {
   }
 
   /** Cada estado por el que pasó el pedido, del primero al vigente. */
-  async historialDeEstados(correo, numCarrito) {
-    const { rows } = await this.#pool.query(
+  async historialDeEstados(correo, numCarrito, cliente = this.#pool) {
+    const { rows } = await cliente.query(
       `SELECT estado, fecha FROM pedidos.historial_estado
         WHERE correo_cliente = $1 AND num_carrito = $2
         ORDER BY fecha`,

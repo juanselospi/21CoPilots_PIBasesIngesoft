@@ -110,6 +110,15 @@ export class InventarioService {
     return this.#repositorio.registrarMovimiento(cliente, movimiento);
   }
 
+  /**
+   * Para pedidos, dentro de su propia transacción: cuántas unidades siguen
+   * fuera por cada SKU con ese motivo. Así una cancelación devuelve lo que
+   * se descontó y no lo que quedó en contrapedido.
+   */
+  async unidadesQueSalieronEnTransaccion(cliente, motivo) {
+    return this.#repositorio.unidadesQueSalieron(cliente, motivo);
+  }
+
   /** Avisa de movimientos ya confirmados por otra transacción, para la alerta y la bitácora. */
   async publicarMovimientos(movimientos, { responsable = null } = {}) {
     for (const movimiento of movimientos) {

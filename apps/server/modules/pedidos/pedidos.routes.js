@@ -12,7 +12,7 @@
  *   GET    /:numCarrito                     RF-27  estado del pedido propio
  *   GET    /admin                           RF-46  pedidos para el administrador, con filtros
  *   GET    /admin/:correo/:numCarrito       RF-46  detalle para el administrador
- *   POST   /admin/:correo/:numCarrito/estado  RF-26, RF-28
+ *   POST   /admin/:correo/:numCarrito/estado  RF-26, RF-28  también cancela
  *
  * El cliente no cancela sus pedidos: eso lo hace solo el administrador.
  */
@@ -44,6 +44,7 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   rutas.use("/admin", exigirSesion, exigirRol(ROLES.ADMINISTRADOR));
   rutas.get("/admin", asincrono(controlador.listarParaAdministracion));
   rutas.get("/admin/:correo/:numCarrito", asincrono(controlador.verParaAdministracion));
+  rutas.post("/admin/:correo/:numCarrito/estado", asincrono(controlador.cambiarEstado));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
 
