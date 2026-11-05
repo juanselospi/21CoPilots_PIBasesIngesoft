@@ -33,6 +33,7 @@ function StockFields({ stock, backorder, error, inputProps, errorId, disabled, o
             <label className='product-form-check'>
                 <input
                     type='checkbox'
+                    className='casilla'
                     disabled={disabled}
                     checked={backorder}
                     onChange={(event) => onChange('backorder', event.target.checked)}

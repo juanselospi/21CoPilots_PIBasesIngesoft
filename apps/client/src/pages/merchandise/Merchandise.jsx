@@ -20,6 +20,7 @@ import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct } from '../products/toAdminProduct.js'
 import { dateTimeFormat, movementTypes, signedUnits, unitsText } from './merchandiseFormat.js'
 import Pagination from '../../components/pagination/Pagination.jsx'
+import Select from '../../components/select/Select.jsx'
 
 // Espera para buscar hasta que el usuario deje de escribir
 const SEARCH_DELAY_MS = 300
@@ -340,16 +341,15 @@ function Merchandise() {
                     <h2>Movimientos recientes{product && ` de ${product.name}`}</h2>
                     <label className='merchandise-history-filter'>
                         <span>Tipo</span>
-                        <select
+                        <Select
                             className='products-sort'
                             value={historyType}
-                            onChange={(event) => changeHistoryType(event.target.value)}
-                        >
-                            <option value=''>Todos</option>
-                            {Object.entries(movementTypes).map(([key, { label }]) => (
-                                <option key={key} value={key}>{label}</option>
-                            ))}
-                        </select>
+                            onChange={changeHistoryType}
+                            options={[
+                                { value: '', label: 'Todos' },
+                                ...Object.entries(movementTypes).map(([key, { label }]) => ({ value: key, label })),
+                            ]}
+                        />
                     </label>
                 </div>
 

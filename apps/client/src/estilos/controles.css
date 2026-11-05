@@ -1,0 +1,96 @@
+/* Controles de formulario compartidos por el panel: campos con borde propio (.control),
+   el botón del Select (components/select) y las casillas (.casilla).
+   Los campos dentro de .product-form-input no llevan borde: lo pone la caja (ProductForm.css). */
+
+/* Campo con borde: inputs sueltos y el botón del Select */
+.control {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-weight: 400;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.control:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-enlace) 45%, var(--color-borde));
+}
+
+/* Un solo borde azul claro y un halo sutil; sustituye al outline global */
+.control:focus-visible {
+  outline: none;
+  border-color: var(--color-enlace);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-enlace) 18%, transparent);
+}
+
+.control[aria-invalid='true'] {
+  border-color: var(--estado-error-texto);
+}
+
+.control[aria-invalid='true']:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--estado-error-texto) 18%, transparent);
+}
+
+.control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Números sin las flechas del navegador; se siguen escribiendo y validando igual */
+input.control[type='number'] {
+  appearance: textfield;
+}
+
+input.control[type='number']::-webkit-inner-spin-button,
+input.control[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+/* Casilla: misma superficie que los campos; marcada, azul principal con el check en blanco.
+   Sigue siendo un <input type='checkbox'>, así que la <label> que la envuelve la marca al hacer clic */
+.casilla {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1.5px solid var(--color-texto-suave);
+  border-radius: 4px;
+  background: var(--color-superficie) center / 12px no-repeat;
+  appearance: none;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.casilla:checked {
+  border-color: var(--color-principal);
+  background-color: var(--color-principal);
+  background-image: var(--icono-check);
+}
+
+/* Hover sutil sobre la casilla o sobre su texto */
+label:hover > .casilla:not(:disabled),
+.casilla:hover:not(:disabled) {
+  border-color: var(--color-enlace);
+}
+
+label:hover > .casilla:checked:not(:disabled),
+.casilla:checked:hover:not(:disabled) {
+  border-color: var(--color-principal-hover);
+  background-color: var(--color-principal-hover);
+}
+
+.casilla:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control,
+  .casilla {
+    transition: none;
+  }
+}

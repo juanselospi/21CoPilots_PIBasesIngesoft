@@ -294,16 +294,27 @@
 
 /* Solo "Editar producto" */
 
-/* Selector de familia: mismo aspecto que los inputs */
-.product-form-input select {
+/* Selector de familia (components/select): sin borde propio, lo pone la caja */
+.product-form-input .control {
   flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
   border: none;
-  border-radius: var(--radio-control);
   background: none;
+  box-shadow: none;
+}
+
+/* El texto y la flecha del selector no son una unidad: sin el relleno ni el gris de arriba */
+.product-form-input .select-trigger > span:first-child {
+  padding: 0;
   color: inherit;
-  font: inherit;
+}
+
+.product-form-input .select-chevron {
+  padding: 0;
+}
+
+/* Con el menú abierto el foco pasa a la lista: la caja sigue marcada */
+.product-form-input:has(.select-trigger[data-state='open']) {
+  border-color: var(--color-enlace);
 }
 
 /* Importación y margen: fieldset sin el borde ni el relleno del navegador */

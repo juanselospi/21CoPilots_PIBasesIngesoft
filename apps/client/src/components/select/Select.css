@@ -1,0 +1,130 @@
+/* Selector del panel (Select.jsx). El borde, el foco, el error y el disabled
+   del botón vienen de .control (estilos/controles.css). */
+
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Texto de la opción elegida en una línea */
+.select-trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mientras el menú está abierto el foco pasa a la lista: el campo sigue marcado */
+.select-trigger[data-state='open'] {
+  border-color: var(--color-enlace);
+}
+
+.select-chevron {
+  display: flex;
+  color: var(--color-texto-suave);
+  transition: transform 150ms ease;
+}
+
+.select-trigger[data-state='open'] .select-chevron {
+  transform: rotate(180deg);
+}
+
+/* Menú: superficie de los paneles, borde discreto y como mucho 320px de alto con scroll.
+   Va en un portal, por encima de los modales (z-index 10) */
+.select-content {
+  --select-desplazamiento: -4px;
+  z-index: 50;
+  min-width: var(--radix-select-trigger-width);
+  max-width: calc(100vw - 16px);
+  max-height: min(320px, var(--radix-select-content-available-height));
+  overflow: hidden;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  box-shadow: var(--sombra);
+  font-size: var(--texto-pequeno);
+}
+
+/* Si no cabe abajo y se abre hacia arriba, el desplazamiento va al revés */
+.select-content[data-side='top'] {
+  --select-desplazamiento: 4px;
+}
+
+.select-content[data-state='open'] {
+  animation: select-abrir 140ms ease-out;
+}
+
+.select-content[data-state='closed'] {
+  animation: select-cerrar 120ms ease-in forwards;
+}
+
+@keyframes select-abrir {
+  from {
+    opacity: 0;
+    transform: translateY(var(--select-desplazamiento));
+  }
+}
+
+@keyframes select-cerrar {
+  to {
+    opacity: 0;
+    transform: translateY(var(--select-desplazamiento));
+  }
+}
+
+.select-viewport {
+  padding: 4px;
+}
+
+/* Opciones separadas por espacio, sin divisores */
+.select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.select-item + .select-item {
+  margin-top: 2px;
+}
+
+/* Resaltada con el puntero o el teclado: un azul petróleo un poco más claro que el menú */
+.select-item[data-highlighted] {
+  background: color-mix(in srgb, var(--color-enlace) 14%, var(--color-superficie));
+}
+
+/* Elegida: texto cian y check a la derecha */
+.select-item[data-state='checked'] {
+  color: var(--color-enlace);
+  font-weight: 600;
+}
+
+.select-item[data-disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.select-check {
+  display: flex;
+  color: var(--color-enlace);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .select-content[data-state='open'],
+  .select-content[data-state='closed'] {
+    animation: none;
+  }
+
+  .select-chevron {
+    transition: none;
+  }
+}

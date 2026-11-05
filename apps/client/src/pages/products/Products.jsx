@@ -5,6 +5,7 @@ import {
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
+import Select from '../../components/select/Select.jsx'
 import { activeFilterTags, emptyFilters, filterParams } from '../../components/product-filters/productFilters.js'
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
@@ -234,15 +235,13 @@ function Products() {
                     </button>
                 </div>
 
-                <select
+                <Select
                     className='products-sort'
+                    aria-label='Ordenar productos'
                     value={sort}
-                    onChange={(event) => changeSort(event.target.value)}
-                >
-                    {sortOptions.map(({ value, label }) => (
-                        <option key={value} value={value}>Ordenar: {label}</option>
-                    ))}
-                </select>
+                    onChange={changeSort}
+                    options={sortOptions.map(({ value, label }) => ({ value, label: `Ordenar: ${label}` }))}
+                />
             </section>
 
             {/* Siempre montado para animar la apertura y el cierre; se despliega con `open` */}
@@ -386,15 +385,13 @@ function Products() {
                     </>
                 )}
 
-                <select
+                <Select
                     className='products-page-size'
+                    aria-label='Productos por página'
                     value={pageSize}
-                    onChange={(event) => changePageSize(Number(event.target.value))}
-                >
-                    {pageSizes.map((size) => (
-                        <option key={size} value={size}>{size} por página</option>
-                    ))}
-                </select>
+                    onChange={(value) => changePageSize(Number(value))}
+                    options={pageSizes.map((size) => ({ value: size, label: `${size} por página` }))}
+                />
             </section>
 
             {editingProduct && (
