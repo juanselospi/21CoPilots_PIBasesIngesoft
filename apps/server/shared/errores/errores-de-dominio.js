@@ -85,8 +85,8 @@ export class ProductoConHistorial extends ErrorDeDominio {
  * compró antes). `lineas` dice cuáles para marcarlas en el carrito.
  */
 export class SinExistencias extends ErrorDeDominio {
-  constructor(lineas) {
-    super("Algunos productos ya no tienen las unidades que pidió. Revise su carrito.", {
+  constructor(lineas, mensaje = "Algunos productos ya no tienen las unidades que pidió. Revise su carrito.") {
+    super(mensaje, {
       codigo: "SIN_EXISTENCIAS",
       detalles: { lineas },
     });

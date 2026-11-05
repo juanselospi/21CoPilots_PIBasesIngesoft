@@ -13,6 +13,10 @@
  *   GET    /admin                           RF-46  pedidos para el administrador, con filtros
  *   GET    /admin/:correo/:numCarrito       RF-46  detalle para el administrador
  *   POST   /admin/:correo/:numCarrito/estado  RF-26, RF-28  también cancela
+ *   POST   /admin/:correo/:numCarrito/lineas               agregar un producto
+ *   PATCH  /admin/:correo/:numCarrito/lineas/:sku          cambiar la cantidad
+ *   DELETE /admin/:correo/:numCarrito/lineas/:sku          quitar
+ *   POST   /admin/:correo/:numCarrito/lineas/:sku/reemplazo  por uno de igual o menor precio
  *
  * El cliente no cancela sus pedidos: eso lo hace solo el administrador.
  */
@@ -45,6 +49,10 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   rutas.get("/admin", asincrono(controlador.listarParaAdministracion));
   rutas.get("/admin/:correo/:numCarrito", asincrono(controlador.verParaAdministracion));
   rutas.post("/admin/:correo/:numCarrito/estado", asincrono(controlador.cambiarEstado));
+  rutas.post("/admin/:correo/:numCarrito/lineas", asincrono(controlador.agregarLineaAlPedido));
+  rutas.patch("/admin/:correo/:numCarrito/lineas/:sku", asincrono(controlador.cambiarCantidadDelPedido));
+  rutas.delete("/admin/:correo/:numCarrito/lineas/:sku", asincrono(controlador.quitarLineaDelPedido));
+  rutas.post("/admin/:correo/:numCarrito/lineas/:sku/reemplazo", asincrono(controlador.reemplazarLineaDelPedido));
 
   // Las rutas se agregan conforme se implementen los RF de arriba.
 

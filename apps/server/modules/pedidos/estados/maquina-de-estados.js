@@ -29,6 +29,10 @@ const TRANSICIONES = Object.freeze({
 
 export const esFinal = (estado) => TRANSICIONES[estado]?.length === 0;
 
+/** Las líneas se editan antes del envío o mientras hay una disputa abierta. */
+export const admiteEdicion = (estado) =>
+  [ESTADOS.COLOCADO, ESTADOS.PROCESADO, ESTADOS.EN_DISPUTA].includes(estado);
+
 /**
  * A qué estados puede pasar. Una disputa se resuelve volviendo al estado
  * anterior, o cancelando si ese estado todavía se podía cancelar.
