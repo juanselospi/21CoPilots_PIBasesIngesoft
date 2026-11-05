@@ -41,6 +41,12 @@ const noticeByAction = {
 
 const formatPercent = (value) => `${value} %`
 
+// Pestañas de la tabla: se ven las activas o las desactivadas, nunca mezcladas
+const views = [
+    { key: 'activas', label: 'Activas', Icon: CircleCheck, matches: (family) => family.active },
+    { key: 'desactivadas', label: 'Desactivadas', Icon: PowerOff, matches: (family) => !family.active },
+]
+
 // Pantalla «Familias» del panel (HU-16): consultar, agregar, editar, desactivar y eliminar familias.
 function Families() {
     const familias = useFamilias()
@@ -50,6 +56,9 @@ function Families() {
     // Acción esperando confirmación: { action, family }
     const [pending, setPending] = useState(null)
     const [notice, setNotice] = useState(null)
+    const [view, setView] = useState('activas')
+    const currentView = views.find(({ key }) => key === view)
+    const shown = families.filter(currentView.matches)
 
     // Guarda la familia, cierra el modal y recarga la tabla.
     // Le devuelve al modal el error si el servidor la rechazó.
@@ -105,6 +114,25 @@ function Families() {
 
             {notice && <p className='families-notice' role='status'>{notice}</p>}
 
+            {families.length > 0 && (
+                <div className='products-view-toggle families-toggle' role='tablist' aria-label='Estado de las familias'>
+                    {views.map(({ key, label, Icon, matches }) => (
+                        <button
+                            key={key}
+                            type='button'
+                            role='tab'
+                            id={`families-tab-${key}`}
+                            aria-selected={view === key}
+                            aria-controls='families-panel'
+                            className={view === key ? 'active' : ''}
+                            onClick={() => setView(key)}
+                        >
+                            <Icon size={16} />{label} ({families.filter(matches).length})
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {familias.cargando ? (
                 <p className='products-status' role='status'>Cargando familias…</p>
             ) : familias.error ? (
@@ -119,8 +147,17 @@ function Families() {
                     <h2>Todavía no hay familias</h2>
                     <p>Agréguelas aquí o se crean solas al cargar el Excel del catálogo.</p>
                 </section>
+            ) : shown.length === 0 ? (
+                <section className='products-empty' id='families-panel' role='tabpanel' aria-labelledby={`families-tab-${view}`}>
+                    <h2>No hay familias {view === 'activas' ? 'activas' : 'desactivadas'}</h2>
+                    <p>
+                        {view === 'activas'
+                            ? 'Reactive una desde la pestaña «Desactivadas» o agregue una nueva.'
+                            : 'Las familias que desactive aparecen aquí, con sus productos fuera de la tienda.'}
+                    </p>
+                </section>
             ) : (
-                <div className='product-table-wrapper'>
+                <div className='product-table-wrapper' id='families-panel' role='tabpanel' aria-labelledby={`families-tab-${view}`}>
                     <table className='product-table'>
                         <thead>
                             <tr>
@@ -134,7 +171,7 @@ function Families() {
                             </tr>
                         </thead>
                         <tbody>
-                            {families.map((family) => (
+                            {shown.map((family) => (
                                 <tr key={family.name}>
                                     <td className='families-name'>{family.name}</td>
                                     <td className='families-description'>{family.description || '—'}</td>

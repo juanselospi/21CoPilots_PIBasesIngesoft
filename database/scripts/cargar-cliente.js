@@ -9,7 +9,8 @@
 //    todo lo que los referencia (pedidos y movimientos demo).
 // 3. Carga las semillas privadas de datos-cliente/semillas/ (familias,
 //    productos y existencias iniciales de prueba).
-// Los pasos 2 y 3 van en una sola transacción.
+// 4. Desactiva las familias que quedaron sin productos activos (las de prueba).
+// Los pasos 2 a 4 van en una sola transacción.
 //
 // No necesita el servidor ni el Excel: las semillas se generan antes con
 //   npm run db:generar-semillas-cliente
@@ -42,6 +43,8 @@ const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-client
     const deprueba = await desactivarProductosDePrueba(client);
     console.log(`✔ ${deprueba} producto(s) de prueba desactivados (siguen en la base).`);
     await runClientSeeds(client, files);
+    const familiasDePrueba = await desactivarFamiliasDePrueba(client);
+    console.log(`✔ ${familiasDePrueba} familia(s) de prueba desactivadas (no tienen productos del cliente).`);
     await client.query('COMMIT');
 
     await printSummary(client);
@@ -60,6 +63,19 @@ const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-client
 async function desactivarProductosDePrueba(client) {
   const { rowCount } = await client.query(
     `UPDATE catalogo.producto SET estado = 'descontinuado' WHERE estado <> 'descontinuado'`
+  );
+  return rowCount;
+}
+
+// Después de cargar al cliente, una familia sin ningún producto activo solo
+// tiene productos de prueba. Si el Excel usa una familia demo, esa sigue activa.
+async function desactivarFamiliasDePrueba(client) {
+  const { rowCount } = await client.query(
+    `UPDATE catalogo.familia f
+        SET activa = false
+      WHERE f.activa
+        AND NOT EXISTS (SELECT 1 FROM catalogo.producto p
+                         WHERE p.categoria = f.nombre AND p.estado = 'activo')`
   );
   return rowCount;
 }

@@ -29,3 +29,9 @@
   max-width: 360px;
   color: var(--color-texto-suave);
 }
+
+/* Pestañas Activas / Desactivadas: el mismo selector de Productos, a la izquierda */
+.families-toggle {
+  align-self: flex-start;
+  margin-left: 0;
+}
