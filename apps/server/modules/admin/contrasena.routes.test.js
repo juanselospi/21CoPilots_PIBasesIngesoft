@@ -84,7 +84,7 @@ test("RF-49: cambiar la contraseña responde 204, cierra las otras sesiones y la
   const { token: estaSesion } = await entrar(base, "Cliente123!");
   const { token: otraSesion } = await entrar(base, "Cliente123!");
 
-  const { estado } = await cambiar(base, estaSesion, { actual: "Cliente123!", nueva: "Nueva#2026" });
+  const { estado } = await cambiar(base, estaSesion, { contrasenaActual: "Cliente123!", contrasenaNueva: "Nueva#2026" });
 
   assert.equal(estado, 204);
   assert.equal(await estadoDeLaSesion(base, estaSesion), 200);
@@ -93,27 +93,27 @@ test("RF-49: cambiar la contraseña responde 204, cierra las otras sesiones y la
   assert.equal((await entrar(base, "Cliente123!")).estado, 401);
 });
 
-test("una contraseña nueva sin mayúscula responde 400 con el motivo en el campo nueva", async (t) => {
+test("una contraseña nueva sin mayúscula responde 400 con el motivo en el campo contrasenaNueva", async (t) => {
   const { base, cerrar } = await levantarServidor();
   t.after(cerrar);
   const { token } = await entrar(base, "Cliente123!");
 
-  const { estado, cuerpo } = await cambiar(base, token, { actual: "Cliente123!", nueva: "nueva#2026" });
+  const { estado, cuerpo } = await cambiar(base, token, { contrasenaActual: "Cliente123!", contrasenaNueva: "nueva#2026" });
 
   assert.equal(estado, 400);
   assert.equal(cuerpo.error.mensaje, "La contraseña debe tener al menos una mayúscula.");
-  assert.deepEqual(cuerpo.error.detalles.campos, ["nueva"]);
+  assert.deepEqual(cuerpo.error.detalles.campos, ["contrasenaNueva"]);
 });
 
-test("la contraseña actual equivocada responde 400 en el campo actual", async (t) => {
+test("la contraseña actual equivocada responde 400 en el campo contrasenaActual", async (t) => {
   const { base, cerrar } = await levantarServidor();
   t.after(cerrar);
   const { token } = await entrar(base, "Cliente123!");
 
-  const { estado, cuerpo } = await cambiar(base, token, { actual: "Otra123!", nueva: "Nueva#2026" });
+  const { estado, cuerpo } = await cambiar(base, token, { contrasenaActual: "Otra123!", contrasenaNueva: "Nueva#2026" });
 
   assert.equal(estado, 400);
-  assert.deepEqual(cuerpo.error.detalles.campos, ["actual"]);
+  assert.deepEqual(cuerpo.error.detalles.campos, ["contrasenaActual"]);
 });
 
 test("sin los dos campos responde 400 y sin sesión 401", async (t) => {
@@ -121,8 +121,8 @@ test("sin los dos campos responde 400 y sin sesión 401", async (t) => {
   t.after(cerrar);
   const { token } = await entrar(base, "Cliente123!");
 
-  const sinCampos = await cambiar(base, token, { nueva: "" });
+  const sinCampos = await cambiar(base, token, { contrasenaNueva: "" });
   assert.equal(sinCampos.estado, 400);
-  assert.deepEqual(sinCampos.cuerpo.error.detalles.campos, ["actual", "nueva"]);
-  assert.equal((await cambiar(base, null, { actual: "Cliente123!", nueva: "Nueva#2026" })).estado, 401);
+  assert.deepEqual(sinCampos.cuerpo.error.detalles.campos, ["contrasenaActual", "contrasenaNueva"]);
+  assert.equal((await cambiar(base, null, { contrasenaActual: "Cliente123!", contrasenaNueva: "Nueva#2026" })).estado, 401);
 });

@@ -237,8 +237,8 @@ test("RF-49: cambia la contraseña, deja esta sesión abierta y cierra las demá
 
   await servicio.cambiarContrasena({
     correo: "admin@dchobbies.test",
-    actual: "Admin123!",
-    nueva: "Nueva#2026",
+    contrasenaActual: "Admin123!",
+    contrasenaNueva: "Nueva#2026",
     token: estaSesion,
   });
 
@@ -257,8 +257,8 @@ test("con la contraseña actual equivocada no cambia nada", async () => {
   const { token } = await entrarComoAdministrador(servicio, repositorio);
 
   await assert.rejects(
-    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "otra", nueva: "Nueva#2026", token }),
-    (error) => error instanceof EntradaInvalida && error.detalles.campos[0] === "actual"
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", contrasenaActual: "otra", contrasenaNueva: "Nueva#2026", token }),
+    (error) => error instanceof EntradaInvalida && error.detalles.campos[0] === "contrasenaActual"
   );
   await servicio.iniciarSesion({ correo: "admin@dchobbies.test", contrasena: "Admin123!" });
 });
@@ -269,7 +269,7 @@ test("una contraseña nueva que no cumple la política se rechaza con el motivo"
   const { token } = await entrarComoAdministrador(servicio, repositorio);
 
   await assert.rejects(
-    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", actual: "Admin123!", nueva: "nueva#2026", token }),
+    servicio.cambiarContrasena({ correo: "admin@dchobbies.test", contrasenaActual: "Admin123!", contrasenaNueva: "nueva#2026", token }),
     { message: "La contraseña debe tener al menos una mayúscula." }
   );
 });
