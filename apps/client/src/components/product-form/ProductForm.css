@@ -80,14 +80,23 @@
 .product-form-input {
   display: flex;
   align-items: center;
-  border: 1.5px solid var(--color-borde);
+  border: 1px solid var(--color-borde);
   border-radius: var(--radio-control);
   background: var(--color-superficie);
   font-weight: 400;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+/* Foco en la caja completa (input + unidad): un solo borde y un halo sutil.
+   Es el indicador de foco visible para teclado; sustituye al outline global */
 .product-form-input:focus-within {
   border-color: var(--color-enlace);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-enlace) 18%, transparent);
+}
+
+/* El control interno no dibuja un segundo contorno: el foco lo muestra la caja */
+.product-form-input :is(input, select, textarea):focus-visible {
+  outline: none;
 }
 
 /* Sin borde propio: el borde lo pone la caja (.product-form-input) */
@@ -185,6 +194,11 @@
 /* Marca en rojo el borde de la caja cuando su input tiene un valor inválido */
 .product-form-input:has([aria-invalid='true']) {
   border-color: var(--estado-error-texto);
+}
+
+/* Con error y foco, el halo también es rojo para no mezclar colores */
+.product-form-input:has([aria-invalid='true']):focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--estado-error-texto) 18%, transparent);
 }
 
 /* Mensaje de error debajo del campo inválido */
