@@ -2,13 +2,13 @@ import { Link } from 'react-router'
 import { ImageOff } from 'lucide-react'
 import './ProductCard.css'
 import AvailabilityChip from './AvailabilityChip.jsx'
+import AddToCartButton from '../add-to-cart/AddToCartButton.jsx'
 import { priceFormat } from './productFormat.js'
 
 // La imagen y el nombre llevan a `to`, la tarjeta entera no es un enlace
-// porque adentro tiene el boton de agregar al carrito cuya funcionalidad
-// queda para otro sprint.
+// porque adentro tiene el boton de agregar al carrito, que agrega de a 1.
 function ProductCard({ product, to, compact = false }) {
-    const { name, price, image, availability } = product
+    const { sku, name, price, image, availability } = product
 
     return (
         <article className={compact ? 'product-card product-card-compact' : 'product-card'}>
@@ -34,11 +34,7 @@ function ProductCard({ product, to, compact = false }) {
                     <AvailabilityChip availability={availability} />
                 </div>
 
-                {!compact && (
-                    <button type='button' className='product-card-button'>
-                        Agregar al carrito
-                    </button>
-                )}
+                {!compact && <AddToCartButton sku={sku} className='product-card-button' />}
             </div>
         </article>
     )

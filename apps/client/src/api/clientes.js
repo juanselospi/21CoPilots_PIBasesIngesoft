@@ -12,3 +12,16 @@ export function registrarCliente({ nombre, correo, contrasena, cedula, telefono,
         cuerpo: { nombre, correo, contrasena, cedula, telefono, direccion, aceptaTerminos: true },
     })
 }
+
+// Datos de la cuenta del cliente con sesión: nombre, correo, cédula, dirección y teléfonos.
+export function obtenerMiCuenta({ signal } = {}) {
+    return pedir('/api/clientes/me', { signal })
+}
+
+/**
+ * Cambia la dirección o los teléfonos del cliente con sesión, solo se manda lo que cambió.
+ * Devuelve la cuenta como quedó, con los teléfonos ya en formato 8888-8888 y sin repetidos.
+ */
+export function corregirMiCuenta(cambios) {
+    return pedir('/api/clientes/me', { metodo: 'PATCH', cuerpo: cambios })
+}

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router'
 import Header from '../header/Header.jsx'
 import Footer from '../footer/Footer.jsx'
+import { useCarrito } from '../../hooks/useCarrito.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useSesion } from '../../hooks/useSesion.js'
 
@@ -11,10 +12,17 @@ function StoreLayout() {
     const categorias = useCategorias()
     const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
     const { usuario, cargando, cerrarSesion } = useSesion()
+    const { cantidad } = useCarrito()
 
     return (
         <>
-            <Header categories={categoryNames} user={usuario} loadingSession={cargando} onLogOut={cerrarSesion} />
+            <Header
+                categories={categoryNames}
+                user={usuario}
+                loadingSession={cargando}
+                onLogOut={cerrarSesion}
+                cartCount={cantidad}
+            />
             <Outlet context={{ categorias, categoryNames }} />
             <Footer categories={categoryNames} />
         </>

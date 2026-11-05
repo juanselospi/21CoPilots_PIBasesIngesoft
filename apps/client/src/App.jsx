@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
 import SessionProvider from './context/SessionProvider.jsx'
+import CartProvider from './context/CartProvider.jsx'
 import StoreLayout from './components/store-layout/StoreLayout.jsx'
 import AdminRoute from './components/admin-route/AdminRoute.jsx'
 import SessionRoute from './components/session-route/SessionRoute.jsx'
@@ -19,27 +20,29 @@ function App() {
   return (
     <BrowserRouter>
       <SessionProvider>
-        <Routes>
-          <Route element={<StoreLayout />}>
-            <Route index element={<Home />} />
-            <Route path='catalogo' element={<Catalog />} />
-            <Route path='catalogo/:category' element={<Catalog />} />
-            <Route path='producto/:sku' element={<ProductDetail />} />
-            <Route element={<SessionRoute />}>
-              <Route path='mi-cuenta' element={<MyAccount />} />
+        <CartProvider>
+          <Routes>
+            <Route element={<StoreLayout />}>
+              <Route index element={<Home />} />
+              <Route path='catalogo' element={<Catalog />} />
+              <Route path='catalogo/:category' element={<Catalog />} />
+              <Route path='producto/:sku' element={<ProductDetail />} />
+              <Route element={<SessionRoute />}>
+                <Route path='mi-cuenta' element={<MyAccount />} />
+              </Route>
             </Route>
-          </Route>
-          <Route element={<AccessLayout />}>
-            <Route path='/acceso' element={<Access />} />
-            <Route path='/recuperar-contrasena' element={<ForgotPassword />} />
-            <Route path='/restablecer' element={<ResetPassword />} />
-          </Route>
-          <Route path='/admin' element={<AdminRoute />}>
-            <Route path='productos' element={<Products />} />
-            <Route path='familias' element={<Families />} />
-            <Route path='mercancia' element={<Merchandise />} />
-          </Route>
-        </Routes>
+            <Route element={<AccessLayout />}>
+              <Route path='/acceso' element={<Access />} />
+              <Route path='/recuperar-contrasena' element={<ForgotPassword />} />
+              <Route path='/restablecer' element={<ResetPassword />} />
+            </Route>
+            <Route path='/admin' element={<AdminRoute />}>
+              <Route path='productos' element={<Products />} />
+              <Route path='familias' element={<Families />} />
+              <Route path='mercancia' element={<Merchandise />} />
+            </Route>
+          </Routes>
+        </CartProvider>
       </SessionProvider>
     </BrowserRouter>
   )

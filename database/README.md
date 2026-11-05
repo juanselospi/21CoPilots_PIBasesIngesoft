@@ -85,7 +85,7 @@ cp .env.example .env       # en Windows PowerShell: copy .env.example .env
 npm install                # instala las herramientas de BD (pg, dotenv)
 npm run db:up              # descarga y levanta PostgreSQL 17 en Docker (puerto 5433)
 npm run db:reset           # crea todos los esquemas y tablas y carga las semillas
-npm run db:test            # debe terminar con "✔ N prueba(s) aprobada(s)"
+npm run db:test            # debe terminar con "✔ 197 prueba(s) aprobada(s)" (§ 5.6)
 ```
 
 Desde la raíz del repositorio también funciona con `--prefix`, por ejemplo
@@ -106,16 +106,34 @@ dchobbies=# \q
 
 **Casos de prueba preparados en las semillas:**
 
+Montos en dólares. Hay 6 familias y 21 productos: «Funko Pop» y «Discos de vinilo»
+son las dos familias nuevas que pidió el profesor, con 5 productos cada una.
+
 | SKU | Caso | Requerimiento |
 |---|---|---|
-| `MTG-002` | Sin stock, admite contrapedido: debe verse | RF-07, RN-03 |
+| `MTG-002`, `VIN-005` | Sin stock, admite contrapedido: debe verse | RF-07, RN-03 |
 | `FUN-003` | Sin stock ni contrapedido: no debe verse | RF-08, RN-03 |
 | `LIQ-001` | Margen negativo (liquidación) | RN-02, RF-43 |
-| `FUN-001`, `ANI-001` | En 2 unidades: disparan la alerta | RF-16, RN-04 |
+| `FUN-001`, `ANI-001`, `VIN-003` | En 2 unidades: disparan la alerta | RF-16, RN-04 |
 | `PKM-001` | Dos ingresos a costos distintos | RN-06, RF-14 |
+| La mayoría | Sin importación ni margen propios: heredan los de su familia | C-15 |
+| `MTG-001`, `JUG-002`, `FUN-003`, `VIN-004` | Margen propio, que sobrescribe el de la familia | C-15 |
+| `ANI-001` | Importación propia, que sobrescribe la de la familia | C-15 |
 
-Hay además un pedido en línea finalizado, pagado y facturado, y una venta presencial,
-para ver los reportes con datos.
+**Pedidos de ejemplo**, con sus pagos, facturas y movimientos de inventario:
+
+| Cliente | Carrito | Canal | Estado actual | Pago |
+|---|---|---|---|---|
+| `cliente@correo.test` | 1 | web | finalizado | tarjeta: un intento rechazado y uno aprobado |
+| `presencial@correo.test` | 1 | presencial | finalizado | efectivo |
+| `cliente@correo.test` | 2 | web | cancelado | tarjeta; se le otorgó un crédito a favor por lo pagado y el inventario se repuso |
+| `cliente@correo.test` | 3 | web | en disputa | tarjeta |
+| `presencial@correo.test` | 2 | WhatsApp (lo registró el empleado, a nombre de otra persona) | en tránsito | SINPE Móvil |
+| `cliente@correo.test` | 4 | web | colocado | contra entrega, pendiente |
+
+`cliente@correo.test` tiene además un carrito activo y $94,35 de crédito a favor. Las
+tarifas de envío de prueba son $3,50 (mensajero), $5 (Uber Flash), $4 (Correos de
+Costa Rica) y $0 (entrega personal); la semilla solo llena las que siguen en 0.
 
 **Conectarse con DBeaver / VS Code:** host `localhost`, puerto `5433`, BD `dchobbies`,
 usuario `dchobbies`, clave `dchobbies_dev`. O levante Adminer con
@@ -301,6 +319,31 @@ SELECT pg_temp.debe_funcionar('El margen negativo se acepta (RN-02)',
 Códigos de error más usados: `23505` unicidad, `23514` `CHECK`, `23503` llave
 foránea, `23001` registro de solo inserción.
 
+Hay una prueba por restricción. Los invariantes de `06_invariantes.sql` son las reglas
+que cruzan varias tablas y que garantiza el servicio, no un `CHECK`; con las semillas
+cargadas, comprueban además que los datos de prueba son coherentes.
+
+| Archivo | Qué prueba | Migraciones | Pruebas |
+|---|---|---|---|
+| `01_catalogo.sql` | Producto | 005 | 12 |
+| `02_inventario.sql` | Registro de mercancía: tipo, costo y motivo | 006, 013 | 19 |
+| `03_usuarios_clientes.sql` | Usuarios, administradores y clientes | 002–004, 010 | 16 |
+| `04_pedidos.sql` | Carritos, ofertas, pedidos e historial | 007, 010 | 28 |
+| `05_pagos_facturacion.sql` | Pagos y facturas | 008 | 10 |
+| `06_invariantes.sql` | Reglas entre tablas | — | 11 |
+| `07_sesion.sql` | Sesiones | 002 | 8 |
+| `08_familias.sql` | Familias y herencia de importación y margen | 011 | 17 |
+| `09_estado_producto.sql` | Estado del producto y eliminación | 012 | 9 |
+| `10_pedidos_y_terminos.sql` | En disputa, canal, creador y términos | 014 | 10 |
+| `11_bitacora.sql` | Bitácora | 015 | 11 |
+| `12_empleados.sql` | Varios administradores y un propietario | 016 | 14 |
+| `13_creditos.sql` | Créditos a favor y su uso en el pago | 017 | 20 |
+| `14_tarifas.sql` | Tarifas de envío | 018 | 5 |
+| `15_emisor.sql` | Emisor de las facturas | 019 | 7 |
+| **Total** | | | **197** |
+
+Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
+
 ---
 
 ## 6. "¿Y cómo compartimos los datos?"
@@ -308,7 +351,7 @@ foránea, `23001` registro de solo inserción.
 | Necesidad | Solución |
 |---|---|
 | Todos necesitan los mismos productos de prueba | Agréguelos a `database/semillas/demo/` vía PR. |
-| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57) y le da 1 unidad de existencia a cada producto importado. |
+| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57), que crea las familias de la hoja que no existan, y le da 1 unidad de existencia a cada producto importado. |
 | Demo del sprint | En la laptop de quien presenta: `npm run db:reset`, para partir de un estado conocido. |
 | Ambiente compartido de staging (opcional, sprints futuros) | Un PostgreSQL alojado al que **solo** se le aplican cambios con `npm run db:migrate` y `npm run db:seed -- --solo-referencia`, usando otro `.env`. Nunca se desarrolla contra él. |
 
