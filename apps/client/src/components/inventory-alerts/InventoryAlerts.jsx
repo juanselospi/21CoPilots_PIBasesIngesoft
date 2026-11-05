@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { PackagePlus, TriangleAlert, X } from 'lucide-react'
 // Mismo aspecto que los modales de producto y la tabla del panel
 import '../product-form/ProductForm.css'
 import '../product-table/ProductTable.css'
 import './InventoryAlerts.css'
 import { chipByLabel } from '../product-table/labelChips.js'
+import { backState } from '../../routes.js'
 
 // La misma etiqueta «Existencias bajas» del listado de productos
 const lowStockChip = chipByLabel.existencias_bajas
@@ -19,6 +20,8 @@ const restockPath = (sku) => `/admin/mercancia?sku=${encodeURIComponent(sku)}`
 function InventoryAlerts({ alerts, onClose }) {
     const products = alerts.datos?.datos ?? []
     const threshold = alerts.datos?.meta.umbral
+    // Mercancía vuelve con su flecha a la pantalla donde se abrieron las alertas
+    const from = backState(useLocation())
 
     useEffect(() => {
         const closeOnEscape = (event) => event.key === 'Escape' && onClose()
@@ -97,6 +100,7 @@ function InventoryAlerts({ alerts, onClose }) {
                                         <td>
                                             <Link
                                                 to={restockPath(sku)}
+                                                state={from}
                                                 className='product-table-button inventory-alerts-link'
                                                 aria-label={`Registrar mercancía de ${nombre}`}
                                                 onClick={onClose}

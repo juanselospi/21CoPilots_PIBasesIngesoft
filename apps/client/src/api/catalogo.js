@@ -10,6 +10,21 @@ export function listarProductos({ categoria, q, limite, pagina } = {}, { signal 
     return pedir('/api/catalogo/productos', { parametros: { categoria, q, limite, pagina }, signal })
 }
 
+/**
+ * Una página del catálogo de la tienda con búsqueda, filtros y orden.
+ * Devuelve { datos, meta } (meta trae el total para paginar); `pagina` empieza en 0.
+ */
+export function listarPaginaDelCatalogo(
+    { categoria, q, disponibilidad, precioMin, precioMax, orden, limite, pagina } = {},
+    { signal } = {},
+) {
+    return pedir('/api/catalogo/productos', {
+        parametros: { categoria, q, disponibilidad, precioMin, precioMax, orden, limite, pagina },
+        signal,
+        conMeta: true,
+    })
+}
+
 // Devuelve la ficha de un producto visible, con los mismos campos que el listado.
 // Si no existe o esta oculto el servidor responde 404
 export function obtenerProducto(sku, { signal } = {}) {

@@ -214,3 +214,8 @@
     gap: 24px;
   }
 }
+
+/* Fila de la flecha para volver (BackButton), arriba del contenido */
+.product-detail-back {
+  margin-bottom: 24px;
+}

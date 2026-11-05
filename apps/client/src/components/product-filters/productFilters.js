@@ -25,13 +25,13 @@ export const availabilityOptions = [
 ]
 
 // Etiquetas de los filtros aplicados, para mostrarlos y poder quitarlos uno por uno
-export const activeFilterTags = (filters, formatPrice) => {
+export const activeFilterTags = (filters, formatPrice, options = availabilityOptions) => {
     const tags = []
     if (filters.categoria) {
         tags.push({ key: 'categoria', label: filters.categoria })
     }
     if (filters.disponibilidad) {
-        const option = availabilityOptions.find(({ value }) => value === filters.disponibilidad)
+        const option = options.find(({ value }) => value === filters.disponibilidad)
         tags.push({ key: 'disponibilidad', label: option?.label ?? filters.disponibilidad })
     }
     if (filters.existenciasBajas) {

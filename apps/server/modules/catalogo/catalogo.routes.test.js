@@ -44,12 +44,16 @@ const fun003 = {
   etiquetas: ["existencias_bajas", "oculto_en_tienda"],
 };
 const filtrosDelPanel = [];
+const filtrosDeLaTienda = [];
 // Editar el precio: NO-EXISTE no existe, `precioFinal` no se acepta y el
 // resto responde con el precio recalculado. Guarda los SKU que le llegaron.
 const skusEditados = [];
 
 const servicio = {
-  listarCatalogo: async () => [],
+  listarCatalogo: async (filtros) => {
+    filtrosDeLaTienda.push(filtros);
+    return { productos: [], total: 0 };
+  },
   listarFamilias: async () => [{ nombre: "Legos", cantidadDeProductos: 3 }],
   listarParaAdministracion: async (filtros) => {
     filtrosDelPanel.push(filtros);
@@ -499,4 +503,53 @@ test("eliminar responde 204 sin cuerpo, 409 si tiene historial y exige administr
   assert.equal(conHistorial.status, 409);
   assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
   assert.equal(error.mensaje, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+});
+
+test("el catálogo público pagina, filtra y ordena, y responde el total en meta", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const respuesta = await fetch(
+    `${url}?categoria=Legos&q=castillo&disponibilidad=por_contrapedido&precioMin=10&precioMax=50.5&orden=-precio&limite=12&pagina=2`
+  );
+  const cuerpo = await respuesta.json();
+
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual(cuerpo.meta, { total: 0, pagina: 2, limite: 12 });
+  assert.deepEqual(filtrosDeLaTienda.at(-1), {
+    termino: "castillo",
+    categoria: "Legos",
+    disponibilidad: "por_contrapedido",
+    precioMin: 10,
+    precioMax: 50.5,
+    orden: "-precio",
+    limite: 12,
+    desplazamiento: 24,
+  });
+});
+
+test("el catálogo público sin parámetros usa los valores de siempre", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const cuerpo = await (await fetch(url)).json();
+
+  assert.deepEqual(cuerpo, { datos: [], meta: { total: 0, pagina: 0, limite: 24 } });
+  assert.equal(filtrosDeLaTienda.at(-1).orden, "nombre");
+});
+
+test("el catálogo público rechaza estados del panel, órdenes desconocidos y rangos al revés", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+
+  const respuesta = await fetch(
+    `${url}?disponibilidad=descontinuado&orden=existencias&precioMin=50&precioMax=10&limite=500&pagina=-1`
+  );
+  const cuerpo = await respuesta.json();
+
+  assert.equal(respuesta.status, 400);
+  assert.deepEqual(
+    [...new Set(cuerpo.error.detalles.campos)].sort(),
+    ["disponibilidad", "limite", "orden", "pagina", "precioMax", "precioMin"]
+  );
 });

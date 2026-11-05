@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useLocation, useSearchParams } from 'react-router'
 import { ChevronDown, Info, PackagePlus, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react'
 // Mismo aspecto que la página de productos, su tabla y sus formularios
 import '../products/Products.css'
@@ -21,6 +21,8 @@ import { toAdminProduct } from '../products/toAdminProduct.js'
 import { dateTimeFormat, movementTypes, signedUnits, unitsText } from './merchandiseFormat.js'
 import Pagination from '../../components/pagination/Pagination.jsx'
 import Select from '../../components/select/Select.jsx'
+import BackButton from '../../components/back-button/BackButton.jsx'
+import { backState } from '../../routes.js'
 
 // Espera para buscar hasta que el usuario deje de escribir
 const SEARCH_DELAY_MS = 300
@@ -48,6 +50,7 @@ const searchProducts = (q, filters, signal, pagina = 0) =>
 function Merchandise() {
     // El producto elegido vive en la URL: las alertas de inventario abren /admin/mercancia?sku=…
     const [searchParams, setSearchParams] = useSearchParams()
+    const location = useLocation()
     const sku = searchParams.get('sku')?.trim().toUpperCase() || null
     const [search, setSearch] = useState('')
     const [query, setQuery] = useState('')
@@ -109,7 +112,8 @@ function Merchandise() {
         setHistoryPage(0)
         setSearch('')
         setQuery('')
-        setSearchParams(code ? { sku: code } : {})
+        // Con producto, la flecha del título vuelve a esta vista (la búsqueda y los filtros siguen montados)
+        setSearchParams(code ? { sku: code } : {}, code ? { state: backState(location) } : undefined)
     }
 
     // Desde el historial: elige el producto del movimiento y sube al formulario
@@ -160,7 +164,14 @@ function Merchandise() {
     return (
         <main className='products'>
             <section className='products-header'>
-                <h1>Ingreso de mercancía</h1>
+                {sku ? (
+                    <div className='back-title'>
+                        <BackButton fallback='/admin/mercancia' />
+                        <h1>Ingreso de mercancía</h1>
+                    </div>
+                ) : (
+                    <h1>Ingreso de mercancía</h1>
+                )}
             </section>
 
             <section className='merchandise-card'>

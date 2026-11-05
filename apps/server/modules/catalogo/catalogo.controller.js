@@ -6,7 +6,6 @@
  * negocio, la lógica está en la capa equivocada.
  */
 
-import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import {
   aProductoPublico,
   aProductoAdministrativo,
@@ -14,9 +13,7 @@ import {
   aFamiliaAdministrativa,
 } from "./catalogo.dto.js";
 import { validarConsultaAdministrativa } from "./validar-consulta-administrativa.js";
-
-const LIMITE_POR_DEFECTO = 24;
-const LIMITE_MAXIMO = 48;
+import { validarConsultaPublica } from "./validar-consulta-publica.js";
 
 export class CatalogoController {
   #servicio;
@@ -27,18 +24,19 @@ export class CatalogoController {
     this.#familias = familias;
   }
 
+  // GET /productos, público. `meta` trae el total para paginar; quien solo lee `datos` sigue igual
   listar = async (peticion, respuesta) => {
-    const { categoria, q, limite, pagina } = peticion.query;
-    const porPagina = leerEntero(limite, "limite", { minimo: 1, maximo: LIMITE_MAXIMO }) ?? LIMITE_POR_DEFECTO;
+    const { pagina, ...filtros } = validarConsultaPublica(peticion.query);
 
-    const productos = await this.#servicio.listarCatalogo({
-      categoria: categoria?.trim() || null,
-      termino: q?.trim() || null,
-      limite: porPagina,
-      desplazamiento: (leerEntero(pagina, "pagina", { minimo: 0 }) ?? 0) * porPagina,
+    const { productos, total } = await this.#servicio.listarCatalogo({
+      ...filtros,
+      desplazamiento: pagina * filtros.limite,
     });
 
-    respuesta.json({ datos: productos.map(aProductoPublico) });
+    respuesta.json({
+      datos: productos.map(aProductoPublico),
+      meta: { total, pagina, limite: filtros.limite },
+    });
   };
 
   obtenerFicha = async (peticion, respuesta) => {
@@ -122,15 +120,4 @@ export class CatalogoController {
     await this.#familias.eliminar(peticion.params.nombre);
     respuesta.status(204).end();
   };
-}
-
-// Lee un entero opcional de la peticion y null si no viene
-function leerEntero(valor, campo, { minimo, maximo = Number.MAX_SAFE_INTEGER }) {
-  if (valor === undefined || valor === "") return null;
-
-  const entero = Number(valor);
-  if (!Number.isInteger(entero) || entero < minimo || entero > maximo) {
-    throw new EntradaInvalida(`"${campo}" debe ser un entero válido.`, [campo]);
-  }
-  return entero;
 }

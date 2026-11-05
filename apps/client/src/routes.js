@@ -8,3 +8,9 @@ export function catalogPath(category) {
 export function productPath(sku) {
     return `/producto/${encodeURIComponent(sku)}`
 }
+
+// Estado que lleva un enlace hacia una vista secundaria para que su flecha (BackButton) sepa a
+// dónde volver: <Link to={…} state={backState(location)}>
+export function backState(location) {
+    return { from: location.pathname + location.search }
+}
