@@ -12,6 +12,11 @@
   margin-inline: auto;
 }
 
+/* «Volver a la tienda» pegado al título: compensa parte del gap de la página */
+.catalog-heading {
+  margin-bottom: -12px;
+}
+
 .catalog-title {
   font-size: clamp(24px, 4vw, var(--texto-seccion));
 }

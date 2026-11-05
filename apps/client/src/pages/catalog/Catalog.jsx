@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
 import { Link, useOutletContext, useParams } from 'react-router'
 import './Catalog.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { useCatalogo } from '../../hooks/useCatalogo.js'
+import { useRestaurarScroll } from '../../hooks/useRestaurarScroll.js'
+import BackButton from '../../components/back-button/BackButton.jsx'
 import { catalogPath, productPath } from '../../routes.js'
 
 // Es el maximo que acepta el servidor -> la paginacion queda pendiente en otro sprint
@@ -18,16 +19,17 @@ function Catalog() {
     const catalogo = useCatalogo({ categoria: category, limite: PRODUCT_LIMIT })
     const products = catalogo.datos?.map(toCardProduct) ?? []
 
-    // Si se llega desde el pie de pagina la vista empieza arriba
-    useEffect(() => {
-        window.scrollTo(0, 0)
-    }, [category])
+    // Al llegar por un enlace empieza arriba; al volver de un producto, donde estaba
+    useRestaurarScroll(!catalogo.cargando)
 
     // StoreLayout solo trae las categorias que tienen productos visibles
     const unknownCategory = Boolean(category) && Boolean(categorias.datos) && !categoryNames.includes(category)
 
     return (
         <main className='catalog'>
+            <div className='catalog-section catalog-heading'>
+                <BackButton fallback='/' label='Volver a la tienda' />
+            </div>
             <h1 className='catalog-section catalog-title'>{category ?? 'Todo el catálogo'}</h1>
 
             {catalogo.cargando ? (

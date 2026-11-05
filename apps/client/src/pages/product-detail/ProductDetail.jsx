@@ -8,6 +8,7 @@ import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useProducto } from '../../hooks/useProducto.js'
 import { catalogPath } from '../../routes.js'
+import BackButton from '../../components/back-button/BackButton.jsx'
 import { CANTIDAD_MAXIMA } from '../../utils/carrito.js'
 
 // Ficha de un producto con imagen, nombre, descripcion, precio final, disponibilidad y el boton para agregarlo al carrito.
@@ -17,6 +18,13 @@ function ProductDetail() {
     const producto = useProducto(sku)
     const product = producto.datos && toCardProduct(producto.datos)
 
+    // Flecha arriba a la izquierda en todos los estados: vuelve a la página de la tarjeta o al catálogo
+    const back = (
+        <div className='product-detail-section product-detail-back'>
+            <BackButton fallback={catalogPath()} />
+        </div>
+    )
+
     // Si se llega desde una tarjeta de abajo la vista empieza arriba
     useEffect(() => {
         window.scrollTo(0, 0)
@@ -25,6 +33,7 @@ function ProductDetail() {
     if (producto.cargando) {
         return (
             <main className='product-detail'>
+                {back}
                 <p className='product-detail-section product-detail-status' role='status'>Cargando producto…</p>
             </main>
         )
@@ -33,6 +42,7 @@ function ProductDetail() {
     if (producto.error) {
         return (
             <main className='product-detail'>
+                {back}
                 <div className='product-detail-section product-detail-status product-detail-status-error' role='alert'>
                     <p>{producto.error}</p>
                     <button type='button' className='product-detail-status-button' onClick={producto.recargar}>
@@ -46,6 +56,7 @@ function ProductDetail() {
     if (!product) {
         return (
             <main className='product-detail'>
+                {back}
                 <div className='product-detail-section product-detail-status'>
                     <p>No encontramos este producto.</p>
                     <Link to={catalogPath()}>Ver todo el catálogo</Link>
@@ -58,6 +69,7 @@ function ProductDetail() {
 
     return (
         <main className='product-detail'>
+            {back}
             <article className='product-detail-section product-detail-content'>
                 {image ? (
                     <img className='product-detail-image' src={image} alt={name} />

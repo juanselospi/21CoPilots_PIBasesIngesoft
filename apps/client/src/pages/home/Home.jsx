@@ -4,6 +4,7 @@ import './Home.css'
 import ProductCard from '../../components/product-card/ProductCard.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { useCatalogo } from '../../hooks/useCatalogo.js'
+import { useRestaurarScroll } from '../../hooks/useRestaurarScroll.js'
 import { catalogPath, productPath } from '../../routes.js'
 
 const infoItems = [
@@ -38,6 +39,8 @@ function Home() {
     // Si falla cualquiera de las dos peticiones, "Reintentar" repite ambas
     const cargando = latest.cargando || categorias.cargando
     const error = latest.error ?? categorias.error
+    // Al volver de un producto la página queda donde estaba
+    useRestaurarScroll(!cargando)
     const retry = () => {
         latest.recargar()
         categorias.recargar()

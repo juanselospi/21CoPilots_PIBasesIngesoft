@@ -1,0 +1,60 @@
+/* Flecha de regreso de las vistas secundarias (BackButton.jsx): compacta, secundaria
+   y con el mismo foco que los campos (estilos/controles.css) */
+.back-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: transparent;
+  color: var(--color-texto-suave);
+  transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.back-button:hover {
+  border-color: color-mix(in srgb, var(--color-enlace) 45%, var(--color-borde));
+  background: color-mix(in srgb, var(--color-enlace) 8%, transparent);
+  color: var(--color-enlace);
+}
+
+.back-button:focus-visible {
+  outline: none;
+  border-color: var(--color-enlace);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-enlace) 18%, transparent);
+  color: var(--color-enlace);
+}
+
+/* Con texto («Volver a la tienda»): enlace secundario en cian, del ancho de su texto */
+.back-button-text {
+  gap: 6px;
+  width: auto;
+  height: 36px;
+  padding: 0 12px 0 10px;
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Flecha y título en una fila; un título largo baja de línea sin empujar la flecha */
+.back-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.back-title > :not(.back-button) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-button {
+    transition: none;
+  }
+}
