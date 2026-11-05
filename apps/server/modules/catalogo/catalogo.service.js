@@ -97,7 +97,8 @@ export class CatalogoService {
 
   /**
    * Listado del panel con los productos ocultos en la tienda (RF-43). Los
-   * descontinuados (RF-18) solo salen con el filtro `disponibilidad=descontinuado`.
+   * descontinuados (RF-18) solo salen con el filtro `disponibilidad=descontinuado`,
+   * y `por_contrapedido` trae los que admiten contrapedido, tengan stock o no.
    * @returns la página pedida y el total de productos que cumplen los filtros
    */
   async listarParaAdministracion({
@@ -117,11 +118,7 @@ export class CatalogoService {
 
     const filtrados = productos
       .map((producto) => this.#conPrecioYDisponibilidad(producto))
-      .filter((producto) =>
-        disponibilidad === null
-          ? producto.disponibilidad !== DISPONIBILIDAD.DESCONTINUADO
-          : producto.disponibilidad === disponibilidad
-      )
+      .filter((producto) => coincideDisponibilidadDelPanel(producto, disponibilidad))
       .filter((producto) => !existenciasBajas || producto.etiquetas.includes(ETIQUETAS.EXISTENCIAS_BAJAS))
       .filter((producto) => !margenNegativo || producto.etiquetas.includes(ETIQUETAS.MARGEN_NEGATIVO))
       .filter((producto) => precioMin === null || producto.precioFinal >= precioMin)
@@ -351,6 +348,20 @@ export const ORDENES_DE_ADMINISTRACION = Object.freeze({
   existencias: (a, b) => a.existencias - b.existencias,
   sku: porSku,
 });
+
+/**
+ * Filtro de disponibilidad del panel. Sin filtro no salen los descontinuados.
+ * «Por contrapedido» es la configuración del producto (la etiqueta del panel),
+ * no solo los que ya están en 0: así el administrador ve todos los que la tienen.
+ */
+function coincideDisponibilidadDelPanel(producto, disponibilidad) {
+  const descontinuado = producto.disponibilidad === DISPONIBILIDAD.DESCONTINUADO;
+  if (disponibilidad === null) return !descontinuado;
+  if (disponibilidad === DISPONIBILIDAD.POR_CONTRAPEDIDO) {
+    return !descontinuado && producto.etiquetas.includes(ETIQUETAS.CONTRAPEDIDO);
+  }
+  return producto.disponibilidad === disponibilidad;
+}
 
 /** Etiquetas del producto ya compuesto, en orden fijo y solo las que aplican. */
 export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {

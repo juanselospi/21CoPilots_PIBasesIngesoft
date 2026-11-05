@@ -316,7 +316,8 @@ test("el término, la categoría y el proveedor se le piden al repositorio", asy
 
 test("filtra por cada estado de disponibilidad", async () => {
   assert.deepEqual(await skusDelPanel({ disponibilidad: "en_existencia" }), ["ALF-001", "MIK-001", "ZEL-001"]);
-  assert.deepEqual(await skusDelPanel({ disponibilidad: "por_contrapedido" }), ["BOO-001"]);
+  // Por contrapedido: todos los que lo admiten, en 0 (BOO) o con stock (MIK)
+  assert.deepEqual(await skusDelPanel({ disponibilidad: "por_contrapedido" }), ["BOO-001", "MIK-001"]);
   assert.deepEqual(await skusDelPanel({ disponibilidad: "no_disponible" }), ["FUN-001"]);
 });
 

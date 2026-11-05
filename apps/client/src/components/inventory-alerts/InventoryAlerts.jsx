@@ -89,7 +89,7 @@ function InventoryAlerts({ alerts, onClose }) {
                                                 </span>
                                                 {admiteContrapedido && (
                                                     <span className={backorderChip.className}>
-                                                        <backorderChip.Icon size={16} />Por contrapedido
+                                                        <backorderChip.Icon size={16} />Admite contrapedido
                                                     </span>
                                                 )}
                                             </div>
