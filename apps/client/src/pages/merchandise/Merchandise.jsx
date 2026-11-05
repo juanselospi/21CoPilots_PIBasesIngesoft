@@ -74,7 +74,8 @@ function Merchandise() {
     }, [search])
 
     const familias = useFamilias()
-    const familyNames = familias.datos?.map(({ nombre }) => nombre) ?? []
+    // Solo las familias activas: las desactivadas confunden en el filtro de Categoría
+    const familyNames = familias.datos?.filter(({ activa }) => activa).map(({ nombre }) => nombre) ?? []
     const filterTags = activeFilterTags(filters, priceFormat.format)
     const searching = query !== '' || filterTags.length > 0
 
