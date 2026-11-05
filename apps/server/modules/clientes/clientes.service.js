@@ -76,6 +76,12 @@ export class ClientesService {
     return this.#repositorio.datosFiscales(correo);
   }
 
+  /** Para el detalle del pedido en el panel: con quién comunicarse. */
+  async datosDeContacto(correo) {
+    const cliente = await this.#repositorio.obtenerPorCorreo(correo);
+    return cliente && { nombre: cliente.nombre, cedula: cliente.cedula, telefonos: cliente.telefonos };
+  }
+
   /** Para pedidos, dentro de la transacción que confirma la compra. */
   async sumarCompra(cliente, correo) {
     await this.#repositorio.incrementarCompras(cliente, correo);

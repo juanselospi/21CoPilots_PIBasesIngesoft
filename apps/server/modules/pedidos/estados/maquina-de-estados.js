@@ -10,6 +10,7 @@ export const ESTADOS = Object.freeze({
   EN_TRANSITO: "en_transito",
   FINALIZADO: "finalizado",
   CANCELADO: "cancelado",
+  EN_DISPUTA: "en_disputa",
 });
 
 /** Transiciones permitidas desde cada estado. */

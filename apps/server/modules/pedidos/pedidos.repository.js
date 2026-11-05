@@ -189,4 +189,113 @@ export class PedidosRepository {
     );
     return rows[0] ? Number(rows[0].costo_entrega) : null;
   }
+
+  // Lo que sigue es para el panel del administrador
+
+  /**
+   * RF-46: los pedidos con su estado vigente y un resumen de productos, del
+   * más nuevo al más viejo. `q` busca en el cliente, el destinatario y los
+   * productos.
+   */
+  async listarParaAdministracion({ estado, canal, correo, q, desde, hasta, limite, pagina }) {
+    const { rows } = await this.#pool.query(
+      `SELECT v.correo_cliente, v.cliente, v.cedula, v.num_carrito, v.fecha_pedido_realizado,
+              v.modalidad_entrega, v.subtotal, v.impuesto, v.costo_entrega, v.estado,
+              p.canal, p.creado_por, p.nombre_destinatario,
+              productos.lineas, productos.unidades,
+              count(*) OVER () AS total
+         FROM reportes.v_pedidos_por_cliente v
+         JOIN pedidos.pedido p
+           ON p.correo_cliente = v.correo_cliente AND p.num_carrito = v.num_carrito
+        CROSS JOIN LATERAL (
+              SELECT coalesce(json_agg(json_build_object('sku', a.sku, 'nombre', pr.nombre, 'cantidad', a.cantidad_solicitada)
+                                       ORDER BY pr.nombre), '[]') AS lineas,
+                     coalesce(sum(a.cantidad_solicitada), 0) AS unidades
+                FROM pedidos.agrega a
+                JOIN catalogo.producto pr ON pr.sku = a.sku
+               WHERE a.correo_cliente = v.correo_cliente AND a.num_carrito = v.num_carrito
+             ) productos
+        WHERE ($1::text IS NULL OR v.estado = $1)
+          AND ($2::text IS NULL OR p.canal = $2)
+          AND ($3::text IS NULL OR v.correo_cliente = $3)
+          AND ($4::timestamptz IS NULL OR v.fecha_pedido_realizado >= $4)
+          AND ($5::timestamptz IS NULL OR v.fecha_pedido_realizado < $5)
+          AND ($6::text IS NULL
+               OR v.cliente ILIKE '%' || $6 || '%'
+               OR v.correo_cliente ILIKE '%' || $6 || '%'
+               OR v.cedula ILIKE '%' || $6 || '%'
+               OR p.nombre_destinatario ILIKE '%' || $6 || '%'
+               OR EXISTS (SELECT 1
+                            FROM pedidos.agrega a
+                            JOIN catalogo.producto pr ON pr.sku = a.sku
+                           WHERE a.correo_cliente = v.correo_cliente AND a.num_carrito = v.num_carrito
+                             AND (pr.nombre ILIKE '%' || $6 || '%' OR a.sku ILIKE '%' || $6 || '%')))
+        ORDER BY v.fecha_pedido_realizado DESC, v.correo_cliente, v.num_carrito DESC
+        LIMIT $7 OFFSET $8`,
+      [estado, canal, correo, desde, hasta, q, limite, pagina * limite]
+    );
+
+    return {
+      pedidos: rows.map((fila) => ({
+        ...pedidoDeLaVista(fila),
+        productos: fila.lineas,
+        unidades: Number(fila.unidades),
+      })),
+      total: Number(rows[0]?.total ?? 0),
+    };
+  }
+
+  /** El pedido con los datos que solo ve el administrador, o null si no existe. */
+  async obtenerParaAdministracion(correo, numCarrito) {
+    const { rows } = await this.#pool.query(
+      `SELECT v.correo_cliente, v.cliente, v.cedula, v.num_carrito, v.fecha_pedido_realizado,
+              v.modalidad_entrega, v.subtotal, v.impuesto, v.costo_entrega, v.estado,
+              p.canal, p.creado_por, p.nombre_destinatario, p.direccion, p.fecha_entrega,
+              u.nombre AS nombre_creado_por
+         FROM reportes.v_pedidos_por_cliente v
+         JOIN pedidos.pedido p
+           ON p.correo_cliente = v.correo_cliente AND p.num_carrito = v.num_carrito
+         LEFT JOIN usuarios.usuario u ON u.correo = p.creado_por
+        WHERE v.correo_cliente = $1 AND v.num_carrito = $2`,
+      [correo, numCarrito]
+    );
+    const fila = rows[0];
+    if (!fila) return null;
+
+    return {
+      ...pedidoDeLaVista(fila),
+      direccion: fila.direccion,
+      fechaEntrega: fila.fecha_entrega,
+      nombreCreadoPor: fila.nombre_creado_por,
+    };
+  }
+
+  /** Cada estado por el que pasó el pedido, del primero al vigente. */
+  async historialDeEstados(correo, numCarrito) {
+    const { rows } = await this.#pool.query(
+      `SELECT estado, fecha FROM pedidos.historial_estado
+        WHERE correo_cliente = $1 AND num_carrito = $2
+        ORDER BY fecha`,
+      [correo, numCarrito]
+    );
+    return rows.map((fila) => ({ estado: fila.estado, fecha: fila.fecha }));
+  }
+}
+
+function pedidoDeLaVista(fila) {
+  return {
+    correoCliente: fila.correo_cliente,
+    nombreCliente: fila.cliente,
+    cedula: fila.cedula,
+    numCarrito: fila.num_carrito,
+    fecha: fila.fecha_pedido_realizado,
+    estado: fila.estado,
+    canal: fila.canal,
+    creadoPor: fila.creado_por,
+    nombreDestinatario: fila.nombre_destinatario,
+    modalidadEntrega: fila.modalidad_entrega,
+    subtotal: Number(fila.subtotal),
+    impuesto: Number(fila.impuesto),
+    costoEntrega: Number(fila.costo_entrega),
+  };
 }
