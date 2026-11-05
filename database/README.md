@@ -156,7 +156,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 020: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 021: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -186,6 +186,7 @@ database/
 | `018_tarifas_de_envio.sql` | `pedidos` | `TARIFA_ENVIO` (C-24): el monto de cada modalidad de entrega, en 0 hasta que el cliente lo defina (RF-62, RN-16) |
 | `019_emisor_de_facturas.sql` | `facturacion` | `EMISOR` (C-24): razón social, cédula jurídica y dirección del negocio para las facturas, en una sola fila (RF-41, RN-18) |
 | `020_cliente_sin_cuenta.sql` | `usuarios`, `clientes` | Cuenta «Venta sin cuenta» (C-25): los pedidos manuales para alguien sin cuenta van a su nombre, con el nombre real en `nombre_destinatario`; nadie puede entrar con ella |
+| `021_recuperacion_de_contrasena.sql` | `usuarios` | `RECUPERACION` (C-26): el hash del token de cada enlace para recuperar la contraseña, con vencimiento y fecha de uso (RF-54) |
 
 ---
 
