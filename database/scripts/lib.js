@@ -14,6 +14,15 @@ const MIGRATIONS_DIR = path.join(DB_DIR, 'migraciones');
 const SEEDS_DIR = path.join(DB_DIR, 'semillas');
 const TESTS_DIR = path.join(DB_DIR, 'pruebas');
 
+// Datos privados del cliente (en .gitignore): el Excel y las semillas generadas
+// a partir de él. Nunca se cargan con db:seed ni db:reset.
+const CLIENT_DIR = path.join(DB_DIR, 'datos-cliente');
+const CLIENT_SEEDS_DIR = path.join(CLIENT_DIR, 'semillas');
+
+// Administrador de las semillas demo (semillas/demo/01_usuarios.sql): firma
+// los movimientos de inventario de la carga del cliente
+const SEED_ADMIN_EMAIL = 'admin@dchobbies.test';
+
 // Orden de carga de las semillas: primero lo que el sistema necesita para
 // arrancar, después los datos de prueba
 const SEED_GROUPS = ['referencia', 'demo'];
@@ -64,6 +73,9 @@ module.exports = {
   SEEDS_DIR,
   SEED_GROUPS,
   TESTS_DIR,
+  CLIENT_DIR,
+  CLIENT_SEEDS_DIR,
+  SEED_ADMIN_EMAIL,
   config,
   connect,
   sqlFiles,

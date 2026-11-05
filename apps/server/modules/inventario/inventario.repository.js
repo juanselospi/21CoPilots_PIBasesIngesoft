@@ -76,7 +76,7 @@ export class InventarioRepository {
     { sku, cantidad, tipo, correoAdministrador = null, costoUnitario = null, motivo = null }
   ) {
     const { rows: [producto] } = await cliente.query(
-      `UPDATE catalogo.producto SET stock = stock + $2 WHERE sku = $1 RETURNING stock`,
+      `UPDATE catalogo.producto SET stock = stock + $2 WHERE sku = $1 RETURNING stock, estado`,
       [sku, cantidad]
     );
     const { rows: [movimiento] } = await cliente.query(
@@ -86,7 +86,17 @@ export class InventarioRepository {
        RETURNING fecha`,
       [sku, correoAdministrador, cantidad, tipo, costoUnitario, motivo]
     );
-    return { sku, cantidad, tipo, costoUnitario, motivo, fecha: movimiento.fecha, existenciasResultantes: producto.stock };
+    return {
+      sku,
+      cantidad,
+      tipo,
+      costoUnitario,
+      motivo,
+      fecha: movimiento.fecha,
+      existenciasResultantes: producto.stock,
+      // La alerta de existencias bajas no avisa de un producto descontinuado
+      estadoDelProducto: producto.estado,
+    };
   }
 
   /** RF-14: el costo de la última compra pasa a ser el costo del producto; el anterior queda en el historial. */

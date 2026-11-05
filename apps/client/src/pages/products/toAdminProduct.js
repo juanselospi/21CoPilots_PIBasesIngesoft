@@ -16,9 +16,10 @@ const serverFieldByModalField = {
     margenPct: 'margenGanancia',
 }
 
-// Texto de cada etiqueta que calcula el servidor
+// Texto de cada etiqueta que calcula el servidor. «Admite contrapedido» es la
+// configuración del producto, no su disponibilidad: con stock se vende de lo que hay.
 const labelByEtiqueta = {
-    contrapedido: 'Por contrapedido',
+    contrapedido: 'Admite contrapedido',
     margen_negativo: 'Margen negativo',
     existencias_bajas: 'Existencias bajas',
     oculto_en_tienda: 'Oculto en la tienda',

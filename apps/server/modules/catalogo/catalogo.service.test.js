@@ -220,6 +220,12 @@ test("etiqueta 'existencias_bajas' en el umbral o por debajo", () => {
   assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, existencias: 3 }, 5), ["existencias_bajas"]);
 });
 
+test("un producto descontinuado no lleva 'existencias_bajas' aunque tenga poco stock", () => {
+  const descontinuado = { ...sinEtiquetas, existencias: 0, disponibilidad: "descontinuado" };
+
+  assert.deepEqual(calcularEtiquetas(descontinuado, 2), ["oculto_en_tienda", "descontinuado"]);
+});
+
 test("RN-03: etiqueta 'oculto_en_tienda' si el producto no está disponible", () => {
   const oculto = { ...sinEtiquetas, existencias: 0, disponibilidad: "no_disponible" };
 
@@ -310,7 +316,8 @@ test("el término, la categoría y el proveedor se le piden al repositorio", asy
 
 test("filtra por cada estado de disponibilidad", async () => {
   assert.deepEqual(await skusDelPanel({ disponibilidad: "en_existencia" }), ["ALF-001", "MIK-001", "ZEL-001"]);
-  assert.deepEqual(await skusDelPanel({ disponibilidad: "por_contrapedido" }), ["BOO-001"]);
+  // Por contrapedido: todos los que lo admiten, en 0 (BOO) o con stock (MIK)
+  assert.deepEqual(await skusDelPanel({ disponibilidad: "por_contrapedido" }), ["BOO-001", "MIK-001"]);
   assert.deepEqual(await skusDelPanel({ disponibilidad: "no_disponible" }), ["FUN-001"]);
 });
 
@@ -621,6 +628,17 @@ test("en el panel sale con disponibilidad y etiqueta descontinuado, y se puede f
   assert.deepEqual(productos.map((p) => p.sku), ["PKM-001"]);
   assert.equal(productos[0].disponibilidad, "descontinuado");
   assert.deepEqual(productos[0].etiquetas, ["oculto_en_tienda", "descontinuado"]);
+});
+
+test("RF-18: sin filtro de disponibilidad el panel no lista los descontinuados", async () => {
+  const descontinuado = { ...producto("PKM-001", "Trading Cards", 5), estado: "descontinuado" };
+  const repositorio = { listarParaAdministracion: async () => [descontinuado, producto("LEG-001", "Legos", 5)] };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos, total } = await servicio.listarParaAdministracion({ limite: 24 });
+
+  assert.deepEqual(productos.map((p) => p.sku), ["LEG-001"]);
+  assert.equal(total, 1);
 });
 
 test("reactivar devuelve el producto a la tienda y publica el cambio para la bitácora", async () => {

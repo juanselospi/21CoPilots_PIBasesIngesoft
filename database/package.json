@@ -13,6 +13,8 @@
     "db:seed": "node scripts/seed.js",
     "db:reset": "node scripts/reset.js",
     "db:cliente": "node scripts/cargar-cliente.js",
+    "db:seed:cliente": "node scripts/seed-cliente.js",
+    "db:generar-semillas-cliente": "node scripts/generar-semillas-cliente.mjs",
     "db:test": "node scripts/probar.js",
     "db:psql": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"'",
     "db:dump": "node scripts/dump.js",

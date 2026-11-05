@@ -18,7 +18,8 @@ export const filterParams = (filters) => ({
 // Estados de disponibilidad de un producto
 export const availabilityOptions = [
     { value: 'en_existencia', label: 'En existencia' },
-    { value: 'por_contrapedido', label: 'Por contrapedido' },
+    // En el panel trae todos los que admiten contrapedido, tengan stock o no
+    { value: 'por_contrapedido', label: 'Admite contrapedido' },
     { value: 'no_disponible', label: 'No disponible (oculto en la tienda)' },
     { value: 'descontinuado', label: 'Descontinuado' },
 ]

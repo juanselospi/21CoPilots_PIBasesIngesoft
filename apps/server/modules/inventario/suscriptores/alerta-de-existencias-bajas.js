@@ -16,6 +16,8 @@ export function registrarAlertaDeExistenciasBajas(busDeEventos, { umbral }) {
   return busDeEventos.suscribir(
     EVENTOS.MOVIMIENTO_REGISTRADO,
     async (movimiento) => {
+      // Uno descontinuado no se va a reponer, así que no avisa (igual que GET /alertas)
+      if (movimiento.estadoDelProducto === "descontinuado") return;
       if (!cruzaElUmbral(movimiento, umbral)) return;
 
       await busDeEventos.publicar(EVENTOS.EXISTENCIAS_BAJAS, {
