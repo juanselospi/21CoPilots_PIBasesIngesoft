@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
 import { readStockInput } from '../../components/product-form/stockInput.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
+import Notice from '../../components/notice/Notice.jsx'
 import { adjustmentModes, signedUnitsText, unitsText } from './merchandiseFormat.js'
 
 // «Dejar en» acepta 0 (se acabó todo); sumar y restar piden al menos una unidad
@@ -146,9 +147,9 @@ function AdjustmentForm({ product, onRegister, onPreview }) {
 
             {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
             {registered && (
-                <p className='product-form-success' role='status'>
+                <Notice onClose={() => setRegistered(null)}>
                     Ajuste registrado: {signedUnitsText(registered.cantidad)}. Quedan {unitsText(registered.existencias)}.
-                </p>
+                </Notice>
             )}
 
             <button type='submit' className='products-button products-button-primary' disabled={saving}>

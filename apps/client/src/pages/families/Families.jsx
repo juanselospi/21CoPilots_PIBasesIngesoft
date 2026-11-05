@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { CircleCheck, EyeOff, Pencil, Plus, Power, PowerOff, Trash2 } from 'lucide-react'
 // Mismo aspecto que la página de productos y su vista de tabla
 import '../products/Products.css'
@@ -6,6 +6,7 @@ import '../../components/product-table/ProductTable.css'
 import './Families.css'
 import FamilyForm from '../../components/family-form/FamilyForm.jsx'
 import ConfirmDialog from '../../components/confirm-dialog/ConfirmDialog.jsx'
+import Notice from '../../components/notice/Notice.jsx'
 import { actualizarFamilia, crearFamilia, eliminarFamilia } from '../../api/catalogo.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
 import { familyErrorFields, productCountText, toAdminFamily, toServerFamily } from './toAdminFamily.js'
@@ -32,7 +33,7 @@ const dialogByAction = {
     }),
 }
 
-// Mensaje que queda arriba de la tabla después de cada acción
+// Aviso que aparece arriba de la tabla después de cada acción
 const noticeByAction = {
     desactivar: (name) => `Se desactivó la familia ${name}.`,
     reactivar: (name) => `Se reactivó la familia ${name}.`,
@@ -55,7 +56,12 @@ function Families() {
     const [form, setForm] = useState(null)
     // Acción esperando confirmación: { action, family }
     const [pending, setPending] = useState(null)
+    // Aviso de éxito: { id, text }; cada uno lleva su id para arrancar con su propio tiempo
     const [notice, setNotice] = useState(null)
+    const noticeId = useRef(0)
+    const showNotice = (text) => setNotice({ id: ++noticeId.current, text })
+    // Solo lo quita si sigue siendo el mismo: uno viejo no cierra a uno nuevo
+    const closeNotice = (id) => setNotice((current) => (current?.id === id ? null : current))
     const [view, setView] = useState('activas')
     const currentView = views.find(({ key }) => key === view)
     const shown = families.filter(currentView.matches)
@@ -68,7 +74,7 @@ function Families() {
                 ? await actualizarFamilia(form.family.name, toServerFamily(values))
                 : await crearFamilia(toServerFamily(values))
             setForm(null)
-            setNotice(`Se guardó la familia ${guardada.nombre}.`)
+            showNotice(`Se guardó la familia ${guardada.nombre}.`)
             familias.recargar()
             return {}
         } catch (error) {
@@ -82,7 +88,7 @@ function Families() {
         if (action === 'eliminar') await eliminarFamilia(family.name)
         else await actualizarFamilia(family.name, { activa: action === 'reactivar' })
         setPending(null)
-        setNotice(noticeByAction[action](family.name))
+        showNotice(noticeByAction[action](family.name))
         familias.recargar()
     }
 
@@ -112,7 +118,11 @@ function Families() {
                 cuando cambia su familia.
             </p>
 
-            {notice && <p className='families-notice' role='status'>{notice}</p>}
+            {notice && (
+                <Notice key={notice.id} onClose={() => closeNotice(notice.id)}>
+                    {notice.text}
+                </Notice>
+            )}
 
             {families.length > 0 && (
                 <div className='products-view-toggle families-toggle' role='tablist' aria-label='Estado de las familias'>

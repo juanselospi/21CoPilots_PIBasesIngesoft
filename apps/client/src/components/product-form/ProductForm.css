@@ -16,6 +16,8 @@
 
 /* Tarjeta del modal */
 .product-form-modal {
+  /* Notice.jsx cierra también este gap al irse un aviso */
+  --notice-gap: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;

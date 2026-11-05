@@ -4,6 +4,7 @@ import { readPriceInput } from '../../components/product-form/priceFields.js'
 import { readStockInput } from '../../components/product-form/stockInput.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
+import Notice from '../../components/notice/Notice.jsx'
 import { unitsText } from './merchandiseFormat.js'
 
 const rules = {
@@ -112,10 +113,10 @@ function RestockForm({ product, onRegister, onPreview }) {
 
             {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
             {registered && (
-                <p className='product-form-success' role='status'>
+                <Notice onClose={() => setRegistered(null)}>
                     Ingreso registrado: {unitsText(registered.cantidad)} a {priceFormat.format(registered.costoUnitario)} cada una.
                     {' '}Quedan {unitsText(registered.existencias)}.
-                </p>
+                </Notice>
             )}
 
             <button type='submit' className='products-button products-button-primary' disabled={saving}>

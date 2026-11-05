@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import './ProductForm.css'
 import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
+import Notice from '../notice/Notice.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 
 // Datos generales; el código no se puede cambiar
@@ -56,6 +57,8 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
     const [justSaved, setJustSaved] = useState(false)
+    // El aviso «Producto actualizado» se va solo; justSaved sigue cambiando el botón a «Cerrar»
+    const [savedNotice, setSavedNotice] = useState(false)
 
     // Familias activas; la actual se muestra aunque esté desactivada o la lista no haya cargado
     const familyOptions = families.some(({ name }) => name === saved.category)
@@ -97,6 +100,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
         cambiarCampo(key, value)
         setSaveError(null)
         setJustSaved(false)
+        setSavedNotice(false)
     }
 
     const handlePriceChange = (key, allowNegative, input) => {
@@ -133,6 +137,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
             setInherited(inheritedOf(result.product))
             reiniciar(valuesOf(result.product))
             setJustSaved(true)
+            setSavedNotice(true)
         }
     }
 
@@ -298,7 +303,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
                 />
 
                 {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
-                {justSaved && <p className='product-form-success' role='status'>Producto actualizado.</p>}
+                {savedNotice && <Notice onClose={() => setSavedNotice(false)}>Producto actualizado.</Notice>}
 
                 <footer className='product-form-actions'>
                     <button type='button' className='product-form-button' disabled={saving} onClick={close}>
