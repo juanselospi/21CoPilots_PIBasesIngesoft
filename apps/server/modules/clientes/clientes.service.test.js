@@ -89,6 +89,11 @@ function crearServicioConCuenta() {
   const repositorio = {
     obtenerPorCorreo: async (correo) => (correo === cuenta.correo ? { ...cuenta } : null),
     actualizarContacto: async (_correo, cambios) => Object.assign(cuenta, cambios),
+    saldoDeCredito: async () => ({ otorgado: 30, usado: 12.5, saldo: 17.5 }),
+    movimientosDeCredito: async () => [
+      { tipo: "usado", fecha: new Date("2026-11-04T16:00:00Z"), monto: 12.5, motivo: null, numCarrito: 9 },
+      { tipo: "otorgado", fecha: new Date("2026-11-03T16:00:00Z"), monto: 30, motivo: "Se quitaron 2 de LEG-001 del pedido 7", numCarrito: 7 },
+    ],
   };
   return { servicio: new ClientesService({ repositorio }), cuenta };
 }
@@ -100,7 +105,20 @@ test("RF-37: devuelve los datos de la cuenta del cliente", async () => {
 
   assert.equal(cuenta.direccion, "San Pedro");
   assert.deepEqual(cuenta.telefonos, ["8888-0001"]);
+  assert.equal(cuenta.saldoCredito, 17.5);
   await assert.rejects(servicio.obtenerMiCuenta("nadie@correo.test"), RecursoNoEncontrado);
+});
+
+test("el cliente ve su saldo a favor con lo que le otorgaron y lo que usó", async () => {
+  const { servicio } = crearServicioConCuenta();
+
+  const creditos = await servicio.obtenerMisCreditos("cliente@correo.test");
+
+  assert.equal(creditos.saldo, 17.5);
+  assert.deepEqual(creditos.movimientos.map(({ tipo, monto }) => [tipo, monto]), [
+    ["usado", 12.5],
+    ["otorgado", 30],
+  ]);
 });
 
 test("cambiar la dirección se ve en la siguiente consulta", async () => {

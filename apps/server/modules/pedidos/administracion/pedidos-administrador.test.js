@@ -100,6 +100,7 @@ test("el detalle junta cliente, líneas con el precio pagado, pagos, factura e h
     },
     clientes: {
       datosDeContacto: async () => ({ nombre: "Ana Mora", cedula: "1-1111-1111", telefonos: ["8888-8888"] }),
+      creditoOtorgadoPorPedido: async () => 0,
     },
     pagos: {
       listarPorPedido: async () => [

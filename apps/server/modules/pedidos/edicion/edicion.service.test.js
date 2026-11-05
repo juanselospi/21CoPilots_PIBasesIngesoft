@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import express from "express";
 
 import { EdicionDePedidosService } from "./edicion.service.js";
+import { CreditosDePedidos } from "../creditos/creditos-de-pedidos.js";
 import { PedidosController } from "../pedidos.controller.js";
 import { crearRutasDePedidos } from "../pedidos.routes.js";
 import { crearExigirRol, ROLES } from "../../../shared/http/autorizacion-por-rol.js";
@@ -23,7 +24,7 @@ const COMO_ADMIN = { responsable: ADMIN };
 // Escenario: el pedido 7 de Ana tiene 2 LEG-001 a 100 y 4 BOO-001 a 10, de
 // los que solo salió 1 (el resto quedó en contrapedido). La "base" solo
 // guarda los cambios si la transacción termina bien.
-function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock } = {}) {
+function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock, cobrado = 0 } = {}) {
   const estado = {
     lineas: {
       "BOO-001": { sku: "BOO-001", cantidad: 4, precioUnitario: 10, tasaImpuesto: 13 },
@@ -34,6 +35,7 @@ function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock } 
       { sku: "BOO-001", cantidad: -1, motivo: MOTIVO },
       { sku: "LEG-001", cantidad: -2, motivo: MOTIVO },
     ],
+    creditos: [],
   };
   const eventos = [];
   const producto = (sku, precioSinImpuesto, { contrapedido = false, aLaVenta = true } = {}) => ({
@@ -91,11 +93,19 @@ function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock } 
     },
     publicarMovimientos: async (movimientos) => movimientos.forEach((m) => eventos.push(["movimiento", m.sku])),
   };
+  const creditos = new CreditosDePedidos({
+    pagos: { montoAprobado: async () => cobrado },
+    clientes: {
+      creditoOtorgadoPorPedido: async () => estado.creditos.reduce((suma, c) => suma + c.monto, 0),
+      otorgarCreditoEnTransaccion: async (_c, credito) => estado.creditos.push(credito),
+    },
+  });
   const servicio = new EdicionDePedidosService({
     repositorio,
     inventario,
     productosParaVenta: async (skus) => new Map(skus.filter((sku) => catalogo[sku]).map((sku) => [sku, catalogo[sku]])),
     busDeEventos: { publicar: async (evento, datos) => eventos.push([evento, datos]) },
+    creditos,
   });
   // Los movimientos que hizo la edición, sin los de la compra
   const nuevos = () => estado.movimientos.slice(2).map((m) => [m.sku, m.cantidad, m.tipo]);
@@ -210,6 +220,32 @@ test("cada cambio queda en la bitácora con la línea anterior y la nueva", asyn
     valorNuevo: { sku: "PKM-001", cantidad: 2, precioUnitario: 100 },
   });
   assert.ok(estado.movimientos.slice(2).every((m) => m.correoAdministrador === ADMIN && m.motivo === MOTIVO));
+});
+
+test("en un pedido pagado, lo que se quita queda como crédito con impuesto", async () => {
+  const { servicio, estado, eventos } = crearEscenario({ cobrado: 274.7 });
+
+  await servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
+  await servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 3 }, COMO_ADMIN);
+
+  // 2 × 113 y 1 × 11,30
+  assert.deepEqual(estado.creditos, [
+    { correo: ANA, numCarrito: 7, monto: 226, motivo: "Se quitaron 2 de LEG-001 del pedido 7" },
+    { correo: ANA, numCarrito: 7, monto: 11.3, motivo: "Se quitó 1 de BOO-001 del pedido 7" },
+  ]);
+  const quitada = eventos.find(([nombre]) => nombre === EVENTOS.PEDIDO_MODIFICADO)[1];
+  assert.deepEqual(quitada.valorNuevo, { creditoOtorgado: 226 });
+});
+
+test("nunca se acredita más de lo cobrado ni hay crédito si el pedido no se pagó", async () => {
+  const pagadoAMedias = crearEscenario({ cobrado: 100 });
+  await pagadoAMedias.servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
+  await pagadoAMedias.servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 1 }, COMO_ADMIN);
+  assert.deepEqual(pagadoAMedias.estado.creditos.map((c) => c.monto), [100]);
+
+  const sinPagar = crearEscenario();
+  await sinPagar.servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
+  assert.deepEqual(sinPagar.estado.creditos, []);
 });
 
 test("editar las líneas es solo del administrador y responde el pedido actualizado", async (t) => {

@@ -9,6 +9,7 @@ import { crearExigirRol, ROLES } from "../../../shared/http/autorizacion-por-rol
 import { manejadorDeErrores } from "../../../shared/http/manejador-de-errores.js";
 import { RecursoNoEncontrado, ReglaDeNegocioViolada } from "../../../shared/errores/errores-de-dominio.js";
 import { EVENTOS } from "../../../shared/eventos/eventos-de-dominio.js";
+import { CreditosDePedidos } from "../creditos/creditos-de-pedidos.js";
 
 const ANA = "ana@correo.test";
 const ADMIN = "admin@dchobbies.test";
@@ -17,7 +18,7 @@ const MOTIVO = `Pedido ${ANA}/7`;
 // Escenario: el pedido 7 de Ana pidió 2 LEG-001 y 4 BOO-001, pero de
 // BOO-001 solo salió 1 (el resto quedó en contrapedido). La "base" solo
 // guarda los cambios si la transacción termina bien.
-function crearEscenario({ historial = ["colocado"] } = {}) {
+function crearEscenario({ historial = ["colocado"], cobrado = 0, yaAcreditado = 0 } = {}) {
   const estado = {
     historial: historial.map((e, i) => ({ estado: e, fecha: new Date(Date.UTC(2026, 10, 3, i)) })),
     stock: { "LEG-001": 1, "BOO-001": 0 },
@@ -26,6 +27,7 @@ function crearEscenario({ historial = ["colocado"] } = {}) {
       { sku: "LEG-001", cantidad: -2, motivo: MOTIVO },
       { sku: "LEG-001", cantidad: -5, motivo: "Pedido otra@correo.test/1" },
     ],
+    creditos: yaAcreditado > 0 ? [{ monto: yaAcreditado }] : [],
   };
   const eventos = [];
 
@@ -67,7 +69,14 @@ function crearEscenario({ historial = ["colocado"] } = {}) {
     repositorio,
     inventario,
     busDeEventos: { publicar: async (evento, datos) => eventos.push([evento, datos]) },
-    clientes: { datosDeContacto: async () => null },
+    clientes: { datosDeContacto: async () => null, creditoOtorgadoPorPedido: async () => 0 },
+    creditos: new CreditosDePedidos({
+      pagos: { montoAprobado: async () => cobrado },
+      clientes: {
+        creditoOtorgadoPorPedido: async () => estado.creditos.reduce((suma, c) => suma + c.monto, 0),
+        otorgarCreditoEnTransaccion: async (_c, credito) => estado.creditos.push(credito),
+      },
+    }),
     pagos: { listarPorPedido: async () => [] },
     facturas: { buscarPorPedido: async () => null },
     productosParaVenta: async () => new Map(),
@@ -117,7 +126,22 @@ test("RF-28: cancelar devuelve lo que salió del inventario y no lo que quedó e
       { sku: "BOO-001", cantidad: 1 },
       { sku: "LEG-001", cantidad: 2 },
     ],
+    creditoOtorgado: 0,
   });
+});
+
+test("cancelar un pedido pagado deja a favor lo cobrado que no se había acreditado", async () => {
+  const { servicio, estado, eventos } = crearEscenario({ cobrado: 274.7, yaAcreditado: 20 });
+
+  await cambiar(servicio, "cancelado");
+
+  assert.deepEqual(estado.creditos.at(-1), {
+    correo: ANA,
+    numCarrito: 7,
+    monto: 254.7,
+    motivo: "Cancelación del pedido 7",
+  });
+  assert.equal(eventos.find(([nombre]) => nombre === EVENTOS.PEDIDO_CANCELADO)[1].valorNuevo.creditoOtorgado, 254.7);
 });
 
 test("RN-15: un pedido en tránsito ya no se cancela y nada cambia", async () => {

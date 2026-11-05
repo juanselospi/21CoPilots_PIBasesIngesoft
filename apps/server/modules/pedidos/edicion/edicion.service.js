@@ -8,6 +8,9 @@
  *
  * Solo se mueven las unidades que de verdad salieron: si una línea tenía
  * contrapedido, al reducirla primero se descuenta lo que faltaba por llegar.
+ *
+ * Si el pedido ya estaba pagado, lo que se quita queda como crédito a favor
+ * del cliente: nunca se devuelve dinero.
  */
 
 import {
@@ -27,12 +30,14 @@ export class EdicionDePedidosService {
   #inventario;
   #productosParaVenta;
   #busDeEventos;
+  #creditos;
 
-  constructor({ repositorio, inventario, productosParaVenta, busDeEventos }) {
+  constructor({ repositorio, inventario, productosParaVenta, busDeEventos, creditos }) {
     this.#repositorio = repositorio;
     this.#inventario = inventario;
     this.#productosParaVenta = productosParaVenta;
     this.#busDeEventos = busDeEventos;
+    this.#creditos = creditos;
   }
 
   /** PATCH: cambia la cantidad; sube o baja el inventario por la diferencia. */
@@ -49,7 +54,8 @@ export class EdicionDePedidosService {
       }
       const nueva = { ...linea, cantidad };
       await pedido.guardar(nueva);
-      return { anterior: linea, nueva };
+      const credito = cantidad < linea.cantidad ? await pedido.acreditarLoQuitado(linea, linea.cantidad - cantidad) : 0;
+      return { anterior: linea, nueva, credito };
     });
   }
 
@@ -62,7 +68,8 @@ export class EdicionDePedidosService {
       }
       await pedido.devolver(sku, pedido.salieron(sku));
       await pedido.quitar(sku);
-      return { anterior: linea, nueva: null };
+      const credito = await pedido.acreditarLoQuitado(linea, linea.cantidad);
+      return { anterior: linea, nueva: null, credito };
     });
   }
 
@@ -118,7 +125,7 @@ export class EdicionDePedidosService {
   async #editar(correo, numCarrito, responsable, skus, cambio) {
     const motivo = motivoDelPedido(correo, numCarrito);
 
-    const { anterior, nueva, movimientos } = await this.#repositorio.enTransaccion(async (cliente) => {
+    const { anterior, nueva, credito = 0, movimientos } = await this.#repositorio.enTransaccion(async (cliente) => {
       const bloqueado = await this.#repositorio.bloquearPedido(cliente, correo, numCarrito);
       if (!bloqueado) throw new RecursoNoEncontrado("el pedido", idDelPedido(correo, numCarrito));
 
@@ -180,6 +187,13 @@ export class EdicionDePedidosService {
           const salen = Math.min(unidades, Number(disponibles));
           if (salen > 0) await mover(sku, -salen, tipoDeSalida);
         },
+        acreditarLoQuitado: (linea, unidades) =>
+          this.#creditos.otorgar(cliente, {
+            correo,
+            numCarrito,
+            monto: precioConImpuesto(linea) * unidades,
+            motivo: `${unidades === 1 ? "Se quitó" : "Se quitaron"} ${unidades} de ${linea.sku} del pedido ${numCarrito}`,
+          }),
         guardar: (linea) => this.#repositorio.guardarLinea(correo, numCarrito, linea, cliente),
         quitar: (sku) => this.#repositorio.quitarLinea(correo, numCarrito, sku, cliente),
       };
@@ -193,13 +207,20 @@ export class EdicionDePedidosService {
       entidad: "pedido",
       entidadId: idDelPedido(correo, numCarrito),
       valorAnterior: anterior && aValorDeBitacora(anterior),
-      valorNuevo: nueva && aValorDeBitacora(nueva),
+      valorNuevo: valorNuevoDeBitacora(nueva, credito),
     });
-    return { anterior, nueva, movimientos };
+    return { anterior, nueva, credito, movimientos };
   }
 }
 
 const aValorDeBitacora = ({ sku, cantidad, precioUnitario }) => ({ sku, cantidad, precioUnitario });
+
+// Una línea quitada no tiene valor nuevo, pero el crédito sí se anota
+function valorNuevoDeBitacora(nueva, credito) {
+  const valor = nueva ? aValorDeBitacora(nueva) : null;
+  if (credito <= 0) return valor;
+  return { ...valor, creditoOtorgado: credito };
+}
 
 // Lo que el cliente pagó por unidad, con impuesto
 const precioConImpuesto = ({ precioUnitario, tasaImpuesto }) =>

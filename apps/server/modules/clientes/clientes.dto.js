@@ -26,4 +26,21 @@ export const aClientePropio = (cliente) => ({
   telefonos: cliente.telefonos,
   numeroDeCompras: cliente.numeroDeCompras,
   fechaAceptacionTerminos: cliente.fechaAceptacionTerminos,
+  saldoCredito: cliente.saldoCredito ?? 0,
+  moneda: "USD",
+});
+
+/** El saldo a favor y de dónde salió. */
+export const aMisCreditos = (creditos) => ({
+  saldo: creditos.saldo,
+  otorgado: creditos.otorgado,
+  usado: creditos.usado,
+  moneda: "USD",
+  movimientos: creditos.movimientos.map((movimiento) => ({
+    tipo: movimiento.tipo,
+    fecha: movimiento.fecha,
+    monto: movimiento.monto,
+    motivo: movimiento.motivo,
+    numCarrito: movimiento.numCarrito,
+  })),
 });

@@ -132,6 +132,8 @@ export const aPedidoAdministrativo = (pedido) => ({
     subtotal: linea.subtotal,
   })),
   pagos: pedido.pagos.map(aPago),
+  // Lo que se le acreditó al cliente por cambios a este pedido ya pagado
+  creditoOtorgado: pedido.creditoOtorgado ?? 0,
   factura: pedido.factura && {
     numFactura: pedido.factura.numFactura,
     fecha: pedido.factura.fecha,

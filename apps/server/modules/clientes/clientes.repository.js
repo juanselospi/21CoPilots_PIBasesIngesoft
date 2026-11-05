@@ -113,6 +113,56 @@ export class ClientesRepository {
     });
   }
 
+  /** Un crédito a favor por algo que se quitó de un pedido pagado. */
+  async registrarCredito(cliente, { correo, numCarrito, monto, motivo }) {
+    await cliente.query(
+      `INSERT INTO clientes.credito (correo_cliente, monto, motivo, num_carrito_pedido) VALUES ($1, $2, $3, $4)`,
+      [correo, monto, motivo, numCarrito]
+    );
+  }
+
+  async creditoOtorgadoPorPedido(correo, numCarrito, cliente = this.#pool) {
+    const { rows } = await cliente.query(
+      `SELECT coalesce(sum(monto), 0) AS monto
+         FROM clientes.credito
+        WHERE correo_cliente = $1 AND num_carrito_pedido = $2`,
+      [correo, numCarrito]
+    );
+    return Number(rows[0].monto);
+  }
+
+  /** Lo otorgado, lo usado y el saldo; en 0 si nunca tuvo crédito. */
+  async saldoDeCredito(correo) {
+    const { rows } = await this.#pool.query(
+      `SELECT otorgado, usado, saldo FROM reportes.v_saldo_credito WHERE correo_cliente = $1`,
+      [correo]
+    );
+    const fila = rows[0] ?? { otorgado: 0, usado: 0, saldo: 0 };
+    return { otorgado: Number(fila.otorgado), usado: Number(fila.usado), saldo: Number(fila.saldo) };
+  }
+
+  /** Cada crédito otorgado y cada pago hecho con crédito, lo más nuevo primero. */
+  async movimientosDeCredito(correo) {
+    const { rows } = await this.#pool.query(
+      `SELECT 'otorgado' AS tipo, fecha, monto, motivo, num_carrito_pedido AS num_carrito
+         FROM clientes.credito
+        WHERE correo_cliente = $1
+       UNION ALL
+       SELECT 'usado', fecha, monto, NULL, num_carrito
+         FROM pagos.pago
+        WHERE correo_cliente = $1 AND metodo_pago = 'credito' AND estado_pago <> 'rechazado'
+        ORDER BY fecha DESC`,
+      [correo]
+    );
+    return rows.map((fila) => ({
+      tipo: fila.tipo,
+      fecha: fila.fecha,
+      monto: Number(fila.monto),
+      motivo: fila.motivo,
+      numCarrito: fila.num_carrito,
+    }));
+  }
+
   /** RF-34: una compra más; es el insumo del nivel de fidelidad (RN-08). */
   async incrementarCompras(cliente, correo) {
     await cliente.query(`UPDATE clientes.cliente SET num_compras = num_compras + 1 WHERE correo_usuario = $1`, [

@@ -11,7 +11,7 @@
  */
 
 import { escribirCookieDeSesion } from "../../shared/http/autenticacion.js";
-import { aClientePropio, aUsuarioRegistrado } from "./clientes.dto.js";
+import { aClientePropio, aMisCreditos, aUsuarioRegistrado } from "./clientes.dto.js";
 
 export class ClientesController {
   #servicio;
@@ -34,6 +34,11 @@ export class ClientesController {
   verMiCuenta = async (peticion, respuesta) => {
     const cliente = await this.#servicio.obtenerMiCuenta(peticion.usuario.correo);
     respuesta.json({ datos: aClientePropio(cliente) });
+  };
+
+  // GET /me/creditos
+  verMisCreditos = async (peticion, respuesta) => {
+    respuesta.json({ datos: aMisCreditos(await this.#servicio.obtenerMisCreditos(peticion.usuario.correo)) });
   };
 
   // PATCH /me con { direccion?, telefonos? }
