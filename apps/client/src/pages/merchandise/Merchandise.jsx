@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { Info, PackagePlus, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react'
+import { ChevronDown, Info, PackagePlus, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react'
 // Mismo aspecto que la página de productos, su tabla y sus formularios
 import '../products/Products.css'
 import '../../components/product-table/ProductTable.css'
@@ -199,23 +199,24 @@ function Merchandise() {
                                 type='button'
                                 className='products-button'
                                 aria-expanded={showFilters}
+                                aria-controls='merchandise-filters'
                                 onClick={() => setShowFilters(!showFilters)}
                             >
                                 <SlidersHorizontal size={18} />
                                 Filtros{filterTags.length > 0 && ` (${filterTags.length})`}
+                                <ChevronDown size={16} className='products-button-chevron' aria-hidden='true' />
                             </button>
                         </div>
 
-                        {/* El mismo panel de filtros de Productos; key: si cambian los aplicados, arranca con ellos */}
-                        {showFilters && (
-                            <ProductFilters
-                                key={JSON.stringify(filters)}
-                                filters={filters}
-                                categories={familyNames}
-                                onApply={applyFilters}
-                                onClose={() => setShowFilters(false)}
-                            />
-                        )}
+                        {/* El mismo panel de filtros de Productos, siempre montado para animar la apertura y el cierre */}
+                        <ProductFilters
+                            id='merchandise-filters'
+                            open={showFilters}
+                            filters={filters}
+                            categories={familyNames}
+                            onApply={applyFilters}
+                            onClose={() => setShowFilters(false)}
+                        />
 
                         {filterTags.length > 0 && (
                             <div className='products-active-filters'>

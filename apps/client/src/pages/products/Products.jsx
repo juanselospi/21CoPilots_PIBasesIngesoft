@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-    Archive, ArchiveRestore, ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
+    Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
 } from 'lucide-react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
@@ -209,10 +209,12 @@ function Products() {
                     type='button'
                     className='products-button'
                     aria-expanded={showFilters}
+                    aria-controls='products-filters'
                     onClick={() => setShowFilters(!showFilters)}
                 >
                     <SlidersHorizontal size={20} />
                     Filtros{filterTags.length > 0 && ` (${filterTags.length})`}
+                    <ChevronDown size={16} className='products-button-chevron' aria-hidden='true' />
                 </button>
 
                 <div className='products-view-toggle'>
@@ -243,16 +245,15 @@ function Products() {
                 </select>
             </section>
 
-            {/* key: si cambian los filtros aplicados, el panel arranca de nuevo con ellos */}
-            {showFilters && (
-                <ProductFilters
-                    key={JSON.stringify(filters)}
-                    filters={filters}
-                    categories={categoryNames}
-                    onApply={applyFilters}
-                    onClose={() => setShowFilters(false)}
-                />
-            )}
+            {/* Siempre montado para animar la apertura y el cierre; se despliega con `open` */}
+            <ProductFilters
+                id='products-filters'
+                open={showFilters}
+                filters={filters}
+                categories={categoryNames}
+                onApply={applyFilters}
+                onClose={() => setShowFilters(false)}
+            />
 
             {filterTags.length > 0 && (
                 <section className='products-active-filters'>
