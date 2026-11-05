@@ -141,6 +141,18 @@ export class ClientesRepository {
     return { otorgado: Number(fila.otorgado), usado: Number(fila.usado), saldo: Number(fila.saldo) };
   }
 
+  /**
+   * El saldo con la fila del cliente bloqueada, igual que el trigger que lo
+   * revisa al pagar, para que dos compras a la vez no gasten el mismo saldo.
+   */
+  async bloquearSaldoDeCredito(cliente, correo) {
+    await cliente.query(`SELECT 1 FROM clientes.cliente WHERE correo_usuario = $1 FOR UPDATE`, [correo]);
+    const { rows } = await cliente.query(`SELECT saldo FROM reportes.v_saldo_credito WHERE correo_cliente = $1`, [
+      correo,
+    ]);
+    return Number(rows[0]?.saldo ?? 0);
+  }
+
   /** Cada crédito otorgado y cada pago hecho con crédito, lo más nuevo primero. */
   async movimientosDeCredito(correo) {
     const { rows } = await this.#pool.query(

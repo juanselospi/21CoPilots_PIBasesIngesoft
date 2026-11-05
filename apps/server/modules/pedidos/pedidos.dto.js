@@ -55,6 +55,7 @@ export const aPedidoConfirmado = (pedido) => ({
   costoEntrega: pedido.costoEntrega,
   total: pedido.total,
   moneda: "USD",
+  creditoUsado: pedido.creditoUsado ?? 0,
   pago: pedido.pago,
   factura: pedido.factura ?? null,
 });
