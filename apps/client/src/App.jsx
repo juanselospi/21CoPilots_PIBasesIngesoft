@@ -11,6 +11,7 @@ import ProductDetail from './pages/product-detail/ProductDetail.jsx'
 import MyAccount from './pages/my-account/MyAccount.jsx'
 import Products from './pages/products/Products.jsx'
 import Families from './pages/families/Families.jsx'
+import Merchandise from './pages/merchandise/Merchandise.jsx'
 import Access from './pages/access/Access.jsx'
 import ForgotPassword from './pages/access/ForgotPassword.jsx'
 import ResetPassword from './pages/access/ResetPassword.jsx'
@@ -38,6 +39,7 @@ function App() {
             <Route path='/admin' element={<AdminRoute />}>
               <Route path='productos' element={<Products />} />
               <Route path='familias' element={<Families />} />
+              <Route path='mercancia' element={<Merchandise />} />
             </Route>
           </Routes>
         </CartProvider>

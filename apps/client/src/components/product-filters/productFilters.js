@@ -8,6 +8,13 @@ export const emptyFilters = {
     precioMax: '',
 }
 
+// Filtros → parámetros del listado del panel; las casillas sin marcar no se envían
+export const filterParams = (filters) => ({
+    ...filters,
+    existenciasBajas: filters.existenciasBajas || undefined,
+    margenNegativo: filters.margenNegativo || undefined,
+})
+
 // Estados de disponibilidad de un producto
 export const availabilityOptions = [
     { value: 'en_existencia', label: 'En existencia' },

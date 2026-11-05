@@ -5,7 +5,7 @@ import {
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
-import { activeFilterTags, emptyFilters } from '../../components/product-filters/productFilters.js'
+import { activeFilterTags, emptyFilters, filterParams } from '../../components/product-filters/productFilters.js'
 import './Products.css'
 import AddProduct from '../../components/product-form/AddProduct.jsx'
 import EditProduct from '../../components/product-form/EditProduct.jsx'
@@ -13,10 +13,12 @@ import ProductActionDialog from '../../components/product-form/ProductActionDial
 import { actualizarProducto, cambiarEstadoProducto, crearFamilia, crearProducto, eliminarProducto } from '../../api/catalogo.js'
 import { useCategorias } from '../../hooks/useCategorias.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
+import { avisarCambioDeInventario } from '../../hooks/useAlertasDeInventario.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toFamilyOption, toModalFields, toServerFields } from './toAdminProduct.js'
 import { familyErrorFields, toServerFamily } from '../families/toAdminFamily.js'
+import { paginasVisibles } from '../../utils/paginas.js'
 
 // Opciones de orden; el value es lo que entiende el servidor
 const sortOptions = [
@@ -33,16 +35,6 @@ const pageSizes = [24, 48, 96]
 
 // Espera para buscar hasta que el usuario deje de escribir
 const SEARCH_DELAY_MS = 300
-
-// Cuántos números de página se muestran a la vez
-const PAGE_WINDOW = 5
-
-// Números de página que se muestran alrededor de la actual (empiezan en 0)
-const visiblePages = (current, count) => {
-    const first = Math.max(0, Math.min(current - Math.floor(PAGE_WINDOW / 2), count - PAGE_WINDOW))
-    const last = Math.min(count - 1, first + PAGE_WINDOW - 1)
-    return Array.from({ length: last - first + 1 }, (_, index) => first + index)
-}
 
 // Página de productos del panel (RF-43): busca, filtra, ordena, pagina, agrega y edita productos.
 function Products() {
@@ -68,15 +60,12 @@ function Products() {
         return () => clearTimeout(timer)
     }, [search])
 
-    // Las casillas sin marcar no se envían
     const listado = useListadoAdministrativo({
         q: query,
         orden: sort,
         limite: pageSize,
         pagina: page,
-        ...filters,
-        existenciasBajas: filters.existenciasBajas || undefined,
-        margenNegativo: filters.margenNegativo || undefined,
+        ...filterParams(filters),
     })
     const products = listado.datos?.datos.map(toAdminProduct) ?? []
     const total = listado.datos?.meta.total ?? 0
@@ -137,6 +126,7 @@ function Products() {
         try {
             const actualizado = await actualizarProducto(sku, toServerFields(values))
             listado.recargar()
+            if (Object.hasOwn(values, 'stock')) avisarCambioDeInventario()
             return { product: toAdminProduct(actualizado) }
         } catch (error) {
             return { error: error.message, fields: toModalFields(error.detalles?.campos ?? []) }
@@ -179,6 +169,8 @@ function Products() {
             else await cambiarEstadoProducto(product.sku, action === 'desactivar' ? 'descontinuado' : 'activo')
             setPendingAction(null)
             listado.recargar()
+            // Un producto descontinuado o eliminado deja de contar en las alertas
+            avisarCambioDeInventario()
             return {}
         } catch (error) {
             return { error: error.message, withHistory: action === 'eliminar' && error.estado === 409 }
@@ -376,7 +368,7 @@ function Products() {
                         <button type='button' disabled={page === 0} onClick={() => setPage(page - 1)}>
                             <ChevronLeft size={16} />Anterior
                         </button>
-                        {visiblePages(page, pageCount).map((number) => (
+                        {paginasVisibles(page, pageCount).map((number) => (
                             <button
                                 key={number}
                                 type='button'
