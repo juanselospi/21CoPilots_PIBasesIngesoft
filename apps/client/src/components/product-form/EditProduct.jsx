@@ -4,6 +4,7 @@ import './ProductForm.css'
 import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
 import Notice from '../notice/Notice.jsx'
+import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 
 // Datos generales; el código no se puede cambiar
@@ -185,16 +186,16 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
                 <label className='product-form-field'>
                     <span>Familia</span>
                     <div className='product-form-input'>
-                        <select
+                        <Select
                             disabled={saving}
                             {...atributosCampo('category')}
                             value={values.category}
-                            onChange={(event) => setField('category', event.target.value)}
-                        >
-                            {familyOptions.map(({ name, active }) => (
-                                <option key={name} value={name}>{name}{active === false ? ' (desactivada)' : ''}</option>
-                            ))}
-                        </select>
+                            onChange={(value) => setField('category', value)}
+                            options={familyOptions.map(({ name, active }) => ({
+                                value: name,
+                                label: `${name}${active === false ? ' (desactivada)' : ''}`,
+                            }))}
+                        />
                     </div>
                     {fieldError('category')}
                 </label>

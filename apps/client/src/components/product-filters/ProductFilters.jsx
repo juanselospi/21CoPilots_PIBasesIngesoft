@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './ProductFilters.css'
+import Select from '../select/Select.jsx'
 import { availabilityOptions, emptyFilters } from './productFilters.js'
 
 // Panel de filtros del listado; los cambios quedan en un borrador hasta "Aplicar".
@@ -45,24 +46,27 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
                     <div className='product-filters-grid'>
                         <label className='product-filters-field'>
                             <span>Categoría</span>
-                            <select value={draft.categoria} onChange={(event) => setField('categoria', event.target.value)}>
-                                <option value=''>Todas</option>
-                                {categoryOptions.map((name) => <option key={name} value={name}>{name}</option>)}
-                            </select>
+                            <Select
+                                value={draft.categoria}
+                                onChange={(value) => setField('categoria', value)}
+                                options={[{ value: '', label: 'Todas' }, ...categoryOptions.map((name) => ({ value: name, label: name }))]}
+                            />
                         </label>
 
                         <label className='product-filters-field'>
                             <span>Disponibilidad</span>
-                            <select value={draft.disponibilidad} onChange={(event) => setField('disponibilidad', event.target.value)}>
-                                <option value=''>Todas</option>
-                                {availabilityOptions.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
-                            </select>
+                            <Select
+                                value={draft.disponibilidad}
+                                onChange={(value) => setField('disponibilidad', value)}
+                                options={[{ value: '', label: 'Todas' }, ...availabilityOptions]}
+                            />
                         </label>
 
                         <label className='product-filters-field'>
                             <span>Precio final mínimo</span>
                             <input
                                 type='number'
+                                className='control'
                                 min='0'
                                 step='0.01'
                                 inputMode='decimal'
@@ -76,6 +80,7 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
                             <span>Precio final máximo</span>
                             <input
                                 type='number'
+                                className='control'
                                 min='0'
                                 step='0.01'
                                 inputMode='decimal'
@@ -90,6 +95,7 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
                         <label>
                             <input
                                 type='checkbox'
+                                className='casilla'
                                 checked={draft.existenciasBajas}
                                 onChange={(event) => setField('existenciasBajas', event.target.checked)}
                             />
@@ -98,6 +104,7 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
                         <label>
                             <input
                                 type='checkbox'
+                                className='casilla'
                                 checked={draft.margenNegativo}
                                 onChange={(event) => setField('margenNegativo', event.target.checked)}
                             />

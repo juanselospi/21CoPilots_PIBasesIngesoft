@@ -4,6 +4,7 @@ import './ProductForm.css'
 import { priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
 import FamilyForm from '../family-form/FamilyForm.jsx'
+import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 
 // Datos del producto; los marcados como obligatorios también los exige el servidor.
@@ -233,16 +234,17 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
                             </button>
                         </div>
                         <div className='product-form-input'>
-                            <select
+                            <Select
                                 id={familySelectId}
                                 disabled={saving}
                                 {...atributosCampo('category')}
                                 value={values.category}
-                                onChange={(event) => setField('category', event.target.value)}
-                            >
-                                <option value=''>Seleccione una familia</option>
-                                {familyOptions.map(({ name }) => <option key={name} value={name}>{name}</option>)}
-                            </select>
+                                onChange={(value) => setField('category', value)}
+                                options={[
+                                    { value: '', label: 'Seleccione una familia' },
+                                    ...familyOptions.map(({ name }) => ({ value: name, label: name })),
+                                ]}
+                            />
                         </div>
                         {fieldError('category')}
                     </div>

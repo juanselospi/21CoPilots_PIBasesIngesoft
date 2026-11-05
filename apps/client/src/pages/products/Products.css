@@ -148,12 +148,10 @@
 }
 
 /* Selects de orden y de cantidad por página */
+/* El borde y el foco vienen de .control (estilos/controles.css) */
 .products-sort,
 .products-page-size {
   padding: 10px 14px;
-  border: 1.5px solid var(--color-borde);
-  border-radius: var(--radio-control);
-  font: inherit;
   font-size: var(--texto-pequeno);
 }
 

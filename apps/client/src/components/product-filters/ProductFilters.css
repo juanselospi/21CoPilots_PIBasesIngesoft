@@ -72,19 +72,8 @@
   font-weight: 600;
 }
 
-.product-filters-field select,
-.product-filters-field input {
-  padding: 10px 12px;
-  border: 1.5px solid var(--color-borde);
-  border-radius: var(--radio-control);
-  font: inherit;
-  font-weight: 400;
-}
-
-/* Borde rojo en los precios cuando el rango no es válido */
-.product-filters-field input[aria-invalid='true'] {
-  border-color: var(--estado-error-texto);
-}
+/* Los campos usan .control (estilos/controles.css), que pinta el borde rojo
+   de los precios cuando el rango no es válido */
 
 /* Casillas de existencias bajas y margen negativo */
 .product-filters-checks {
