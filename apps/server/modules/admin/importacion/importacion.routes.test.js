@@ -8,7 +8,7 @@ import { crearRutasDeAdmin } from "../admin.routes.js";
 import { AdminController } from "../admin.controller.js";
 import { crearRecibirExcel } from "./recibir-excel.js";
 import { RUTA_DE_LA_PLANTILLA } from "./columnas.js";
-import { crearExigirRol, ROLES } from "../../../shared/http/autorizacion-por-rol.js";
+import { crearExigirPropietario, crearExigirRol, ROLES } from "../../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../../shared/http/manejador-de-errores.js";
 
 // Servicio falso: devuelve siempre el mismo resumen, con una fila rechazada.
@@ -34,6 +34,7 @@ async function levantarServidor({ tamanoMaximoMb = 5, servicio = servicioConRech
     "/api/admin",
     crearRutasDeAdmin(new AdminController({ servicio }), {
       exigirRol: crearExigirRol({ publicar: async () => {} }),
+      exigirPropietario: crearExigirPropietario({ publicar: async () => {} }),
       recibirExcel: crearRecibirExcel({ tamanoMaximoMb }),
     })
   );

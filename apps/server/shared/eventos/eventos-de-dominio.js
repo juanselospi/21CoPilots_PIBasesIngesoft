@@ -32,6 +32,11 @@ export const EVENTOS = Object.freeze({
 
   /** RF-51 — cambio de precio, margen o descuento. */
   PARAMETRO_MODIFICADO: "parametro_modificado",
+  /** El propietario creó una cuenta de empleado. */
+  EMPLEADO_CREADO: "empleado_creado",
+  /** El propietario activó o desactivó la cuenta de un empleado. */
+  ESTADO_DE_EMPLEADO_CAMBIADO: "estado_empleado_cambiado",
+
   /** RNF-10 — el 100 % de los intentos no autorizados debe registrarse. */
   ACCESO_DENEGADO: "acceso_denegado",
 });

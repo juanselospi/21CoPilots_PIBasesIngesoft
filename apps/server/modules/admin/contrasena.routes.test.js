@@ -8,7 +8,7 @@ import { AdminController } from "./admin.controller.js";
 import { AdminService } from "./admin.service.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { crearIdentificarUsuario, COOKIE_DE_SESION } from "../../shared/http/autenticacion.js";
-import { crearExigirRol } from "../../shared/http/autorizacion-por-rol.js";
+import { crearExigirPropietario, crearExigirRol } from "../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 
 // Servicio real sobre una base en memoria con un cliente, para seguir el
@@ -44,6 +44,7 @@ async function levantarServidor() {
     "/api/admin",
     crearRutasDeAdmin(new AdminController({ servicio }), {
       exigirRol: crearExigirRol({ publicar: async () => {} }),
+      exigirPropietario: crearExigirPropietario({ publicar: async () => {} }),
       recibirExcel: (_peticion, _respuesta, siguiente) => siguiente(),
     })
   );

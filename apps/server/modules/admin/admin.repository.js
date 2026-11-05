@@ -1,19 +1,21 @@
 /**
  * CAPA DE PERSISTENCIA —> Repositorio de administración.
  *
- * Escribe en `usuarios.usuario` y `usuarios.sesion`, y lee `admin.administrador`.
+ * Escribe en `usuarios.usuario`, `usuarios.sesion` y `admin.administrador`.
  * El usuario se identifica por su correo, que la base guarda en minusculas y sin espacios.
  * El rol no es una columna, sale de si el correo esta en admin.administrador o en clientes.cliente.
- *
- * Falta por implementar en otro sprint: crearUsuario()
  *
  * La contraseña llega ya transformada con hash; este repositorio jamás recibe ni devuelve una contraseña en limpio.
  */
 
+import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
+
+// Una cuenta de administrador desactivada ya no tiene ese rol
 const ROL_DEL_USUARIO = `
-       CASE WHEN a.correo_usuario IS NOT NULL THEN 'administrador'
+       CASE WHEN a.correo_usuario IS NOT NULL AND a.activo THEN 'administrador'
             WHEN c.correo_usuario IS NOT NULL THEN 'cliente'
-       END AS rol`;
+       END AS rol,
+       coalesce(a.es_propietario AND a.activo, false) AS "esPropietario"`;
 
 const ESPECIALIZACIONES_DEL_USUARIO = `
   LEFT JOIN admin.administrador a ON a.correo_usuario = u.correo
@@ -106,6 +108,60 @@ export class AdminRepository {
     );
   }
 
+  /**
+   * Crea el usuario y su cuenta de administrador.
+   * @returns false si el correo ya tiene un usuario
+   */
+  async crearEmpleado({ nombre, correo, contrasenaHash, creadoPor }) {
+    return enTransaccion(this.#pool, async (cliente) => {
+      const { rowCount } = await cliente.query(
+        `INSERT INTO usuarios.usuario (correo, contrasena, nombre) VALUES ($1, $2, $3)
+         ON CONFLICT (correo) DO NOTHING`,
+        [correo, contrasenaHash, nombre]
+      );
+      if (rowCount === 0) return false;
+
+      await cliente.query(
+        `INSERT INTO admin.administrador (correo_usuario, creado_por) VALUES ($1, $2)`,
+        [correo, creadoPor]
+      );
+      return true;
+    });
+  }
+
+  /** El propietario primero y después los empleados por nombre. */
+  async listarAdministradores() {
+    const { rows } = await this.#pool.query(
+      `SELECT u.correo, u.nombre, a.es_propietario, a.activo, a.creado_por
+         FROM admin.administrador a
+         JOIN usuarios.usuario u ON u.correo = a.correo_usuario
+        ORDER BY a.es_propietario DESC, u.nombre`
+    );
+    return rows.map(aAdministrador);
+  }
+
+  async buscarAdministrador(correo) {
+    const { rows } = await this.#pool.query(
+      `SELECT u.correo, u.nombre, a.es_propietario, a.activo, a.creado_por
+         FROM admin.administrador a
+         JOIN usuarios.usuario u ON u.correo = a.correo_usuario
+        WHERE a.correo_usuario = $1`,
+      [correo]
+    );
+    return rows[0] ? aAdministrador(rows[0]) : null;
+  }
+
+  /** Al desactivar se cierran sus sesiones en la misma sentencia. */
+  async cambiarActivo(correo, activo) {
+    await this.#pool.query(
+      `WITH cambio AS (
+         UPDATE admin.administrador SET activo = $2 WHERE correo_usuario = $1
+       )
+       DELETE FROM usuarios.sesion WHERE correo_usuario = $1 AND NOT $2`,
+      [correo, activo]
+    );
+  }
+
   /** RF-52: una fila de la bitácora. La fecha la pone la base con clock_timestamp(). */
   async registrarEnBitacora({ correoUsuario, evento, entidad, entidadId, valorAnterior, valorNuevo }) {
     await this.#pool.query(
@@ -146,5 +202,13 @@ export class AdminRepository {
     };
   }
 }
+
+const aAdministrador = (fila) => ({
+  correo: fila.correo,
+  nombre: fila.nombre,
+  esPropietario: fila.es_propietario,
+  activo: fila.activo,
+  creadoPor: fila.creado_por,
+});
 
 const aJson = (valor) => (valor === null || valor === undefined ? null : JSON.stringify(valor));

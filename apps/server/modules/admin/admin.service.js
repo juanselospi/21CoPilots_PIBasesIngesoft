@@ -2,7 +2,6 @@
  * Servicio de administración y seguridad.
  *
  * Falta implementar:
- *   - cuenta de administrador y acceso por rol
  *   - modificar precios, descuentos y márgenes
  *   - recuperación de contraseña
  *
@@ -11,11 +10,19 @@
  *     política de seguridad/politica-de-contrasenas.js.
  */
 
-import { CredencialesInvalidas, EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
+import {
+  CredencialesInvalidas,
+  DatoDuplicado,
+  EntradaInvalida,
+  RecursoNoEncontrado,
+  ReglaDeNegocioViolada,
+} from "../../shared/errores/errores-de-dominio.js";
+import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { hashearContrasena, verificarContrasena } from "./seguridad/contrasenas.js";
 import { exigirPoliticaDeContrasenas } from "./seguridad/politica-de-contrasenas.js";
 import { validarConsultaDeBitacora } from "./bitacora/validar-consulta-de-bitacora.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
+import { validarActivo, validarEmpleadoNuevo } from "./empleados/validar-empleado.js";
 
 // Si el correo no existe se compara igual contra este hash para que la respuesta tarde lo mismo y no se pueda adivinar qué correos existen.
 // PD: Gracias profe Maeva por el TIP que nos dio en redes!!!
@@ -135,6 +142,60 @@ export class AdminService {
     const filtros = validarConsultaDeBitacora(consulta);
     const { registros, total } = await this.#repositorio.listarBitacora(filtros);
     return { registros, total, pagina: filtros.pagina, limite: filtros.limite };
+  }
+
+  /**
+   * El propietario crea la cuenta de un empleado. Es otra cuenta de
+   * administrador: entra al panel igual, salvo crear cuentas y configurar.
+   * @throws {DatoDuplicado} si el correo ya tiene una cuenta
+   */
+  async crearEmpleado(datos, { responsable }) {
+    const { nombre, correo, contrasena } = validarEmpleadoNuevo(datos);
+
+    const creado = await this.#repositorio.crearEmpleado({
+      nombre,
+      correo,
+      contrasenaHash: await hashearContrasena(contrasena),
+      creadoPor: responsable,
+    });
+    if (!creado) throw new DatoDuplicado("Ya existe una cuenta con ese correo.", ["correo"]);
+
+    await this.#busDeEventos.publicar(EVENTOS.EMPLEADO_CREADO, {
+      correoUsuario: responsable,
+      entidad: "administrador",
+      entidadId: correo,
+      valorAnterior: null,
+      valorNuevo: { nombre, activo: true },
+    });
+    return this.#repositorio.buscarAdministrador(correo);
+  }
+
+  async listarAdministradores() {
+    return this.#repositorio.listarAdministradores();
+  }
+
+  /**
+   * Activa o desactiva la cuenta de un empleado. La cuenta no se borra para
+   * no perder quién hizo qué; al desactivarla se cierran sus sesiones.
+   */
+  async cambiarActivo(correo, datos, { responsable }) {
+    const activo = validarActivo(datos);
+    const cuenta = await this.#repositorio.buscarAdministrador(normalizarCorreo(correo));
+    if (!cuenta) throw new RecursoNoEncontrado("la cuenta de administrador", correo);
+    if (cuenta.esPropietario) {
+      throw new ReglaDeNegocioViolada("La cuenta del propietario no se puede desactivar.", "RF-49");
+    }
+    if (cuenta.activo === activo) return cuenta;
+
+    await this.#repositorio.cambiarActivo(cuenta.correo, activo);
+    await this.#busDeEventos.publicar(EVENTOS.ESTADO_DE_EMPLEADO_CAMBIADO, {
+      correoUsuario: responsable,
+      entidad: "administrador",
+      entidadId: cuenta.correo,
+      valorAnterior: { activo: cuenta.activo },
+      valorNuevo: { activo },
+    });
+    return { ...cuenta, activo };
   }
 
   #duracionMs() {
