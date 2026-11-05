@@ -293,7 +293,7 @@ Quien **todavía no hizo merge** renombra la suya a `010_…`, corre `npm run db
 | Agregué datos de prueba nuevos | `npm run db:seed` (o `db:reset`) |
 | Quiero comprobar que las restricciones funcionan | `npm run db:test` |
 | Necesito una BD sin datos de prueba | `npm run db:reset -- --solo-referencia` |
-| Quiero la BD con el catálogo real del cliente | `npm run db:cliente` (ver § 6) |
+| Quiero la BD con el catálogo real del cliente | `npm run db:generar-semillas-cliente` (cuando cambia el Excel) + `npm run db:cliente` (ver § 6) |
 | Voy a entregar / cambió el esquema | `npm run db:dump` |
 
 `db:reset` **solo** corre contra `localhost`; si su `.env` apunta a otro servidor, se
@@ -351,7 +351,7 @@ Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
 | Necesidad | Solución |
 |---|---|
 | Todos necesitan los mismos productos de prueba | Agréguelos a `database/semillas/demo/` vía PR. |
-| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. Con el servidor corriendo, `npm run db:cliente` reconstruye la BD, oculta los productos de prueba (quedan en 0 y sin contrapedido, RN-03), importa el Excel por el servidor (RF-57), que crea las familias de la hoja que no existan, y le da 1 unidad de existencia a cada producto importado. |
+| Probar con los datos **reales** del cliente (Excel de ~200 SKU) | **No se suben al repositorio** (tiene costos y márgenes). Compártalo por Drive/Teams y póngalo en `database/datos-cliente/`, que está en `.gitignore`. `npm run db:generar-semillas-cliente` lee el Excel con el mismo importador del botón «Cargar Excel» (mismas validaciones, RF-57) y escribe `datos-cliente/semillas/` (`01_familias.sql`, `02_productos.sql`, `03_inventario.sql`); no necesita PostgreSQL ni el servidor, solo `npm --prefix apps/server install`. Después `npm run db:cliente` reconstruye la BD, desactiva los productos de prueba (quedan descontinuados, RF-18: fuera de la tienda y de las alertas de existencias bajas, con su stock e historial intactos) y carga esas semillas en una transacción, sin el servidor. Las semillas dan existencias de prueba reproducibles: entre 10 y 30 unidades por producto (según su SKU) y 2 o 3 productos con 0 a 2 para probar las alertas de existencias bajas. `npm run db:seed:cliente` las vuelve a cargar sin borrar nada: actualiza familias y productos, y solo da existencias iniciales a los productos que aún no tienen movimientos de inventario. `db:seed` y `db:reset` nunca las cargan. |
 | Demo del sprint | En la laptop de quien presenta: `npm run db:reset`, para partir de un estado conocido. |
 | Ambiente compartido de staging (opcional, sprints futuros) | Un PostgreSQL alojado al que **solo** se le aplican cambios con `npm run db:migrate` y `npm run db:seed -- --solo-referencia`, usando otro `.env`. Nunca se desarrolla contra él. |
 
@@ -436,7 +436,9 @@ npm run db:migrate   # aplicar migraciones pendientes
 npm run db:status    # ver qué migraciones están aplicadas
 npm run db:reset     # borrar todo y reconstruir (migraciones + semillas)
 npm run db:seed      # recargar solo las semillas
-npm run db:cliente   # BD con el catálogo real del cliente (servidor corriendo)
+npm run db:generar-semillas-cliente   # Excel del cliente -> datos-cliente/semillas/*.sql
+npm run db:cliente        # borrar todo + demo + catálogo real del cliente (sin servidor)
+npm run db:seed:cliente   # recargar las semillas del cliente sin borrar nada
 npm run db:test      # correr las pruebas SQL
 npm run db:new -- descripcion   # crear la siguiente migración
 npm run db:dump      # regenerar database/schema.sql

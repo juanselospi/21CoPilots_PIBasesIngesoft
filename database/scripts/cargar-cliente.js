@@ -1,21 +1,22 @@
-//   npm run db:cliente                       usa el .xlsx de database/datos-cliente/
-//   npm run db:cliente -- ruta/al/excel.xlsx
-// Hace db:reset, oculta los productos de prueba, sube el Excel por el servidor
-// (igual que "Cargar Excel") y da existencias iniciales a los importados.
-
-const fs = require('fs');
+// Deja la base local con el catálogo real del cliente. BORRA TODO.
+//
+//   npm run db:cliente
+//
+// 1. db:reset: migraciones + semillas demo (usuarios, pedidos, etc.).
+// 2. Desactiva los productos de prueba (estado «descontinuado», como el botón
+//    «Desactivar»): salen de la tienda, de las alertas de existencias bajas y
+//    del listado por defecto del panel, pero siguen en la base con su stock y
+//    todo lo que los referencia (pedidos y movimientos demo).
+// 3. Carga las semillas privadas de datos-cliente/semillas/ (familias,
+//    productos y existencias iniciales de prueba).
+// Los pasos 2 y 3 van en una sola transacción.
+//
+// No necesita el servidor ni el Excel: las semillas se generan antes con
+//   npm run db:generar-semillas-cliente
 const path = require('path');
 const { execFileSync } = require('child_process');
-const { DB_DIR, connect, config, isLocalHost } = require('./lib');
-
-const CARPETA_DE_DATOS = path.join(DB_DIR, 'datos-cliente');
-const SERVIDOR_URL = process.env.SERVIDOR_URL || 'http://localhost:3000';
-
-// Administrador de las semillas (semillas/demo/01_usuarios.sql)
-const ADMINISTRADOR = { correo: 'admin@dchobbies.test', contrasena: 'Admin123!' };
-const EXISTENCIAS_INICIALES = 1;
-// Sacar el stock de los productos de prueba es un ajuste, y la BD exige su motivo (013)
-const MOTIVO_OCULTAR_PRUEBA = 'Se ocultan los productos de prueba al cargar el catálogo del cliente';
+const { connect, config, isLocalHost } = require('./lib');
+const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-cliente');
 
 (async () => {
   if (!isLocalHost()) {
@@ -23,14 +24,11 @@ const MOTIVO_OCULTAR_PRUEBA = 'Se ocultan los productos de prueba al cargar el c
     process.exit(1);
   }
 
-  const archivo = buscarExcel(process.argv[2]);
-  if (!archivo) return;
+  // Antes de borrar nada se revisa que las semillas del cliente existan
+  const files = clientSeedFiles();
+  if (!files) return;
 
-  // Antes de borrar nada se revisa que el servidor responda, porque la
-  // importación pasa por él
-  if (!(await servidorArriba())) return;
-
-  console.log('→ Reconstruyendo la base con las semillas ...');
+  console.log('→ Reconstruyendo la base con las semillas demo ...');
   try {
     execFileSync(process.execPath, [path.join(__dirname, 'reset.js')], { stdio: 'inherit' });
   } catch {
@@ -40,151 +38,28 @@ const MOTIVO_OCULTAR_PRUEBA = 'Se ocultan los productos de prueba al cargar el c
 
   const client = await connect();
   try {
-    const deprueba = await ocultarProductosDePrueba(client);
-    console.log(`✔ ${deprueba.length} producto(s) de prueba ocultos (siguen en la base).`);
+    await client.query('BEGIN');
+    const deprueba = await desactivarProductosDePrueba(client);
+    console.log(`✔ ${deprueba} producto(s) de prueba desactivados (siguen en la base).`);
+    await runClientSeeds(client, files);
+    await client.query('COMMIT');
 
-    // La importación crea las familias de la columna «familia» que no existan,
-    // con la importación y el margen de su primera fila (SCRUM-107)
-    const familiasAntes = await contarFamilias(client);
-
-    console.log(`→ Importando ${path.basename(archivo)} por ${SERVIDOR_URL} ...`);
-    const resumen = await importarPorElServidor(archivo);
-    console.log(`✔ Filas leídas: ${resumen.leidas}, importadas: ${resumen.importadas}, rechazadas: ${resumen.rechazadas.length}.`);
-    console.log(`✔ ${(await contarFamilias(client)) - familiasAntes} familia(s) nueva(s) creada(s) desde la hoja.`);
-    for (const { fila, codigoSku, motivos } of resumen.rechazadas) {
-      console.log(`  · Fila ${fila} (${codigoSku ?? 'sin código'}): ${motivos.join('; ')}`);
-    }
-
-    const conExistencias = await registrarExistenciasIniciales(client, deprueba);
-    console.log(`✔ ${conExistencias} producto(s) con ${EXISTENCIAS_INICIALES} unidad de existencia.`);
+    await printSummary(client);
     console.log('\n✔ Base lista con el catálogo del cliente.');
   } catch (err) {
-    console.error(`\n✖ ${err.message}`);
+    await client.query('ROLLBACK').catch(() => {});
+    console.error(`\n✖ ${err.message}\n  (quedó la base demo recién reconstruida, sin datos del cliente)`);
     process.exitCode = 1;
   } finally {
     await client.end();
   }
 })();
 
-// El Excel que se pasa por argumento, o el único .xlsx de datos-cliente/
-function buscarExcel(ruta) {
-  if (ruta) {
-    if (fs.existsSync(ruta)) return path.resolve(ruta);
-    console.error(`✖ No existe el archivo ${ruta}.`);
-    process.exitCode = 1;
-    return null;
-  }
-
-  const excels = fs.existsSync(CARPETA_DE_DATOS)
-    ? fs.readdirSync(CARPETA_DE_DATOS).filter((f) => f.toLowerCase().endsWith('.xlsx'))
-    : [];
-  if (excels.length === 1) return path.join(CARPETA_DE_DATOS, excels[0]);
-
-  console.error(
-    excels.length === 0
-      ? `✖ No hay ningún .xlsx en ${CARPETA_DE_DATOS}.\n  Copie ahí el Excel del cliente (se pide por Drive/Teams).`
-      : `✖ Hay ${excels.length} archivos .xlsx en ${CARPETA_DE_DATOS}. Deje uno o pase la ruta:\n  npm run db:cliente -- ruta/al/excel.xlsx`
+// Justo después del reset, todos los productos son de prueba. Igual que
+// «Desactivar» (RF-18): solo cambia el estado, sin tocar stock ni historial.
+async function desactivarProductosDePrueba(client) {
+  const { rowCount } = await client.query(
+    `UPDATE catalogo.producto SET estado = 'descontinuado' WHERE estado <> 'descontinuado'`
   );
-  process.exitCode = 1;
-  return null;
-}
-
-async function servidorArriba() {
-  try {
-    const respuesta = await fetch(`${SERVIDOR_URL}/api/salud`);
-    if (respuesta.ok) return true;
-  } catch {
-    // se informa abajo
-  }
-  console.error(
-    `✖ El servidor no responde en ${SERVIDOR_URL}.\n` +
-    '  Levántelo en otra terminal:  npm --prefix apps/server run dev'
-  );
-  process.exitCode = 1;
-  return false;
-}
-
-async function ocultarProductosDePrueba(client) {
-  await client.query('BEGIN');
-  try {
-    const { rows } = await client.query(
-      `SELECT sku, stock FROM catalogo.producto ORDER BY sku FOR UPDATE`
-    );
-
-    for (const { sku, stock } of rows.filter((p) => p.stock > 0)) {
-      await client.query(
-        `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad, tipo, motivo)
-         VALUES ($1, $2, $3, 'ajuste', $4)`,
-        [sku, ADMINISTRADOR.correo, -stock, MOTIVO_OCULTAR_PRUEBA]
-      );
-    }
-    await client.query(`UPDATE catalogo.producto SET stock = 0, contrapedido = false`);
-
-    await client.query('COMMIT');
-    return rows.map((p) => p.sku);
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  }
-}
-
-async function contarFamilias(client) {
-  const { rows } = await client.query('SELECT count(*)::int AS total FROM catalogo.familia');
-  return rows[0].total;
-}
-
-// Inicia sesión como administrador y sube el Excel, igual que "Cargar Excel"
-async function importarPorElServidor(archivo) {
-  const sesion = await fetch(`${SERVIDOR_URL}/api/admin/sesion`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ADMINISTRADOR),
-  });
-  if (!sesion.ok) throw new Error(`No se pudo iniciar sesión como ${ADMINISTRADOR.correo} (HTTP ${sesion.status}).`);
-  const cookie = sesion.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
-
-  const formulario = new FormData();
-  formulario.append('archivo', new Blob([fs.readFileSync(archivo)]), path.basename(archivo));
-
-  const respuesta = await fetch(`${SERVIDOR_URL}/api/admin/importaciones`, {
-    method: 'POST',
-    headers: { Cookie: cookie },
-    body: formulario,
-  });
-  const cuerpo = await respuesta.json().catch(() => null);
-  if (!respuesta.ok) {
-    throw new Error(`El servidor rechazó el Excel (HTTP ${respuesta.status}): ${cuerpo?.error?.mensaje ?? 'sin detalle'}`);
-  }
-  return cuerpo.datos;
-}
-
-async function registrarExistenciasIniciales(client, deprueba) {
-  await client.query('BEGIN');
-  try {
-    const { rows } = await client.query(
-      `SELECT sku
-         FROM catalogo.producto
-        WHERE sku <> ALL($1::text[])
-        ORDER BY sku
-          FOR UPDATE`,
-      [deprueba]
-    );
-    const skus = rows.map((p) => p.sku);
-
-    await client.query(
-      `INSERT INTO inventario.producto_administra (sku, correo_administrador, cantidad, tipo, costo_unitario)
-       SELECT sku, $2, $3, 'ingreso', item FROM catalogo.producto WHERE sku = ANY($1::text[])`,
-      [skus, ADMINISTRADOR.correo, EXISTENCIAS_INICIALES]
-    );
-    await client.query(
-      `UPDATE catalogo.producto SET stock = stock + $2 WHERE sku = ANY($1::text[])`,
-      [skus, EXISTENCIAS_INICIALES]
-    );
-
-    await client.query('COMMIT');
-    return skus.length;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  }
+  return rowCount;
 }
