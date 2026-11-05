@@ -353,8 +353,9 @@ export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
 
   if (producto.admiteContrapedido) etiquetas.push(ETIQUETAS.CONTRAPEDIDO);
   if (producto.margenGanancia < 0) etiquetas.push(ETIQUETAS.MARGEN_NEGATIVO);
-  if (producto.existencias <= umbralDeExistenciasBajas) etiquetas.push(ETIQUETAS.EXISTENCIAS_BAJAS);
   const descontinuado = producto.disponibilidad === DISPONIBILIDAD.DESCONTINUADO;
+  // Igual que la alerta de inventario: uno descontinuado no se va a reponer, así que no avisa
+  if (!descontinuado && producto.existencias <= umbralDeExistenciasBajas) etiquetas.push(ETIQUETAS.EXISTENCIAS_BAJAS);
   const oculto =
     producto.disponibilidad === DISPONIBILIDAD.NO_DISPONIBLE || descontinuado || producto.familia?.activa === false;
   if (oculto) etiquetas.push(ETIQUETAS.OCULTO_EN_TIENDA);

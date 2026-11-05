@@ -220,6 +220,12 @@ test("etiqueta 'existencias_bajas' en el umbral o por debajo", () => {
   assert.deepEqual(calcularEtiquetas({ ...sinEtiquetas, existencias: 3 }, 5), ["existencias_bajas"]);
 });
 
+test("un producto descontinuado no lleva 'existencias_bajas' aunque tenga poco stock", () => {
+  const descontinuado = { ...sinEtiquetas, existencias: 0, disponibilidad: "descontinuado" };
+
+  assert.deepEqual(calcularEtiquetas(descontinuado, 2), ["oculto_en_tienda", "descontinuado"]);
+});
+
 test("RN-03: etiqueta 'oculto_en_tienda' si el producto no está disponible", () => {
   const oculto = { ...sinEtiquetas, existencias: 0, disponibilidad: "no_disponible" };
 

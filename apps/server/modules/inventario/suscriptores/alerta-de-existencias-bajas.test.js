@@ -44,6 +44,19 @@ test("no avisa si el stock sigue arriba del umbral ni cuando un ingreso lo sube"
   assert.deepEqual(alertas, []);
 });
 
+test("no avisa de un producto descontinuado aunque cruce el umbral", async () => {
+  const { bus, alertas } = crearBus();
+
+  await bus.publicar(EVENTOS.MOVIMIENTO_REGISTRADO, {
+    sku: "LEG-001",
+    cantidad: -1,
+    existenciasResultantes: 2,
+    estadoDelProducto: "descontinuado",
+  });
+
+  assert.deepEqual(alertas, []);
+});
+
 test("sin la cantidad del movimiento avisa siempre que quede en el umbral o por debajo", async () => {
   const { bus, alertas } = crearBus();
 
