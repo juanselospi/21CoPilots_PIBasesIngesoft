@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { useLocation, useNavigationType } from 'react-router'
 
 const claveDe = (key) => `scroll:${key}`
@@ -7,8 +7,10 @@ const claveDe = (key) => `scroll:${key}`
  * Posición de la página por entrada del historial. Al volver (atrás del navegador o la flecha
  * de regreso) la restaura cuando `listo` es true, es decir, cuando ya están los productos;
  * al llegar por un enlace empieza arriba. Lo guarda en sessionStorage para que sobreviva a recargar.
+ * `alLlegar`, si viene, reemplaza al «empieza arriba» (el catálogo baja solo hasta sus resultados
+ * al cambiar de página).
  */
-export function useRestaurarScroll(listo) {
+export function useRestaurarScroll(listo, { alLlegar } = {}) {
     const { key } = useLocation()
     const tipo = useNavigationType()
     // Última posición vista al desplazarse (null si todavía no hubo scroll). No se lee window.scrollY
@@ -39,6 +41,8 @@ export function useRestaurarScroll(listo) {
         }
     }, [key])
 
+    const llegar = useEffectEvent(() => (alLlegar ? alLlegar() : window.scrollTo(0, 0)))
+
     useEffect(() => {
         if (!listo) return
         let guardada = null
@@ -47,7 +51,11 @@ export function useRestaurarScroll(listo) {
         } catch {
             // Sin sessionStorage la página empieza arriba
         }
-        const y = tipo === 'POP' && guardada !== null ? Number(guardada) : 0
+        if (tipo !== 'POP' || guardada === null) {
+            llegar()
+            return
+        }
+        const y = Number(guardada)
         window.scrollTo(0, Number.isFinite(y) ? y : 0)
     }, [listo, key, tipo])
 }

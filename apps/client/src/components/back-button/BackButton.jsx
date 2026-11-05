@@ -12,7 +12,8 @@ const destinations = [
     ['/mi-cuenta', 'a Mi cuenta'],
 ]
 const destination = (path) => {
-    const pathname = path.split(/[?#]/)[0]
+    const [pathname, search = ''] = path.split('#')[0].split('?')
+    if (pathname === '/catalogo' && new URLSearchParams(search).get('q')) return 'a los resultados de la búsqueda'
     if (pathname === '/') return 'a la tienda'
     // Una categoría se nombra: «Volver a Legos»
     const category = pathname.match(/^\/catalogo\/([^/]+)$/)?.[1]

@@ -27,6 +27,62 @@
   gap: 24px;
 }
 
+/* «Filtros» a la izquierda y el orden a la derecha; en móvil el orden baja de línea */
+.catalog-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.catalog-sort {
+  margin-left: auto;
+}
+
+/* Cerrado, el panel de filtros no deja hueco: el contenedor cancela el gap de 24px de la página.
+   La separación al abrirlo es un margen del formulario, que se recorta junto con el panel
+   (un relleno no se recortaría y dejaría 24px aun cerrado) */
+.catalog-filters {
+  margin-top: -24px;
+}
+
+.catalog-filters .product-filters-collapse {
+  margin-top: 0;
+}
+
+.catalog-filters .product-filters-collapse-inner {
+  padding-top: 0;
+}
+
+.catalog-filters .product-filters {
+  margin-top: 24px;
+}
+
+/* Productos de la página anterior mientras llega la nueva */
+.catalog-products-refreshing {
+  opacity: 0.6;
+  transition: opacity 150ms ease;
+}
+
+/* «Mostrando 1–12 de 199 productos» a la izquierda y las páginas a la derecha */
+.catalog-pagination {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalog-pagination .pagination-summary {
+  order: -1;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-products-refreshing {
+    transition: none;
+  }
+}
+
 .catalog-status {
   display: flex;
   flex-direction: column;
@@ -82,5 +138,14 @@
   .catalog-products {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
+  }
+
+  /* En móvil el texto y las páginas van centrados, uno arriba del otro */
+  .catalog-pagination {
+    justify-content: center;
+  }
+
+  .catalog-sort {
+    margin-left: 0;
   }
 }

@@ -436,7 +436,9 @@ test("un producto sin valores propios toma la importación y el margen de su fam
     { ...producto("LEG-001", "Legos", 3), porcentajeImportacion: null, margenGanancia: null, familia: legos },
   ]);
 
-  const [leg001] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+  const {
+    productos: [leg001],
+  } = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
 
   // 100 → 120 → 180 → 203,40
   assert.equal(leg001.precioFinal, 203.4);
@@ -450,7 +452,9 @@ test("un margen propio sobrescribe el de la familia y la importación se sigue h
     { ...producto("LEG-002", "Legos", 3), porcentajeImportacion: null, margenGanancia: 25, familia: legos },
   ]);
 
-  const [leg002] = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+  const {
+    productos: [leg002],
+  } = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
 
   // 100 → 120 → 150 → 169,50
   assert.equal(leg002.precioFinal, 169.5);
@@ -507,7 +511,7 @@ test("una familia inactiva saca sus productos de la tienda y los marca ocultos e
   };
   const servicio = new CatalogoService({ repositorio, motorDePrecios });
 
-  const tienda = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
+  const { productos: tienda } = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
   assert.deepEqual(tienda.map((p) => p.sku), ["PKM-001"]);
   await assert.rejects(servicio.obtenerFicha("LEG-001"), RecursoNoEncontrado);
   assert.deepEqual(await servicio.listarFamilias(), [{ nombre: "Trading Cards", cantidadDeProductos: 1 }]);
@@ -613,7 +617,7 @@ test("RF-18: descontinuar un producto lo saca de la tienda, la ficha y las famil
     },
     motorDePrecios,
   });
-  assert.deepEqual(await tienda.listarCatalogo({ limite: 10, desplazamiento: 0 }), []);
+  assert.deepEqual((await tienda.listarCatalogo({ limite: 10, desplazamiento: 0 })).productos, []);
   await assert.rejects(tienda.obtenerFicha("PKM-001"), RecursoNoEncontrado);
   assert.deepEqual(await tienda.listarFamilias(), []);
 });
@@ -728,4 +732,43 @@ test("editar las existencias en el panel pasa por inventario con quién lo hizo"
 
   assert.deepEqual(fijadas, [{ sku: "PKM-001", existencias: 8, responsable: "admin@dchobbies.test" }]);
   assert.equal(producto.existencias, 8);
+});
+
+test("el catálogo filtra por disponibilidad y precio final antes de paginar y cuenta el total", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("LEG-001", "Legos", 3), costoItem: 10, nombre: "Castillo" },
+    { ...producto("LEG-002", "Legos", 0, true), costoItem: 50, nombre: "Barco" },
+    { ...producto("LEG-003", "Legos", 2), costoItem: 90, nombre: "Avión" },
+    { ...producto("LEG-004", "Legos", 0), costoItem: 70, nombre: "Oculto" },
+  ]);
+  const todos = (await servicio.listarCatalogo({ limite: 10 })).productos;
+  const precio = (sku) => todos.find((p) => p.sku === sku).precioFinal;
+
+  // El oculto no cuenta nunca; el orden por defecto es por nombre
+  assert.deepEqual(todos.map((p) => p.sku), ["LEG-003", "LEG-002", "LEG-001"]);
+
+  const caros = await servicio.listarCatalogo({ precioMin: precio("LEG-002"), orden: "-precio", limite: 1 });
+  assert.equal(caros.total, 2);
+  assert.deepEqual(caros.productos.map((p) => p.sku), ["LEG-003"]);
+
+  const segundaPagina = await servicio.listarCatalogo({ precioMin: precio("LEG-002"), orden: "-precio", limite: 1, desplazamiento: 1 });
+  assert.deepEqual(segundaPagina.productos.map((p) => p.sku), ["LEG-002"]);
+
+  const contrapedido = await servicio.listarCatalogo({ disponibilidad: "por_contrapedido", limite: 10 });
+  assert.deepEqual(contrapedido.productos.map((p) => p.sku), ["LEG-002"]);
+  assert.equal(contrapedido.total, 1);
+
+  const baratos = await servicio.listarCatalogo({ precioMax: precio("LEG-001"), limite: 10 });
+  assert.deepEqual(baratos.productos.map((p) => p.sku), ["LEG-001"]);
+});
+
+test("con precios iguales el catálogo desempata por SKU para que nada cambie de página", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("B-2", "Legos", 1), nombre: "Igual" },
+    { ...producto("A-1", "Legos", 1), nombre: "Igual" },
+    { ...producto("C-3", "Legos", 1), nombre: "Igual" },
+  ]);
+
+  const { productos } = await servicio.listarCatalogo({ orden: "precio", limite: 10 });
+  assert.deepEqual(productos.map((p) => p.sku), ["A-1", "B-2", "C-3"]);
 });

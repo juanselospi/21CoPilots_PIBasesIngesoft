@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { LayoutDashboard, Search, ShoppingCart, UserRound } from 'lucide-react'
 import './Header.css'
 import Logo from '../logo/Logo.jsx'
@@ -11,13 +11,27 @@ const ADMIN_ROLE = 'administrador'
 // `onLogOut` es lo que se llama al confirmar "Cerrar sesión" en el menu de la cuenta
 // `cartCount` son las unidades del carrito, el visitante y el administrador siempre ven 0
 function Header({ categories, user, loadingSession, onLogOut, cartCount }) {
+    const navigate = useNavigate()
+    const location = useLocation()
+    // En los resultados la caja muestra lo que se buscó; la key la reinicia al cambiar la búsqueda
+    const currentSearch = location.pathname.startsWith(catalogPath())
+        ? (new URLSearchParams(location.search).get('q') ?? '')
+        : ''
+
+    // Busca en todo el catálogo; los filtros y el orden se eligen en la página de resultados
+    const search = (event) => {
+        event.preventDefault()
+        const term = new FormData(event.currentTarget).get('q')?.toString().trim() ?? ''
+        navigate(term ? `${catalogPath()}?${new URLSearchParams({ q: term })}` : catalogPath())
+    }
+
     return (
         <header className='header'>
             <div className='header-top'>
                 <Link to='/' className='header-logo'><Logo /></Link>
 
-                <form className='header-search'>
-                    <input type='search' placeholder='Buscar en la tienda...' />
+                <form key={currentSearch} className='header-search' role='search' onSubmit={search}>
+                    <input type='search' name='q' aria-label='Buscar en la tienda' placeholder='Buscar en la tienda...' defaultValue={currentSearch} />
                     <button type='submit' aria-label='Buscar'><Search size={20} /></button>
                 </form>
 

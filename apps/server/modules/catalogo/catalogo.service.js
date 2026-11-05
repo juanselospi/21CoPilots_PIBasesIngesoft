@@ -86,13 +86,36 @@ export class CatalogoService {
     this.#fijarExistencias = fijarExistencias;
   }
 
-  async listarCatalogo({ categoria, termino, limite, desplazamiento }) {
+  /**
+   * Catálogo de la tienda: solo productos visibles, filtrados y ordenados antes de cortar la página.
+   * El precio final lo calcula el motor de precios, por eso el filtro de precio y el orden van aquí
+   * y no en SQL; la base ya devuelve solo la categoría y el término pedidos.
+   * @returns la página pedida y el total de productos que cumplen los filtros
+   */
+  async listarCatalogo({
+    categoria = null,
+    termino = null,
+    disponibilidad = null,
+    precioMin = null,
+    precioMax = null,
+    orden = "nombre",
+    limite,
+    desplazamiento = 0,
+  }) {
     const productos = await this.#repositorio.listar({ categoria, termino });
 
-    return productos
+    const filtrados = productos
       .map((producto) => this.#conPrecioYDisponibilidad(producto))
       .filter(esVisible)
-      .slice(desplazamiento, desplazamiento + limite);
+      .filter((producto) => disponibilidad === null || producto.disponibilidad === disponibilidad)
+      .filter((producto) => precioMin === null || producto.precioFinal >= precioMin)
+      .filter((producto) => precioMax === null || producto.precioFinal <= precioMax)
+      .sort((a, b) => ORDENES_DE_TIENDA[orden](a, b) || porSku(a, b));
+
+    return {
+      productos: filtrados.slice(desplazamiento, desplazamiento + limite),
+      total: filtrados.length,
+    };
   }
 
   /**
@@ -347,6 +370,14 @@ export const ORDENES_DE_ADMINISTRACION = Object.freeze({
   "-precio": invertido(porPrecio),
   existencias: (a, b) => a.existencias - b.existencias,
   sku: porSku,
+});
+
+/** Órdenes de la tienda; los empates van por SKU para que un producto no cambie de página. */
+export const ORDENES_DE_TIENDA = Object.freeze({
+  nombre: porNombre,
+  "-nombre": invertido(porNombre),
+  precio: porPrecio,
+  "-precio": invertido(porPrecio),
 });
 
 /**

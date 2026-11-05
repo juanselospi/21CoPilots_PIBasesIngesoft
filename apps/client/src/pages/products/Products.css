@@ -404,6 +404,37 @@
 }
 
 /* Resalta la página actual */
+/* Botones de página del componente Pagination; bajan de línea antes que desbordar */
+.pagination-pages {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Puntos suspensivos entre páginas que no se muestran */
+.pagination-gap {
+  min-width: 20px;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .pagination-pages {
+    gap: 2px;
+  }
+
+  .products-pagination button {
+    padding: 8px 10px;
+  }
+
+  /* En móvil «Anterior» y «Siguiente» quedan como flecha; su aria-label los sigue nombrando */
+  .pagination-word {
+    display: none;
+  }
+}
+
 .products-pagination button.active {
   background: var(--color-principal);
   color: var(--color-sobre-principal);

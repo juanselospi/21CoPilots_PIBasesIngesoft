@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import './ProductFilters.css'
 import Select from '../select/Select.jsx'
-import { availabilityOptions, emptyFilters } from './productFilters.js'
+import { availabilityOptions as panelAvailability, emptyFilters } from './productFilters.js'
 
 // Panel de filtros del listado; los cambios quedan en un borrador hasta "Aplicar".
 // Siempre está montado para poder animar la apertura y el cierre: `open` lo despliega
 // y, cerrado, queda inerte (sus controles no reciben foco ni los lee el lector de pantalla).
-function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
+// Lo usan el panel (Productos, Mercancía) y la tienda (Catalog): la tienda pasa sus propias
+// opciones de disponibilidad, `showFlags={false}` para no mostrar las casillas del panel y,
+// dentro de una categoría, `categories={null}` para no repetir un filtro que ya es el contexto.
+function ProductFilters({ id, open, filters, categories, availabilityOptions = panelAvailability, showFlags = true, onApply, onClose }) {
     const [draft, setDraft] = useState(filters)
     const [error, setError] = useState(null)
 
@@ -27,6 +30,10 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
 
     const handleSubmit = (event) => {
         event.preventDefault()
+        if (Number(draft.precioMin) < 0 || Number(draft.precioMax) < 0) {
+            setError('Los precios no pueden ser negativos.')
+            return
+        }
         if (draft.precioMin !== '' && draft.precioMax !== '' && Number(draft.precioMin) > Number(draft.precioMax)) {
             setError('El precio mínimo no puede ser mayor que el máximo.')
             return
@@ -35,7 +42,7 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
     }
 
     // Si la categoría filtrada ya no está en la lista, igual se muestra como opción
-    const categoryOptions = draft.categoria && !categories.includes(draft.categoria)
+    const categoryOptions = categories && draft.categoria && !categories.includes(draft.categoria)
         ? [draft.categoria, ...categories]
         : categories
 
@@ -44,14 +51,16 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
             <div className='product-filters-collapse-inner'>
                 <form className='product-filters' aria-label='Filtros' onSubmit={handleSubmit}>
                     <div className='product-filters-grid'>
-                        <label className='product-filters-field'>
-                            <span>Categoría</span>
-                            <Select
-                                value={draft.categoria}
-                                onChange={(value) => setField('categoria', value)}
-                                options={[{ value: '', label: 'Todas' }, ...categoryOptions.map((name) => ({ value: name, label: name }))]}
-                            />
-                        </label>
+                        {categoryOptions && (
+                            <label className='product-filters-field'>
+                                <span>Categoría</span>
+                                <Select
+                                    value={draft.categoria}
+                                    onChange={(value) => setField('categoria', value)}
+                                    options={[{ value: '', label: 'Todas' }, ...categoryOptions.map((name) => ({ value: name, label: name }))]}
+                                />
+                            </label>
+                        )}
 
                         <label className='product-filters-field'>
                             <span>Disponibilidad</span>
@@ -91,26 +100,28 @@ function ProductFilters({ id, open, filters, categories, onApply, onClose }) {
                         </label>
                     </div>
 
-                    <div className='product-filters-checks'>
-                        <label>
-                            <input
-                                type='checkbox'
-                                className='casilla'
-                                checked={draft.existenciasBajas}
-                                onChange={(event) => setField('existenciasBajas', event.target.checked)}
-                            />
-                            Existencias bajas
-                        </label>
-                        <label>
-                            <input
-                                type='checkbox'
-                                className='casilla'
-                                checked={draft.margenNegativo}
-                                onChange={(event) => setField('margenNegativo', event.target.checked)}
-                            />
-                            Margen negativo
-                        </label>
-                    </div>
+                    {showFlags && (
+                        <div className='product-filters-checks'>
+                            <label>
+                                <input
+                                    type='checkbox'
+                                    className='casilla'
+                                    checked={draft.existenciasBajas}
+                                    onChange={(event) => setField('existenciasBajas', event.target.checked)}
+                                />
+                                Existencias bajas
+                            </label>
+                            <label>
+                                <input
+                                    type='checkbox'
+                                    className='casilla'
+                                    checked={draft.margenNegativo}
+                                    onChange={(event) => setField('margenNegativo', event.target.checked)}
+                                />
+                                Margen negativo
+                            </label>
+                        </div>
+                    )}
 
                     {error && <p className='product-filters-error' role='alert'>{error}</p>}
 
