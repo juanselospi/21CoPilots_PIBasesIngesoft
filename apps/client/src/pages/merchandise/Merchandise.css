@@ -3,6 +3,8 @@
 
 /* Tarjeta blanca: producto elegido, formulario y resumen */
 .merchandise-card {
+  /* Notice.jsx cierra también este gap al irse un aviso */
+  --notice-gap: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;

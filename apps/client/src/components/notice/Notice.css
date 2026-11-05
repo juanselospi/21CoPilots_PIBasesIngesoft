@@ -1,0 +1,108 @@
+/* Aviso del panel (Notice.jsx): entra y sale con un desvanecido corto y,
+   al irse, su alto se cierra de a poco para que lo de abajo no salte.
+   El contenedor define --notice-gap con su gap para que ese espacio también se cierre. */
+.notice {
+  --notice-duracion: 200ms;
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: notice-entrar var(--notice-duracion) ease-out;
+  transition:
+    grid-template-rows var(--notice-duracion) ease-in,
+    margin-bottom var(--notice-duracion) ease-in,
+    opacity var(--notice-duracion) ease-in,
+    transform var(--notice-duracion) ease-in;
+}
+
+.notice-leaving {
+  grid-template-rows: 0fr;
+  margin-bottom: calc(-1 * var(--notice-gap, 0px));
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@keyframes notice-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* min-height: 0 deja que la fila llegue a 0 */
+.notice-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notice-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 8px 10px 12px;
+  border-radius: var(--radio-control);
+  font-size: var(--texto-pequeno);
+}
+
+.notice-success .notice-body {
+  background: var(--estado-ok-fondo);
+  color: var(--estado-ok-texto);
+}
+
+.notice-info .notice-body {
+  background: var(--estado-info-fondo);
+  color: var(--estado-info-texto);
+}
+
+.notice-warning .notice-body {
+  background: var(--estado-aviso-fondo);
+  color: var(--estado-aviso-texto);
+}
+
+.notice-error .notice-body {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+/* El icono se alinea con la primera línea del texto */
+.notice-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.notice-text {
+  flex: 1;
+  margin: 0;
+  align-self: center;
+}
+
+/* X con el color del aviso; el área de toque es más grande que el icono */
+.notice-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-control);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.notice-close:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.notice-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notice {
+    animation: none;
+    transition: none;
+  }
+}

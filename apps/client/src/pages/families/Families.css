@@ -8,16 +8,6 @@
   font-size: var(--texto-pequeno);
 }
 
-/* Aviso de que se guardó, desactivó o eliminó una familia */
-.families-notice {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: var(--radio-control);
-  background: var(--estado-ok-fondo);
-  color: var(--estado-ok-texto);
-  font-size: var(--texto-pequeno);
-}
-
 .families-name {
   font-weight: 600;
   white-space: nowrap;
