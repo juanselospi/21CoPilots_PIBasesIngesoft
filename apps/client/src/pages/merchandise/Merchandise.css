@@ -50,6 +50,11 @@
   flex: 1;
 }
 
+/* El panel de filtros compensa el gap de 12px de la tarjeta al estar cerrado */
+.merchandise-card .product-filters-collapse {
+  --filters-gap: 12px;
+}
+
 /* Lupa dentro de la caja del buscador */
 .merchandise-search-icon {
   margin-left: 12px;

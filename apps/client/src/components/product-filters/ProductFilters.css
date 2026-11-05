@@ -1,5 +1,48 @@
 /* Estilos del panel de filtros (ProductFilters.jsx) */
 
+/* Despliegue vertical: la fila de la grilla pasa de 0fr a 1fr, así la altura se anima
+   sin conocerla y el contenido de abajo baja o sube junto con el panel.
+   --filters-gap es el gap del contenedor padre: el margen negativo anula ese hueco
+   cuando el panel está cerrado y el padding interno lo recupera al abrirse. */
+.product-filters-collapse {
+  --filters-gap: 16px;
+  --filters-duracion: 250ms;
+  --filters-curva: cubic-bezier(0.2, 0.7, 0.2, 1);
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: calc(-1 * var(--filters-gap));
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows var(--filters-duracion) var(--filters-curva),
+    opacity var(--filters-duracion) var(--filters-curva),
+    visibility 0s linear var(--filters-duracion);
+}
+
+.product-filters-collapse[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows var(--filters-duracion) var(--filters-curva),
+    opacity var(--filters-duracion) var(--filters-curva),
+    visibility 0s;
+}
+
+/* min-height: 0 deja que la fila llegue a 0; overflow evita que el contenido sobresalga */
+.product-filters-collapse-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding-top: var(--filters-gap);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-filters-collapse,
+  .product-filters-collapse[data-open='true'] {
+    transition: none;
+  }
+}
+
 /* Caja debajo de la barra de herramientas */
 .product-filters {
   display: flex;

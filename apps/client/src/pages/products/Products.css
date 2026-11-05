@@ -32,6 +32,33 @@
   color: var(--color-enlace);
 }
 
+/* Botón que despliega un panel (ej. "Filtros"): mientras está abierto lleva fondo azul suave */
+.products-button[aria-expanded] {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.products-button[aria-expanded='true'] {
+  border-color: var(--color-enlace);
+  background: var(--color-tinte);
+  color: var(--color-enlace);
+}
+
+/* Chevron al final del botón: gira 180° y apunta hacia arriba cuando el panel está abierto */
+.products-button-chevron {
+  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.products-button[aria-expanded='true'] .products-button-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .products-button[aria-expanded],
+  .products-button-chevron {
+    transition: none;
+  }
+}
+
 /* Variante principal del botón (ej. "Nuevo producto"): azul principal y texto blanco */
 .products-button-primary {
   border-color: var(--color-principal);
