@@ -27,6 +27,7 @@ import { MODALIDADES, totalConEntrega, validarEntrega } from "./entrega/modalida
 import { validarConfirmacion } from "./confirmacion/validar-confirmacion.js";
 import { validarConsultaDePedidos } from "./administracion/validar-consulta-de-pedidos.js";
 import { validarCambioDeEstado } from "./administracion/validar-cambio-de-estado.js";
+import { validarPedidoManual } from "./manual/validar-pedido-manual.js";
 import { admiteEdicion, ESTADOS, estadoAnterior, siguientesEstados, transicionar } from "./estados/maquina-de-estados.js";
 import { idDelPedido, motivoDelPedido } from "./referencia-del-pedido.js";
 
@@ -250,6 +251,104 @@ export class PedidosService {
       },
     });
     return pedido;
+  }
+
+  /**
+   * RF-17, HU-09: el administrador registra una venta de otro canal. Es una
+   * sola transacción, con todos los productos: crea el carrito ya
+   * convertido y el pedido, descuenta el inventario como venta externa y
+   * deja el pago aprobado, porque se cobra en el momento.
+   * @returns el pedido como lo ve el panel
+   */
+  async registrarPedidoManual(datos, { responsable }) {
+    const venta = validarPedidoManual(datos);
+    const { correo, lineas: pedidas } = venta;
+    if (!(await this.#clientes.datosDeContacto(correo))) throw new RecursoNoEncontrado("el cliente", correo);
+    const { costoEntrega } = await this.cotizarEntrega(venta);
+
+    const { numCarrito, movimientos, total } = await this.#repositorio.enTransaccion(async (cliente) => {
+      // Primero los productos y después el cliente, igual que al confirmar en la tienda
+      const skus = pedidas.map(({ sku }) => sku);
+      const stock = await this.#inventario.bloquearEnTransaccion(cliente, skus);
+      const productos = await this.#productosParaVenta(skus);
+      const desconocido = skus.find((sku) => !productos.has(sku));
+      if (desconocido) throw new RecursoNoEncontrado("el producto", desconocido);
+      const faltantes = lineasSinExistencias(pedidas, stock, productos);
+      if (faltantes.length > 0) {
+        const detalle = faltantes.map(({ sku, disponibles }) => `${sku} (hay ${disponibles})`).join(", ");
+        throw new SinExistencias(faltantes, `No hay suficientes existencias o ya no están a la venta: ${detalle}.`);
+      }
+
+      const numCarrito = await this.#repositorio.abrirCarritoConvertido(cliente, correo);
+      const motivo = motivoDelPedido(correo, numCarrito);
+      const lineas = pedidas.map((linea) => {
+        const producto = productos.get(linea.sku);
+        return {
+          ...linea,
+          nombre: producto.nombre,
+          precioUnitario: producto.precioSinImpuesto,
+          tasaImpuesto: producto.tasaImpuesto,
+          precioFinal: producto.precioFinal,
+        };
+      });
+
+      const movimientos = [];
+      for (const linea of lineas) {
+        await this.#repositorio.guardarLinea(correo, numCarrito, linea, cliente);
+        const salen = Math.min(linea.cantidad, Number(stock.get(linea.sku).stock));
+        if (salen > 0) {
+          movimientos.push(
+            await this.#inventario.registrarEnTransaccion(cliente, {
+              sku: linea.sku,
+              cantidad: -salen,
+              tipo: "venta_externa",
+              correoAdministrador: responsable,
+              motivo,
+            })
+          );
+        }
+      }
+
+      await this.#repositorio.crearPedido(cliente, {
+        correo,
+        numCarrito,
+        modalidadEntrega: venta.modalidadEntrega,
+        direccion: venta.direccion,
+        costoEntrega,
+        canal: venta.canal,
+        creadoPor: responsable,
+        nombreDestinatario: venta.nombreDestinatario,
+      });
+      await this.#clientes.sumarCompra(cliente, correo);
+
+      const { total } = totalesDelPedido(lineas, costoEntrega);
+      const pago = await this.#pagos.registrar(cliente, {
+        numReferencia: `LOCAL-${randomUUID()}`,
+        monto: total,
+        metodoPago: venta.metodoPago,
+        estadoPago: "aprobado",
+        correoCliente: correo,
+        numCarrito,
+      });
+      await this.#facturar(cliente, { correo, numCarrito, numReferencia: pago.numReferencia, lineas });
+      return { numCarrito, movimientos, total };
+    });
+
+    await this.#inventario.publicarMovimientos(movimientos, { responsable });
+    await this.#busDeEventos.publicar(EVENTOS.PEDIDO_CREADO_MANUAL, {
+      correoUsuario: responsable,
+      entidad: "pedido",
+      entidadId: idDelPedido(correo, numCarrito),
+      valorAnterior: null,
+      valorNuevo: {
+        canal: venta.canal,
+        total,
+        metodoPago: venta.metodoPago,
+        sinCuenta: venta.sinCuenta,
+        nombreDestinatario: venta.nombreDestinatario,
+      },
+    });
+    return this.obtenerParaAdministracion(correo, numCarrito);
   }
 
   /** RF-40: los pagos de un pedido del cliente; 404 si el pedido no es suyo. */

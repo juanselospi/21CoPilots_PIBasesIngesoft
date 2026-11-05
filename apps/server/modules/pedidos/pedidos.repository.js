@@ -133,17 +133,21 @@ export class PedidosRepository {
   }
 
   /** RF-25: el carrito pasa a convertido y nace el pedido con su primer estado, colocado. */
-  async crearPedido(cliente, { correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal = "web" }) {
+  async crearPedido(
+    cliente,
+    { correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal = "web", creadoPor = null, nombreDestinatario = null }
+  ) {
     await cliente.query(
       `UPDATE pedidos.carrito SET estado_carrito = 'convertido', fecha_cierre = now()
         WHERE correo_cliente = $1 AND num_carrito = $2`,
       [correo, numCarrito]
     );
     const { rows } = await cliente.query(
-      `INSERT INTO pedidos.pedido (correo_cliente, num_carrito, modalidad_entrega, direccion, costo_entrega, canal)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO pedidos.pedido
+              (correo_cliente, num_carrito, modalidad_entrega, direccion, costo_entrega, canal, creado_por, nombre_destinatario)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING fecha_pedido_realizado`,
-      [correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal]
+      [correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal, creadoPor, nombreDestinatario]
     );
     await this.registrarEstado(cliente, correo, numCarrito, "colocado");
     return rows[0].fecha_pedido_realizado;
@@ -159,6 +163,25 @@ export class PedidosRepository {
       [correo, numCarrito]
     );
     return rows[0] ? { canal: rows[0].canal } : null;
+  }
+
+  /**
+   * Para un pedido manual: el carrito nace ya convertido, sin pasar por
+   * activo, así no choca con el carrito que el cliente tenga abierto en la
+   * tienda. Bloquea al cliente para que dos ventas suyas a la vez no tomen
+   * el mismo número.
+   * @returns el número del carrito nuevo
+   */
+  async abrirCarritoConvertido(cliente, correo) {
+    await cliente.query(`SELECT 1 FROM clientes.cliente WHERE correo_usuario = $1 FOR UPDATE`, [correo]);
+    const { rows } = await cliente.query(
+      `INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_cierre)
+       SELECT $1::varchar, coalesce(max(num_carrito), 0) + 1, 'convertido', now()
+         FROM pedidos.carrito WHERE correo_cliente = $1::varchar
+       RETURNING num_carrito`,
+      [correo]
+    );
+    return rows[0].num_carrito;
   }
 
   async registrarEstado(cliente, correo, numCarrito, estado) {
