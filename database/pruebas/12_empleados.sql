@@ -53,3 +53,14 @@ SELECT pg_temp.debe_funcionar('El dueño se traspasa en dos pasos: primero se qu
 SELECT pg_temp.debe_cumplirse('Sigue habiendo un solo propietario',
     (SELECT count(*) = 1 AND bool_and(correo_usuario = 'empleado.prueba@prueba.test')
      FROM admin.administrador WHERE es_propietario));
+
+SELECT pg_temp.debe_funcionar('Cambiar el correo de quien creó una cuenta se propaga a creado_por',
+    $$UPDATE admin.administrador SET creado_por = (SELECT correo_usuario FROM admin.administrador
+                                                    WHERE es_propietario)
+      WHERE correo_usuario <> (SELECT correo_usuario FROM admin.administrador WHERE es_propietario);
+      UPDATE usuarios.usuario SET correo = 'propietario.nuevo@prueba.test'
+      WHERE correo = (SELECT correo_usuario FROM admin.administrador WHERE es_propietario)$$);
+
+SELECT pg_temp.debe_cumplirse('Las cuentas que creó quedaron con el correo nuevo',
+    (SELECT bool_and(creado_por = 'propietario.nuevo@prueba.test') FROM admin.administrador
+     WHERE NOT es_propietario));
