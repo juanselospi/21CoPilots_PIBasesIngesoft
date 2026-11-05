@@ -96,7 +96,8 @@ export class CatalogoService {
   }
 
   /**
-   * Listado del panel con todos los productos, también los ocultos (RF-43).
+   * Listado del panel con los productos ocultos en la tienda (RF-43). Los
+   * descontinuados (RF-18) solo salen con el filtro `disponibilidad=descontinuado`.
    * @returns la página pedida y el total de productos que cumplen los filtros
    */
   async listarParaAdministracion({
@@ -116,7 +117,11 @@ export class CatalogoService {
 
     const filtrados = productos
       .map((producto) => this.#conPrecioYDisponibilidad(producto))
-      .filter((producto) => disponibilidad === null || producto.disponibilidad === disponibilidad)
+      .filter((producto) =>
+        disponibilidad === null
+          ? producto.disponibilidad !== DISPONIBILIDAD.DESCONTINUADO
+          : producto.disponibilidad === disponibilidad
+      )
       .filter((producto) => !existenciasBajas || producto.etiquetas.includes(ETIQUETAS.EXISTENCIAS_BAJAS))
       .filter((producto) => !margenNegativo || producto.etiquetas.includes(ETIQUETAS.MARGEN_NEGATIVO))
       .filter((producto) => precioMin === null || producto.precioFinal >= precioMin)

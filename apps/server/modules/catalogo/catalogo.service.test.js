@@ -629,6 +629,17 @@ test("en el panel sale con disponibilidad y etiqueta descontinuado, y se puede f
   assert.deepEqual(productos[0].etiquetas, ["oculto_en_tienda", "descontinuado"]);
 });
 
+test("RF-18: sin filtro de disponibilidad el panel no lista los descontinuados", async () => {
+  const descontinuado = { ...producto("PKM-001", "Trading Cards", 5), estado: "descontinuado" };
+  const repositorio = { listarParaAdministracion: async () => [descontinuado, producto("LEG-001", "Legos", 5)] };
+  const servicio = new CatalogoService({ repositorio, motorDePrecios });
+
+  const { productos, total } = await servicio.listarParaAdministracion({ limite: 24 });
+
+  assert.deepEqual(productos.map((p) => p.sku), ["LEG-001"]);
+  assert.equal(total, 1);
+});
+
 test("reactivar devuelve el producto a la tienda y publica el cambio para la bitácora", async () => {
   const { servicio, eventos } = crearServicio();
   await servicio.crearProducto({ ...pkm001, existencias: 5 });
