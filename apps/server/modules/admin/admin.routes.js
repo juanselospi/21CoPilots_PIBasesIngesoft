@@ -8,7 +8,8 @@
  * GET    /sesion
  * DELETE /sesion
  * PATCH  /contrasena
- * POST   /contrasena/recuperacion
+ * POST   /contrasena/recuperacion     pública
+ * POST   /contrasena/restablecimiento pública, con el token del enlace
  * POST   /usuarios                 solo el propietario
  * GET    /usuarios                 solo el propietario
  * PATCH  /usuarios/:correo/activo  solo el propietario
@@ -38,6 +39,10 @@ export function crearRutasDeAdmin(controlador, { exigirRol, exigirPropietario, r
 
   // Cualquier usuario con sesión cambia la suya
   rutas.patch("/contrasena", exigirSesion, asincrono(controlador.cambiarContrasena));
+
+  // Quien olvidó la contraseña no tiene sesión
+  rutas.post("/contrasena/recuperacion", asincrono(controlador.solicitarRecuperacion));
+  rutas.post("/contrasena/restablecimiento", asincrono(controlador.restablecerContrasena));
 
   // Primero se revisan la sesión y el rol, después se recibe el archivo para no cargar en memoria lo que mande alguien sin permiso
   rutas.post(

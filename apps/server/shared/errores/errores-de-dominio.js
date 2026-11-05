@@ -51,6 +51,13 @@ export class CredencialesInvalidas extends ErrorDeDominio {
   }
 }
 
+/** El enlace para recuperar la contraseña no existe, ya se usó o venció. */
+export class TokenInvalido extends ErrorDeDominio {
+  constructor() {
+    super("El enlace no es válido o ya venció. Pida uno nuevo.", { codigo: "TOKEN_INVALIDO" });
+  }
+}
+
 /** Identificado, pero sin el rol necesario (RF-50, RNF-10). */
 export class NoAutorizado extends ErrorDeDominio {
   constructor(accion) {

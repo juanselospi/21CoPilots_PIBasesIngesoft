@@ -76,6 +76,25 @@ export class AdminController {
     respuesta.status(204).end();
   };
 
+  // POST /contrasena/recuperacion con { correo }. Responde 202 exista o no la cuenta
+  solicitarRecuperacion = async (peticion, respuesta) => {
+    const { enlace } = await this.#servicio.solicitarRecuperacion(peticion.body ?? {});
+    respuesta.status(202).json({
+      datos: {
+        mensaje: "Si el correo está registrado, le llegará un enlace para crear una contraseña nueva.",
+        // Solo fuera de producción, mientras no haya envío de correos
+        ...(enlace ? { enlace } : {}),
+      },
+    });
+  };
+
+  // POST /contrasena/restablecimiento con { token, contrasenaNueva }. Responde 204
+  restablecerContrasena = async (peticion, respuesta) => {
+    const { token, contrasenaNueva } = peticion.body ?? {};
+    await this.#servicio.restablecerContrasena({ token, contrasenaNueva });
+    respuesta.status(204).end();
+  };
+
   // GET /bitacora?entidad&entidadId&evento&correo&desde&hasta&pagina&limite
   listarBitacora = async (peticion, respuesta) => {
     const { registros, total, pagina, limite } = await this.#servicio.listarBitacora(peticion.query);

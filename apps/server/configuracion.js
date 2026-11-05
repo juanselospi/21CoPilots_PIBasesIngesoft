@@ -29,6 +29,17 @@ export const configuracion = Object.freeze({
     cookieSegura: process.env.NODE_ENV === "production",
   }),
 
+  /**
+   * RF-54: el enlace para recuperar la contraseña. No hay envío de correos,
+   * así que el enlace se escribe en el log y, fuera de producción, también
+   * se devuelve en la respuesta para poder probarlo.
+   */
+  recuperacion: Object.freeze({
+    duracionMinutos: numero(process.env.DURACION_RECUPERACION_MINUTOS, 30),
+    urlDeLaTienda: process.env.URL_DE_LA_TIENDA ?? "http://localhost:5173",
+    devolverEnlace: process.env.NODE_ENV !== "production",
+  }),
+
   /** Importación del Excel de productos. La hoja real pesa unos pocos KB. */
   importacion: Object.freeze({
     tamanoMaximoMb: numero(process.env.IMPORTACION_TAMANO_MAXIMO_MB, 5),
