@@ -18,6 +18,11 @@ export function invoicePath(numCarrito) {
     return `/pedidos/${encodeURIComponent(numCarrito)}/factura`
 }
 
+// Detalle de un pedido en el panel; el número solo se repite entre clientes, por eso va también el correo
+export function adminOrderPath(correo, numCarrito) {
+    return `/admin/pedidos/${encodeURIComponent(correo)}/${encodeURIComponent(numCarrito)}`
+}
+
 // Estado que lleva un enlace hacia una vista secundaria para que su flecha (BackButton) sepa a
 // dónde volver: <Link to={…} state={backState(location)}>
 export function backState(location) {

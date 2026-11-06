@@ -227,9 +227,9 @@ export class PedidosRepository {
   // Lo que sigue es para el panel del administrador
 
   /**
-   * RF-46: los pedidos con su estado vigente y un resumen de productos, del
-   * más nuevo al más viejo. `q` busca en el cliente, el destinatario y los
-   * productos.
+   * RF-46: los pedidos con su estado vigente, el de su último pago y un
+   * resumen de productos, del más nuevo al más viejo. `q` busca en el número
+   * (con o sin #), el cliente, el destinatario y los productos.
    */
   async listarParaAdministracion({ estado, canal, correo, q, desde, hasta, limite, pagina }) {
     const { rows } = await this.#pool.query(
@@ -237,6 +237,11 @@ export class PedidosRepository {
               v.modalidad_entrega, v.subtotal, v.impuesto, v.costo_entrega, v.estado,
               p.canal, p.creado_por, p.nombre_destinatario,
               productos.lineas, productos.unidades,
+              (SELECT pa.estado_pago
+                 FROM pagos.pago pa
+                WHERE pa.correo_cliente = v.correo_cliente AND pa.num_carrito = v.num_carrito
+                ORDER BY pa.fecha DESC
+                LIMIT 1) AS estado_pago,
               count(*) OVER () AS total
          FROM reportes.v_pedidos_por_cliente v
          JOIN pedidos.pedido p
@@ -255,6 +260,7 @@ export class PedidosRepository {
           AND ($4::timestamptz IS NULL OR v.fecha_pedido_realizado >= $4)
           AND ($5::timestamptz IS NULL OR v.fecha_pedido_realizado < $5)
           AND ($6::text IS NULL
+               OR v.num_carrito::text = ltrim($6, '#')
                OR v.cliente ILIKE '%' || $6 || '%'
                OR v.correo_cliente ILIKE '%' || $6 || '%'
                OR v.cedula ILIKE '%' || $6 || '%'
@@ -274,6 +280,7 @@ export class PedidosRepository {
         ...pedidoDeLaVista(fila),
         productos: fila.lineas,
         unidades: Number(fila.unidades),
+        estadoPago: fila.estado_pago,
       })),
       total: Number(rows[0]?.total ?? 0),
     };

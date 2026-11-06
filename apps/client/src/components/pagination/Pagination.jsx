@@ -4,11 +4,11 @@ import { elementosDePaginacion } from '../../utils/paginas.js'
 // Paginación numerada con la página actual resaltada; usa los estilos de .products-pagination
 // (Products.css). `page` empieza en 0 y `summary` es el texto que la acompaña, por ejemplo el total.
 // Con muchas páginas muestra los extremos y puntos suspensivos; en pantallas angostas
-// «Anterior» y «Siguiente» quedan solo como flecha.
-function Pagination({ page, pageCount, onChange, label, summary, className = '' }) {
+// «Anterior» y «Siguiente» quedan solo como flecha. Con una sola página no muestra los botones, salvo con `alwaysShow`.
+function Pagination({ page, pageCount, onChange, label, summary, className = '', alwaysShow = false }) {
     return (
         <nav className={`products-pagination ${className}`} aria-label={label}>
-            {pageCount > 1 && (
+            {(pageCount > 1 || alwaysShow) && (
                 <div className='pagination-pages'>
                     <button type='button' aria-label='Página anterior' disabled={page === 0} onClick={() => onChange(page - 1)}>
                         <ChevronLeft size={16} aria-hidden='true' />

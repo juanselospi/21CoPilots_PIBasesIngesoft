@@ -3,7 +3,7 @@ import './ConfirmDialog.css'
 
 // Dialogo para confirmar una accion antes de hacerla, por ejemplo cerrar sesion.
 // `onConfirm` puede ser async, mientras corre los botones quedan deshabilitados y si falla se muestra el error
-function ConfirmDialog({ title, message, confirmLabel, busyLabel, onConfirm, onCancel }) {
+function ConfirmDialog({ title, message, confirmLabel, busyLabel, cancelLabel = 'Cancelar', onConfirm, onCancel }) {
     const [busy, setBusy] = useState(false)
     const [error, setError] = useState(null)
     const titleId = useId()
@@ -46,7 +46,7 @@ function ConfirmDialog({ title, message, confirmLabel, busyLabel, onConfirm, onC
                 <div className='confirm-dialog-actions'>
                     {/* El foco arranca en Cancelar para que un Enter no confirme sin querer */}
                     <button type='button' className='confirm-dialog-cancel' onClick={onCancel} disabled={busy} autoFocus>
-                        Cancelar
+                        {cancelLabel}
                     </button>
                     <button type='button' className='confirm-dialog-confirm' onClick={confirm} disabled={busy}>
                         {busy ? busyLabel : confirmLabel}
