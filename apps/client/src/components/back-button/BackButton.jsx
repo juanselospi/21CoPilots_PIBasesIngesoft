@@ -8,6 +8,7 @@ const destinations = [
     ['/admin/productos', 'a Productos'],
     ['/admin/familias', 'a Familias'],
     ['/admin/mercancia', 'a Mercancía'],
+    ['/admin/pedidos', 'a Pedidos'],
     ['/catalogo', 'al catálogo'],
     ['/carrito', 'al carrito'],
     ['/mi-cuenta', 'a Mi cuenta'],

@@ -12,6 +12,7 @@ const sections = [
     { to: '/admin/productos', label: 'Productos' },
     { to: '/admin/familias', label: 'Familias' },
     { to: '/admin/mercancia', label: 'Mercancía' },
+    { to: '/admin/pedidos', label: 'Pedidos' },
 ]
 
 // Barra de arriba del panel con el logo, las pantallas, las alertas de inventario,

@@ -1,0 +1,148 @@
+/* Estilos de la pantalla «Pedidos» del panel; lo demás viene de Products.css y ProductTable.css */
+
+/* Lista */
+
+.orders-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Toda la fila abre el detalle */
+.orders-row {
+  cursor: pointer;
+}
+
+.orders-number {
+  color: var(--color-enlace);
+  font-weight: 700;
+}
+
+.orders-nowrap {
+  white-space: nowrap;
+}
+
+/* Texto de apoyo, como el correo debajo del nombre */
+.orders-secondary {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+td > .orders-secondary {
+  display: block;
+}
+
+/* Detalle */
+
+.order-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+}
+
+.order-card h2 {
+  margin: 0;
+  font-size: var(--texto-subtitulo);
+}
+
+.order-card p {
+  margin: 0;
+}
+
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.order-status-row,
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-actions .products-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* «Cancelar» se distingue de las demás acciones aunque no le pasen el mouse */
+.order-button-cancel,
+.order-button-cancel:hover {
+  border-color: var(--estado-error-texto);
+  color: var(--estado-error-texto);
+}
+
+/* Datos en dos columnas: nombre del dato y su valor */
+.order-data,
+.order-totals {
+  display: grid;
+  gap: 8px 16px;
+  margin: 0;
+  font-size: var(--texto-pequeno);
+}
+
+.order-data {
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.order-data dt,
+.order-totals dt {
+  color: var(--color-texto-suave);
+}
+
+.order-data dd,
+.order-totals dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Totales a la derecha, debajo de la tabla */
+.order-totals {
+  grid-template-columns: max-content max-content;
+  justify-content: end;
+}
+
+.order-totals dd {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.order-totals .order-total {
+  color: var(--color-titulo);
+  font-size: var(--texto-producto);
+  font-weight: 800;
+}
+
+/* Historiales: qué pasó y, debajo o al lado, cuándo */
+.order-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  font-size: var(--texto-pequeno);
+  list-style: none;
+}
+
+.order-history li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+@media (max-width: 800px) {
+  .order-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
