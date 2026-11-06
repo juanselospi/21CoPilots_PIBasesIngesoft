@@ -41,15 +41,14 @@ Si en el sprint aparece otro servicio que mande correos, se agrega a esta tabla.
 Antes del congelamiento de funcionalidades del jueves 5 de noviembre, para que la
 demo interna del viernes 6 use el envío real.
 
-## «Mi cuenta» del cliente: prueba manual y capturas
+## «Mi cuenta» del cliente: probado, con capturas
 
-La sección de datos de contacto de `/mi-cuenta` (SCRUM-126) ya está hecha. Lint,
-build y pruebas unitarias pasan, pero falta probarla en el navegador con la base
-de datos y el servidor levantados, y guardar la evidencia.
+La sección de datos de contacto de `/mi-cuenta` (SCRUM-126) ya está hecha y se
+probó en el navegador con la base de datos y el servidor levantados.
 
-| Tarea | Estado al 3/11 |
+| Tarea | Estado al 6/11 |
 |---|---|
-| SCRUM-126: datos de contacto en «Mi cuenta» y enlace a «Mis pedidos» | Código listo, falta la prueba manual y las capturas |
+| SCRUM-126: datos de contacto en «Mi cuenta» y enlace a «Mis pedidos» | Probado, con capturas |
 
 ### Cómo se verifica
 
@@ -76,32 +75,25 @@ Como administrador:
 10. Entrar a `/mi-cuenta` y confirmar que solo se ven nombre, correo y la sección
     de contraseña, sin datos de contacto ni «Mis pedidos».
 
-Guardar las capturas en `evidencias/mi-cuenta/`.
+Las capturas están en `evidencias/mi-cuenta/datos-de-contacto/`. La dirección
+nueva ya se ve en el checkout (`direccion-nueva-en-el-checkout.png`).
 
 ### Pendiente que depende de otras tareas
 
 - El enlace «Mis pedidos» lleva a `/mis-pedidos`, que todavía no existe (página
   en blanco). Se completa con SCRUM-137.
-- El criterio de la tarea pide que el cambio de dirección se vea en el siguiente
-  checkout. Se verifica cuando esté SCRUM-136, que tiene que precargar la
-  dirección desde `GET /api/clientes/me`. Agregar esa captura en el mismo folder.
-- Saldo a favor: no se muestra porque los créditos (SCRUM-85, SCRUM-145) siguen
-  sin hacerse.
+- Saldo a favor: no se muestra porque los créditos (SCRUM-145, PR #113) todavía
+  no están en `develop`.
 
-### Fecha límite
-
-Antes del congelamiento de funcionalidades del jueves 5 de noviembre.
-
-## «Agregar al carrito» y contador: prueba manual y capturas
+## «Agregar al carrito» y contador: probado, con capturas
 
 El botón de la tarjeta y de la ficha, y los contadores del header y de `/acceso`
-(SCRUM-129) ya están hechos. Lint, build y pruebas unitarias pasan, pero falta
-probarlos en el navegador con la base de datos y el servidor levantados, y guardar
-la evidencia.
+(SCRUM-129) ya están hechos y se probaron en el navegador con la base de datos y
+el servidor levantados.
 
-| Tarea | Estado al 3/11 |
+| Tarea | Estado al 6/11 |
 |---|---|
-| SCRUM-129: «Agregar al carrito» en la tarjeta y la ficha; contador del carrito | Código listo, falta la prueba manual y las capturas |
+| SCRUM-129: «Agregar al carrito» en la tarjeta y la ficha; contador del carrito | Probado, con capturas |
 
 ### Cómo se verifica
 
@@ -136,26 +128,17 @@ Como administrador:
     contador queda en 0. El carrito del administrador queda para un sprint
     posterior (ver `cambios-siguiente-sprint.md`).
 
-Guardar las capturas en `evidencias/carrito/`.
+Las capturas están en `evidencias/carrito/agregar/`.
 
-### Pendiente que depende de otras tareas
-
-- El enlace «Carrito» del header y de `/acceso` lleva a `/carrito`, que ya existe
-  desde SCRUM-130 (ver la sección de abajo).
-
-### Fecha límite
-
-Antes del congelamiento de funcionalidades del jueves 5 de noviembre.
-
-## Página `/carrito`: capturas
+## Página `/carrito`: probado, con capturas
 
 La página del carrito (SCRUM-130) ya está hecha. Lint, build y pruebas unitarias
 pasan, y se recorrió en el navegador con la base de datos y el servidor
-levantados. Faltan las capturas de evidencia.
+levantados.
 
-| Tarea | Estado al 5/11 |
+| Tarea | Estado al 6/11 |
 |---|---|
-| SCRUM-130: página `/carrito` con totales, avisos y botón «Finalizar compra» | Código listo y probado en el navegador, faltan las capturas |
+| SCRUM-130: página `/carrito` con totales, avisos y botón «Finalizar compra» | Probado, con capturas |
 
 ### Cómo se verifica
 
@@ -189,19 +172,51 @@ Como administrador:
 10. `/carrito` sale vacío, el carrito del administrador queda para un sprint
     posterior (ver `cambios-siguiente-sprint.md`).
 
-Capturas que pide la tarea, en `evidencias/carrito/`: línea normal, línea por
-contrapedido, línea fuera de stock, y el total antes y después de cambiar un
-precio.
+Las capturas que pide la tarea están en `evidencias/carrito/pagina/`: línea normal,
+línea por contrapedido, línea fuera de stock, y el total antes y después de cambiar
+un precio. Para esos casos el precio y las existencias se cambiaron directo en la
+base de datos local, no desde el panel.
 
 ### Pendiente que depende de otras tareas
 
-- «Finalizar compra» lleva a `/finalizar-compra`, que todavía no existe (página
-  en blanco). Se completa con SCRUM-136.
 - El tope de existencias se conoce hasta que el servidor responde (409), porque
   el carrito no dice si el producto admite contrapedido. Si se quiere deshabilitar
   el «+» al llegar al tope, el servidor tendría que mandar `admiteContrapedido`
   en cada línea.
 
-### Fecha límite
+## Finalizar la compra: probado, con capturas
 
-Antes del congelamiento de funcionalidades del jueves 5 de noviembre.
+El checkout en `/finalizar-compra`, la confirmación y la factura (SCRUM-136) ya
+están hechos y se probaron en el navegador con la base de datos y el servidor
+levantados. La demo completa una compra aprobada y una rechazada, y muestra la
+factura.
+
+| Tarea | Estado al 6/11 |
+|---|---|
+| SCRUM-136: checkout, pago emulado, confirmación y factura | Probado, con capturas |
+
+Las capturas de cada paso están en `evidencias/checkout/compra/`.
+
+### Cómo repetir la prueba
+
+Con `cliente@correo.test` / `Cliente123!` y algo en el carrito:
+
+- **Compra aprobada:** cualquier tarjeta de 12 a 19 dígitos con un vencimiento
+  futuro, por ejemplo `4242 4242 4242 4242`. SINPE Móvil siempre se aprueba.
+- **Compra rechazada:** una tarjeta que termine en `0000`. El carrito queda igual.
+- **Contra entrega:** queda pendiente de cobro y sin factura.
+- **Sin existencias:** dejar el resumen abierto, bajar a 0 las existencias de un
+  producto del carrito que no admita contrapedido y confirmar: vuelve a `/carrito`
+  con la línea marcada «Fuera de stock».
+
+### Pendientes
+
+- **Datos del emisor:** la factura dice «POR DEFINIR» en la cédula jurídica y la
+  dirección del negocio. Faltan los datos reales del cliente, antes de la entrega
+  hay que cargarlos en `facturacion.emisor`.
+- **Contra entrega por nivel de fidelidad:** hoy lo pueden escoger todos los
+  clientes, porque el nivel todavía no existe. Ver `cambios-siguiente-sprint.md`.
+- **Mis pedidos:** la confirmación no enlaza a «Mis pedidos» porque esa página
+  todavía no existe (SCRUM-137).
+- **Pago con crédito a favor:** el servidor está en el PR #114 (SCRUM-146); falta
+  la parte de la pantalla.

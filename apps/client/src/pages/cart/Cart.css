@@ -18,6 +18,24 @@
   font-size: clamp(24px, 4vw, var(--texto-seccion));
 }
 
+/* Aviso que manda el checkout cuando ya no alcanzan las existencias */
+.cart-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  margin-block: 0;
+  padding: 12px 14px;
+  border-radius: var(--radio-control);
+  background: var(--estado-aviso-fondo);
+  color: var(--estado-aviso-texto);
+  font-weight: 600;
+}
+
+.cart-notice .lucide {
+  flex-shrink: 0;
+}
+
 /* Las lineas a la izquierda y el resumen a la derecha */
 .cart-content {
   display: grid;

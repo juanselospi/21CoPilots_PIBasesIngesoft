@@ -43,6 +43,7 @@ dudas por confirmar, etc.
 | Cambio | Origen | Motivo para pasarlo | Estado |
 |---|---|---|---|
 | Buscador de la barra superior | Wireframe de Inicio, bloque 1 (SCRUM-60) | Corresponde a HU-06, búsqueda y filtrado del cliente | Pendiente |
+| Pago contra entrega según el nivel de fidelidad (RN-11): solo los clientes con el nivel necesario pueden escogerlo, y todos los administradores pueden. El nivel necesario va en un campo de la base de datos.<br>• **Por definir:** en qué tabla y con qué nombre va el campo, y de dónde sale el nivel de cada cliente: [`modelo-datos.md`](../diseño/modelo-datos.md) dice que el nivel no se guarda sino que se deriva de `num_compras`, y la escala de niveles (RN-08) sigue sin definirse | Implementación de SCRUM-136 (06/11/2026) | El nivel de fidelidad todavía no existe: `clientes.cliente` solo tiene `num_compras`. Mientras tanto el servidor no valida el nivel y el checkout le ofrece contra entrega a todos los clientes | Pendiente |
 | Carrito del administrador: que la cuenta de administrador también pueda agregar productos y tener su propio carrito | Implementación de SCRUM-129 (03/11/2026) | Hoy el servidor deja el carrito solo al cliente (`exigirRol(ROLES.CLIENTE)`); en la tienda el administrador ve el botón «Agregar al carrito» pero no hace nada y su contador queda en 0 | Pendiente |
 
 ## Por confirmar con el cliente
