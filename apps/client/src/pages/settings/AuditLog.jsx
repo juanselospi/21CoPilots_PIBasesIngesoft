@@ -2,6 +2,7 @@ import { useSearchParams } from 'react-router'
 import '../../components/product-table/ProductTable.css'
 // La paginación, como el historial de Mercancía
 import '../merchandise/Merchandise.css'
+import DateField from '../../components/date-field/DateField.jsx'
 import Pagination from '../../components/pagination/Pagination.jsx'
 import Select from '../../components/select/Select.jsx'
 import { dateTimeFormat } from '../merchandise/merchandiseFormat.js'
@@ -56,20 +57,20 @@ function AuditLog() {
                 </label>
                 <label>
                     <span>Desde</span>
-                    <input
-                        type='date'
-                        className='control settings-date'
+                    <DateField
+                        className='products-sort'
+                        label='Desde'
                         value={desde}
-                        onChange={(event) => change(cambioDeFecha({ desde, hasta }, 'desde', event.target.value))}
+                        onChange={(value) => change(cambioDeFecha({ desde, hasta }, 'desde', value))}
                     />
                 </label>
                 <label>
                     <span>Hasta</span>
-                    <input
-                        type='date'
-                        className='control settings-date'
+                    <DateField
+                        className='products-sort'
+                        label='Hasta'
                         value={hasta}
-                        onChange={(event) => change(cambioDeFecha({ desde, hasta }, 'hasta', event.target.value))}
+                        onChange={(value) => change(cambioDeFecha({ desde, hasta }, 'hasta', value))}
                     />
                 </label>
                 {filtered && (

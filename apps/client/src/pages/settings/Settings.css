@@ -60,12 +60,6 @@
   font-weight: 600;
 }
 
-/* El calendario del navegador sigue el tema de la página */
-.settings-date {
-  font-size: var(--texto-pequeno);
-  color-scheme: light dark;
-}
-
 /* «Limpiar filtros» a la altura de los campos */
 .settings-filters .products-clear-filters {
   padding: 10px 0;
