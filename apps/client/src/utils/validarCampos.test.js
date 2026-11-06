@@ -67,3 +67,11 @@ test('maximo rechaza lo que pasa del tope y deja pasar el tope', () => {
         { cantidad: 'Es mucho.' },
     )
 })
+
+test('comprobar: usa el mensaje que devuelve y no corre si ya hay otro error', () => {
+    const comprobar = (valor) => (valor === 'malo' ? 'No sirve.' : null)
+    const reglas = { campo: { patron: /^[a-z]+$/, mensajePatron: 'Solo letras.', comprobar } }
+    assert.deepEqual(validarCampos({ campo: 'bueno' }, reglas), {})
+    assert.deepEqual(validarCampos({ campo: 'malo' }, reglas), { campo: 'No sirve.' })
+    assert.deepEqual(validarCampos({ campo: '123' }, reglas), { campo: 'Solo letras.' })
+})

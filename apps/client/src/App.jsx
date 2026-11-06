@@ -9,6 +9,9 @@ import Home from './pages/home/Home.jsx'
 import Catalog from './pages/catalog/Catalog.jsx'
 import ProductDetail from './pages/product-detail/ProductDetail.jsx'
 import Cart from './pages/cart/Cart.jsx'
+import Checkout from './pages/checkout/Checkout.jsx'
+import OrderConfirmation from './pages/checkout/OrderConfirmation.jsx'
+import Invoice from './pages/invoice/Invoice.jsx'
 import MyAccount from './pages/my-account/MyAccount.jsx'
 import Products from './pages/products/Products.jsx'
 import Families from './pages/families/Families.jsx'
@@ -29,8 +32,11 @@ function App() {
               <Route path='catalogo/:category' element={<Catalog />} />
               <Route path='producto/:sku' element={<ProductDetail />} />
               <Route path='carrito' element={<Cart />} />
+              <Route path='finalizar-compra' element={<Checkout />} />
+              <Route path='finalizar-compra/confirmacion' element={<OrderConfirmation />} />
               <Route element={<SessionRoute />}>
                 <Route path='mi-cuenta' element={<MyAccount />} />
+                <Route path='pedidos/:numCarrito/factura' element={<Invoice />} />
               </Route>
             </Route>
             <Route element={<AccessLayout />}>

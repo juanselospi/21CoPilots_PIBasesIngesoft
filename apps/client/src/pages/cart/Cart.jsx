@@ -1,5 +1,5 @@
-import { useId } from 'react'
-import { Link } from 'react-router'
+import { useEffect, useId, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { ShoppingCart, TriangleAlert } from 'lucide-react'
 import './Cart.css'
 import CartLine from './CartLine.jsx'
@@ -8,11 +8,9 @@ import { useCarrito } from '../../hooks/useCarrito.js'
 import { useRecursoRemoto } from '../../hooks/useRecursoRemoto.js'
 import { useRestaurarScroll } from '../../hooks/useRestaurarScroll.js'
 import { useSesion } from '../../hooks/useSesion.js'
-import { catalogPath } from '../../routes.js'
+import { CHECKOUT_PATH, catalogPath } from '../../routes.js'
 import { hayFueraDeStock } from '../../utils/carrito.js'
 
-// La pagina para finalizar la compra queda para otra tarea, por ahora el boton lleva a una ruta que no existe
-const CHECKOUT_PATH = '/finalizar-compra'
 // Despues de iniciar sesion el visitante regresa al carrito
 const LOGIN_PATH = `/acceso?volver=${encodeURIComponent('/carrito')}`
 
@@ -25,12 +23,28 @@ function Cart() {
     // y no los de cuando se agrego el producto
     const consulta = useRecursoRemoto((signal) => actualizar(signal), [usuario?.correo ?? null])
     const loading = loadingSession || consulta.cargando
+    const location = useLocation()
+    const navigate = useNavigate()
+    // El checkout manda aqui un aviso si ya no alcanzan las existencias. Se guarda y se borra del
+    // historial, asi no vuelve a salir si se recarga la pagina
+    const [notice] = useState(location.state?.aviso ?? null)
+
+    useEffect(() => {
+        if (location.state?.aviso) navigate(location.pathname, { replace: true, state: null })
+    }, [location.state, location.pathname, navigate])
 
     useRestaurarScroll(!loading)
 
     return (
         <main className='cart'>
             <h1 className='cart-section cart-title'>Carrito</h1>
+
+            {notice && (
+                <p className='cart-section cart-notice' role='alert'>
+                    <TriangleAlert size={18} aria-hidden='true' />
+                    {notice}
+                </p>
+            )}
 
             {loading ? (
                 <p className='cart-section cart-status' role='status'>Cargando tu carrito…</p>

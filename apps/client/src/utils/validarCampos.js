@@ -46,6 +46,12 @@ export function validarCampos(valores, definicion) {
         if (!errores[campo] && reglas.igualA && valor !== String(valores[reglas.igualA] ?? '').trim()) {
             errores[campo] = reglas.mensajeIgualA ?? 'Los valores no coinciden.'
         }
+
+        // comprobar: para lo que no se puede revisar con un patron, devuelve el mensaje o null si esta bien
+        if (!errores[campo] && reglas.comprobar) {
+            const problema = reglas.comprobar(valor)
+            if (problema) errores[campo] = problema
+        }
     }
     return errores
 }
