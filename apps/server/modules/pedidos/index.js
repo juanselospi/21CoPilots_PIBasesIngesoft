@@ -10,6 +10,7 @@ import { PedidosRepository } from "./pedidos.repository.js";
 import { PedidosService } from "./pedidos.service.js";
 import { CarritoService } from "./carrito/carrito.service.js";
 import { EdicionDePedidosService } from "./edicion/edicion.service.js";
+import { CreditosDePedidos } from "./creditos/creditos-de-pedidos.js";
 import { PedidosController } from "./pedidos.controller.js";
 import { crearRutasDePedidos } from "./pedidos.routes.js";
 
@@ -27,6 +28,7 @@ export function crearModuloPedidos({
   facturacionElectronica,
 }) {
   const repositorio = new PedidosRepository({ pool });
+  const creditos = new CreditosDePedidos({ pagos, clientes });
   const servicio = new PedidosService({
     repositorio,
     inventario,
@@ -38,9 +40,16 @@ export function crearModuloPedidos({
     productosParaVenta,
     pagos,
     facturas,
+    creditos,
   });
   const carrito = new CarritoService({ repositorio, productosParaVenta });
-  const edicion = new EdicionDePedidosService({ repositorio, inventario, productosParaVenta, busDeEventos });
+  const edicion = new EdicionDePedidosService({
+    repositorio,
+    inventario,
+    productosParaVenta,
+    busDeEventos,
+    creditos,
+  });
   const controlador = new PedidosController({ servicio, carrito, edicion });
 
   return {

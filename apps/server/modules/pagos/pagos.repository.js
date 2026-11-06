@@ -40,4 +40,15 @@ export class PagosRepository {
       estadoPago: fila.estado_pago,
     }));
   }
+
+  /** Lo que se cobró del pedido: la suma de sus pagos aprobados. */
+  async montoAprobado(correoCliente, numCarrito, cliente = this.#pool) {
+    const { rows } = await cliente.query(
+      `SELECT coalesce(sum(monto), 0) AS monto
+         FROM pagos.pago
+        WHERE correo_cliente = $1 AND num_carrito = $2 AND estado_pago = 'aprobado'`,
+      [correoCliente, numCarrito]
+    );
+    return Number(rows[0].monto);
+  }
 }

@@ -16,6 +16,7 @@ export function crearRutasDeClientes(controlador, { exigirSesion, exigirRol }) {
   const soloCliente = [exigirSesion, exigirRol(ROLES.CLIENTE)];
   rutas.get("/me", ...soloCliente, asincrono(controlador.verMiCuenta));
   rutas.patch("/me", ...soloCliente, asincrono(controlador.corregirMiCuenta));
+  rutas.get("/me/creditos", ...soloCliente, asincrono(controlador.verMisCreditos));
 
   return rutas;
 }

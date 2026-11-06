@@ -26,6 +26,8 @@ async function levantarServidor() {
     registrar: async ({ correo }) => (correo === "cliente@correo.test" ? ["correo"] : []),
     obtenerPorCorreo: async (correo) => (correo === cuenta.correo ? { ...cuenta } : null),
     actualizarContacto: async (_correo, cambios) => Object.assign(cuenta, cambios),
+    saldoDeCredito: async () => ({ otorgado: 0, usado: 0, saldo: 0 }),
+    movimientosDeCredito: async () => [],
   };
   const servicio = new ClientesService({
     repositorio,
@@ -141,6 +143,7 @@ test("el cliente ve sus datos y corrige la dirección y los teléfonos", async (
   const antes = await (await miCuenta(url, { rol: "cliente" })).json();
   assert.equal(antes.datos.direccion, "San Pedro");
   assert.equal(antes.datos.cedula, "111111111");
+  assert.equal(antes.datos.saldoCredito, 0);
 
   const respuesta = await miCuenta(url, {
     rol: "cliente",
@@ -162,4 +165,16 @@ test("intentar cambiar la cédula desde Mi cuenta responde 400", async (t) => {
 
   assert.equal(respuesta.status, 400);
   assert.deepEqual((await respuesta.json()).error.detalles.campos, ["cedula"]);
+});
+
+test("los créditos son solo del cliente y vienen con su saldo en dólares", async (t) => {
+  const { url, cerrar } = await levantarServidor();
+  t.after(cerrar);
+  const creditos = (rol) => fetch(`${url}/me/creditos`, { headers: rol ? { "x-rol": rol } : {} });
+
+  assert.equal((await creditos()).status, 401);
+  assert.equal((await creditos("administrador")).status, 403);
+  const respuesta = await creditos("cliente");
+  assert.equal(respuesta.status, 200);
+  assert.deepEqual((await respuesta.json()).datos, { saldo: 0, otorgado: 0, usado: 0, moneda: "USD", movimientos: [] });
 });

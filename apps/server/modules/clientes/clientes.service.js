@@ -59,7 +59,17 @@ export class ClientesService {
   async obtenerMiCuenta(correo) {
     const cliente = await this.#repositorio.obtenerPorCorreo(correo);
     if (!cliente) throw new RecursoNoEncontrado("el cliente", correo);
-    return cliente;
+    const { saldo } = await this.#repositorio.saldoDeCredito(correo);
+    return { ...cliente, saldoCredito: saldo };
+  }
+
+  /** El saldo a favor con cada crédito otorgado y cada uso. No se retira en efectivo. */
+  async obtenerMisCreditos(correo) {
+    const [saldo, movimientos] = await Promise.all([
+      this.#repositorio.saldoDeCredito(correo),
+      this.#repositorio.movimientosDeCredito(correo),
+    ]);
+    return { ...saldo, movimientos };
   }
 
   /** Cambia la dirección o los teléfonos y devuelve la cuenta actualizada. */
@@ -80,6 +90,15 @@ export class ClientesService {
   async datosDeContacto(correo) {
     const cliente = await this.#repositorio.obtenerPorCorreo(correo);
     return cliente && { nombre: cliente.nombre, cedula: cliente.cedula, telefonos: cliente.telefonos };
+  }
+
+  /** Para pedidos, dentro de la transacción que le quita algo a un pedido pagado. */
+  async otorgarCreditoEnTransaccion(cliente, credito) {
+    await this.#repositorio.registrarCredito(cliente, credito);
+  }
+
+  async creditoOtorgadoPorPedido(correo, numCarrito, cliente) {
+    return this.#repositorio.creditoOtorgadoPorPedido(correo, numCarrito, cliente);
   }
 
   /** Para pedidos, dentro de la transacción que confirma la compra. */

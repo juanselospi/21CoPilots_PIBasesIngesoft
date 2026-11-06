@@ -40,6 +40,7 @@ export class PedidosService {
   #productosParaVenta;
   #pagos;
   #facturas;
+  #creditos;
 
   constructor({
     repositorio,
@@ -52,6 +53,7 @@ export class PedidosService {
     productosParaVenta,
     pagos,
     facturas,
+    creditos,
   }) {
     this.#repositorio = repositorio;
     this.#inventario = inventario;
@@ -63,6 +65,7 @@ export class PedidosService {
     this.#productosParaVenta = productosParaVenta;
     this.#pagos = pagos;
     this.#facturas = facturas;
+    this.#creditos = creditos;
   }
 
   /** Las modalidades en el orden en que se muestran, cada una con su costo. */
@@ -269,12 +272,13 @@ export class PedidosService {
     const pedido = await this.#repositorio.obtenerParaAdministracion(correo, numCarrito);
     if (!pedido) throw new RecursoNoEncontrado("el pedido", idDelPedido(correo, numCarrito));
 
-    const [contacto, guardadas, historial, pagos, factura] = await Promise.all([
+    const [contacto, guardadas, historial, pagos, factura, creditoOtorgado] = await Promise.all([
       this.#clientes.datosDeContacto(correo),
       this.#repositorio.lineasDelPedido(correo, numCarrito),
       this.#repositorio.historialDeEstados(correo, numCarrito),
       this.#pagos.listarPorPedido(correo, numCarrito),
       this.#facturas.buscarPorPedido(correo, numCarrito),
+      this.#clientes.creditoOtorgadoPorPedido(correo, numCarrito),
     ]);
     const nombres = await this.#productosParaVenta(guardadas.map(({ sku }) => sku));
 
@@ -291,6 +295,7 @@ export class PedidosService {
       lineasEditables: admiteEdicion(pedido.estado),
       pagos,
       factura,
+      creditoOtorgado,
     };
   }
 
@@ -303,7 +308,7 @@ export class PedidosService {
   async cambiarEstado(correo, numCarrito, datos, { responsable }) {
     const estadoNuevo = validarCambioDeEstado(datos);
 
-    const { estadoPrevio, movimientos } = await this.#repositorio.enTransaccion(async (cliente) => {
+    const { estadoPrevio, movimientos, credito } = await this.#repositorio.enTransaccion(async (cliente) => {
       if (!(await this.#repositorio.bloquearPedido(cliente, correo, numCarrito))) {
         throw new RecursoNoEncontrado("el pedido", idDelPedido(correo, numCarrito));
       }
@@ -312,9 +317,17 @@ export class PedidosService {
       transicionar(estadoPrevio, estadoNuevo, estadoAnterior(historial));
 
       await this.#repositorio.registrarEstado(cliente, correo, numCarrito, estadoNuevo);
-      const movimientos =
-        estadoNuevo === ESTADOS.CANCELADO ? await this.#reponerInventario(cliente, correo, numCarrito, responsable) : [];
-      return { estadoPrevio, movimientos };
+      if (estadoNuevo !== ESTADOS.CANCELADO) return { estadoPrevio, movimientos: [], credito: 0 };
+
+      const movimientos = await this.#reponerInventario(cliente, correo, numCarrito, responsable);
+      // Lo cobrado que todavía no se había acreditado queda a favor del cliente
+      const credito = await this.#creditos.otorgar(cliente, {
+        correo,
+        numCarrito,
+        monto: Number.POSITIVE_INFINITY,
+        motivo: `Cancelación del pedido ${numCarrito}`,
+      });
+      return { estadoPrevio, movimientos, credito };
     });
 
     await this.#inventario.publicarMovimientos(movimientos, { responsable });
@@ -330,7 +343,7 @@ export class PedidosService {
       const repuestas = movimientos.map(({ sku, cantidad }) => ({ sku, cantidad }));
       await this.#busDeEventos.publicar(EVENTOS.PEDIDO_CANCELADO, {
         ...cambio,
-        valorNuevo: { estado: estadoNuevo, unidadesRepuestas: repuestas },
+        valorNuevo: { estado: estadoNuevo, unidadesRepuestas: repuestas, creditoOtorgado: credito },
       });
     }
     return this.obtenerParaAdministracion(correo, numCarrito);
