@@ -8,6 +8,7 @@ import AccessLayout from './components/access-layout/AccessLayout.jsx'
 import Home from './pages/home/Home.jsx'
 import Catalog from './pages/catalog/Catalog.jsx'
 import ProductDetail from './pages/product-detail/ProductDetail.jsx'
+import Cart from './pages/cart/Cart.jsx'
 import MyAccount from './pages/my-account/MyAccount.jsx'
 import Products from './pages/products/Products.jsx'
 import Families from './pages/families/Families.jsx'
@@ -27,6 +28,7 @@ function App() {
               <Route path='catalogo' element={<Catalog />} />
               <Route path='catalogo/:category' element={<Catalog />} />
               <Route path='producto/:sku' element={<ProductDetail />} />
+              <Route path='carrito' element={<Cart />} />
               <Route element={<SessionRoute />}>
                 <Route path='mi-cuenta' element={<MyAccount />} />
               </Route>

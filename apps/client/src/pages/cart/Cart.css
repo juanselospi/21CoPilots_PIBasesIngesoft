@@ -1,0 +1,400 @@
+/* Pagina del carrito */
+
+.cart {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 0 48px;
+  text-align: left;
+}
+
+.cart-section {
+  width: min(1280px, 100% - 48px);
+  margin-inline: auto;
+}
+
+.cart-title {
+  font-size: clamp(24px, 4vw, var(--texto-seccion));
+}
+
+/* Las lineas a la izquierda y el resumen a la derecha */
+.cart-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.cart-lines,
+.cart-summary {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+.cart-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Linea: la imagen, los datos del producto y a la derecha la cantidad, el total y el boton de quitar.
+   El error va abajo a lo ancho */
+.cart-line {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'image info controls'
+    'image error error';
+  column-gap: 20px;
+  align-items: center;
+  padding: 16px 20px;
+}
+
+.cart-line + .cart-line {
+  border-top: 1px solid var(--color-borde);
+}
+
+.cart-line[aria-busy='true'] {
+  opacity: 0.7;
+}
+
+.cart-line > .cart-line-link,
+.cart-line > .cart-line-image {
+  grid-area: image;
+  align-self: start;
+}
+
+.cart-line-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cart-line-name .cart-line-link:hover {
+  color: var(--color-enlace);
+  text-decoration: underline;
+}
+
+.cart-line-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  object-fit: cover;
+  background: var(--color-tinte);
+}
+
+.cart-line-no-image {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-style: dashed;
+  border-width: 1.5px;
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+.cart-line-info {
+  display: flex;
+  grid-area: info;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* El nombre del producto va en la letra de texto: Bungee es solo para titulos cortos */
+.cart-line-name {
+  color: var(--color-texto);
+  font-family: var(--fuente-texto);
+  font-size: var(--texto-producto);
+  font-weight: 700;
+  letter-spacing: normal;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.cart-line-price {
+  color: var(--color-texto);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-line-price span {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 400;
+}
+
+.cart-line-note {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.cart-line-controls {
+  display: flex;
+  grid-area: controls;
+  align-items: center;
+  gap: 20px;
+}
+
+.cart-line-quantity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 600;
+}
+
+/* Ancho fijo para que los totales de todas las lineas queden alineados */
+.cart-line-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 104px;
+  color: var(--color-titulo);
+  font-size: var(--texto-precio);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-line-total span {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+  font-weight: 600;
+}
+
+.cart-line-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: none;
+  color: var(--color-texto-suave);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cart-line-remove:hover:not(:disabled) {
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+.cart-line-remove:disabled {
+  cursor: wait;
+}
+
+.cart-line-error {
+  grid-area: error;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+/* Resumen con los totales y el boton de finalizar compra */
+.cart-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.cart-summary h2 {
+  font-size: var(--texto-subtitulo);
+}
+
+.cart-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+
+.cart-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cart-totals dt {
+  color: var(--color-texto-suave);
+}
+
+.cart-totals dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-totals .cart-total {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.cart-total dt,
+.cart-total dd {
+  color: var(--color-titulo);
+  font-size: var(--texto-precio);
+  font-weight: 800;
+}
+
+.cart-summary-note {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.cart-summary-warning {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radio-control);
+  background: var(--estado-aviso-fondo);
+  color: var(--estado-aviso-texto);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+/* El icono queda a la altura de la primera linea del texto */
+.cart-summary-warning .lucide {
+  margin-top: 2px;
+}
+
+/* Usa el acento igual que el boton de agregar al carrito */
+.cart-checkout {
+  padding: 12px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: var(--color-acento);
+  color: var(--color-sobre-acento);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cart-checkout:hover:not(:disabled) {
+  background: var(--color-acento-hover);
+}
+
+.cart-checkout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cart-keep-shopping {
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Cargando, error y carrito vacio */
+.cart-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+.cart-status a:not(.cart-status-button) {
+  color: var(--color-enlace);
+  font-weight: 700;
+}
+
+.cart-status-title {
+  color: var(--color-titulo);
+  font-size: var(--texto-subtitulo);
+  font-weight: 800;
+}
+
+.cart-status-error {
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+.cart-status-button {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cart-status-button:hover {
+  background: var(--color-principal-hover);
+}
+
+/* En pantallas medianas el resumen baja debajo de las lineas */
+@media (max-width: 1024px) {
+  .cart-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* En celular la cantidad, el total y el boton de quitar bajan debajo de los datos del producto */
+@media (max-width: 768px) {
+  .cart-section {
+    width: calc(100% - 32px);
+  }
+
+  .cart-line {
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-areas:
+      'image info'
+      'controls controls'
+      'error error';
+    column-gap: 14px;
+    padding: 16px;
+  }
+
+  /* La cantidad a la izquierda, el total a la derecha y el boton de quitar en su propia fila,
+     asi todas las lineas quedan igual sin importar que tan largo sea el total */
+  .cart-line-controls {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 12px;
+    margin-top: 12px;
+  }
+
+  .cart-line-total {
+    justify-self: end;
+    min-width: 0;
+  }
+
+  .cart-line-remove {
+    justify-self: start;
+    margin-left: -10px;
+  }
+}

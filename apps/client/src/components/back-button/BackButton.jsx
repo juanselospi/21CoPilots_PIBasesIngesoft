@@ -9,6 +9,7 @@ const destinations = [
     ['/admin/familias', 'a Familias'],
     ['/admin/mercancia', 'a Mercancía'],
     ['/catalogo', 'al catálogo'],
+    ['/carrito', 'al carrito'],
     ['/mi-cuenta', 'a Mi cuenta'],
 ]
 const destination = (path) => {
