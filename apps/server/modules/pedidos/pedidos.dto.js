@@ -115,6 +115,8 @@ export const aPedidoEnListado = (pedido) => ({
   cliente: { nombre: pedido.nombreCliente, cedula: pedido.cedula },
   productos: pedido.productos.map(({ sku, nombre, cantidad }) => ({ sku, nombre, cantidad })),
   unidades: pedido.unidades,
+  // El del último pago; null si el pedido todavía no tiene ninguno
+  estadoPago: pedido.estadoPago ?? null,
 });
 
 /** RF-46: el pedido completo, con lo que el cliente no ve. */

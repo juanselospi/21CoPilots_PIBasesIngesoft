@@ -36,6 +36,7 @@ const PEDIDO_EN_LISTADO = Object.freeze({
   costoEntrega: 3.5,
   productos: [{ sku: "LEG-001", nombre: "Halcón", cantidad: 2 }],
   unidades: 2,
+  estadoPago: "aprobado",
 });
 
 test("los filtros del listado se normalizan y la página por defecto es la 0 de 50", () => {
@@ -169,6 +170,7 @@ test("el listado del panel es solo del administrador y responde con su total", a
   assert.deepEqual(cuerpo.datos[0].cliente, { nombre: "Ana Mora", cedula: "1-1111-1111" });
   assert.deepEqual(cuerpo.datos[0].productos, [{ sku: "LEG-001", nombre: "Halcón", cantidad: 2 }]);
   assert.equal(cuerpo.datos[0].estado, "colocado");
+  assert.equal(cuerpo.datos[0].estadoPago, "aprobado");
   assert.equal(cuerpo.datos[0].moneda, "USD");
 });
 
