@@ -2,6 +2,8 @@
 
 /* Caja con borde; en pantallas angostas la tabla se desplaza de lado */
 .product-table-wrapper {
+  /* Para que el texto oculto de los encabezados (.product-table-hidden) también quede dentro del desplazamiento */
+  position: relative;
   overflow-x: auto;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-tarjeta);
