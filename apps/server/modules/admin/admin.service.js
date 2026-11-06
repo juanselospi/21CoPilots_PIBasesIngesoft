@@ -3,7 +3,6 @@
  *
  * Falta implementar:
  *   - modificar precios, descuentos y márgenes
- *   - recuperación de contraseña
  *
  * A tener en cuenta:
  *   - Las contraseñas se guardan siempre con hash. Las nuevas siguen la
@@ -16,10 +15,13 @@ import {
   EntradaInvalida,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
+  TokenInvalido,
 } from "../../shared/errores/errores-de-dominio.js";
+import { CORREO_DE_VENTA_SIN_CUENTA } from "../../shared/cuentas/venta-sin-cuenta.js";
 import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { hashearContrasena, verificarContrasena } from "./seguridad/contrasenas.js";
 import { exigirPoliticaDeContrasenas } from "./seguridad/politica-de-contrasenas.js";
+import { validarCorreoDeRecuperacion } from "./seguridad/validar-recuperacion.js";
 import { validarConsultaDeBitacora } from "./bitacora/validar-consulta-de-bitacora.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
 import { validarActivo, validarEmpleadoNuevo } from "./empleados/validar-empleado.js";
@@ -34,13 +36,26 @@ export class AdminService {
   #duracionSesionMinutos;
   #renovarSesion;
   #importacionDeExcel;
+  #recuperacion;
+  #avisarEnlace;
 
-  constructor({ repositorio, busDeEventos, duracionSesionMinutos = 25, renovarSesion = false, importacionDeExcel }) {
+  constructor({
+    repositorio,
+    busDeEventos,
+    duracionSesionMinutos = 25,
+    renovarSesion = false,
+    importacionDeExcel,
+    recuperacion = { duracionMinutos: 30, urlDeLaTienda: "http://localhost:5173", devolverEnlace: false },
+    // Mientras no haya envío de correos, el enlace sale en el log del servidor
+    avisarEnlace = (correo, enlace) => console.info(`Enlace para recuperar la contraseña de ${correo}: ${enlace}`),
+  }) {
     this.#repositorio = repositorio;
     this.#busDeEventos = busDeEventos;
     this.#duracionSesionMinutos = duracionSesionMinutos;
     this.#renovarSesion = renovarSesion;
     this.#importacionDeExcel = importacionDeExcel;
+    this.#recuperacion = recuperacion;
+    this.#avisarEnlace = avisarEnlace;
   }
 
   // Valida las credenciales y abre la sesion, hace return del token para la cookie
@@ -125,6 +140,47 @@ export class AdminService {
       contrasenaHash: await hashearContrasena(nueva),
       sesionQueSeQueda: hashearToken(token),
     });
+  }
+
+  /**
+   * RF-54: crea el enlace para cambiar la contraseña y lo "envía". La
+   * respuesta es la misma exista o no el correo, para no revelar cuáles
+   * tienen cuenta; fuera de producción trae el enlace para poder probarlo.
+   * @returns `{ enlace }`, con null si no hay que devolverlo
+   */
+  async solicitarRecuperacion(datos) {
+    const correo = validarCorreoDeRecuperacion(datos);
+    const usuario = await this.#repositorio.buscarUsuarioPorCorreo(correo);
+    // Una cuenta desactivada no tiene rol, y la de ventas sin cuenta no es de nadie
+    if (!usuario?.rol || usuario.correo === CORREO_DE_VENTA_SIN_CUENTA) return { enlace: null };
+
+    const token = generarToken();
+    await this.#repositorio.crearRecuperacion({
+      correoUsuario: usuario.correo,
+      tokenHash: hashearToken(token),
+      venceEn: new Date(Date.now() + this.#recuperacion.duracionMinutos * 60 * 1000),
+    });
+
+    const enlace = `${this.#recuperacion.urlDeLaTienda}/restablecer?token=${token}`;
+    this.#avisarEnlace(usuario.correo, enlace);
+    return { enlace: this.#recuperacion.devolverEnlace ? enlace : null };
+  }
+
+  /**
+   * Cambia la contraseña con el token del enlace, una sola vez. Primero se
+   * revisa la contraseña nueva, así un enlace no se gasta por un error al
+   * escribirla. Cierra todas las sesiones de la cuenta.
+   * @throws {TokenInvalido} si el enlace no existe, ya se usó o venció
+   */
+  async restablecerContrasena({ token, contrasenaNueva }) {
+    exigirPoliticaDeContrasenas(contrasenaNueva, "contrasenaNueva");
+    if (typeof token !== "string" || token.trim() === "") throw new TokenInvalido();
+
+    const correo = await this.#repositorio.restablecerContrasena({
+      tokenHash: hashearToken(token.trim()),
+      contrasenaHash: await hashearContrasena(contrasenaNueva),
+    });
+    if (!correo) throw new TokenInvalido();
   }
 
   // Importa la hoja de productos

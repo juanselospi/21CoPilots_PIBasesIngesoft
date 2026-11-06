@@ -608,6 +608,21 @@ CREATE VIEW reportes.v_venta_por_producto AS
 
 
 --
+-- Name: recuperacion; Type: TABLE; Schema: usuarios; Owner: -
+--
+
+CREATE TABLE usuarios.recuperacion (
+    token_hash character varying(128) NOT NULL,
+    correo_usuario character varying(255) NOT NULL,
+    fecha_creacion timestamp with time zone DEFAULT now() NOT NULL,
+    fecha_vencimiento timestamp with time zone NOT NULL,
+    fecha_uso timestamp with time zone,
+    CONSTRAINT ck_recuperacion_uso CHECK (((fecha_uso IS NULL) OR (fecha_uso >= fecha_creacion))),
+    CONSTRAINT ck_recuperacion_vigencia CHECK ((fecha_vencimiento > fecha_creacion))
+);
+
+
+--
 -- Name: sesion; Type: TABLE; Schema: usuarios; Owner: -
 --
 
@@ -773,6 +788,14 @@ ALTER TABLE ONLY pedidos.tarifa_envio
 
 
 --
+-- Name: recuperacion recuperacion_pkey; Type: CONSTRAINT; Schema: usuarios; Owner: -
+--
+
+ALTER TABLE ONLY usuarios.recuperacion
+    ADD CONSTRAINT recuperacion_pkey PRIMARY KEY (token_hash);
+
+
+--
 -- Name: sesion sesion_pkey; Type: CONSTRAINT; Schema: usuarios; Owner: -
 --
 
@@ -884,6 +907,13 @@ CREATE INDEX ix_pedido_oferta ON pedidos.pedido USING btree (codigo_oferta);
 --
 
 CREATE UNIQUE INDEX ux_carrito_activo_por_cliente ON pedidos.carrito USING btree (correo_cliente) WHERE ((estado_carrito)::text = 'activo'::text);
+
+
+--
+-- Name: ix_recuperacion_usuario; Type: INDEX; Schema: usuarios; Owner: -
+--
+
+CREATE INDEX ix_recuperacion_usuario ON usuarios.recuperacion USING btree (correo_usuario);
 
 
 --
@@ -1085,6 +1115,14 @@ ALTER TABLE ONLY pedidos.pedido
 
 ALTER TABLE ONLY pedidos.pedido
     ADD CONSTRAINT pedido_creado_por_fkey FOREIGN KEY (creado_por) REFERENCES admin.administrador(correo_usuario) ON UPDATE CASCADE;
+
+
+--
+-- Name: recuperacion recuperacion_correo_usuario_fkey; Type: FK CONSTRAINT; Schema: usuarios; Owner: -
+--
+
+ALTER TABLE ONLY usuarios.recuperacion
+    ADD CONSTRAINT recuperacion_correo_usuario_fkey FOREIGN KEY (correo_usuario) REFERENCES usuarios.usuario(correo) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

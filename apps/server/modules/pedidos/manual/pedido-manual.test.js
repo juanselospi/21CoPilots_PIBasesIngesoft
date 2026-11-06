@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 
-import { CORREO_DE_VENTA_SIN_CUENTA, validarPedidoManual } from "./validar-pedido-manual.js";
+import { validarPedidoManual } from "./validar-pedido-manual.js";
+import { CORREO_DE_VENTA_SIN_CUENTA } from "../../../shared/cuentas/venta-sin-cuenta.js";
 import { PedidosService } from "../pedidos.service.js";
 import { PedidosController } from "../pedidos.controller.js";
 import { crearRutasDePedidos } from "../pedidos.routes.js";

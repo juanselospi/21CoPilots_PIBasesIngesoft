@@ -91,6 +91,12 @@ guarda el token en una cookie `HttpOnly`; aquí solo se guarda su hash (`token_h
 ser posterior a la creación. Una sesión es válida si `fecha_vencimiento` no ha pasado.
 Si se borra el usuario, se borran sus sesiones.
 
+**`recuperacion`** — enlaces para recuperar la contraseña (RF-54, C-26), entidad débil
+de `usuario`. Como en `sesion`, solo se guarda el hash del token (`token_hash`, llave
+primaria), con `fecha_creacion` y `fecha_vencimiento`. `fecha_uso` queda en `NULL`
+hasta que se usa: un enlace sirve una sola vez y solo antes de vencer. Si se borra el
+usuario, se borran sus enlaces.
+
 ### 2.2 `admin` y `clientes`
 
 **`admin.administrador`** — especialización de `usuario`. Su llave es
@@ -399,6 +405,8 @@ coinciden con los del documento del Sprint 1, § 3.2.
 
 | C-25 | **Cliente para ventas sin cuenta:** una fila fija en `usuarios.usuario` y `clientes.cliente` (`venta.sin.cuenta@dchobbies.local`, cédula `SIN-CUENTA`) con una contraseña que nadie conoce. Un pedido manual para alguien sin cuenta va a su nombre y el nombre real queda en `nombre_destinatario`. Migración 020 (SCRUM-141). | El pedido necesita un cliente (la llave es el correo del cliente), pero quien compra en el local o por WhatsApp muchas veces no tiene cuenta y no se le puede pedir que se registre. Decidido el 05/11/2026 (I4). | RF-17, HU-09, `requerimientos-profesor` § 3 |
 
+| C-26 | Entidad nueva **Recuperación** (`usuarios.recuperacion`), débil de Usuario: hash del token, fecha de creación, de vencimiento y de uso. Migración 021 (SCRUM-117). | El enlace para recuperar la contraseña necesita un token de un solo uso que vence. En una tabla aparte no se toca `usuario`, puede haber más de un enlace pedido y queda registro de cuándo se pidió y se usó cada uno. Decidido el 05/11/2026 (E4). | RF-54, RNF-08 |
+
 C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
 migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
 diagrama.
@@ -421,8 +429,7 @@ Las decisiones abiertas que afectan al modelo son:
 - qué monedas se aceptan y, si se aceptan colones, de dónde sale el tipo de cambio
   (Daniel; C-24);
 - los montos de las tarifas de envío, la razón social y la cédula jurídica (el PO los
-  pide a Daniel; C-24), y crear en Jira la tarea de la migración 018;
-- dónde se guarda el token de recuperación de contraseña (E4, SCRUM-117).
+  pide a Daniel; C-24), y crear en Jira la tarea de la migración 018.
 
 El detalle está en
 [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md). Cuando

@@ -21,6 +21,7 @@ export function crearModuloAdmin({
   busDeEventos,
   exigirRol,
   sesion,
+  recuperacion,
   importacion,
   catalogo,
   negocio,
@@ -38,6 +39,7 @@ export function crearModuloAdmin({
     duracionSesionMinutos: sesion.duracionMinutos,
     renovarSesion: sesion.renovar,
     importacionDeExcel,
+    recuperacion,
   });
   const controlador = new AdminController({
     servicio,

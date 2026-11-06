@@ -162,6 +162,45 @@ export class AdminRepository {
     );
   }
 
+  /**
+   * RF-54: guarda el hash de un enlace nuevo. Los que la persona había pedido
+   * antes y no usó dejan de servir, así solo vale el último correo.
+   */
+  async crearRecuperacion({ correoUsuario, tokenHash, venceEn }) {
+    await enTransaccion(this.#pool, async (cliente) => {
+      await cliente.query(`DELETE FROM usuarios.recuperacion WHERE correo_usuario = $1 AND fecha_uso IS NULL`, [
+        correoUsuario,
+      ]);
+      await cliente.query(
+        `INSERT INTO usuarios.recuperacion (token_hash, correo_usuario, fecha_vencimiento) VALUES ($1, $2, $3)`,
+        [tokenHash, correoUsuario, venceEn]
+      );
+    });
+  }
+
+  /**
+   * Usa el enlace y cambia la contraseña en una transacción. Marcar el uso y
+   * leer el dueño es una sola sentencia, así dos intentos a la vez no pueden
+   * usar el mismo enlace. Cierra todas las sesiones de la cuenta.
+   * @returns el correo del dueño, o null si el enlace no existe, ya se usó o venció
+   */
+  async restablecerContrasena({ tokenHash, contrasenaHash }) {
+    return enTransaccion(this.#pool, async (cliente) => {
+      const { rows } = await cliente.query(
+        `UPDATE usuarios.recuperacion SET fecha_uso = now()
+          WHERE token_hash = $1 AND fecha_uso IS NULL AND fecha_vencimiento > now()
+          RETURNING correo_usuario`,
+        [tokenHash]
+      );
+      const correo = rows[0]?.correo_usuario;
+      if (!correo) return null;
+
+      await cliente.query(`UPDATE usuarios.usuario SET contrasena = $2 WHERE correo = $1`, [correo, contrasenaHash]);
+      await cliente.query(`DELETE FROM usuarios.sesion WHERE correo_usuario = $1`, [correo]);
+      return correo;
+    });
+  }
+
   /** RF-52: una fila de la bitácora. La fecha la pone la base con clock_timestamp(). */
   async registrarEnBitacora({ correoUsuario, evento, entidad, entidadId, valorAnterior, valorNuevo }) {
     await this.#pool.query(

@@ -8,9 +8,8 @@ import { crearValidacion, texto } from "../../../shared/validacion/validar-campo
 import { validarEntrega } from "../entrega/modalidades-de-entrega.js";
 import { validarLinea } from "../carrito/validar-linea.js";
 import { CANALES } from "../administracion/validar-consulta-de-pedidos.js";
+import { CORREO_DE_VENTA_SIN_CUENTA } from "../../../shared/cuentas/venta-sin-cuenta.js";
 
-/** La cuenta de la migración 020; los pedidos de alguien sin cuenta van a su nombre. */
-export const CORREO_DE_VENTA_SIN_CUENTA = "venta.sin.cuenta@dchobbies.local";
 
 // La web tiene su propio flujo; aquí entra todo lo demás
 export const CANALES_MANUALES = Object.freeze(CANALES.filter((canal) => canal !== "web"));

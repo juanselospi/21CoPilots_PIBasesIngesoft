@@ -58,6 +58,7 @@ export function componerSistema(configuracion) {
     busDeEventos,
     exigirRol,
     sesion: configuracion.sesion,
+    recuperacion: configuracion.recuperacion,
     importacion: configuracion.importacion,
     catalogo,
     negocio: configuracion.negocio,
