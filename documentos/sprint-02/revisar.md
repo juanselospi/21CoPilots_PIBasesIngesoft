@@ -140,8 +140,67 @@ Guardar las capturas en `evidencias/carrito/`.
 
 ### Pendiente que depende de otras tareas
 
-- El enlace «Carrito» del header y de `/acceso` lleva a `/carrito`, que todavía
-  no existe (página en blanco). Se completa con SCRUM-130.
+- El enlace «Carrito» del header y de `/acceso` lleva a `/carrito`, que ya existe
+  desde SCRUM-130 (ver la sección de abajo).
+
+### Fecha límite
+
+Antes del congelamiento de funcionalidades del jueves 5 de noviembre.
+
+## Página `/carrito`: capturas
+
+La página del carrito (SCRUM-130) ya está hecha. Lint, build y pruebas unitarias
+pasan, y se recorrió en el navegador con la base de datos y el servidor
+levantados. Faltan las capturas de evidencia.
+
+| Tarea | Estado al 5/11 |
+|---|---|
+| SCRUM-130: página `/carrito` con totales, avisos y botón «Finalizar compra» | Código listo y probado en el navegador, faltan las capturas |
+
+### Cómo se verifica
+
+Como visitante (sin sesión):
+
+1. Entrar a `/carrito`: sale «Tu carrito está vacío» con el enlace al catálogo y
+   el de iniciar sesión, que regresa a `/carrito` después de entrar.
+
+Como cliente:
+
+2. Con productos en el carrito, cada línea muestra imagen, nombre, precio de la
+   unidad con impuesto, cantidad, total y «Quitar»; a la derecha el resumen con
+   subtotal, impuesto y total.
+3. Subir o bajar la cantidad con «+» y «−», o escribirla y salir del campo: cambian
+   el total de la línea, el resumen y el contador del header.
+4. Dejar la cantidad vacía o en 0: sale el error en la línea y no se guarda.
+5. Con un producto que no admite contrapedido, pedir más de lo que hay: sale
+   «El máximo disponible es N.» y la cantidad vuelve a la que tenía.
+6. Con un producto por contrapedido, pedir más de lo que hay: la línea queda con
+   la etiqueta «Por contrapedido» y cuántas unidades van por contrapedido.
+7. Dejar en 0 las existencias de un producto del carrito que no admite
+   contrapedido (desde el panel) y volver a `/carrito`: la línea sale «Fuera de
+   stock» con la cantidad bloqueada y «Finalizar compra» queda deshabilitado
+   hasta quitarla.
+8. Cambiar el precio de un producto del carrito (por ejemplo el margen, desde el
+   panel) y volver a `/carrito`: cambian el precio de la línea y el total.
+9. Quitar todas las líneas: sale «Tu carrito está vacío» y el contador queda en 0.
+
+Como administrador:
+
+10. `/carrito` sale vacío, el carrito del administrador queda para un sprint
+    posterior (ver `cambios-siguiente-sprint.md`).
+
+Capturas que pide la tarea, en `evidencias/carrito/`: línea normal, línea por
+contrapedido, línea fuera de stock, y el total antes y después de cambiar un
+precio.
+
+### Pendiente que depende de otras tareas
+
+- «Finalizar compra» lleva a `/finalizar-compra`, que todavía no existe (página
+  en blanco). Se completa con SCRUM-136.
+- El tope de existencias se conoce hasta que el servidor responde (409), porque
+  el carrito no dice si el producto admite contrapedido. Si se quiere deshabilitar
+  el «+» al llegar al tope, el servidor tendría que mandar `admiteContrapedido`
+  en cada línea.
 
 ### Fecha límite
 

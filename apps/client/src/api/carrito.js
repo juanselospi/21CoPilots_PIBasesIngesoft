@@ -18,3 +18,21 @@ export function obtenerCarrito({ signal } = {}) {
 export function agregarAlCarrito(sku, cantidad) {
     return pedir('/api/pedidos/carrito/lineas', { metodo: 'POST', cuerpo: { sku, cantidad } })
 }
+
+/**
+ * Deja la línea con esa cantidad (no la suma) y devuelve el carrito completo.
+ * Con el tope de existencias pasa lo mismo que al agregar: el servidor responde 409 con el mensaje.
+ */
+export function cambiarCantidadDeLinea(sku, cantidad) {
+    return pedir(rutaDeLinea(sku), { metodo: 'PATCH', cuerpo: { cantidad } })
+}
+
+/**
+ * Quita la línea y devuelve el carrito completo.
+ */
+export function quitarDelCarrito(sku) {
+    return pedir(rutaDeLinea(sku), { metodo: 'DELETE' })
+}
+
+// El SKU va en la ruta, por eso se codifica
+const rutaDeLinea = (sku) => `/api/pedidos/carrito/lineas/${encodeURIComponent(sku)}`

@@ -1,0 +1,54 @@
+/* Selector de cantidad de la ficha y del carrito */
+
+.quantity-stepper {
+  display: flex;
+  overflow: hidden;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+}
+
+.quantity-stepper button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  border: none;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+
+.quantity-stepper button:hover:not(:disabled) {
+  color: var(--color-enlace);
+}
+
+.quantity-stepper button:disabled {
+  color: var(--color-texto-suave);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-stepper input {
+  width: 56px;
+  padding: 10px 4px;
+  border: none;
+  border-inline: 1.5px solid var(--color-borde);
+  font: inherit;
+  font-size: var(--texto-general);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.quantity-stepper input:focus {
+  outline: 2px solid var(--color-enlace);
+  outline-offset: -2px;
+}
+
+.quantity-stepper input:disabled {
+  color: var(--color-texto-suave);
+  cursor: not-allowed;
+}
+
+/* Con error el borde va en rojo, el mensaje lo pone quien usa el selector */
+.quantity-stepper:has(input[aria-invalid='true']) {
+  border-color: var(--estado-error-texto);
+}

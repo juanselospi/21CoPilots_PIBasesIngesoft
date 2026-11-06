@@ -56,3 +56,14 @@ test('igualA compara con otro campo y no tapa el obligatorio', () => {
     })
     assert.deepEqual(validarCampos({ nueva: 'Clave#2026', confirmar: 'Clave#2026' }, reglas), {})
 })
+
+test('maximo rechaza lo que pasa del tope y deja pasar el tope', () => {
+    const reglas = { cantidad: { tipo: 'entero', minimo: 1, maximo: 999 } }
+    assert.deepEqual(validarCampos({ cantidad: '1000' }, reglas), { cantidad: 'El valor máximo es 999.' })
+    assert.deepEqual(validarCampos({ cantidad: '999' }, reglas), {})
+    assert.deepEqual(validarCampos({ cantidad: '5' }, { cantidad: { ...reglas.cantidad, mensajeMaximo: 'Es mucho.' } }), {})
+    assert.deepEqual(
+        validarCampos({ cantidad: '1000' }, { cantidad: { ...reglas.cantidad, mensajeMaximo: 'Es mucho.' } }),
+        { cantidad: 'Es mucho.' },
+    )
+})

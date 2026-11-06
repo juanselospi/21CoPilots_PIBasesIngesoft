@@ -24,6 +24,8 @@ export function validarCampos(valores, definicion) {
                 reglas.exclusivo ? numero <= reglas.minimo : numero < reglas.minimo
             )) {
                 errores[campo] = reglas.mensajeMinimo ?? `El valor mínimo es ${reglas.minimo}.`
+            } else if (reglas.maximo !== undefined && numero > reglas.maximo) {
+                errores[campo] = reglas.mensajeMaximo ?? `El valor máximo es ${reglas.maximo}.`
             }
         } else if (reglas.tipo === 'correo' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)) {
             errores[campo] = 'Ingrese un correo electrónico válido.'

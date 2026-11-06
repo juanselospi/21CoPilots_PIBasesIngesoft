@@ -1,15 +1,16 @@
 import { useEffect, useId, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ImageOff, Minus, Plus } from 'lucide-react'
+import { ImageOff } from 'lucide-react'
 import './ProductDetail.css'
 import AddToCartButton from '../../components/add-to-cart/AddToCartButton.jsx'
 import AvailabilityChip from '../../components/product-card/AvailabilityChip.jsx'
+import QuantityStepper from '../../components/quantity-stepper/QuantityStepper.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useProducto } from '../../hooks/useProducto.js'
 import { catalogPath } from '../../routes.js'
 import BackButton from '../../components/back-button/BackButton.jsx'
-import { CANTIDAD_MAXIMA } from '../../utils/carrito.js'
+import { aCantidad } from '../../utils/carrito.js'
 
 // Ficha de un producto con imagen, nombre, descripcion, precio final, disponibilidad y el boton para agregarlo al carrito.
 // Un producto oculto se muestra como no encontrado.
@@ -97,48 +98,26 @@ function ProductDetail() {
     )
 }
 
-// Deja la cantidad entre 1 y el maximo que acepta el servidor, lo que no es numero cuenta como 1
-const toQuantity = (texto) => Math.min(Math.max(Number.parseInt(texto, 10) || 1, 1), CANTIDAD_MAXIMA)
-
 // Selector de cantidad y boton de agregar. Despues de agregar la cantidad vuelve a 1.
 // El tope de existencias no se conoce aqui (el catalogo no las trae), lo avisa el servidor al agregar
 function BuyBox({ sku }) {
     // Se guarda como texto para poder borrar el campo mientras se escribe
     const [quantity, setQuantity] = useState('1')
     const inputId = useId()
-    const current = toQuantity(quantity)
+    const current = aCantidad(quantity)
 
     return (
         <div className='product-detail-buy'>
             <div className='product-detail-quantity'>
                 <label htmlFor={inputId}>Cantidad</label>
-                <div className='product-detail-stepper'>
-                    <button
-                        type='button'
-                        aria-label='Quitar una unidad'
-                        onClick={() => setQuantity(String(current - 1))}
-                        disabled={current <= 1}
-                    >
-                        <Minus size={18} aria-hidden='true' />
-                    </button>
-                    <input
-                        id={inputId}
-                        type='text'
-                        inputMode='numeric'
-                        value={quantity}
-                        // Solo deja escribir digitos
-                        onChange={(event) => setQuantity(event.target.value.replace(/\D/g, '').slice(0, 3))}
-                        onBlur={() => setQuantity(String(current))}
-                    />
-                    <button
-                        type='button'
-                        aria-label='Agregar una unidad'
-                        onClick={() => setQuantity(String(current + 1))}
-                        disabled={current >= CANTIDAD_MAXIMA}
-                    >
-                        <Plus size={18} aria-hidden='true' />
-                    </button>
-                </div>
+                <QuantityStepper
+                    id={inputId}
+                    value={quantity}
+                    onType={setQuantity}
+                    onStep={(cantidad) => setQuantity(String(cantidad))}
+                    // Al salir del campo queda la cantidad ya corregida, por ejemplo vacio -> 1
+                    onDone={() => setQuantity(String(current))}
+                />
             </div>
 
             <AddToCartButton
