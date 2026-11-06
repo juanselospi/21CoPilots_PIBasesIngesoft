@@ -263,6 +263,14 @@
   margin-left: auto;
   color: var(--color-texto-suave);
   font-size: var(--texto-pequeno);
+  white-space: nowrap;
+}
+
+/* En pantallas angostas el total baja a su propia línea en vez de apretar los botones */
+@media (max-width: 480px) {
+  .merchandise-pagination {
+    flex-wrap: wrap;
+  }
 }
 
 /* Sin producto elegido, cada movimiento elige su producto */
