@@ -99,6 +99,23 @@ export class InventarioRepository {
     };
   }
 
+  /**
+   * Lo que salió neto con un motivo, por SKU: las ventas menos lo que ya se
+   * repuso. Los productos que no salieron no aparecen.
+   */
+  async unidadesQueSalieron(cliente, motivo) {
+    const { rows } = await cliente.query(
+      `SELECT sku, -sum(cantidad)::integer AS unidades
+         FROM inventario.producto_administra
+        WHERE motivo = $1
+        GROUP BY sku
+       HAVING sum(cantidad) < 0
+        ORDER BY sku`,
+      [motivo]
+    );
+    return new Map(rows.map((fila) => [fila.sku, fila.unidades]));
+  }
+
   /** RF-14: el costo de la última compra pasa a ser el costo del producto; el anterior queda en el historial. */
   async actualizarCosto(cliente, sku, costoUnitario) {
     await cliente.query(`UPDATE catalogo.producto SET item = $2 WHERE sku = $1`, [sku, costoUnitario]);

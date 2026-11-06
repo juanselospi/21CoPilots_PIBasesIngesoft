@@ -4,7 +4,6 @@
  * POR IMPLEMENTAR
  *   consultarEstado                                             RF-27
  *   listarMisPedidos                                            RF-37
- *   cambiarEstado                                               RF-26, RF-28
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
@@ -87,6 +86,16 @@ export class PedidosController {
     const correo = peticion.params.correo.trim().toLowerCase();
     const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
     const pedido = await this.#servicio.obtenerParaAdministracion(correo, numCarrito);
+    respuesta.json({ datos: aPedidoAdministrativo(pedido) });
+  };
+
+  // POST /admin/:correo/:numCarrito/estado con { estado }
+  cambiarEstado = async (peticion, respuesta) => {
+    const correo = peticion.params.correo.trim().toLowerCase();
+    const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
+    const pedido = await this.#servicio.cambiarEstado(correo, numCarrito, peticion.body ?? {}, {
+      responsable: peticion.usuario.correo,
+    });
     respuesta.json({ datos: aPedidoAdministrativo(pedido) });
   };
 }

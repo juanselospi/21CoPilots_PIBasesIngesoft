@@ -147,6 +147,8 @@ test("HU-12: confirmar crea el pedido colocado, descuenta el stock y suma la com
     ["BOO-001", -1, "venta_en_linea"],
     ["LEG-001", -2, "venta_en_linea"],
   ]);
+  // Así una cancelación sabe cuánto devolver
+  assert.ok(estado.movimientos.every((m) => m.motivo === `Pedido ${ANA}/7`));
 });
 
 test("el precio queda congelado y el total suma el envío", async () => {

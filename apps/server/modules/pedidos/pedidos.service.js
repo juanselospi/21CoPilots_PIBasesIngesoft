@@ -4,9 +4,7 @@
  * El carrito está en carrito/carrito.service.js.
  *
  * POR IMPLEMENTAR
- *   RF-26, RF-27  Estados del pedido y su visibilidad para el cliente
- *   RF-28         Cancelar antes del despacho y devolver unidades (RN-15);
- *                 solo lo hace el administrador
+ *   RF-27         Visibilidad del estado para el cliente
  *   RF-29         Sin límite de pedidos activos (RN-12)
  *   RF-31         Comprobante
  *
@@ -27,6 +25,9 @@ import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { MODALIDADES, totalConEntrega, validarEntrega } from "./entrega/modalidades-de-entrega.js";
 import { validarConfirmacion } from "./confirmacion/validar-confirmacion.js";
 import { validarConsultaDePedidos } from "./administracion/validar-consulta-de-pedidos.js";
+import { validarCambioDeEstado } from "./administracion/validar-cambio-de-estado.js";
+import { ESTADOS, estadoAnterior, siguientesEstados, transicionar } from "./estados/maquina-de-estados.js";
+import { idDelPedido, motivoDelPedido } from "./referencia-del-pedido.js";
 
 export class PedidosService {
   #repositorio;
@@ -129,7 +130,12 @@ export class PedidosService {
         // Con contrapedido se descuenta lo que hay; el resto llega después
         const salen = Math.min(linea.cantidad, Number(stock.get(linea.sku).stock));
         if (salen > 0) {
-          const salida = { sku: linea.sku, cantidad: -salen, tipo: "venta_en_linea" };
+          const salida = {
+            sku: linea.sku,
+            cantidad: -salen,
+            tipo: "venta_en_linea",
+            motivo: motivoDelPedido(correo, carrito.numCarrito),
+          };
           movimientos.push(await this.#inventario.registrarEnTransaccion(cliente, salida));
         }
       }
@@ -198,7 +204,7 @@ export class PedidosService {
     await this.#busDeEventos.publicar(EVENTOS.PEDIDO_CONFIRMADO, {
       correoUsuario: correo,
       entidad: "pedido",
-      entidadId: `${correo}/${pedido.numCarrito}`,
+      entidadId: idDelPedido(correo, pedido.numCarrito),
       valorAnterior: null,
       valorNuevo: { total: pedido.total, metodoPago, pago: pedido.pago.resultado },
     });
@@ -261,7 +267,7 @@ export class PedidosService {
    */
   async obtenerParaAdministracion(correo, numCarrito) {
     const pedido = await this.#repositorio.obtenerParaAdministracion(correo, numCarrito);
-    if (!pedido) throw new RecursoNoEncontrado("el pedido", `${correo}/${numCarrito}`);
+    if (!pedido) throw new RecursoNoEncontrado("el pedido", idDelPedido(correo, numCarrito));
 
     const [contacto, guardadas, historial, pagos, factura] = await Promise.all([
       this.#clientes.datosDeContacto(correo),
@@ -281,9 +287,73 @@ export class PedidosService {
         subtotal: redondear(linea.precioUnitario * linea.cantidad),
       })),
       historial,
+      estadosSiguientes: siguientesEstados(pedido.estado, estadoAnterior(historial)),
       pagos,
       factura,
     };
+  }
+
+  /**
+   * RF-26, RF-28: el administrador mueve el pedido a otro estado. Cancelar
+   * devuelve al inventario lo que el pedido descontó, en la misma
+   * transacción; el cliente no tiene ruta para hacerlo.
+   * @returns el pedido como lo ve el panel después del cambio
+   */
+  async cambiarEstado(correo, numCarrito, datos, { responsable }) {
+    const estadoNuevo = validarCambioDeEstado(datos);
+
+    const { estadoPrevio, movimientos } = await this.#repositorio.enTransaccion(async (cliente) => {
+      if (!(await this.#repositorio.bloquearPedido(cliente, correo, numCarrito))) {
+        throw new RecursoNoEncontrado("el pedido", idDelPedido(correo, numCarrito));
+      }
+      const historial = await this.#repositorio.historialDeEstados(correo, numCarrito, cliente);
+      const estadoPrevio = historial.at(-1)?.estado;
+      transicionar(estadoPrevio, estadoNuevo, estadoAnterior(historial));
+
+      await this.#repositorio.registrarEstado(cliente, correo, numCarrito, estadoNuevo);
+      const movimientos =
+        estadoNuevo === ESTADOS.CANCELADO ? await this.#reponerInventario(cliente, correo, numCarrito, responsable) : [];
+      return { estadoPrevio, movimientos };
+    });
+
+    await this.#inventario.publicarMovimientos(movimientos, { responsable });
+    const cambio = {
+      correoUsuario: responsable,
+      entidad: "pedido",
+      entidadId: idDelPedido(correo, numCarrito),
+      valorAnterior: { estado: estadoPrevio },
+      valorNuevo: { estado: estadoNuevo },
+    };
+    await this.#busDeEventos.publicar(EVENTOS.ESTADO_DE_PEDIDO_CAMBIADO, cambio);
+    if (estadoNuevo === ESTADOS.CANCELADO) {
+      const repuestas = movimientos.map(({ sku, cantidad }) => ({ sku, cantidad }));
+      await this.#busDeEventos.publicar(EVENTOS.PEDIDO_CANCELADO, {
+        ...cambio,
+        valorNuevo: { estado: estadoNuevo, unidadesRepuestas: repuestas },
+      });
+    }
+    return this.obtenerParaAdministracion(correo, numCarrito);
+  }
+
+  // Devuelve lo que salió por el pedido; lo que estaba en contrapedido nunca se descontó
+  async #reponerInventario(cliente, correo, numCarrito, responsable) {
+    const motivo = motivoDelPedido(correo, numCarrito);
+    const unidades = await this.#inventario.unidadesQueSalieronEnTransaccion(cliente, motivo);
+    await this.#inventario.bloquearEnTransaccion(cliente, [...unidades.keys()]);
+
+    const movimientos = [];
+    for (const [sku, cantidad] of unidades) {
+      movimientos.push(
+        await this.#inventario.registrarEnTransaccion(cliente, {
+          sku,
+          cantidad,
+          tipo: "reposicion",
+          correoAdministrador: responsable,
+          motivo,
+        })
+      );
+    }
+    return movimientos;
   }
 
   // Si la facturación no está disponible el pedido sigue; la factura solo se guarda si se emitió
