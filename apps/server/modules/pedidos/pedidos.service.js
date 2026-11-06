@@ -15,6 +15,7 @@
  */
 
 import {
+  EntradaInvalida,
   PagoRechazado,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
@@ -100,7 +101,7 @@ export class PedidosService {
    * rechaza se revierte todo y el carrito queda como estaba (RF-39).
    */
   async confirmar(correo, datos) {
-    const { modalidadEntrega, direccion, metodoPago, datosTarjeta } = validarConfirmacion(datos);
+    const { modalidadEntrega, direccion, metodoPago, datosTarjeta, usarCredito } = validarConfirmacion(datos);
     const { costoEntrega } = await this.cotizarEntrega({ modalidadEntrega, direccion });
 
     const { pedido, movimientos } = await this.#repositorio.enTransaccion(async (cliente) => {
@@ -153,36 +154,67 @@ export class PedidosService {
       await this.#clientes.sumarCompra(cliente, correo);
 
       const montos = totalesDelPedido(lineas, costoEntrega);
-      const pago = await this.#pasarelaDePago.cobrar({
-        correoCliente: correo,
-        numCarrito: carrito.numCarrito,
-        monto: montos.total,
-        metodo: metodoPago,
-        datosTarjeta,
-      });
-      // Lanzar aquí revierte la transacción completa
-      if (pago.resultado === "rechazado") throw new PagoRechazado(pago.motivo);
 
-      // Sin referencia de la pasarela (contra entrega o no disponible) se usa una local
-      const pagoGuardado = await this.#pagos.registrar(cliente, {
-        numReferencia: pago.referencia ?? `LOCAL-${randomUUID()}`,
-        monto: montos.total,
-        metodoPago,
-        estadoPago: pago.resultado === "aprobado" ? "aprobado" : "pendiente",
-        correoCliente: correo,
-        numCarrito: carrito.numCarrito,
-      });
+      // Primero el crédito a favor; lo que no cubra se cobra con el medio de pago
+      const creditoUsado = usarCredito
+        ? redondear(Math.min(await this.#clientes.bloquearSaldoDeCredito(cliente, correo), montos.total))
+        : 0;
+      const restante = redondear(montos.total - creditoUsado);
+      if (restante > 0 && !metodoPago) {
+        throw new EntradaInvalida(
+          "Su crédito no alcanza para todo el pedido; elija un medio de pago para la diferencia.",
+          ["metodoPago"]
+        );
+      }
 
-      // RF-41: con el pago aprobado se emite la factura; contra entrega la tendrá al pagar
-      const factura =
-        pagoGuardado.estadoPago === "aprobado"
-          ? await this.#facturar(cliente, {
-              correo,
-              numCarrito: carrito.numCarrito,
-              numReferencia: pagoGuardado.numReferencia,
-              lineas,
-            })
-          : null;
+      const pagosGuardados = [];
+      if (creditoUsado > 0) {
+        pagosGuardados.push(
+          await this.#pagos.registrar(cliente, {
+            numReferencia: `CREDITO-${randomUUID()}`,
+            monto: creditoUsado,
+            metodoPago: "credito",
+            estadoPago: "aprobado",
+            correoCliente: correo,
+            numCarrito: carrito.numCarrito,
+          })
+        );
+      }
+      if (restante > 0) {
+        const pago = await this.#pasarelaDePago.cobrar({
+          correoCliente: correo,
+          numCarrito: carrito.numCarrito,
+          monto: restante,
+          metodo: metodoPago,
+          datosTarjeta,
+        });
+        // Lanzar aquí revierte la transacción completa, también el uso del crédito
+        if (pago.resultado === "rechazado") throw new PagoRechazado(pago.motivo);
+
+        // Sin referencia de la pasarela (contra entrega o no disponible) se usa una local
+        pagosGuardados.push(
+          await this.#pagos.registrar(cliente, {
+            numReferencia: pago.referencia ?? `LOCAL-${randomUUID()}`,
+            monto: restante,
+            metodoPago,
+            estadoPago: pago.resultado === "aprobado" ? "aprobado" : "pendiente",
+            correoCliente: correo,
+            numCarrito: carrito.numCarrito,
+          })
+        );
+      }
+      // El pago que se informa es el del medio de pago, o el del crédito si alcanzó solo
+      const pagoGuardado = pagosGuardados.at(-1);
+
+      // RF-41: con todo cobrado se emite la factura; contra entrega la tendrá al pagar
+      const factura = pagosGuardados.every(({ estadoPago }) => estadoPago === "aprobado")
+        ? await this.#facturar(cliente, {
+            correo,
+            numCarrito: carrito.numCarrito,
+            numReferencia: pagoGuardado.numReferencia,
+            lineas,
+          })
+        : null;
 
       return {
         movimientos,
@@ -193,9 +225,10 @@ export class PedidosService {
           estado: "colocado",
           modalidadEntrega,
           direccion,
-          metodoPago,
+          metodoPago: metodoPago ?? "credito",
           lineas,
           ...montos,
+          creditoUsado,
           pago: { resultado: pagoGuardado.estadoPago, referencia: pagoGuardado.numReferencia },
           factura: factura && { numFactura: factura.numFactura },
         },
@@ -209,7 +242,12 @@ export class PedidosService {
       entidad: "pedido",
       entidadId: idDelPedido(correo, pedido.numCarrito),
       valorAnterior: null,
-      valorNuevo: { total: pedido.total, metodoPago, pago: pedido.pago.resultado },
+      valorNuevo: {
+        total: pedido.total,
+        metodoPago: pedido.metodoPago,
+        pago: pedido.pago.resultado,
+        creditoUsado: pedido.creditoUsado,
+      },
     });
     return pedido;
   }
@@ -230,11 +268,12 @@ export class PedidosService {
     const factura = await this.#facturas.buscarPorPedido(correo, numCarrito);
     if (!factura) throw new RecursoNoEncontrado("la factura del pedido", numCarrito);
 
-    const [emisor, receptor, guardadas, costoEntrega] = await Promise.all([
+    const [emisor, receptor, guardadas, costoEntrega, cobrado] = await Promise.all([
       this.#facturas.obtenerEmisor(),
       this.#clientes.datosParaFactura(correo),
       this.#repositorio.lineasDelPedido(correo, numCarrito),
       this.#repositorio.costoDeEntrega(correo, numCarrito),
+      this.#pagos.montoAprobado(correo, numCarrito),
     ]);
     const nombres = await this.#productosParaVenta(guardadas.map(({ sku }) => sku));
     const lineas = guardadas.map((linea) => ({
@@ -244,7 +283,8 @@ export class PedidosService {
     }));
 
     const subtotal = redondear(lineas.reduce((suma, linea) => suma + linea.subtotal, 0));
-    const total = factura.montoCobrado;
+    // Si se pagó una parte con crédito, el total son los dos pagos
+    const total = cobrado;
     return {
       ...factura,
       emisor,

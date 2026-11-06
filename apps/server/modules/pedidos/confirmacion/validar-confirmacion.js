@@ -10,8 +10,10 @@ import { validarEntrega } from "../entrega/modalidades-de-entrega.js";
 export const METODOS_DE_PAGO_EN_LINEA = Object.freeze(["tarjeta", "sinpe_movil", "contra_entrega"]);
 
 /**
- * @returns `{ modalidadEntrega, direccion, metodoPago, datosTarjeta }`; los
- *   datos de la tarjeta solo pasan a la pasarela y nunca se guardan (RNF-09)
+ * Con `usarCredito` el medio de pago puede faltar: si el saldo no alcanza,
+ * la confirmación lo pide para cobrar la diferencia.
+ * @returns `{ modalidadEntrega, direccion, metodoPago, datosTarjeta, usarCredito }`;
+ *   los datos de la tarjeta solo pasan a la pasarela y nunca se guardan (RNF-09)
  * @throws {EntradaInvalida} con todos los campos que tienen problemas
  */
 export function validarConfirmacion(datos = {}) {
@@ -25,8 +27,12 @@ export function validarConfirmacion(datos = {}) {
     validacion.anotar(error.detalles.campos, error.message);
   }
 
-  const metodoPago = datos.metodoPago;
-  if (!METODOS_DE_PAGO_EN_LINEA.includes(metodoPago)) {
+  const usarCredito = datos.usarCredito ?? false;
+  if (typeof usarCredito !== "boolean") validacion.anotar("usarCredito", "Indique si quiere usar su crédito (true o false).");
+
+  const metodoPago = datos.metodoPago ?? null;
+  const puedeFaltar = usarCredito === true && metodoPago === null;
+  if (!puedeFaltar && !METODOS_DE_PAGO_EN_LINEA.includes(metodoPago)) {
     validacion.anotar("metodoPago", `El medio de pago tiene que ser uno de: ${METODOS_DE_PAGO_EN_LINEA.join(", ")}.`);
   }
 
@@ -36,5 +42,5 @@ export function validarConfirmacion(datos = {}) {
   }
 
   validacion.lanzarSiHayProblemas();
-  return { ...entrega, metodoPago, datosTarjeta: metodoPago === "tarjeta" ? datosTarjeta : null };
+  return { ...entrega, metodoPago, datosTarjeta: metodoPago === "tarjeta" ? datosTarjeta : null, usarCredito };
 }

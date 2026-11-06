@@ -12,7 +12,7 @@ import {
 // Escenario: Ana tiene en el carrito 2 LEG-001 (hay 3) y 4 BOO-001 (hay 1,
 // admite contrapedido). La "base" solo guarda los cambios si la transacción
 // termina bien, como la real.
-function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) {
+function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock, saldo = 0 } = {}) {
   const estado = {
     carrito: carrito ?? {
       numCarrito: 7,
@@ -28,6 +28,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     movimientos: [],
     compras: 0,
     precios: {},
+    cobros: [],
   };
   const eventos = [];
   const producto = (sku, nombre, precioSinImpuesto, precioFinal, admiteContrapedido) => ({
@@ -80,6 +81,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
   const clientes = {
     sumarCompra: async () => (estado.compras += 1),
     datosParaFactura: async () => ({ nombre: "Ana Mora", cedula: "123456789" }),
+    bloquearSaldoDeCredito: async () => saldo,
   };
   const facturas = {
     obtenerEmisor: async () => ({ razonSocial: "DC Hobbies", cedulaJuridica: "3-101-123456", direccion: "San José" }),
@@ -101,7 +103,7 @@ function crearEscenario({ resultadoDelPago = "aprobado", carrito, stock } = {}) 
     },
   };
   const pasarelaDePago = {
-    cobrar: async ({ monto }) => ({
+    cobrar: async ({ monto }) => (estado.cobros.push(monto), {
       resultado: resultadoDelPago,
       referencia: resultadoDelPago === "aprobado" ? `SIM-${monto}` : null,
       motivo: resultadoDelPago === "rechazado" ? "FONDOS_INSUFICIENTES" : null,
@@ -276,4 +278,75 @@ test("contra entrega no emite factura todavía", async () => {
 
   assert.equal(pedido.factura, null);
   assert.deepEqual(estado.facturas, []);
+});
+
+test("con crédito suficiente el pedido se paga sin pasarela y sin medio de pago", async () => {
+  const { servicio, estado } = crearEscenario({ saldo: 500 });
+
+  const pedido = await servicio.confirmar(ANA, { modalidadEntrega: "mensajero", direccion: "Heredia", usarCredito: true });
+
+  assert.deepEqual(estado.cobros, []);
+  assert.deepEqual(estado.pagos.map((p) => [p.metodoPago, p.monto, p.estadoPago]), [["credito", 274.7, "aprobado"]]);
+  assert.match(estado.pagos[0].numReferencia, /^CREDITO-/);
+  assert.equal(pedido.metodoPago, "credito");
+  assert.equal(pedido.creditoUsado, 274.7);
+  assert.equal(pedido.pago.resultado, "aprobado");
+  assert.ok(pedido.factura);
+});
+
+test("con crédito parcial se cobra solo la diferencia con el otro medio", async () => {
+  const { servicio, estado } = crearEscenario({ saldo: 100 });
+
+  const pedido = await servicio.confirmar(ANA, { ...checkout, usarCredito: true });
+
+  assert.deepEqual(estado.cobros, [174.7]);
+  assert.deepEqual(estado.pagos.map((p) => [p.metodoPago, p.monto]), [
+    ["credito", 100],
+    ["tarjeta", 174.7],
+  ]);
+  assert.equal(pedido.creditoUsado, 100);
+  assert.equal(pedido.total, 274.7);
+});
+
+test("si el crédito no alcanza y no hay medio de pago se pide uno, y un rechazo devuelve el crédito", async () => {
+  const sinMedio = crearEscenario({ saldo: 100 });
+  await assert.rejects(
+    sinMedio.servicio.confirmar(ANA, { modalidadEntrega: "mensajero", direccion: "Heredia", usarCredito: true }),
+    (error) => error instanceof EntradaInvalida && error.detalles.campos.includes("metodoPago")
+  );
+  assert.deepEqual(sinMedio.estado.pagos, []);
+
+  const rechazado = crearEscenario({ saldo: 100, resultadoDelPago: "rechazado" });
+  await assert.rejects(rechazado.servicio.confirmar(ANA, { ...checkout, usarCredito: true }), PagoRechazado);
+  // La transacción se revierte entera: el uso del crédito tampoco queda
+  assert.deepEqual(rechazado.estado.pagos, []);
+});
+
+test("sin pedir el crédito no se toca aunque haya saldo", async () => {
+  const { servicio, estado } = crearEscenario({ saldo: 500 });
+
+  const pedido = await servicio.confirmar(ANA, checkout);
+
+  assert.deepEqual(estado.pagos.map((p) => p.metodoPago), ["tarjeta"]);
+  assert.equal(pedido.creditoUsado, 0);
+});
+
+test("la factura de un pedido pagado en parte con crédito suma los dos pagos", async () => {
+  const servicio = new PedidosService({
+    repositorio: {
+      lineasDelPedido: async () => [{ sku: "LEG-001", cantidad: 2, precioUnitario: 100, tasaImpuesto: 13 }],
+      costoDeEntrega: async () => 3.5,
+    },
+    clientes: { datosParaFactura: async () => ({ nombre: "Ana Mora", cedula: "123456789" }) },
+    pagos: { montoAprobado: async () => 229.5 },
+    facturas: {
+      buscarPorPedido: async () => ({ numFactura: "F-1", numReferencia: "SIM-1", montoCobrado: 129.5, metodoPago: "tarjeta" }),
+      obtenerEmisor: async () => ({ razonSocial: "DC Hobbies" }),
+    },
+    productosParaVenta: async () => new Map([["LEG-001", { nombre: "Halcón" }]]),
+  });
+
+  const factura = await servicio.obtenerFactura(ANA, 7);
+
+  assert.deepEqual([factura.subtotal, factura.impuesto, factura.costoEntrega, factura.total], [200, 26, 3.5, 229.5]);
 });

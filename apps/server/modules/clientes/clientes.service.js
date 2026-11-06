@@ -97,6 +97,11 @@ export class ClientesService {
     await this.#repositorio.registrarCredito(cliente, credito);
   }
 
+  /** Para pedidos, dentro de la transacción que confirma la compra. */
+  async bloquearSaldoDeCredito(cliente, correo) {
+    return this.#repositorio.bloquearSaldoDeCredito(cliente, correo);
+  }
+
   async creditoOtorgadoPorPedido(correo, numCarrito, cliente) {
     return this.#repositorio.creditoOtorgadoPorPedido(correo, numCarrito, cliente);
   }
