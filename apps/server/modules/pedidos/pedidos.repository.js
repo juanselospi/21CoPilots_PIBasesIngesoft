@@ -76,9 +76,9 @@ export class PedidosRepository {
     return rows[0].num_carrito;
   }
 
-  /** Crea la línea o le cambia la cantidad y el precio. */
-  async guardarLinea(correo, numCarrito, { sku, cantidad, precioUnitario, tasaImpuesto }) {
-    await this.#pool.query(
+  /** Crea la línea o le cambia la cantidad y el precio. Sirve para el carrito y para editar un pedido. */
+  async guardarLinea(correo, numCarrito, { sku, cantidad, precioUnitario, tasaImpuesto }, cliente = this.#pool) {
+    await cliente.query(
       `INSERT INTO pedidos.agrega
               (correo_cliente, num_carrito, sku, cantidad_solicitada, precio_unitario, tasa_impuesto_aplicada)
        VALUES ($1, $2, $3, $4, $5, $6)
@@ -90,8 +90,8 @@ export class PedidosRepository {
     );
   }
 
-  async quitarLinea(correo, numCarrito, sku) {
-    await this.#pool.query(
+  async quitarLinea(correo, numCarrito, sku, cliente = this.#pool) {
+    await cliente.query(
       `DELETE FROM pedidos.agrega WHERE correo_cliente = $1 AND num_carrito = $2 AND sku = $3`,
       [correo, numCarrito, sku]
     );
@@ -151,14 +151,14 @@ export class PedidosRepository {
 
   /**
    * Bloquea el pedido para que dos cambios a la vez no lean el mismo estado.
-   * @returns false si el pedido no existe
+   * @returns el canal del pedido, o null si no existe
    */
   async bloquearPedido(cliente, correo, numCarrito) {
     const { rows } = await cliente.query(
-      `SELECT 1 FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2 FOR UPDATE`,
+      `SELECT canal FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2 FOR UPDATE`,
       [correo, numCarrito]
     );
-    return rows.length > 0;
+    return rows[0] ? { canal: rows[0].canal } : null;
   }
 
   async registrarEstado(cliente, correo, numCarrito, estado) {
@@ -177,8 +177,8 @@ export class PedidosRepository {
   }
 
   /** Las líneas del pedido con el precio que quedó congelado al confirmar. */
-  async lineasDelPedido(correo, numCarrito) {
-    const { rows } = await this.#pool.query(
+  async lineasDelPedido(correo, numCarrito, cliente = this.#pool) {
+    const { rows } = await cliente.query(
       `SELECT sku, cantidad_solicitada, precio_unitario, tasa_impuesto_aplicada
          FROM pedidos.agrega
         WHERE correo_cliente = $1 AND num_carrito = $2

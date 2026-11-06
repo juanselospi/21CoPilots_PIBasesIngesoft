@@ -20,10 +20,12 @@ import {
 export class PedidosController {
   #servicio;
   #carrito;
+  #edicion;
 
-  constructor({ servicio, carrito }) {
+  constructor({ servicio, carrito, edicion }) {
     this.#servicio = servicio;
     this.#carrito = carrito;
+    this.#edicion = edicion;
   }
 
   // GET /carrito
@@ -83,21 +85,63 @@ export class PedidosController {
 
   // GET /admin/:correo/:numCarrito
   verParaAdministracion = async (peticion, respuesta) => {
-    const correo = peticion.params.correo.trim().toLowerCase();
-    const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
+    const { correo, numCarrito } = leerPedido(peticion.params);
     const pedido = await this.#servicio.obtenerParaAdministracion(correo, numCarrito);
     respuesta.json({ datos: aPedidoAdministrativo(pedido) });
   };
 
   // POST /admin/:correo/:numCarrito/estado con { estado }
   cambiarEstado = async (peticion, respuesta) => {
-    const correo = peticion.params.correo.trim().toLowerCase();
-    const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
+    const { correo, numCarrito } = leerPedido(peticion.params);
     const pedido = await this.#servicio.cambiarEstado(correo, numCarrito, peticion.body ?? {}, {
       responsable: peticion.usuario.correo,
     });
     respuesta.json({ datos: aPedidoAdministrativo(pedido) });
   };
+
+  // PATCH /admin/:correo/:numCarrito/lineas/:sku con { cantidad }
+  cambiarCantidadDelPedido = async (peticion, respuesta) => {
+    await this.#editarYResponder(peticion, respuesta, ({ correo, numCarrito, sku }, opciones) =>
+      this.#edicion.cambiarCantidad(correo, numCarrito, sku, peticion.body ?? {}, opciones)
+    );
+  };
+
+  // DELETE /admin/:correo/:numCarrito/lineas/:sku
+  quitarLineaDelPedido = async (peticion, respuesta) => {
+    await this.#editarYResponder(peticion, respuesta, ({ correo, numCarrito, sku }, opciones) =>
+      this.#edicion.quitarLinea(correo, numCarrito, sku, opciones)
+    );
+  };
+
+  // POST /admin/:correo/:numCarrito/lineas con { sku, cantidad }
+  agregarLineaAlPedido = async (peticion, respuesta) => {
+    await this.#editarYResponder(
+      peticion,
+      respuesta,
+      ({ correo, numCarrito }, opciones) => this.#edicion.agregarLinea(correo, numCarrito, peticion.body ?? {}, opciones),
+      201
+    );
+  };
+
+  // POST /admin/:correo/:numCarrito/lineas/:sku/reemplazo con { skuNuevo }
+  reemplazarLineaDelPedido = async (peticion, respuesta) => {
+    await this.#editarYResponder(peticion, respuesta, ({ correo, numCarrito, sku }, opciones) =>
+      this.#edicion.reemplazarLinea(correo, numCarrito, sku, peticion.body ?? {}, opciones)
+    );
+  };
+
+  // Después de cada cambio el panel recibe el pedido completo, con los montos nuevos
+  async #editarYResponder(peticion, respuesta, editar, estado = 200) {
+    const pedido = leerPedido(peticion.params);
+    const sku = peticion.params.sku?.trim().toUpperCase();
+    await editar({ ...pedido, sku }, { responsable: peticion.usuario.correo });
+    const actualizado = await this.#servicio.obtenerParaAdministracion(pedido.correo, pedido.numCarrito);
+    respuesta.status(estado).json({ datos: aPedidoAdministrativo(actualizado) });
+  }
+}
+
+function leerPedido(params) {
+  return { correo: params.correo.trim().toLowerCase(), numCarrito: leerNumeroDeCarrito(params.numCarrito) };
 }
 
 function leerNumeroDeCarrito(valor) {

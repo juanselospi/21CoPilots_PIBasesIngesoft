@@ -26,7 +26,7 @@ import { MODALIDADES, totalConEntrega, validarEntrega } from "./entrega/modalida
 import { validarConfirmacion } from "./confirmacion/validar-confirmacion.js";
 import { validarConsultaDePedidos } from "./administracion/validar-consulta-de-pedidos.js";
 import { validarCambioDeEstado } from "./administracion/validar-cambio-de-estado.js";
-import { ESTADOS, estadoAnterior, siguientesEstados, transicionar } from "./estados/maquina-de-estados.js";
+import { admiteEdicion, ESTADOS, estadoAnterior, siguientesEstados, transicionar } from "./estados/maquina-de-estados.js";
 import { idDelPedido, motivoDelPedido } from "./referencia-del-pedido.js";
 
 export class PedidosService {
@@ -288,6 +288,7 @@ export class PedidosService {
       })),
       historial,
       estadosSiguientes: siguientesEstados(pedido.estado, estadoAnterior(historial)),
+      lineasEditables: admiteEdicion(pedido.estado),
       pagos,
       factura,
     };

@@ -140,4 +140,5 @@ export const aPedidoAdministrativo = (pedido) => ({
   historial: pedido.historial.map(({ estado, fecha }) => ({ estado, fecha })),
   // Los botones de acción del panel salen de aquí
   estadosSiguientes: pedido.estadosSiguientes,
+  lineasEditables: pedido.lineasEditables,
 });
