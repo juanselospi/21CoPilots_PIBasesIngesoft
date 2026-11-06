@@ -1,7 +1,8 @@
-/* Barra de arriba del panel */
+/* Barra de arriba del panel; lo que no cabe baja de línea en vez de desbordar la página */
 
 .admin-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 24px;
   padding: 14px 24px;
@@ -17,6 +18,7 @@
 /* Pantallas del panel; la abierta va resaltada */
 .admin-bar-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
@@ -92,7 +94,6 @@
 
 @media (max-width: 640px) {
   .admin-bar {
-    flex-wrap: wrap;
     gap: 12px 16px;
     padding: 12px 16px;
   }

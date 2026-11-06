@@ -1,0 +1,37 @@
+/* Estilos de la pantalla «Configuración»; lo demás viene de Products.css y ProductTable.css */
+
+.settings-section {
+  /* Notice.jsx cierra también este gap al irse un aviso */
+  --notice-gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Título y explicación a la izquierda, botón a la derecha; en pantallas angostas se apilan */
+.settings-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-section-header h2 {
+  margin: 0;
+  font-size: var(--texto-subtitulo);
+}
+
+.settings-section-header p {
+  margin: 4px 0 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+/* Nombre con el chip de propietario al lado */
+.settings-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}

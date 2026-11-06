@@ -13,6 +13,7 @@ const sections = [
     { to: '/admin/familias', label: 'Familias' },
     { to: '/admin/mercancia', label: 'Mercancía' },
     { to: '/admin/pedidos', label: 'Pedidos' },
+    { to: '/admin/configuracion', label: 'Configuración', ownerOnly: true },
 ]
 
 // Barra de arriba del panel con el logo, las pantallas, las alertas de inventario,
@@ -45,7 +46,9 @@ function AdminBar({ user, onLogOut }) {
         <header className='admin-bar'>
             <Link to='/' className='admin-bar-logo'><Logo /></Link>
             <nav className='admin-bar-nav' aria-label='Panel de administración'>
-                {sections.map(({ to, label }) => <NavLink key={to} to={to}>{label}</NavLink>)}
+                {sections
+                    .filter(({ ownerOnly }) => !ownerOnly || user.esPropietario)
+                    .map(({ to, label }) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
             <button
                 type='button'

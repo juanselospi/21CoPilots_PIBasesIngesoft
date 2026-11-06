@@ -18,6 +18,7 @@ import Families from './pages/families/Families.jsx'
 import Merchandise from './pages/merchandise/Merchandise.jsx'
 import Orders from './pages/orders/Orders.jsx'
 import OrderDetail from './pages/orders/OrderDetail.jsx'
+import Settings from './pages/settings/Settings.jsx'
 import Access from './pages/access/Access.jsx'
 import ForgotPassword from './pages/access/ForgotPassword.jsx'
 import ResetPassword from './pages/access/ResetPassword.jsx'
@@ -52,6 +53,7 @@ function App() {
               <Route path='mercancia' element={<Merchandise />} />
               <Route path='pedidos' element={<Orders />} />
               <Route path='pedidos/:correo/:numCarrito' element={<OrderDetail />} />
+              <Route path='configuracion' element={<Settings />} />
             </Route>
           </Routes>
         </CartProvider>

@@ -210,19 +210,21 @@ export class AdminRepository {
     );
   }
 
-  /** La bitácora filtrada, de lo más nuevo a lo más viejo, con el total para paginar. */
+  /** La bitácora filtrada con el nombre de cada usuario, de lo más nuevo a lo más viejo y con el total para paginar. */
   async listarBitacora({ entidad, entidadId, evento, correoUsuario, desde, hasta, limite, pagina }) {
     const { rows } = await this.#pool.query(
-      `SELECT correo_usuario, fecha, evento, entidad, entidad_id, valor_anterior, valor_nuevo,
+      `SELECT b.correo_usuario, u.nombre AS nombre_usuario, b.fecha, b.evento, b.entidad, b.entidad_id,
+              b.valor_anterior, b.valor_nuevo,
               count(*) OVER () AS total
-         FROM admin.bitacora
-        WHERE ($1::text IS NULL OR entidad = $1)
-          AND ($2::text IS NULL OR entidad_id = $2)
-          AND ($3::text IS NULL OR evento = $3)
-          AND ($4::text IS NULL OR correo_usuario = $4)
-          AND ($5::timestamptz IS NULL OR fecha >= $5)
-          AND ($6::timestamptz IS NULL OR fecha < $6)
-        ORDER BY fecha DESC
+         FROM admin.bitacora b
+         LEFT JOIN usuarios.usuario u ON u.correo = b.correo_usuario
+        WHERE ($1::text IS NULL OR b.entidad = $1)
+          AND ($2::text IS NULL OR b.entidad_id = $2)
+          AND ($3::text IS NULL OR b.evento = $3)
+          AND ($4::text IS NULL OR b.correo_usuario = $4)
+          AND ($5::timestamptz IS NULL OR b.fecha >= $5)
+          AND ($6::timestamptz IS NULL OR b.fecha < $6)
+        ORDER BY b.fecha DESC
         LIMIT $7 OFFSET $8`,
       [entidad, entidadId, evento, correoUsuario, desde, hasta, limite, pagina * limite]
     );
@@ -230,6 +232,7 @@ export class AdminRepository {
     return {
       registros: rows.map((fila) => ({
         correoUsuario: fila.correo_usuario,
+        nombreUsuario: fila.nombre_usuario,
         fecha: fila.fecha,
         evento: fila.evento,
         entidad: fila.entidad,
