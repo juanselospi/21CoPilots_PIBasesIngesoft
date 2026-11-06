@@ -6,11 +6,26 @@ export const METODOS_DE_PAGO = [
     { metodo: 'contra_entrega', nombre: 'Contra entrega' },
 ]
 
-const nombreDeMetodo = Object.fromEntries(METODOS_DE_PAGO.map(({ metodo, nombre }) => [metodo, nombre]))
+// El credito no se escoge como los demas: se marca aparte y cubre todo o una parte
+const nombreDeMetodo = {
+    ...Object.fromEntries(METODOS_DE_PAGO.map(({ metodo, nombre }) => [metodo, nombre])),
+    credito: 'Crédito a favor',
+}
 export const nombreDelMetodo = (metodo) => nombreDeMetodo[metodo] ?? metodo
 
 export const ENTREGA_VACIA = { modalidadEntrega: '', direccion: '' }
-export const PAGO_VACIO = { metodoPago: '', numeroTarjeta: '', vencimiento: '', cvv: '' }
+export const PAGO_VACIO = { metodoPago: '', numeroTarjeta: '', vencimiento: '', cvv: '', usarCredito: false }
+
+const redondear = (monto) => Math.round((monto + Number.EPSILON) * 100) / 100
+
+// Cuanto del saldo a favor se usa: todo el saldo, o solo el total si el saldo alcanza para mas
+export function creditoQueSeUsa(pago, saldo, total) {
+    if (!pago.usarCredito || !(saldo > 0)) return 0
+    return redondear(Math.min(saldo, total))
+}
+
+// Lo que falta despues del credito y se cobra con el medio de pago
+export const restantePorPagar = (total, creditoUsado) => redondear(total - creditoUsado)
 
 // Lo que hay que llenar en la entrega. La direccion solo se pide si la modalidad la necesita
 export function reglasDeEntrega(modalidad) {
@@ -26,8 +41,10 @@ export function tarjetaVencida(vencimiento, hoy = new Date()) {
     return hoy >= primerDiaDespues
 }
 
-// Lo que hay que llenar en el pago, los datos de la tarjeta solo si se paga con tarjeta
-export function reglasDePago(metodoPago, hoy = new Date()) {
+// Lo que hay que llenar en el pago, los datos de la tarjeta solo si se paga con tarjeta.
+// Si el credito cubre todo no hace falta ningun medio de pago
+export function reglasDePago(metodoPago, hoy = new Date(), { creditoCubreTodo = false } = {}) {
+    if (creditoCubreTodo) return {}
     const reglas = { metodoPago: { obligatorio: true } }
     if (metodoPago !== 'tarjeta') return reglas
 
@@ -64,20 +81,22 @@ export function formatoVencimiento(texto) {
 }
 
 // Lo que se le manda al servidor. El vencimiento y el CVV se revisan aqui y no salen del navegador
-// porque el servidor no los usa, y de la tarjeta nunca se guarda nada
-export function cuerpoDeConfirmacion(entrega, pago, modalidad) {
+// porque el servidor no los usa, y de la tarjeta nunca se guarda nada.
+// Si el credito cubre todo no va medio de pago: el servidor lo aprueba sin pasarela
+export function cuerpoDeConfirmacion(entrega, pago, modalidad, { creditoCubreTodo = false } = {}) {
+    const metodoPago = creditoCubreTodo ? null : pago.metodoPago
     return {
         modalidadEntrega: entrega.modalidadEntrega,
         direccion: modalidad?.exigeDireccion ? entrega.direccion.trim() : null,
-        metodoPago: pago.metodoPago,
-        datosTarjeta: pago.metodoPago === 'tarjeta' ? { numero: soloDigitos(pago.numeroTarjeta) } : null,
+        metodoPago,
+        datosTarjeta: metodoPago === 'tarjeta' ? { numero: soloDigitos(pago.numeroTarjeta) } : null,
+        usarCredito: Boolean(pago.usarCredito),
     }
 }
 
 // El envio se suma a lo del carrito, igual que hace el servidor al confirmar
 export function totalConEnvio(carrito, modalidad) {
-    const total = (carrito?.total ?? 0) + (modalidad?.costo ?? 0)
-    return Math.round((total + Number.EPSILON) * 100) / 100
+    return redondear((carrito?.total ?? 0) + (modalidad?.costo ?? 0))
 }
 
 // El servidor marca los datos de la tarjeta como un solo campo -> se muestra en el numero
@@ -90,6 +109,6 @@ const PASO_PAGO = 2
 // A que paso hay que volver para corregir lo que rechazo el servidor, null si no es de ningun paso
 export function pasoDeLosCampos(campos = []) {
     if (campos.some((campo) => campo === 'modalidadEntrega' || campo === 'direccion')) return PASO_ENTREGA
-    if (campos.some((campo) => campo === 'metodoPago' || campo === 'datosTarjeta')) return PASO_PAGO
+    if (campos.some((campo) => ['metodoPago', 'datosTarjeta', 'usarCredito'].includes(campo))) return PASO_PAGO
     return null
 }

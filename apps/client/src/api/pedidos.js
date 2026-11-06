@@ -10,13 +10,14 @@ export function listarModalidades({ signal } = {}) {
 
 /**
  * Convierte el carrito en un pedido y lo cobra, todo o nada.
- * Si el pago se rechaza responde 402 y el carrito queda igual.
+ * Con `usarCredito` primero se usa el saldo a favor; si alcanza, `metodoPago` puede ir en null.
+ * Si el pago se rechaza responde 402 y el carrito queda igual, también el saldo.
  * Si ya no alcanzan las existencias responde 409 con el código SIN_EXISTENCIAS.
  */
-export function confirmarPedido({ modalidadEntrega, direccion, metodoPago, datosTarjeta }) {
+export function confirmarPedido({ modalidadEntrega, direccion, metodoPago, datosTarjeta, usarCredito = false }) {
     return pedir('/api/pedidos', {
         metodo: 'POST',
-        cuerpo: { modalidadEntrega, direccion, metodoPago, datosTarjeta },
+        cuerpo: { modalidadEntrega, direccion, metodoPago, datosTarjeta, usarCredito },
     })
 }
 

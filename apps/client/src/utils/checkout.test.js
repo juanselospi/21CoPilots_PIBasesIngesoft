@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-    PAGO_VACIO, camposDelPago, cuerpoDeConfirmacion, formatoVencimiento, nombreDelMetodo, pasoDeLosCampos,
-    reglasDeEntrega, reglasDePago, tarjetaVencida, totalConEnvio, ultimosDigitos,
+    PAGO_VACIO, camposDelPago, creditoQueSeUsa, cuerpoDeConfirmacion, formatoVencimiento, nombreDelMetodo,
+    pasoDeLosCampos, reglasDeEntrega, reglasDePago, restantePorPagar, tarjetaVencida, totalConEnvio, ultimosDigitos,
 } from './checkout.js'
 import { validarCampos } from './validarCampos.js'
 
@@ -67,6 +67,7 @@ test('cuerpo: de la tarjeta solo sale el número limpio', () => {
         direccion: 'San Pedro',
         metodoPago: 'tarjeta',
         datosTarjeta: { numero: '4111111111111111' },
+        usarCredito: false,
     })
     assert.equal(JSON.stringify(cuerpo).includes('123"'), false)
 })
@@ -79,6 +80,37 @@ test('cuerpo: sin tarjeta ni dirección cuando no hacen falta', () => {
     )
     assert.equal(cuerpo.direccion, null)
     assert.equal(cuerpo.datosTarjeta, null)
+})
+
+test('crédito: se usa todo el saldo o solo lo que cuesta el pedido', () => {
+    const conCredito = { ...PAGO_VACIO, usarCredito: true }
+
+    assert.equal(creditoQueSeUsa(conCredito, 30, 74.7), 30)
+    assert.equal(creditoQueSeUsa(conCredito, 100, 74.7), 74.7)
+    assert.equal(creditoQueSeUsa(PAGO_VACIO, 100, 74.7), 0)
+    assert.equal(creditoQueSeUsa(conCredito, 0, 74.7), 0)
+    assert.equal(restantePorPagar(74.7, 30), 44.7)
+})
+
+test('crédito: si cubre todo no pide medio de pago ni lo manda', () => {
+    const pago = { ...PAGO_VACIO, usarCredito: true }
+
+    assert.deepEqual(validarCampos(pago, reglasDePago('', HOY, { creditoCubreTodo: true })), {})
+    const cuerpo = cuerpoDeConfirmacion(
+        { modalidadEntrega: 'entrega_personal', direccion: '' }, pago, sinDireccion, { creditoCubreTodo: true },
+    )
+    assert.equal(cuerpo.metodoPago, null)
+    assert.equal(cuerpo.datosTarjeta, null)
+    assert.equal(cuerpo.usarCredito, true)
+    assert.equal(nombreDelMetodo('credito'), 'Crédito a favor')
+})
+
+test('crédito: si no alcanza el resto se paga con el medio escogido', () => {
+    const pago = { ...PAGO_VACIO, usarCredito: true, metodoPago: 'tarjeta', numeroTarjeta: '4111 1111 1111 1111' }
+
+    assert.deepEqual(Object.keys(validarCampos({ ...pago, metodoPago: '' }, reglasDePago('', HOY))), ['metodoPago'])
+    const cuerpo = cuerpoDeConfirmacion({ modalidadEntrega: 'entrega_personal', direccion: '' }, pago, sinDireccion)
+    assert.deepEqual([cuerpo.metodoPago, cuerpo.datosTarjeta, cuerpo.usarCredito], ['tarjeta', { numero: '4111111111111111' }, true])
 })
 
 test('total: suma el envío sin arrastrar decimales', () => {
