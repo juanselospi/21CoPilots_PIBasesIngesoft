@@ -25,16 +25,36 @@ export function crearExigirRol(busDeEventos) {
         siguiente();
         return;
       }
-
-      const ruta = `${peticion.method} ${peticion.originalUrl}`;
-
-      await busDeEventos.publicar(EVENTOS.ACCESO_DENEGADO, {
-        correoUsuario: usuario?.correo ?? null,
-        entidad: "ruta",
-        entidadId: ruta.slice(0, 100),
-        valorNuevo: { rol: usuario?.rol ?? "anonimo" },
-      });
-
-      siguiente(new NoAutorizado(ruta));
+      siguiente(await denegar(busDeEventos, peticion));
     };
+}
+
+/**
+ * Los empleados también son administradores; esto separa lo que solo hace
+ * el dueño, como crear cuentas y configurar el negocio.
+ */
+export function crearExigirPropietario(busDeEventos) {
+  return async (peticion, _respuesta, siguiente) => {
+    const usuario = peticion.usuario;
+
+    if (usuario?.rol === ROLES.ADMINISTRADOR && usuario.esPropietario) {
+      siguiente();
+      return;
+    }
+    siguiente(await denegar(busDeEventos, peticion));
+  };
+}
+
+// RNF-10: todo intento sin permiso queda registrado
+async function denegar(busDeEventos, peticion) {
+  const usuario = peticion.usuario;
+  const ruta = `${peticion.method} ${peticion.originalUrl}`;
+
+  await busDeEventos.publicar(EVENTOS.ACCESO_DENEGADO, {
+    correoUsuario: usuario?.correo ?? null,
+    entidad: "ruta",
+    entidadId: ruta.slice(0, 100),
+    valorNuevo: { rol: usuario?.rol ?? "anonimo" },
+  });
+  return new NoAutorizado(ruta);
 }

@@ -8,7 +8,7 @@ import {
   borrarCookieDeSesion,
   escribirCookieDeSesion,
 } from "../../shared/http/autenticacion.js";
-import { aUsuario, aResultadoDeImportacion, aRegistroDeBitacora } from "./admin.dto.js";
+import { aAdministrador, aUsuario, aResultadoDeImportacion, aRegistroDeBitacora } from "./admin.dto.js";
 import { CAMPO_DEL_ARCHIVO } from "./importacion/recibir-excel.js";
 import { RUTA_DE_LA_PLANTILLA } from "./importacion/columnas.js";
 import { generarReporteDeRechazos } from "./importacion/reporte-de-rechazos.js";
@@ -99,6 +99,26 @@ export class AdminController {
       resultado.rechazadas.length > 0 ? await generarReporteDeRechazos(resultado.rechazadas) : null;
 
     respuesta.json({ datos: aResultadoDeImportacion(resultado, reporte) });
+  };
+
+  // POST /usuarios con { nombre, correo, contrasena }, solo el propietario
+  crearEmpleado = async (peticion, respuesta) => {
+    const cuenta = await this.#servicio.crearEmpleado(peticion.body ?? {}, { responsable: peticion.usuario.correo });
+    respuesta.status(201).json({ datos: aAdministrador(cuenta) });
+  };
+
+  // GET /usuarios, solo el propietario
+  listarAdministradores = async (_peticion, respuesta) => {
+    const cuentas = await this.#servicio.listarAdministradores();
+    respuesta.json({ datos: cuentas.map(aAdministrador) });
+  };
+
+  // PATCH /usuarios/:correo/activo con { activo }, solo el propietario
+  cambiarActivo = async (peticion, respuesta) => {
+    const cuenta = await this.#servicio.cambiarActivo(peticion.params.correo, peticion.body ?? {}, {
+      responsable: peticion.usuario.correo,
+    });
+    respuesta.json({ datos: aAdministrador(cuenta) });
   };
 
   // GET / importaciones/ plantilla de descarga

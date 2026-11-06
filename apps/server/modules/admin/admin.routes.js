@@ -9,7 +9,9 @@
  * DELETE /sesion
  * PATCH  /contrasena
  * POST   /contrasena/recuperacion
- * POST   /usuarios
+ * POST   /usuarios                 solo el propietario
+ * GET    /usuarios                 solo el propietario
+ * PATCH  /usuarios/:correo/activo  solo el propietario
  * PATCH  /parametros
  * GET    /bitacora
  * POST   /importaciones
@@ -22,9 +24,11 @@ import { asincrono } from "../../shared/http/envoltura-async.js";
 import { exigirSesion } from "../../shared/http/autenticacion.js";
 import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 
-export function crearRutasDeAdmin(controlador, { exigirRol, recibirExcel }) {
+export function crearRutasDeAdmin(controlador, { exigirRol, exigirPropietario, recibirExcel }) {
   const rutas = Router();
   const soloAdministrador = [exigirSesion, exigirRol(ROLES.ADMINISTRADOR)];
+  // Los empleados también son administradores, pero no crean cuentas
+  const soloPropietario = [exigirSesion, exigirPropietario];
 
   rutas.post("/sesion", asincrono(controlador.iniciarSesion));
 
@@ -45,6 +49,10 @@ export function crearRutasDeAdmin(controlador, { exigirRol, recibirExcel }) {
   rutas.get("/importaciones/plantilla", ...soloAdministrador, controlador.descargarPlantilla);
 
   rutas.get("/bitacora", ...soloAdministrador, asincrono(controlador.listarBitacora));
+
+  rutas.post("/usuarios", ...soloPropietario, asincrono(controlador.crearEmpleado));
+  rutas.get("/usuarios", ...soloPropietario, asincrono(controlador.listarAdministradores));
+  rutas.patch("/usuarios/:correo/activo", ...soloPropietario, asincrono(controlador.cambiarActivo));
 
   return rutas;
 }

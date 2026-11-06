@@ -14,6 +14,7 @@ import { ImportacionDeExcel } from "./importacion/importacion-de-excel.js";
 import { crearRecibirExcel } from "./importacion/recibir-excel.js";
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
+import { crearExigirPropietario } from "../../shared/http/autorizacion-por-rol.js";
 
 export function crearModuloAdmin({
   pool,
@@ -46,6 +47,7 @@ export function crearModuloAdmin({
   return {
     rutas: crearRutasDeAdmin(controlador, {
       exigirRol,
+      exigirPropietario: crearExigirPropietario(busDeEventos),
       recibirExcel: crearRecibirExcel({ tamanoMaximoMb: importacion.tamanoMaximoMb }),
     }),
     servicio,

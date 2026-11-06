@@ -6,13 +6,13 @@ import cookieParser from "cookie-parser";
 import { crearRutasDeAdmin } from "./admin.routes.js";
 import { AdminController } from "./admin.controller.js";
 import { crearIdentificarUsuario, COOKIE_DE_SESION } from "../../shared/http/autenticacion.js";
-import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js";
+import { crearExigirPropietario, crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 
 // Sesiones vigentes, por token. Cualquier otro token no identifica a nadie.
 const USUARIOS_POR_TOKEN = {
-  "token-admin": { correo: "admin@dchobbies.test", nombre: "Administración", rol: ROLES.ADMINISTRADOR },
-  "token-cliente": { correo: "cliente@correo.test", nombre: "Cliente", rol: ROLES.CLIENTE },
+  "token-admin": { correo: "admin@dchobbies.test", nombre: "Administración", rol: ROLES.ADMINISTRADOR, esPropietario: true },
+  "token-cliente": { correo: "cliente@correo.test", nombre: "Cliente", rol: ROLES.CLIENTE, esPropietario: false },
 };
 
 // Una sesión que el servidor renueva al usarla, hasta esta fecha.
@@ -57,6 +57,7 @@ async function levantarServidor() {
     "/api/admin",
     crearRutasDeAdmin(new AdminController({ servicio }), {
       exigirRol: crearExigirRol({ publicar: async (evento) => accesosDenegados.push(evento) }),
+      exigirPropietario: crearExigirPropietario({ publicar: async (evento) => accesosDenegados.push(evento) }),
       recibirExcel: (_peticion, _respuesta, siguiente) => siguiente(),
     })
   );

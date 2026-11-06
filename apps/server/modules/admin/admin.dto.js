@@ -4,11 +4,21 @@
 
 import { NOMBRE_DEL_REPORTE, TIPO_DEL_REPORTE } from "./importacion/reporte-de-rechazos.js";
 
-/** Usuario sin credenciales. */
+/** Usuario sin credenciales. `esPropietario` dice si el panel le muestra la gestión de empleados. */
 export const aUsuario = (usuario) => ({
   correo: usuario.correo,
   nombre: usuario.nombre,
   rol: usuario.rol,
+  esPropietario: usuario.esPropietario === true,
+});
+
+/** Una cuenta de administrador para la pantalla de empleados. */
+export const aAdministrador = (cuenta) => ({
+  correo: cuenta.correo,
+  nombre: cuenta.nombre,
+  esPropietario: cuenta.esPropietario,
+  activo: cuenta.activo,
+  creadoPor: cuenta.creadoPor,
 });
 
 /**
