@@ -36,6 +36,7 @@ async function levantarServidor() {
       registros: [
         {
           correoUsuario: "admin@dchobbies.test",
+          nombreUsuario: "Administración DC Hobbies",
           fecha: "2026-11-03T18:00:00.000Z",
           evento: "parametro_modificado",
           entidad: "familia",
@@ -178,6 +179,7 @@ test("la bitácora es solo del administrador y viene paginada", async (t) => {
   assert.equal(respuesta.status, 200);
   assert.deepEqual(cuerpo.meta, { total: 1, pagina: 0, limite: 50 });
   assert.equal(cuerpo.datos[0].usuario, "admin@dchobbies.test");
+  assert.equal(cuerpo.datos[0].nombreUsuario, "Administración DC Hobbies");
   assert.deepEqual(cuerpo.datos[0].valorNuevo, { margenGanancia: 25 });
 });
 

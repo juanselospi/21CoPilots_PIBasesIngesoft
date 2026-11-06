@@ -46,6 +46,7 @@ export const aResultadoDeImportacion = (resultado, reporte = null) => ({
 export const aRegistroDeBitacora = (registro) => ({
   fecha: registro.fecha,
   usuario: registro.correoUsuario,
+  nombreUsuario: registro.nombreUsuario ?? null,
   evento: registro.evento,
   entidad: registro.entidad,
   entidadId: registro.entidadId,
