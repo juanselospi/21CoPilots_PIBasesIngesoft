@@ -35,3 +35,58 @@
   align-items: center;
   gap: 8px;
 }
+
+/* Las pestañas no se estiran a todo el ancho */
+.settings-tabs {
+  align-self: flex-start;
+  margin-left: 0;
+}
+
+/* Bitácora */
+
+.settings-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.settings-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+  font-weight: 600;
+}
+
+/* «Limpiar filtros» a la altura de los campos */
+.settings-filters .products-clear-filters {
+  padding: 10px 0;
+}
+
+.settings-nowrap {
+  white-space: nowrap;
+}
+
+/* Texto de apoyo debajo del nombre: el correo o el identificador */
+.settings-secondary {
+  display: block;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
+}
+
+.settings-id {
+  overflow-wrap: anywhere;
+}
+
+/* Antes y después, campo por campo */
+.settings-values {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-values span {
+  color: var(--color-texto-suave);
+}
