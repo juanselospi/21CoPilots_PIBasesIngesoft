@@ -251,7 +251,7 @@ function OrderContent({ order, cambios, busy, onAction }) {
                                     <li key={`${change.fecha}-${change.evento}-${index}`}>
                                         <span>{describirCambio(change)}</span>
                                         <span className='orders-secondary'>
-                                            {formatDate(change.fecha)}{change.usuario && ` · ${change.usuario}`}
+                                            {[formatDate(change.fecha), change.nombreUsuario ?? change.usuario].filter(Boolean).join(' · ')}
                                         </span>
                                     </li>
                                 ))}

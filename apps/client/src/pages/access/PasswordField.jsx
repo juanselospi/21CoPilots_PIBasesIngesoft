@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 
 // Input de contraseña con el boton para mostrarla u ocultarla, igual al de iniciar sesion.
-// Lo usan crear cuenta y restablecer contraseña; `children` va debajo del error (por ejemplo los requisitos)
+// Lo usan crear cuenta, restablecer contraseña y agregar empleado; `children` va debajo del error (por ejemplo los requisitos)
 function PasswordField({ label, value, onChange, disabled, inputAttributes, error, errorId, children }) {
     const [visible, setVisible] = useState(false)
     const inputId = useId()
