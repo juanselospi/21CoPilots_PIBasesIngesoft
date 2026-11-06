@@ -83,6 +83,12 @@ export class PedidosController {
     respuesta.json({ datos: pedidos.map(aPedidoEnListado), meta: { total, pagina, limite } });
   };
 
+  // POST /admin con { correoCliente | clienteNuevo, lineas, canal, modalidadEntrega, direccion, metodoPago }
+  registrarPedidoManual = async (peticion, respuesta) => {
+    const pedido = await this.#servicio.registrarPedidoManual(peticion.body ?? {}, { responsable: peticion.usuario.correo });
+    respuesta.status(201).json({ datos: aPedidoAdministrativo(pedido) });
+  };
+
   // GET /admin/:correo/:numCarrito
   verParaAdministracion = async (peticion, respuesta) => {
     const { correo, numCarrito } = leerPedido(peticion.params);

@@ -133,6 +133,10 @@ choquen. No se puede borrar un usuario que tenga registros en la bitácora.
 En el EER, `direccion` y "Teléfonos" forman el atributo compuesto "Datos de
 contacto" del cliente.
 
+Hay un cliente fijo, `venta.sin.cuenta@dchobbies.local`, para los pedidos manuales de
+alguien sin cuenta (C-25): nadie puede iniciar sesión con él y su cédula es
+`SIN-CUENTA`.
+
 **`clientes.cliente_telefono`** — atributo multivaluado "Teléfonos" del EER. Llave
 `(correo_usuario, telefono)`.
 
@@ -393,6 +397,8 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-23 | **Especialización de Usuario** traslapada: se quita el trigger `verificar_usuario_disjunto`. **Historial del estado** sin Número de cambio, con llave parcial `(estado, fecha)`: la llave es `(correo_cliente, num_carrito, estado, fecha)`. Migración 010 (A2, SCRUM-88). | Alinea la base de datos con el EER, que marca la especialización con «O» y tiene el historial con solo estado y fecha. Una cuenta puede ser administrador y cliente y tiene los dos permisos. Con `estado` solo en la llave, un pedido no podría volver a «en disputa», que puede repetirse. Cambia la llave de C-12. | RF-26, `e2-6-10-2026` punto 1 |
 | C-24 | Entidades nuevas para las **tarifas de envío** por modalidad (propuesta: `pedidos.tarifa_envio (modalidad PK, monto)`) y los **datos del negocio** (una tabla de una sola fila: razón social, cédula jurídica, dirección). El **pago** guarda su moneda. Migración 018 (falta crear la tarea en Jira). | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`. La factura va en la moneda en que se hizo el pago. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-62, RN-16, RN-18, RNF-17 |
 
+| C-25 | **Cliente para ventas sin cuenta:** una fila fija en `usuarios.usuario` y `clientes.cliente` (`venta.sin.cuenta@dchobbies.local`, cédula `SIN-CUENTA`) con una contraseña que nadie conoce. Un pedido manual para alguien sin cuenta va a su nombre y el nombre real queda en `nombre_destinatario`. Migración 020 (SCRUM-141). | El pedido necesita un cliente (la llave es el correo del cliente), pero quien compra en el local o por WhatsApp muchas veces no tiene cuenta y no se le puede pedir que se registre. Decidido el 05/11/2026 (I4). | RF-17, HU-09, `requerimientos-profesor` § 3 |
+
 C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
 migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
 diagrama.
@@ -416,8 +422,7 @@ Las decisiones abiertas que afectan al modelo son:
   (Daniel; C-24);
 - los montos de las tarifas de envío, la razón social y la cédula jurídica (el PO los
   pide a Daniel; C-24), y crear en Jira la tarea de la migración 018;
-- dónde se guarda el token de recuperación de contraseña (E4, SCRUM-117);
-- cómo se registra un pedido manual para alguien sin cuenta (I4, SCRUM-141).
+- dónde se guarda el token de recuperación de contraseña (E4, SCRUM-117).
 
 El detalle está en
 [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md). Cuando

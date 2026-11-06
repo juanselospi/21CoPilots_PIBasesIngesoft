@@ -11,6 +11,7 @@
  *   POST   /                                RF-25  confirmar pedido
  *   GET    /:numCarrito                     RF-27  estado del pedido propio
  *   GET    /admin                           RF-46  pedidos para el administrador, con filtros
+ *   POST   /admin                           RF-17  pedido manual o venta de otro canal
  *   GET    /admin/:correo/:numCarrito       RF-46  detalle para el administrador
  *   POST   /admin/:correo/:numCarrito/estado  RF-26, RF-28  también cancela
  *   POST   /admin/:correo/:numCarrito/lineas               agregar un producto
@@ -47,6 +48,7 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   // El panel ve los pedidos de todos los clientes
   rutas.use("/admin", exigirSesion, exigirRol(ROLES.ADMINISTRADOR));
   rutas.get("/admin", asincrono(controlador.listarParaAdministracion));
+  rutas.post("/admin", asincrono(controlador.registrarPedidoManual));
   rutas.get("/admin/:correo/:numCarrito", asincrono(controlador.verParaAdministracion));
   rutas.post("/admin/:correo/:numCarrito/estado", asincrono(controlador.cambiarEstado));
   rutas.post("/admin/:correo/:numCarrito/lineas", asincrono(controlador.agregarLineaAlPedido));
