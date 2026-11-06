@@ -126,18 +126,18 @@ export class AdminService {
    * Cambia la contraseña de quien tiene la sesión. La sesión desde la que
    * se cambia sigue abierta y las demás se cierran.
    */
-  async cambiarContrasena({ correo, actual, nueva, token }) {
+  async cambiarContrasena({ correo, contrasenaActual, contrasenaNueva, token }) {
     const usuario = await this.#repositorio.buscarUsuarioPorCorreo(correo);
-    const actualCorrecta = usuario && (await verificarContrasena(actual, usuario.contrasenaHash));
+    const actualCorrecta = usuario && (await verificarContrasena(contrasenaActual, usuario.contrasenaHash));
     if (!actualCorrecta) {
-      throw new EntradaInvalida("La contraseña actual no es correcta.", ["actual"]);
+      throw new EntradaInvalida("La contraseña actual no es correcta.", ["contrasenaActual"]);
     }
 
-    exigirPoliticaDeContrasenas(nueva, "nueva");
+    exigirPoliticaDeContrasenas(contrasenaNueva, "contrasenaNueva");
 
     await this.#repositorio.cambiarContrasena({
       correo: usuario.correo,
-      contrasenaHash: await hashearContrasena(nueva),
+      contrasenaHash: await hashearContrasena(contrasenaNueva),
       sesionQueSeQueda: hashearToken(token),
     });
   }
