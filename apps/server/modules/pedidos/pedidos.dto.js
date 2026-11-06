@@ -1,8 +1,5 @@
 /**
  * DTO + Mapper de carrito y pedidos.
- *
- * POR IMPLEMENTAR
- *   aPedidoAdministrativo()  RF-46 — agrega datos que el cliente no ve
  */
 
 /** Modalidad de entrega con su costo, para el checkout. */
@@ -92,4 +89,53 @@ export const aFactura = (factura) => ({
   moneda: "USD",
   metodoPago: factura.metodoPago,
   numReferencia: factura.numReferencia,
+});
+
+// Lo que el panel muestra de cualquier pedido, en el listado y en el detalle
+const datosDelPedido = (pedido) => ({
+  correoCliente: pedido.correoCliente,
+  numCarrito: pedido.numCarrito,
+  fecha: pedido.fecha,
+  estado: pedido.estado,
+  canal: pedido.canal,
+  creadoPor: pedido.creadoPor,
+  nombreDestinatario: pedido.nombreDestinatario,
+  modalidadEntrega: pedido.modalidadEntrega,
+  subtotal: pedido.subtotal,
+  impuesto: pedido.impuesto,
+  costoEntrega: pedido.costoEntrega,
+  total: pedido.total,
+  moneda: "USD",
+});
+
+/** RF-46: una fila del listado de pedidos del panel. */
+export const aPedidoEnListado = (pedido) => ({
+  ...datosDelPedido(pedido),
+  cliente: { nombre: pedido.nombreCliente, cedula: pedido.cedula },
+  productos: pedido.productos.map(({ sku, nombre, cantidad }) => ({ sku, nombre, cantidad })),
+  unidades: pedido.unidades,
+});
+
+/** RF-46: el pedido completo, con lo que el cliente no ve. */
+export const aPedidoAdministrativo = (pedido) => ({
+  ...datosDelPedido(pedido),
+  nombreCreadoPor: pedido.nombreCreadoPor,
+  cliente: { nombre: pedido.nombreCliente, cedula: pedido.cedula, telefonos: pedido.telefonos },
+  direccion: pedido.direccion,
+  fechaEntrega: pedido.fechaEntrega,
+  lineas: pedido.lineas.map((linea) => ({
+    sku: linea.sku,
+    nombre: linea.nombre,
+    cantidad: linea.cantidad,
+    precioUnitario: linea.precioUnitario,
+    tasaImpuesto: linea.tasaImpuesto,
+    subtotal: linea.subtotal,
+  })),
+  pagos: pedido.pagos.map(aPago),
+  factura: pedido.factura && {
+    numFactura: pedido.factura.numFactura,
+    fecha: pedido.factura.fecha,
+    numReferencia: pedido.factura.numReferencia,
+  },
+  historial: pedido.historial.map(({ estado, fecha }) => ({ estado, fecha })),
 });

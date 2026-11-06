@@ -26,6 +26,7 @@ import { randomUUID } from "node:crypto";
 import { EVENTOS } from "../../shared/eventos/eventos-de-dominio.js";
 import { MODALIDADES, totalConEntrega, validarEntrega } from "./entrega/modalidades-de-entrega.js";
 import { validarConfirmacion } from "./confirmacion/validar-confirmacion.js";
+import { validarConsultaDePedidos } from "./administracion/validar-consulta-de-pedidos.js";
 
 export class PedidosService {
   #repositorio;
@@ -247,6 +248,44 @@ export class PedidosService {
     };
   }
 
+  /** RF-46: los pedidos del panel con su total para paginar. */
+  async listarParaAdministracion(consulta) {
+    const filtros = validarConsultaDePedidos(consulta);
+    const { pedidos, total } = await this.#repositorio.listarParaAdministracion(filtros);
+    return { pedidos: pedidos.map(conMontos), total, pagina: filtros.pagina, limite: filtros.limite };
+  }
+
+  /**
+   * El pedido completo para el administrador: cliente, líneas con el precio
+   * que se pagó, entrega, pagos, factura e historial de estados.
+   */
+  async obtenerParaAdministracion(correo, numCarrito) {
+    const pedido = await this.#repositorio.obtenerParaAdministracion(correo, numCarrito);
+    if (!pedido) throw new RecursoNoEncontrado("el pedido", `${correo}/${numCarrito}`);
+
+    const [contacto, guardadas, historial, pagos, factura] = await Promise.all([
+      this.#clientes.datosDeContacto(correo),
+      this.#repositorio.lineasDelPedido(correo, numCarrito),
+      this.#repositorio.historialDeEstados(correo, numCarrito),
+      this.#pagos.listarPorPedido(correo, numCarrito),
+      this.#facturas.buscarPorPedido(correo, numCarrito),
+    ]);
+    const nombres = await this.#productosParaVenta(guardadas.map(({ sku }) => sku));
+
+    return {
+      ...conMontos(pedido),
+      telefonos: contacto?.telefonos ?? [],
+      lineas: guardadas.map((linea) => ({
+        ...linea,
+        nombre: nombres.get(linea.sku)?.nombre ?? linea.sku,
+        subtotal: redondear(linea.precioUnitario * linea.cantidad),
+      })),
+      historial,
+      pagos,
+      factura,
+    };
+  }
+
   // Si la facturación no está disponible el pedido sigue; la factura solo se guarda si se emitió
   async #facturar(cliente, { correo, numCarrito, numReferencia, lineas }) {
     const [emisor, receptor] = await Promise.all([
@@ -283,6 +322,13 @@ function totalesDelPedido(lineas, costoEntrega) {
   const conImpuesto = redondear(lineas.reduce((suma, l) => suma + redondear(l.precioFinal * l.cantidad), 0));
   const impuesto = redondear(conImpuesto - subtotal);
   return { subtotal, impuesto, costoEntrega, total: totalConEntrega({ subtotal, impuesto, costoEntrega }) };
+}
+
+// La vista suma el impuesto línea por línea sin redondear
+function conMontos(pedido) {
+  const subtotal = redondear(pedido.subtotal);
+  const impuesto = redondear(pedido.impuesto);
+  return { ...pedido, subtotal, impuesto, total: totalConEntrega({ subtotal, impuesto, costoEntrega: pedido.costoEntrega }) };
 }
 
 const redondear = (monto) => Math.round((monto + Number.EPSILON) * 100) / 100;
