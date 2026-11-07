@@ -11,7 +11,10 @@ const PAYMENT_STEP = 2
 
 // Paso 3: todo lo que se va a comprar y el boton de confirmar.
 // Al entrar se vuelve a pedir el carrito, asi el total que se ve es el de hoy
-function ReviewStep({ delivery, deliveryName, needsAddress, payment, sending, error, onEdit, onBack, onConfirm }) {
+function ReviewStep({
+    delivery, deliveryName, needsAddress, payment, creditUsed = 0, creditCoversAll = false,
+    sending, error, onEdit, onBack, onConfirm,
+}) {
     const { carrito, actualizar } = useCarrito()
     const consulta = useRecursoRemoto((signal) => actualizar(signal), [])
 
@@ -45,10 +48,13 @@ function ReviewStep({ delivery, deliveryName, needsAddress, payment, sending, er
             </ReviewBlock>
 
             <ReviewBlock title='Pago' onEdit={() => onEdit(PAYMENT_STEP)} editLabel='Cambiar el pago'>
-                <p>
-                    {nombreDelMetodo(payment.metodoPago)}
-                    {payment.metodoPago === CARD && ` terminada en ${ultimosDigitos(payment.numeroTarjeta)}`}
-                </p>
+                {creditUsed > 0 && <p>Crédito a favor: {priceFormat.format(creditUsed)}</p>}
+                {!creditCoversAll && (
+                    <p>
+                        {nombreDelMetodo(payment.metodoPago)}
+                        {payment.metodoPago === CARD && ` terminada en ${ultimosDigitos(payment.numeroTarjeta)}`}
+                    </p>
+                )}
             </ReviewBlock>
 
             <div className='checkout-actions checkout-actions-between'>

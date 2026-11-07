@@ -89,6 +89,12 @@ function OrderConfirmation() {
                         <dt>Total</dt>
                         <dd>{priceFormat.format(pedido.total)}</dd>
                     </div>
+                    {pedido.creditoUsado > 0 && (
+                        <div>
+                            <dt>Pagado con tu crédito a favor</dt>
+                            <dd>{priceFormat.format(pedido.creditoUsado)}</dd>
+                        </div>
+                    )}
                 </dl>
 
                 <InvoiceNote pedido={pedido} state={backState(location)} />

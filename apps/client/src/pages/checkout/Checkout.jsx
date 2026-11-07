@@ -14,7 +14,9 @@ import { useRecursoRemoto } from '../../hooks/useRecursoRemoto.js'
 import { useSesion } from '../../hooks/useSesion.js'
 import { CHECKOUT_PATH, CONFIRMATION_PATH } from '../../routes.js'
 import { hayFueraDeStock } from '../../utils/carrito.js'
-import { ENTREGA_VACIA, PAGO_VACIO, cuerpoDeConfirmacion, pasoDeLosCampos } from '../../utils/checkout.js'
+import {
+    ENTREGA_VACIA, PAGO_VACIO, creditoQueSeUsa, cuerpoDeConfirmacion, pasoDeLosCampos, restantePorPagar, totalConEnvio,
+} from '../../utils/checkout.js'
 
 const CLIENT_ROLE = 'cliente'
 const CART_PATH = '/carrito'
@@ -102,6 +104,7 @@ function CheckoutLoader({ email }) {
 // nunca quedan en la URL, en el historial ni en el navegador
 function CheckoutSteps({ account, deliveries }) {
     const navigate = useNavigate()
+    const { carrito } = useCarrito()
     const [step, setStep] = useState(DELIVERY_STEP)
     // La direccion va llena con la de Mi cuenta, pero cambiarla aqui solo aplica a este pedido
     const [delivery, setDelivery] = useState({ ...ENTREGA_VACIA, direccion: account.direccion ?? '' })
@@ -113,6 +116,11 @@ function CheckoutSteps({ account, deliveries }) {
     const [rejected, setRejected] = useState(null)
 
     const selectedDelivery = deliveries.find(({ modalidad }) => modalidad === delivery.modalidadEntrega)
+    // El saldo a favor viene con la cuenta; se usa solo si el cliente lo marca en el pago
+    const creditBalance = account.saldoCredito ?? 0
+    const total = totalConEnvio(carrito, selectedDelivery)
+    const creditUsed = creditoQueSeUsa(payment, creditBalance, total)
+    const creditCoversAll = creditUsed > 0 && restantePorPagar(total, creditUsed) === 0
 
     const goToStep = (next) => {
         setReviewError(null)
@@ -125,7 +133,9 @@ function CheckoutSteps({ account, deliveries }) {
         setSending(true)
         setReviewError(null)
         try {
-            const pedido = await confirmarPedido(cuerpoDeConfirmacion(delivery, payment, selectedDelivery))
+            const pedido = await confirmarPedido(
+                cuerpoDeConfirmacion(delivery, payment, selectedDelivery, { creditoCubreTodo: creditCoversAll }),
+            )
             // Con replace no se puede volver atras a un checkout que ya se pago
             navigate(CONFIRMATION_PATH, { replace: true, state: { pedido, deliveryName: selectedDelivery.nombre } })
         } catch (confirmError) {
@@ -204,6 +214,8 @@ function CheckoutSteps({ account, deliveries }) {
                     {step === PAYMENT_STEP && (
                         <PaymentStep
                             values={payment}
+                            saldoCredito={creditBalance}
+                            total={total}
                             serverError={stepError}
                             onBack={(values) => {
                                 setPayment(values)
@@ -224,6 +236,8 @@ function CheckoutSteps({ account, deliveries }) {
                             deliveryName={selectedDelivery.nombre}
                             needsAddress={selectedDelivery.exigeDireccion}
                             payment={payment}
+                            creditUsed={creditUsed}
+                            creditCoversAll={creditCoversAll}
                             sending={sending}
                             error={reviewError}
                             onEdit={goToStep}
@@ -233,7 +247,7 @@ function CheckoutSteps({ account, deliveries }) {
                     )}
                 </section>
 
-                <CheckoutSummary selectedDelivery={selectedDelivery} />
+                <CheckoutSummary selectedDelivery={selectedDelivery} creditUsed={creditUsed} />
             </div>
         </main>
     )
