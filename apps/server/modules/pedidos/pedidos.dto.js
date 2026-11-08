@@ -123,6 +123,7 @@ export const aPedidoEnListado = (pedido) => ({
 export const aPedidoAdministrativo = (pedido) => ({
   ...datosDelPedido(pedido),
   nombreCreadoPor: pedido.nombreCreadoPor,
+  telefonoDestinatario: pedido.telefonoDestinatario,
   cliente: { nombre: pedido.nombreCliente, cedula: pedido.cedula, telefonos: pedido.telefonos },
   direccion: pedido.direccion,
   fechaEntrega: pedido.fechaEntrega,
