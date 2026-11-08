@@ -44,6 +44,12 @@
   cursor: not-allowed;
 }
 
+/* «Filtros» a la izquierda y el orden a la derecha; en pantallas angostas el orden baja de línea */
+.sales-toolbar {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
 /* La venta en curso se queda a la vista mientras se recorren las tarjetas */
 .sales-summary {
   position: sticky;

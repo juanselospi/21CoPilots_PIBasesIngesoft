@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 // Mismo aspecto que la página de productos, sus tarjetas, sus campos y los datos del pedido
 import '../products/Products.css'
 import '../../components/product-form/ProductForm.css'
@@ -7,10 +7,13 @@ import '../orders/Orders.css'
 import './Sales.css'
 import Notice from '../../components/notice/Notice.jsx'
 import Pagination from '../../components/pagination/Pagination.jsx'
+import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
+import { activeFilterTags, emptyFilters, filterParams } from '../../components/product-filters/productFilters.js'
 import Select from '../../components/select/Select.jsx'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { listarAlertas } from '../../api/inventario.js'
 import { listarModalidades, registrarVenta } from '../../api/pedidos.js'
+import { useCategorias } from '../../hooks/useCategorias.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import { avisarCambioDeInventario } from '../../hooks/useAlertasDeInventario.js'
 import { useListadoAdministrativo } from '../../hooks/useListadoAdministrativo.js'
@@ -28,11 +31,30 @@ import SaleProductCard from './SaleProductCard.jsx'
 const SEARCH_DELAY_MS = 300
 const PAGE_SIZE = 24
 
+// Lo que sirve para encontrar qué vender; el value es lo que entiende el servidor
+const SORT_OPTIONS = [
+    { value: 'nombre', label: 'Ordenar: Nombre A–Z' },
+    { value: '-nombre', label: 'Ordenar: Nombre Z–A' },
+    { value: 'precio', label: 'Ordenar: Precio (menor a mayor)' },
+    { value: '-precio', label: 'Ordenar: Precio (mayor a menor)' },
+    { value: 'existencias', label: 'Ordenar: Existencias (menor a mayor)' },
+]
+
+// Un descontinuado no se puede vender, así que no se ofrece
+const AVAILABILITY_OPTIONS = [
+    { value: 'en_existencia', label: 'En existencia' },
+    { value: 'por_contrapedido', label: 'Admite contrapedido' },
+    { value: 'no_disponible', label: 'Agotado' },
+]
+
 // Pantalla «Ventas» del panel (HU-09): cada tarjeta agrega a la venta en curso y al final se registra todo junto.
 function Sales() {
     const [search, setSearch] = useState('')
     const [q, setQ] = useState('')
     const [page, setPage] = useState(0)
+    const [sort, setSort] = useState(SORT_OPTIONS[0].value)
+    const [filters, setFilters] = useState(emptyFilters)
+    const [showFilters, setShowFilters] = useState(false)
     const [lines, setLines] = useState([])
     const [linesError, setLinesError] = useState(null)
     // Las reglas dependen de estos dos, por eso van aparte y no salen de los valores del formulario
@@ -52,7 +74,10 @@ function Sales() {
         return () => clearTimeout(timer)
     }, [search])
 
-    const listado = useListadoAdministrativo({ q, limite: PAGE_SIZE, pagina: page })
+    const listado = useListadoAdministrativo({ q, orden: sort, limite: PAGE_SIZE, pagina: page, ...filterParams(filters) })
+    const categorias = useCategorias()
+    const categoryNames = categorias.datos?.map(({ nombre }) => nombre) ?? []
+    const filterTags = activeFilterTags(filters, priceFormat.format, AVAILABILITY_OPTIONS)
     const modalidades = useRecursoRemoto((signal) => listarModalidades({ signal }), [])
     const products = listado.datos?.datos ?? []
     const productTotal = listado.datos?.meta.total ?? 0
@@ -67,6 +92,17 @@ function Sales() {
     const shipping = selectedDelivery?.costo ?? 0
     const total = totalDeLaVenta(lines, shipping)
     const fieldError = (key) => errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>
+
+    // Cualquier cambio de filtros u orden vuelve a la primera página
+    const changeFilters = (next) => {
+        setFilters(next)
+        setPage(0)
+    }
+
+    const changeSort = (value) => {
+        setSort(value)
+        setPage(0)
+    }
 
     const addProduct = (product, quantity) => {
         const result = agregarALaVenta(lines, product, quantity)
@@ -153,6 +189,60 @@ function Sales() {
                         onChange={(event) => setSearch(event.target.value)}
                     />
 
+                    <div className='products-toolbar sales-toolbar'>
+                        <button
+                            type='button'
+                            className='products-button'
+                            aria-expanded={showFilters}
+                            aria-controls='sales-filters'
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
+                            <SlidersHorizontal size={20} aria-hidden='true' />
+                            Filtros{filterTags.length > 0 && ` (${filterTags.length})`}
+                            <ChevronDown size={16} className='products-button-chevron' aria-hidden='true' />
+                        </button>
+                        <Select
+                            className='products-sort'
+                            aria-label='Ordenar productos'
+                            value={sort}
+                            onChange={changeSort}
+                            options={SORT_OPTIONS}
+                        />
+                    </div>
+
+                    {/* Siempre montado para animar la apertura y el cierre; se despliega con `open` */}
+                    <ProductFilters
+                        id='sales-filters'
+                        open={showFilters}
+                        filters={filters}
+                        categories={categoryNames}
+                        availabilityOptions={AVAILABILITY_OPTIONS}
+                        showFlags={false}
+                        onApply={(next) => {
+                            changeFilters(next)
+                            setShowFilters(false)
+                        }}
+                        onClose={() => setShowFilters(false)}
+                    />
+
+                    {filterTags.length > 0 && (
+                        <div className='products-active-filters'>
+                            {filterTags.map(({ key, label }) => (
+                                <span key={key} className='products-filter-tag'>
+                                    {label}
+                                    <button
+                                        type='button'
+                                        aria-label={`Quitar filtro ${label}`}
+                                        onClick={() => changeFilters({ ...filters, [key]: emptyFilters[key] })}
+                                    >
+                                        <X size={16} aria-hidden='true' />
+                                    </button>
+                                </span>
+                            ))}
+                            <button type='button' className='products-clear-filters' onClick={() => changeFilters(emptyFilters)}>Limpiar filtros</button>
+                        </div>
+                    )}
+
                     {listado.cargando ? (
                         <p className='products-status' role='status'>Cargando productos…</p>
                     ) : listado.error ? (
@@ -161,7 +251,7 @@ function Sales() {
                             <button type='button' className='products-status-button' onClick={listado.recargar}>Reintentar</button>
                         </div>
                     ) : products.length === 0 ? (
-                        <p className='products-status' role='status'>Ningún producto coincide con la búsqueda.</p>
+                        <p className='products-status' role='status'>Ningún producto coincide con la búsqueda o los filtros.</p>
                     ) : (
                         <>
                             <div className='sales-grid'>
