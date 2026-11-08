@@ -304,11 +304,11 @@ function Sales() {
                     <fieldset className='sales-customer-type'>
                         <legend>¿A quién se le vende?</legend>
                         <label>
-                            <input type='radio' name='tipoCliente' checked={!withoutAccount} onChange={() => setWithoutAccount(false)} />
+                            <input type='radio' className='casilla' name='tipoCliente' checked={!withoutAccount} onChange={() => setWithoutAccount(false)} />
                             Cliente registrado
                         </label>
                         <label>
-                            <input type='radio' name='tipoCliente' checked={withoutAccount} onChange={() => setWithoutAccount(true)} />
+                            <input type='radio' className='casilla' name='tipoCliente' checked={withoutAccount} onChange={() => setWithoutAccount(true)} />
                             Sin cuenta
                         </label>
                     </fieldset>

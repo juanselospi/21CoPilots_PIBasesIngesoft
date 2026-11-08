@@ -65,6 +65,11 @@ input.control[type='number']::-webkit-outer-spin-button {
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 
+/* Redonda cuando es una opción entre varias, con el mismo aspecto */
+.casilla[type='radio'] {
+  border-radius: 50%;
+}
+
 .casilla:checked {
   border-color: var(--color-principal);
   background-color: var(--color-principal);

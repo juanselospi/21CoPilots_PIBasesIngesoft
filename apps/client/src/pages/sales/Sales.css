@@ -125,8 +125,28 @@
 .sales-customer-type label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  color: var(--color-texto);
+  font-weight: 600;
   cursor: pointer;
+  transition: color 120ms ease, opacity 120ms ease;
+}
+
+/* La opción sin elegir se apaga para que se note cuál está seleccionada */
+.sales-customer-type label:not(:has(:checked)) {
+  color: var(--color-texto-suave);
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.sales-customer-type label:not(:has(:checked)):hover {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sales-customer-type label {
+    transition: none;
+  }
 }
 
 .sales-customer-selected,
