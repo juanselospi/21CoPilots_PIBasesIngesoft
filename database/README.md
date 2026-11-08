@@ -85,7 +85,7 @@ cp .env.example .env       # en Windows PowerShell: copy .env.example .env
 npm install                # instala las herramientas de BD (pg, dotenv)
 npm run db:up              # descarga y levanta PostgreSQL 17 en Docker (puerto 5433)
 npm run db:reset           # crea todos los esquemas y tablas y carga las semillas
-npm run db:test            # debe terminar con "✔ 197 prueba(s) aprobada(s)" (§ 5.6)
+npm run db:test            # debe terminar con "✔ 210 prueba(s) aprobada(s)" (§ 5.6)
 ```
 
 Desde la raíz del repositorio también funciona con `--prefix`, por ejemplo
@@ -156,7 +156,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 021: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 … 022: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -187,6 +187,7 @@ database/
 | `019_emisor_de_facturas.sql` | `facturacion` | `EMISOR` (C-24): razón social, cédula jurídica y dirección del negocio para las facturas, en una sola fila (RF-41, RN-18) |
 | `020_cliente_sin_cuenta.sql` | `usuarios`, `clientes` | Cuenta «Venta sin cuenta» (C-25): los pedidos manuales para alguien sin cuenta van a su nombre, con el nombre real en `nombre_destinatario`; nadie puede entrar con ella |
 | `021_recuperacion_de_contrasena.sql` | `usuarios` | `RECUPERACION` (C-26): el hash del token de cada enlace para recuperar la contraseña, con vencimiento y fecha de uso (RF-54) |
+| `022_telefono_del_destinatario.sql` | `pedidos` | `PEDIDO` con el teléfono de quien compra sin cuenta, opcional (C-27) |
 
 ---
 
@@ -342,7 +343,10 @@ cargadas, comprueban además que los datos de prueba son coherentes.
 | `13_creditos.sql` | Créditos a favor y su uso en el pago | 017 | 20 |
 | `14_tarifas.sql` | Tarifas de envío | 018 | 5 |
 | `15_emisor.sql` | Emisor de las facturas | 019 | 7 |
-| **Total** | | | **197** |
+| `16_cliente_sin_cuenta.sql` | Cliente para las ventas sin cuenta | 020 | 4 |
+| `17_recuperacion.sql` | Enlaces para recuperar la contraseña | 021 | 5 |
+| `18_telefono_destinatario.sql` | Teléfono de quien compra sin cuenta | 022 | 4 |
+| **Total** | | | **210** |
 
 Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
 
