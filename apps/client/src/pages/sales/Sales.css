@@ -1,0 +1,252 @@
+/* Estilos de la pantalla «Ventas» del panel; lo demás viene de Products.css, ProductForm.css y Orders.css */
+
+/* Tarjetas a la izquierda y la venta en curso a la derecha */
+.sales-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 24px;
+}
+
+.sales-products {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.sales-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.sales-card-stock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 8px;
+}
+
+.sales-grid .quantity-stepper {
+  justify-content: space-between;
+}
+
+.sales-grid .quantity-stepper input {
+  flex: 1;
+  width: 0;
+  min-width: 40px;
+}
+
+.sales-grid .products-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* La venta en curso se queda a la vista mientras se recorren las tarjetas */
+.sales-summary {
+  position: sticky;
+  top: 16px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.sales-number {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sales-lines,
+.sales-dialog-lines,
+.sales-customer-results {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sales-lines {
+  gap: 8px;
+  font-size: var(--texto-pequeno);
+}
+
+.sales-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.sales-line-name {
+  overflow-wrap: anywhere;
+}
+
+.sales-line-remove {
+  display: flex;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+}
+
+.sales-line-remove:hover {
+  color: var(--estado-error-texto);
+}
+
+/* Con o sin cuenta */
+.sales-customer-type {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 12px 0 0;
+  border: none;
+  border-top: 1px solid var(--color-borde);
+  font-size: var(--texto-pequeno);
+}
+
+.sales-customer-type legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--color-texto-suave);
+}
+
+.sales-customer-type label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.sales-customer-selected,
+.sales-customer-results button {
+  font-size: var(--texto-pequeno);
+  overflow-wrap: anywhere;
+}
+
+.sales-customer-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radio-control);
+  background: var(--color-tinte);
+}
+
+.sales-customer-selected .orders-secondary,
+.sales-customer-results .orders-secondary,
+.sales-dialog-lines .orders-secondary {
+  display: block;
+}
+
+.sales-customer-selected .products-button {
+  flex-shrink: 0;
+  padding: 6px 10px;
+}
+
+.sales-customer-results {
+  gap: 4px;
+}
+
+.sales-customer-results button {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sales-customer-results button:hover {
+  border-color: var(--color-enlace);
+}
+
+.sales-customer-results strong {
+  display: block;
+}
+
+.sales-totals {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Diálogos de confirmar y de detalle */
+.confirm-dialog.sales-dialog {
+  box-sizing: border-box;
+  max-width: 480px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.sales-dialog-lines {
+  gap: 10px;
+  font-size: var(--texto-pequeno);
+}
+
+.sales-dialog-lines li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.sales-dialog-lines strong {
+  color: var(--color-texto);
+}
+
+.sales-dialog .order-data {
+  grid-template-columns: max-content minmax(0, 1fr);
+}
+
+.sales-dialog .order-data dd {
+  text-align: right;
+}
+
+.sales-dialog .sales-total {
+  color: var(--color-titulo);
+  font-size: var(--texto-producto);
+  font-weight: 800;
+}
+
+.confirm-dialog-actions .sales-dialog-link {
+  padding: 10px 18px;
+  border-radius: var(--radio-control);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 1000px) {
+  .sales-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sales-summary {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* Dos tarjetas por fila también en el teléfono, para no alargar tanto el camino hasta la venta */
+@media (max-width: 640px) {
+  .sales-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .sales-grid .products-card-body {
+    padding: 10px;
+  }
+
+  .sales-grid .quantity-stepper button {
+    width: 32px;
+  }
+}
