@@ -1,8 +1,61 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-    accionesDelPedido, conCambios, describirCambio, leerConsulta, numeroBuscado, resumenDeProductos,
+    accionesDelPedido, conCambios, creditoNuevo, describirCambio, estaPagado, leerConsulta, motivoSinEdicion,
+    numeroBuscado, precioPagado, precioParaComparar, productosElegibles, resumenDeProductos, topeDeBusqueda,
 } from './pedidosAdmin.js'
+
+const producto = (sku, margen, extra = {}) => ({
+    sku,
+    disponibilidad: 'en_existencia',
+    tasaImpuesto: 13,
+    desglosePrecio: [{ paso: 'costo', monto: 1 }, { paso: 'margen', monto: margen }, { paso: 'impuesto', monto: 999 }],
+    ...extra,
+})
+
+test('el precio pagado lleva impuesto y se redondea a centavos', () => {
+    assert.equal(precioPagado({ precioUnitario: 100, tasaImpuesto: 13 }), 113)
+    assert.equal(precioPagado({ precioUnitario: 71.98, tasaImpuesto: 13 }), 81.34)
+    assert.equal(precioPagado({ precioUnitario: 100, tasaImpuesto: 0 }), 100)
+})
+
+test('un producto se compara con la misma cuenta que lo pagado, no con el último paso del desglose', () => {
+    assert.equal(precioParaComparar(producto('A', 100)), 113)
+})
+
+test('el buscador deja fuera lo que ya está en el pedido y lo que no se puede vender', () => {
+    const productos = [producto('A', 10), producto('B', 10), producto('C', 10, { disponibilidad: 'no_disponible' }),
+        producto('D', 10, { disponibilidad: 'por_contrapedido' })]
+    assert.deepEqual(productosElegibles(productos, [{ sku: 'A' }]).map(({ sku }) => sku), ['B', 'D'])
+})
+
+test('un reemplazo admite igual o menor precio, nunca mayor', () => {
+    const productos = [producto('IGUAL', 100), producto('MENOR', 50), producto('MAYOR', 100.01)]
+    assert.deepEqual(productosElegibles(productos, [], 113).map(({ sku }) => sku), ['IGUAL', 'MENOR'])
+})
+
+test('el tope de la búsqueda da un centavo de margen y lo exacto se revisa después', () => {
+    assert.equal(topeDeBusqueda(113), '113.01')
+    assert.equal(topeDeBusqueda(81.34), '81.35')
+})
+
+test('cada estado sin edición dice su motivo', () => {
+    assert.match(motivoSinEdicion('en_transito'), /salió a entrega/)
+    assert.match(motivoSinEdicion('finalizado'), /se entregó/)
+    assert.match(motivoSinEdicion('cancelado'), /cancelado/)
+    assert.match(motivoSinEdicion('otro'), /no permite/)
+})
+
+test('el crédito nuevo es lo que aumentó con el cambio', () => {
+    assert.equal(creditoNuevo({ creditoOtorgado: 10.1 }, { creditoOtorgado: 30.3 }), 20.2)
+    assert.equal(creditoNuevo({ creditoOtorgado: 5 }, { creditoOtorgado: 5 }), 0)
+})
+
+test('un pedido está pagado si tiene algún pago aprobado', () => {
+    assert.equal(estaPagado({ pagos: [{ estadoPago: 'rechazado' }, { estadoPago: 'aprobado' }] }), true)
+    assert.equal(estaPagado({ pagos: [{ estadoPago: 'pendiente' }] }), false)
+    assert.equal(estaPagado({ pagos: [] }), false)
+})
 
 const etiquetas = (estado, siguientes) => accionesDelPedido(estado, siguientes).map(({ etiqueta }) => etiqueta)
 

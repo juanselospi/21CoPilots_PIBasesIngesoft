@@ -44,6 +44,29 @@ export function cambiarEstadoPedido(correo, numCarrito, estado) {
     return pedir(`${rutaDelPedido(correo, numCarrito)}/estado`, { metodo: 'POST', cuerpo: { estado } })
 }
 
+// Edición de las líneas: cada una responde el pedido completo, con los montos nuevos.
+// Si el estado ya no lo permite o no alcanzan las existencias, el servidor responde 409 con el motivo.
+const rutaDeLinea = (correo, numCarrito, sku) =>
+    `${rutaDelPedido(correo, numCarrito)}/lineas/${encodeURIComponent(sku)}`
+
+export function cambiarCantidadDeLinea(correo, numCarrito, sku, cantidad) {
+    return pedir(rutaDeLinea(correo, numCarrito, sku), { metodo: 'PATCH', cuerpo: { cantidad } })
+}
+
+export function quitarLineaDelPedido(correo, numCarrito, sku) {
+    return pedir(rutaDeLinea(correo, numCarrito, sku), { metodo: 'DELETE' })
+}
+
+// La línea nueva entra con el precio de hoy
+export function agregarLineaAlPedido(correo, numCarrito, { sku, cantidad }) {
+    return pedir(`${rutaDelPedido(correo, numCarrito)}/lineas`, { metodo: 'POST', cuerpo: { sku, cantidad } })
+}
+
+// Solo por un producto de igual o menor precio; la línea conserva el precio pagado y la cantidad
+export function reemplazarLineaDelPedido(correo, numCarrito, sku, skuNuevo) {
+    return pedir(`${rutaDeLinea(correo, numCarrito, sku)}/reemplazo`, { metodo: 'POST', cuerpo: { skuNuevo } })
+}
+
 // Lo que la bitácora guarda de este pedido, de lo más nuevo a lo más viejo; responde { datos, meta }
 export function listarCambiosDelPedido(correo, numCarrito, { signal } = {}) {
     return pedir('/api/admin/bitacora', {

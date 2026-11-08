@@ -46,6 +46,45 @@ export function accionesDelPedido(estado, estadosSiguientes = []) {
     }))
 }
 
+const MOTIVOS_SIN_EDICION = {
+    en_transito: 'El pedido ya salió a entrega: sus productos ya no se pueden cambiar.',
+    finalizado: 'El pedido ya se entregó: sus productos ya no se pueden cambiar.',
+    cancelado: 'El pedido está cancelado: sus productos ya no se pueden cambiar.',
+}
+
+// Si se puede editar lo dice el servidor (lineasEditables); esto solo le pone palabras
+export const motivoSinEdicion = (estado) =>
+    MOTIVOS_SIN_EDICION[estado] ?? 'El estado de este pedido no permite cambiar sus productos.'
+
+const redondear = (monto) => Math.round((monto + Number.EPSILON) * 100) / 100
+
+// Lo que se pagó por unidad, con impuesto; es la misma cuenta con la que el servidor revisa un reemplazo
+export const precioPagado = ({ precioUnitario, tasaImpuesto }) => redondear(precioUnitario * (1 + tasaImpuesto / 100))
+
+// El precio del producto con esa misma cuenta: el precio final del catálogo puede diferir por un centavo
+export function precioParaComparar({ desglosePrecio, tasaImpuesto }) {
+    const precioUnitario = desglosePrecio.find(({ paso }) => paso === 'margen')?.monto ?? 0
+    return precioPagado({ precioUnitario, tasaImpuesto })
+}
+
+// Lo que el buscador del pedido deja elegir: sin lo que ya está en el pedido, sin lo que no se puede
+// vender y, en un reemplazo, sin lo que cueste más que lo pagado.
+export function productosElegibles(productos, lineas, precioMaximo = null) {
+    const enElPedido = new Set(lineas.map(({ sku }) => sku))
+    return productos.filter((producto) =>
+        !enElPedido.has(producto.sku)
+        && producto.disponibilidad !== 'no_disponible'
+        && (precioMaximo === null || precioParaComparar(producto) <= precioMaximo))
+}
+
+// El tope para pedirle al servidor: un centavo de más, y lo exacto lo decide productosElegibles
+export const topeDeBusqueda = (precioMaximo) => (precioMaximo + 0.01).toFixed(2)
+
+// El crédito que dejó un cambio: lo acumulado después menos lo de antes
+export const creditoNuevo = (antes, despues) => redondear(despues.creditoOtorgado - antes.creditoOtorgado)
+
+export const estaPagado = (pedido) => pedido.pagos.some(({ estadoPago }) => estadoPago === 'aprobado')
+
 // «2 × Halcón, 1 × Set de cartas y 3 más»
 export function resumenDeProductos(productos, visibles = 2) {
     const texto = productos.slice(0, visibles).map(({ nombre, cantidad }) => `${cantidad} × ${nombre}`).join(', ')
