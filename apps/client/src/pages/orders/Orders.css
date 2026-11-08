@@ -36,6 +36,7 @@ td > .orders-secondary {
 /* Detalle */
 
 .order-card {
+  --notice-gap: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -79,6 +80,174 @@ td > .orders-secondary {
 .order-button-cancel:hover {
   border-color: var(--estado-error-texto);
   color: var(--estado-error-texto);
+}
+
+/* Productos del pedido: título y «Agregar», motivo del bloqueo y controles de cada línea */
+.order-lines-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Bloqueado se ve igual con o sin el mouse encima, y «Quitar» deja de verse en rojo */
+.order-lines-header .products-button:disabled,
+.order-line-actions .products-button:disabled {
+  border-color: var(--color-borde);
+  color: var(--color-texto-suave);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.order-lines-blocked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radio-control);
+  background: var(--color-fondo);
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.order-lines-blocked svg {
+  flex-shrink: 0;
+}
+
+.order-line-quantity .quantity-stepper {
+  display: inline-flex;
+}
+
+.order-line-quantity .quantity-stepper button {
+  width: 32px;
+}
+
+.order-line-quantity .quantity-stepper input {
+  width: 44px;
+  padding: 6px 2px;
+  font-size: var(--texto-pequeno);
+}
+
+.order-line-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* El error va pegado a su línea: la fila de arriba no lleva línea de separación */
+.product-table tbody tr:has(+ .order-line-error-row) td {
+  border-bottom: none;
+}
+
+.product-table .order-line-error-row td {
+  padding-top: 0;
+}
+
+.product-table tbody .order-line-error-row:hover {
+  background: none;
+}
+
+.order-line-error {
+  padding: 8px 12px;
+  border-radius: var(--radio-control);
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+  white-space: normal;
+}
+
+/* Buscador de productos para agregar o reemplazar */
+.confirm-dialog.order-picker {
+  max-width: 560px;
+  max-height: calc(100dvh - 32px);
+  gap: 12px;
+}
+
+.order-picker .products-search {
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.order-picker-results {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 96px;
+  max-height: 280px;
+}
+
+.order-picker-results ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-picker-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  text-align: left;
+  cursor: pointer;
+}
+
+.order-picker-option:hover {
+  border-color: var(--color-enlace);
+}
+
+.order-picker-option[aria-pressed='true'] {
+  border-color: var(--color-enlace);
+  background: var(--color-tinte);
+}
+
+.order-picker-name,
+.order-picker-option .orders-secondary {
+  display: block;
+}
+
+.order-picker-name {
+  font-weight: 700;
+}
+
+.order-picker-price {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.order-picker-selection {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: var(--texto-pequeno);
+}
+
+.order-picker-quantity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-picker-quantity .quantity-stepper button {
+  width: 32px;
+}
+
+.order-picker-quantity .quantity-stepper input {
+  width: 44px;
+  padding: 6px 2px;
 }
 
 /* Datos en dos columnas: nombre del dato y su valor */

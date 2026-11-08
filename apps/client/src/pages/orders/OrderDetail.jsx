@@ -9,11 +9,12 @@ import ConfirmDialog from '../../components/confirm-dialog/ConfirmDialog.jsx'
 import Notice from '../../components/notice/Notice.jsx'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { dateTimeFormat } from '../merchandise/merchandiseFormat.js'
-import { cambiarEstadoPedido } from '../../api/pedidos.js'
+import { cambiarEstadoPedido, obtenerPedidoAdmin } from '../../api/pedidos.js'
 import { avisarCambioDeInventario } from '../../hooks/useAlertasDeInventario.js'
 import { useCambiosDelPedido, usePedidoAdmin } from '../../hooks/usePedidosAdmin.js'
 import { CANALES, ESTADOS, MODALIDADES, accionesDelPedido, describirCambio } from '../../utils/pedidosAdmin.js'
 import { OrderStatusChip, PaymentStatusChip } from './OrderChips.jsx'
+import OrderLines from './OrderLines.jsx'
 
 const formatDate = (fecha) => dateTimeFormat.format(new Date(fecha))
 
@@ -63,6 +64,24 @@ function OrderDetail() {
         setConfirmingCancel(false)
     }
 
+    // Cambia las líneas y devuelve el pedido como quedó; si falla, quien lo pidió muestra el error junto a su control
+    const editLines = async (request) => {
+        setBusy(true)
+        try {
+            const next = await request()
+            setUpdated(next)
+            cambios.recargar()
+            avisarCambioDeInventario()
+            return next
+        } catch (error) {
+            // Otra persona pudo haberlo cambiado. Se lee sin recargar la pantalla, para no perder ese mensaje
+            obtenerPedidoAdmin(correo, numCarrito).then(setUpdated, () => {})
+            throw error
+        } finally {
+            setBusy(false)
+        }
+    }
+
     return (
         <main className='products'>
             <section className='products-header'>
@@ -86,7 +105,7 @@ function OrderDetail() {
                     </button>
                 </div>
             ) : (
-                <OrderContent order={order} cambios={cambios} busy={busy} onAction={runAction} />
+                <OrderContent order={order} cambios={cambios} busy={busy} onAction={runAction} onEdit={editLines} />
             )}
 
             {confirmingCancel && (
@@ -104,7 +123,7 @@ function OrderDetail() {
     )
 }
 
-function OrderContent({ order, cambios, busy, onAction }) {
+function OrderContent({ order, cambios, busy, onAction, onEdit }) {
     const actions = accionesDelPedido(order.estado, order.estadosSiguientes)
     const changes = cambios.datos?.datos ?? []
     const changesTotal = cambios.datos?.meta.total ?? 0
@@ -179,31 +198,7 @@ function OrderContent({ order, cambios, busy, onAction }) {
             </div>
 
             <section className='order-card'>
-                <h2>Productos</h2>
-                <div className='product-table-wrapper'>
-                    <table className='product-table'>
-                        <thead>
-                            <tr>
-                                <th scope='col'>Código</th>
-                                <th scope='col'>Producto</th>
-                                <th scope='col' className='product-table-number'>Cantidad</th>
-                                <th scope='col' className='product-table-number'>Precio</th>
-                                <th scope='col' className='product-table-number'>Subtotal</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {order.lineas.map((line) => (
-                                <tr key={line.sku}>
-                                    <td className='product-table-sku codigo'>{line.sku}</td>
-                                    <td>{line.nombre}</td>
-                                    <td className='product-table-number'>{line.cantidad}</td>
-                                    <td className='product-table-number'>{priceFormat.format(line.precioUnitario)}</td>
-                                    <td className='product-table-number'>{priceFormat.format(line.subtotal)}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                <OrderLines order={order} busy={busy} onEdit={onEdit} />
                 <dl className='order-totals'>
                     <dt>Subtotal</dt>
                     <dd>{priceFormat.format(order.subtotal)}</dd>
