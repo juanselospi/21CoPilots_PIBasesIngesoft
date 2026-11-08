@@ -4,6 +4,7 @@ import CartProvider from './context/CartProvider.jsx'
 import StoreLayout from './components/store-layout/StoreLayout.jsx'
 import AdminRoute from './components/admin-route/AdminRoute.jsx'
 import SessionRoute from './components/session-route/SessionRoute.jsx'
+import ClientRoute from './components/client-route/ClientRoute.jsx'
 import AccessLayout from './components/access-layout/AccessLayout.jsx'
 import Home from './pages/home/Home.jsx'
 import Catalog from './pages/catalog/Catalog.jsx'
@@ -12,6 +13,8 @@ import Cart from './pages/cart/Cart.jsx'
 import Checkout from './pages/checkout/Checkout.jsx'
 import OrderConfirmation from './pages/checkout/OrderConfirmation.jsx'
 import Invoice from './pages/invoice/Invoice.jsx'
+import MyOrders from './pages/my-orders/MyOrders.jsx'
+import MyOrderDetail from './pages/my-orders/MyOrderDetail.jsx'
 import MyAccount from './pages/my-account/MyAccount.jsx'
 import Products from './pages/products/Products.jsx'
 import Families from './pages/families/Families.jsx'
@@ -37,6 +40,10 @@ function App() {
               <Route path='carrito' element={<Cart />} />
               <Route path='finalizar-compra' element={<Checkout />} />
               <Route path='finalizar-compra/confirmacion' element={<OrderConfirmation />} />
+              <Route element={<ClientRoute />}>
+                <Route path='mis-pedidos' element={<MyOrders />} />
+                <Route path='mis-pedidos/:numCarrito' element={<MyOrderDetail />} />
+              </Route>
               <Route element={<SessionRoute />}>
                 <Route path='mi-cuenta' element={<MyAccount />} />
                 <Route path='pedidos/:numCarrito/factura' element={<Invoice />} />

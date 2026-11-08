@@ -4,7 +4,6 @@
  * El carrito está en carrito/carrito.service.js.
  *
  * POR IMPLEMENTAR
- *   RF-27         Visibilidad del estado para el cliente
  *   RF-29         Sin límite de pedidos activos (RN-12)
  *   RF-31         Comprobante
  *
@@ -30,6 +29,8 @@ import { validarCambioDeEstado } from "./administracion/validar-cambio-de-estado
 import { validarPedidoManual } from "./manual/validar-pedido-manual.js";
 import { admiteEdicion, ESTADOS, estadoAnterior, siguientesEstados, transicionar } from "./estados/maquina-de-estados.js";
 import { idDelPedido, motivoDelPedido } from "./referencia-del-pedido.js";
+
+const MAXIMO_DE_MIS_PEDIDOS = 100;
 
 export class PedidosService {
   #repositorio;
@@ -394,6 +395,17 @@ export class PedidosService {
       costoEntrega,
       total,
     };
+  }
+
+  // Usa la misma consulta del panel pero filtrada por el correo de la sesion.
+  // Los filtros y la paginacion del historial quedan para el otro sprint, por eso solo trae los ultimos
+  async listarMisPedidos(correo) {
+    const { pedidos } = await this.#repositorio.listarParaAdministracion({
+      correo,
+      limite: MAXIMO_DE_MIS_PEDIDOS,
+      pagina: 0,
+    });
+    return pedidos.map(conMontos);
   }
 
   /** RF-46: los pedidos del panel con su total para paginar. */

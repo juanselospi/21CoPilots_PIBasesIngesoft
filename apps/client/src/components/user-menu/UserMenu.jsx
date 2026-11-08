@@ -3,6 +3,9 @@ import { Link } from 'react-router'
 import { ChevronDown } from 'lucide-react'
 import './UserMenu.css'
 import ConfirmDialog from '../confirm-dialog/ConfirmDialog.jsx'
+import { MY_ORDERS_PATH } from '../../routes.js'
+
+const CLIENT_ROLE = 'cliente'
 
 // Iniciales para el circulo del usuario: "Juan Loaiza" -> "JL".
 const toInitials = (nombre) =>
@@ -59,6 +62,10 @@ function UserMenu({ user, onLogOut, logOutMessage }) {
                         <span>{user.correo}</span>
                     </div>
                     <Link to='/mi-cuenta' className='user-menu-item' onClick={() => setOpen(false)}>Mi cuenta</Link>
+                    {/* El administrador no tiene pedidos propios */}
+                    {user.rol === CLIENT_ROLE && (
+                        <Link to={MY_ORDERS_PATH} className='user-menu-item' onClick={() => setOpen(false)}>Mis pedidos</Link>
+                    )}
                     <button type='button' className='user-menu-item user-menu-logout' onClick={askLogOut}>
                         Cerrar sesión
                     </button>

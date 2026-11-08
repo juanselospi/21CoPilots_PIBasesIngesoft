@@ -56,6 +56,11 @@ export function crearRutasDePedidos(controlador, { exigirRol }) {
   rutas.delete("/admin/:correo/:numCarrito/lineas/:sku", asincrono(controlador.quitarLineaDelPedido));
   rutas.post("/admin/:correo/:numCarrito/lineas/:sku/reemplazo", asincrono(controlador.reemplazarLineaDelPedido));
 
+  // Mis pedidos, cada cliente ve solo los suyos.
+  // El detalle va de ultimo porque si no /:numCarrito se come a /admin
+  rutas.get("/", ...soloCliente, asincrono(controlador.listarMisPedidos));
+  rutas.get("/:numCarrito", ...soloCliente, asincrono(controlador.verMiPedido));
+
   // Las rutas se agregan conforme se implementen los RF de arriba.
 
   return rutas;

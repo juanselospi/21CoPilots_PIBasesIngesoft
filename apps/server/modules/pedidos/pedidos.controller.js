@@ -1,15 +1,13 @@
 /**
  * CAPA DE API — Controlador de carrito y pedidos.
- *
- * POR IMPLEMENTAR
- *   consultarEstado                                             RF-27
- *   listarMisPedidos                                            RF-37
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";
 import {
   aCarrito,
   aFactura,
+  aMiPedido,
+  aMiPedidoEnListado,
   aModalidad,
   aPago,
   aPedidoAdministrativo,
@@ -75,6 +73,19 @@ export class PedidosController {
     const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
     const factura = await this.#servicio.obtenerFactura(peticion.usuario.correo, numCarrito);
     respuesta.json({ datos: aFactura(factura) });
+  };
+
+  // GET / los pedidos del cliente con sesion
+  listarMisPedidos = async (peticion, respuesta) => {
+    const pedidos = await this.#servicio.listarMisPedidos(peticion.usuario.correo);
+    respuesta.json({ datos: pedidos.map(aMiPedidoEnListado) });
+  };
+
+  // GET /:numCarrito, el correo sale de la sesion asi que nadie puede ver el pedido de otro
+  verMiPedido = async (peticion, respuesta) => {
+    const numCarrito = leerNumeroDeCarrito(peticion.params.numCarrito);
+    const pedido = await this.#servicio.obtenerParaAdministracion(peticion.usuario.correo, numCarrito);
+    respuesta.json({ datos: aMiPedido(pedido) });
   };
 
   // GET /admin?estado&canal&correo&q&desde&hasta&pagina&limite
