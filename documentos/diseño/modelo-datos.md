@@ -274,6 +274,7 @@ llave `(correo_cliente, num_carrito)`, que identifica al pedido (RF-30).
 | `canal` | Por dónde llegó: `web` (por defecto), `whatsapp`, `facebook`, `telefono` o `presencial` (C-18) |
 | `creado_por` | Administrador que registró un pedido manual; opcional. Llave foránea a `admin.administrador`, indexada (`ix_pedido_creado_por`) |
 | `nombre_destinatario` | A nombre de quién va un pedido manual, si no es el cliente; opcional y no en blanco |
+| `telefono_destinatario` | Teléfono de contacto de quien compra sin cuenta en un pedido manual; opcional y no en blanco |
 
 El pedido no guarda su estado ni sus montos: el estado sale del historial y los montos
 de las líneas en `agrega`.
@@ -404,6 +405,7 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-24 | Entidades nuevas para las **tarifas de envío** por modalidad (propuesta: `pedidos.tarifa_envio (modalidad PK, monto)`) y los **datos del negocio** (una tabla de una sola fila: razón social, cédula jurídica, dirección). El **pago** guarda su moneda. Migración 018 (falta crear la tarea en Jira). | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`. La factura va en la moneda en que se hizo el pago. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-62, RN-16, RN-18, RNF-17 |
 
 | C-25 | **Cliente para ventas sin cuenta:** una fila fija en `usuarios.usuario` y `clientes.cliente` (`venta.sin.cuenta@dchobbies.local`, cédula `SIN-CUENTA`) con una contraseña que nadie conoce. Un pedido manual para alguien sin cuenta va a su nombre y el nombre real queda en `nombre_destinatario`. Migración 020 (SCRUM-141). | El pedido necesita un cliente (la llave es el correo del cliente), pero quien compra en el local o por WhatsApp muchas veces no tiene cuenta y no se le puede pedir que se registre. Decidido el 05/11/2026 (I4). | RF-17, HU-09, `requerimientos-profesor` § 3 |
+| C-26 | **Teléfono de quien compra sin cuenta:** `telefono_destinatario` en `pedidos.pedido`, opcional. Migración 022 (SCRUM-144). | La cuenta de ventas sin cuenta (C-25) no tiene los datos de cada comprador; sin este campo no habría cómo contactarlo. | RF-17, HU-09 |
 
 | C-26 | Entidad nueva **Recuperación** (`usuarios.recuperacion`), débil de Usuario: hash del token, fecha de creación, de vencimiento y de uso. Migración 021 (SCRUM-117). | El enlace para recuperar la contraseña necesita un token de un solo uso que vence. En una tabla aparte no se toca `usuario`, puede haber más de un enlace pedido y queda registro de cuándo se pidió y se usó cada uno. Decidido el 05/11/2026 (E4). | RF-54, RNF-08 |
 

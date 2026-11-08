@@ -453,11 +453,13 @@ CREATE TABLE pedidos.pedido (
     canal character varying(20) DEFAULT 'web'::character varying NOT NULL,
     creado_por character varying(255),
     nombre_destinatario character varying(150),
+    telefono_destinatario character varying(20),
     CONSTRAINT ck_pedido_canal CHECK (((canal)::text = ANY ((ARRAY['web'::character varying, 'whatsapp'::character varying, 'facebook'::character varying, 'telefono'::character varying, 'presencial'::character varying])::text[]))),
     CONSTRAINT ck_pedido_costo_entrega CHECK ((costo_entrega >= (0)::numeric)),
     CONSTRAINT ck_pedido_destinatario CHECK (((nombre_destinatario IS NULL) OR (btrim((nombre_destinatario)::text) <> ''::text))),
     CONSTRAINT ck_pedido_fecha_entrega CHECK (((fecha_entrega IS NULL) OR (fecha_entrega >= fecha_pedido_realizado))),
-    CONSTRAINT ck_pedido_modalidad CHECK (((modalidad_entrega)::text = ANY ((ARRAY['mensajero'::character varying, 'uber_flash'::character varying, 'correos_cr'::character varying, 'entrega_personal'::character varying])::text[])))
+    CONSTRAINT ck_pedido_modalidad CHECK (((modalidad_entrega)::text = ANY ((ARRAY['mensajero'::character varying, 'uber_flash'::character varying, 'correos_cr'::character varying, 'entrega_personal'::character varying])::text[]))),
+    CONSTRAINT ck_pedido_telefono_destinatario CHECK (((telefono_destinatario IS NULL) OR (btrim((telefono_destinatario)::text) <> ''::text)))
 );
 
 
