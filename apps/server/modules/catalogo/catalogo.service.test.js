@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { CatalogoService, calcularEtiquetas } from "./catalogo.service.js";
+import { validarConsultaPublica } from "./validar-consulta-publica.js";
 import { MotorDePrecios } from "./precio/motor-de-precios.js";
 import { ImportacionPorAranceles } from "./precio/pasos/importacion-por-aranceles.js";
 import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
@@ -426,6 +427,32 @@ test("una categoría con todos sus productos ocultos no aparece", async () => {
   assert.deepEqual(await servicio.listarCategorias(), [
     { nombre: "Video Juegos", cantidadDeProductos: 1 },
   ]);
+});
+
+test("recién llegados: lo último que entró va primero y sin ingresos queda al final", async () => {
+  const servicio = crearServicioConProductos([
+    { ...producto("AAA-001", "Legos", 3), ultimoIngreso: null },
+    { ...producto("BBB-001", "Legos", 3), ultimoIngreso: new Date("2026-10-01T10:00:00Z") },
+    { ...producto("CCC-001", "Legos", 3), ultimoIngreso: new Date("2026-11-05T10:00:00Z") },
+    { ...producto("DDD-001", "Legos", 3), ultimoIngreso: new Date("2026-10-20T10:00:00Z") },
+  ]);
+
+  const { productos } = await servicio.listarCatalogo({ orden: "recientes", limite: 3, desplazamiento: 0 });
+
+  assert.deepEqual(productos.map(({ sku }) => sku), ["CCC-001", "DDD-001", "BBB-001"]);
+});
+
+test("recién llegados: con la misma fecha desempata por SKU y el orden es válido en la consulta", async () => {
+  const fecha = new Date("2026-11-05T10:00:00Z");
+  const servicio = crearServicioConProductos([
+    { ...producto("BBB-001", "Legos", 3), ultimoIngreso: fecha },
+    { ...producto("AAA-001", "Legos", 3), ultimoIngreso: fecha },
+  ]);
+
+  const { productos } = await servicio.listarCatalogo({ orden: "recientes", limite: 2, desplazamiento: 0 });
+
+  assert.deepEqual(productos.map(({ sku }) => sku), ["AAA-001", "BBB-001"]);
+  assert.equal(validarConsultaPublica({ orden: "recientes" }).orden, "recientes");
 });
 
 // Familia Legos: 20 % de importación y 50 % de margen.

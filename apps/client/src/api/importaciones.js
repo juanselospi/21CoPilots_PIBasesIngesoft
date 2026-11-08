@@ -1,5 +1,6 @@
 // Llamadas al servidor para importar el Excel de productos.
-// Van a /api, que Vite reenvía al servidor, así viaja la cookie de sesión.
+
+import { ErrorHttp, pedir } from './clienteHttp.js'
 
 export const TEMPLATE_URL = '/api/admin/importaciones/plantilla'
 
@@ -17,25 +18,16 @@ export async function importProducts(file) {
     const form = new FormData()
     form.append('archivo', file)
 
-    let response
     try {
-        response = await fetch('/api/admin/importaciones', { method: 'POST', body: form })
-    } catch {
-        throw new Error('No se pudo conectar con el servidor. Revise su conexión e intente de nuevo.')
-    }
-
-    const body = await response.json().catch(() => null)
-
-    if (!response.ok) {
+        return await pedir('/api/admin/importaciones', { metodo: 'POST', cuerpo: form })
+    } catch (error) {
+        if (!(error instanceof ErrorHttp)) throw error
         // Los 400 traen un mensaje pensado para el usuario (archivo muy grande,
         // no es .xlsx, faltan columnas...). Para lo demás usamos uno propio.
-        const serverMessage = response.status === 400 ? body?.error?.mensaje : null
         throw new Error(
-            messagesByStatus[response.status] ??
-            serverMessage ??
-            'No se pudo importar el archivo. No se guardó ningún producto.'
+            messagesByStatus[error.estado] ??
+            (error.estado === 400 ? error.message : 'No se pudo importar el archivo. No se guardó ningún producto.'),
+            { cause: error },
         )
     }
-
-    return body.datos
 }

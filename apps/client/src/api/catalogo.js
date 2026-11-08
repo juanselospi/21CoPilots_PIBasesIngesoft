@@ -6,8 +6,8 @@ import { pedir } from './clienteHttp.js'
 /**
  * Devuelve los productos visibles del catálogo.
  */
-export function listarProductos({ categoria, q, limite, pagina } = {}, { signal } = {}) {
-    return pedir('/api/catalogo/productos', { parametros: { categoria, q, limite, pagina }, signal })
+export function listarProductos({ categoria, q, orden, limite, pagina } = {}, { signal } = {}) {
+    return pedir('/api/catalogo/productos', { parametros: { categoria, q, orden, limite, pagina }, signal })
 }
 
 /**

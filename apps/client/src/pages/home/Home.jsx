@@ -31,9 +31,8 @@ function Home() {
     // Las categorías las pide StoreLayout una sola vez y las comparte
     const { categorias, categoryNames } = useOutletContext()
 
-    // TODO: el servidor todavía no manda la fecha de llegada; mientras se
-    // decide de dónde sale, se muestran los primeros del catálogo.
-    const latest = useCatalogo({ limite: 5 })
+    // Los ultimos que entraron segun la fecha del ingreso de mercancia
+    const latest = useCatalogo({ orden: 'recientes', limite: 5 })
     const latestProducts = latest.datos?.map(toCardProduct) ?? []
 
     // Si falla cualquiera de las dos peticiones, "Reintentar" repite ambas

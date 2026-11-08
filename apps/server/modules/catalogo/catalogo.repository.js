@@ -87,7 +87,10 @@ export class CatalogoRepository {
 
   async listar({ categoria = null, termino = null } = {}) {
     const { rows } = await this.#pool.query(
-      `SELECT ${COLUMNAS_DE_PRODUCTO}
+      `SELECT ${COLUMNAS_DE_PRODUCTO},
+              (SELECT max(pa.fecha)
+                 FROM inventario.producto_administra pa
+                WHERE pa.sku = p.sku AND pa.tipo = 'ingreso') AS ultimo_ingreso
          FROM ${PRODUCTO_CON_FAMILIA}
         WHERE ($1::text IS NULL OR p.categoria = $1)
           AND ($2::text IS NULL OR p.nombre ILIKE '%' || $2 || '%')
@@ -333,6 +336,8 @@ const aProducto = (fila) => ({
   categoria: fila.categoria,
   proveedor: fila.proveedor,
   estado: fila.estado,
+  // Solo viene en el listado, es para ordenar los recien llegados
+  ultimoIngreso: fila.ultimo_ingreso ?? null,
 });
 
 const numeroONulo = (valor) => (valor === null ? null : Number(valor));
