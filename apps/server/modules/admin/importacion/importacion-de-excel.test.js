@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 
 import { ImportacionDeExcel } from "./importacion-de-excel.js";
 import { COLUMNAS, TIPOS } from "./columnas.js";
@@ -325,3 +326,43 @@ test("SCRUM-30: la plantilla versionada se importa sin rechazos", async () => {
 });
 
 // Test de casos de importación del excel hecho con la ayuda de Claude
+
+// Como lo escriben otras herramientas: prefijo x: en todas las etiquetas y una tabla con ruta absoluta
+async function conFormatoDeOtraHerramienta(archivo) {
+  const MAIN = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+  const zip = await JSZip.loadAsync(archivo);
+
+  for (const [ruta, entrada] of Object.entries(zip.files)) {
+    if (entrada.dir || !ruta.startsWith("xl/") || !ruta.endsWith(".xml")) continue;
+    const xml = await entrada.async("string");
+    if (xml.includes(`xmlns="${MAIN}"`)) {
+      zip.file(ruta, xml.replace(`xmlns="${MAIN}"`, `xmlns:x="${MAIN}"`).replace(/<(\/?)([a-zA-Z])/g, "<$1x:$2"));
+    }
+  }
+
+  const TABLA = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/table";
+  // Se agrega a las que ya están: ahí también van los enlaces de las imágenes
+  const RELACIONES = "xl/worksheets/_rels/sheet1.xml.rels";
+  const relaciones = await zip.file(RELACIONES).async("string");
+  zip.file(
+    RELACIONES,
+    relaciones.replace("</Relationships>", `<Relationship Type="${TABLA}" Target="/xl/tables/table1.xml" Id="RTabla"/></Relationships>`)
+  );
+  return zip.generateAsync({ type: "nodebuffer" });
+}
+
+test("lee un Excel válido que exceljs no entiende por cómo lo guardó otra herramienta", async () => {
+  const archivo = await conFormatoDeOtraHerramienta(await crearExcel([GOD_OF_WAR, MILLENNIUM_FALCON]));
+  await assert.rejects(new ExcelJS.Workbook().xlsx.load(archivo));
+
+  const { importacion, guardados } = crearImportacion();
+  const resultado = await importacion.importar(archivo);
+
+  assert.deepEqual(resultado.rechazadas, []);
+  assert.deepEqual(guardados.map(({ sku }) => sku), ["PS5-WAJH-ZX6C", "LEG-QGR6-3FCS"]);
+});
+
+test("un archivo que no es Excel sigue rechazándose aunque intente normalizarlo", async () => {
+  const { importacion } = crearImportacion();
+  await assert.rejects(importacion.importar(Buffer.from("no soy un excel")), EntradaInvalida);
+});

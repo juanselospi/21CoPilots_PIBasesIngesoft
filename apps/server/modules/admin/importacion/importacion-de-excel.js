@@ -6,6 +6,7 @@ import ExcelJS from "exceljs";
 import { EntradaInvalida } from "../../../shared/errores/errores-de-dominio.js";
 import { PlantillaDeImportacion } from "./plantilla-de-importacion.js";
 import { COLUMNAS, TIPOS, normalizarEncabezado } from "./columnas.js";
+import { normalizarXlsx } from "./normalizar-xlsx.js";
 
 // por si el encabezado no esta de primero
 const FILAS_DONDE_BUSCAR_ENCABEZADO = 10;
@@ -33,12 +34,7 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
   }
 
   async parsear(archivo) {
-    const libro = new ExcelJS.Workbook();
-    try {
-      await libro.xlsx.load(archivo);
-    } catch {
-      throw new EntradaInvalida("El archivo no es un Excel (.xlsx) válido.", ["archivo"]);
-    }
+    const libro = await leerLibro(archivo);
 
     const { hoja, numeroDeEncabezado, columnaPorCampo } = ubicarEncabezado(libro);
     const filas = [];
@@ -141,6 +137,25 @@ export class ImportacionDeExcel extends PlantillaDeImportacion {
 
   async guardarFila(cliente, producto) {
     return this.#guardarProducto(cliente, producto);
+  }
+}
+
+// Primero tal cual: normalizar solo hace falta con los libros que exceljs no entiende
+async function leerLibro(archivo) {
+  const cargar = async (contenido) => {
+    const libro = new ExcelJS.Workbook();
+    await libro.xlsx.load(contenido);
+    return libro;
+  };
+
+  try {
+    return await cargar(archivo);
+  } catch {
+    try {
+      return await cargar(await normalizarXlsx(archivo));
+    } catch {
+      throw new EntradaInvalida("El archivo no es un Excel (.xlsx) válido.", ["archivo"]);
+    }
   }
 }
 
