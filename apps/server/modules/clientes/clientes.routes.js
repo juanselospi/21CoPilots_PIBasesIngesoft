@@ -18,5 +18,8 @@ export function crearRutasDeClientes(controlador, { exigirSesion, exigirRol }) {
   rutas.patch("/me", ...soloCliente, asincrono(controlador.corregirMiCuenta));
   rutas.get("/me/creditos", ...soloCliente, asincrono(controlador.verMisCreditos));
 
+  // El panel busca a quién registrarle una venta
+  rutas.get("/admin", exigirSesion, exigirRol(ROLES.ADMINISTRADOR), asincrono(controlador.buscarParaAdministracion));
+
   return rutas;
 }

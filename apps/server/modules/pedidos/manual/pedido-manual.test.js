@@ -56,6 +56,15 @@ test("alguien sin cuenta va a la cuenta de ventas sin cuenta con su nombre como 
   assert.equal(venta.nombreDestinatario, "María Pérez");
 });
 
+test("el teléfono de alguien sin cuenta es opcional y se guarda en un solo formato", () => {
+  const { correoCliente: _correo, ...sinCorreo } = VENTA;
+  const conTelefono = (telefono) => ({ ...sinCorreo, clienteNuevo: { nombre: "María", telefono } });
+
+  assert.equal(validarPedidoManual(conTelefono("8888 1234")).telefonoDestinatario, "8888-1234");
+  assert.equal(validarPedidoManual(conTelefono(undefined)).telefonoDestinatario, null);
+  assert.deepEqual(camposConProblemas(conTelefono("123")), ["clienteNuevo.telefono"]);
+});
+
 test("revisa todo a la vez: canal web, pago con tarjeta, sin cliente y productos repetidos", () => {
   const { correoCliente: _correo, ...sinCorreo } = VENTA;
 

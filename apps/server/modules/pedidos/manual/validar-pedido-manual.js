@@ -9,6 +9,7 @@ import { validarEntrega } from "../entrega/modalidades-de-entrega.js";
 import { validarLinea } from "../carrito/validar-linea.js";
 import { CANALES } from "../administracion/validar-consulta-de-pedidos.js";
 import { CORREO_DE_VENTA_SIN_CUENTA } from "../../../shared/cuentas/venta-sin-cuenta.js";
+import { normalizarTelefono } from "../../clientes/reglas-de-contacto.js";
 
 
 // La web tiene su propio flujo; aquí entra todo lo demás
@@ -21,9 +22,10 @@ const LARGO_DEL_NOMBRE = 150;
 const MAXIMO_DE_LINEAS = 50;
 
 /**
- * Para alguien sin cuenta llega `clienteNuevo: { nombre }` en vez de
- * `correoCliente`; ese nombre queda como destinatario.
- * @returns `{ correo, sinCuenta, nombreDestinatario, lineas, canal, metodoPago, modalidadEntrega, direccion }`
+ * Para alguien sin cuenta llega `clienteNuevo: { nombre, telefono? }` en vez de
+ * `correoCliente`; esos datos quedan como destinatario. Su dirección es la
+ * de la entrega, `direccion`.
+ * @returns `{ correo, sinCuenta, nombreDestinatario, telefonoDestinatario, lineas, canal, metodoPago, modalidadEntrega, direccion }`
  * @throws {EntradaInvalida} con todos los campos que tienen problemas
  */
 export function validarPedidoManual(datos = {}) {
@@ -47,11 +49,11 @@ export function validarPedidoManual(datos = {}) {
     validacion.anotar("metodoPago", `El medio de pago tiene que ser uno de: ${METODOS_DE_PAGO_EN_EL_NEGOCIO.join(", ")}.`);
   }
 
-  const { correo, sinCuenta, nombreDestinatario } = leerCliente(datos, validacion);
+  const { correo, sinCuenta, nombreDestinatario, telefonoDestinatario = null } = leerCliente(datos, validacion);
   const lineas = leerLineas(datos.lineas, validacion);
 
   validacion.lanzarSiHayProblemas();
-  return { correo, sinCuenta, nombreDestinatario, lineas, canal, metodoPago, ...entrega };
+  return { correo, sinCuenta, nombreDestinatario, telefonoDestinatario, lineas, canal, metodoPago, ...entrega };
 }
 
 function leerCliente(datos, validacion) {
@@ -69,7 +71,12 @@ function leerCliente(datos, validacion) {
     else if (nombre.length > LARGO_DEL_NOMBRE) {
       validacion.anotar("clienteNuevo.nombre", `El nombre no puede pasar de ${LARGO_DEL_NOMBRE} caracteres.`);
     }
-    return { correo: CORREO_DE_VENTA_SIN_CUENTA, sinCuenta: true, nombreDestinatario: nombre };
+    const telefono = texto(clienteNuevo.telefono);
+    const telefonoDestinatario = telefono ? normalizarTelefono(telefono) : null;
+    if (telefono && !telefonoDestinatario) {
+      validacion.anotar("clienteNuevo.telefono", "El teléfono tiene que tener 8 dígitos, por ejemplo 8888-8888.");
+    }
+    return { correo: CORREO_DE_VENTA_SIN_CUENTA, sinCuenta: true, nombreDestinatario: nombre, telefonoDestinatario };
   }
 
   if (!correoEscrito) {

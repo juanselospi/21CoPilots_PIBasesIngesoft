@@ -135,7 +135,17 @@ export class PedidosRepository {
   /** RF-25: el carrito pasa a convertido y nace el pedido con su primer estado, colocado. */
   async crearPedido(
     cliente,
-    { correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal = "web", creadoPor = null, nombreDestinatario = null }
+    {
+      correo,
+      numCarrito,
+      modalidadEntrega,
+      direccion,
+      costoEntrega,
+      canal = "web",
+      creadoPor = null,
+      nombreDestinatario = null,
+      telefonoDestinatario = null,
+    }
   ) {
     await cliente.query(
       `UPDATE pedidos.carrito SET estado_carrito = 'convertido', fecha_cierre = now()
@@ -144,10 +154,10 @@ export class PedidosRepository {
     );
     const { rows } = await cliente.query(
       `INSERT INTO pedidos.pedido
-              (correo_cliente, num_carrito, modalidad_entrega, direccion, costo_entrega, canal, creado_por, nombre_destinatario)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              (correo_cliente, num_carrito, modalidad_entrega, direccion, costo_entrega, canal, creado_por, nombre_destinatario, telefono_destinatario)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING fecha_pedido_realizado`,
-      [correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal, creadoPor, nombreDestinatario]
+      [correo, numCarrito, modalidadEntrega, direccion, costoEntrega, canal, creadoPor, nombreDestinatario, telefonoDestinatario]
     );
     await this.registrarEstado(cliente, correo, numCarrito, "colocado");
     return rows[0].fecha_pedido_realizado;
@@ -291,7 +301,7 @@ export class PedidosRepository {
     const { rows } = await this.#pool.query(
       `SELECT v.correo_cliente, v.cliente, v.cedula, v.num_carrito, v.fecha_pedido_realizado,
               v.modalidad_entrega, v.subtotal, v.impuesto, v.costo_entrega, v.estado,
-              p.canal, p.creado_por, p.nombre_destinatario, p.direccion, p.fecha_entrega,
+              p.canal, p.creado_por, p.nombre_destinatario, p.telefono_destinatario, p.direccion, p.fecha_entrega,
               u.nombre AS nombre_creado_por
          FROM reportes.v_pedidos_por_cliente v
          JOIN pedidos.pedido p
@@ -334,6 +344,7 @@ function pedidoDeLaVista(fila) {
     canal: fila.canal,
     creadoPor: fila.creado_por,
     nombreDestinatario: fila.nombre_destinatario,
+    telefonoDestinatario: fila.telefono_destinatario,
     modalidadEntrega: fila.modalidad_entrega,
     subtotal: Number(fila.subtotal),
     impuesto: Number(fila.impuesto),

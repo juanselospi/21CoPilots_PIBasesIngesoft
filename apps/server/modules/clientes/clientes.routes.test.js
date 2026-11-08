@@ -25,6 +25,7 @@ async function levantarServidor() {
   const repositorio = {
     registrar: async ({ correo }) => (correo === "cliente@correo.test" ? ["correo"] : []),
     obtenerPorCorreo: async (correo) => (correo === cuenta.correo ? { ...cuenta } : null),
+    buscarClientes: async () => [{ ...cuenta, contrasena: "hash" }],
     actualizarContacto: async (_correo, cambios) => Object.assign(cuenta, cambios),
     saldoDeCredito: async () => ({ otorgado: 0, usado: 0, saldo: 0 }),
     movimientosDeCredito: async () => [],
@@ -177,4 +178,32 @@ test("los créditos son solo del cliente y vienen con su saldo en dólares", asy
   const respuesta = await creditos("cliente");
   assert.equal(respuesta.status, 200);
   assert.deepEqual((await respuesta.json()).datos, { saldo: 0, otorgado: 0, usado: 0, moneda: "USD", movimientos: [] });
+});
+
+test("GET /admin: solo el administrador busca clientes y recibe lo justo", async () => {
+  const { url, cerrar } = await levantarServidor();
+  try {
+    const buscar = (headers) => fetch(`${url}/admin?q=cli`, { headers });
+
+    assert.equal((await buscar({})).status, 401);
+    assert.equal((await buscar({ "x-rol": "cliente" })).status, 403);
+
+    const respuesta = await buscar({ "x-rol": "administrador" });
+    assert.equal(respuesta.status, 200);
+    assert.deepEqual((await respuesta.json()).datos, [
+      { correo: "cliente@correo.test", nombre: "Cliente", cedula: "111111111" },
+    ]);
+  } finally {
+    await cerrar();
+  }
+});
+
+test("GET /admin: con menos de dos letras no busca", async () => {
+  const { url, cerrar } = await levantarServidor();
+  try {
+    const respuesta = await fetch(`${url}/admin?q=c`, { headers: { "x-rol": "administrador" } });
+    assert.deepEqual((await respuesta.json()).datos, []);
+  } finally {
+    await cerrar();
+  }
 });

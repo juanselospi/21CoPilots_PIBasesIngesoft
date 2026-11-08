@@ -319,6 +319,7 @@ export class PedidosService {
         canal: venta.canal,
         creadoPor: responsable,
         nombreDestinatario: venta.nombreDestinatario,
+        telefonoDestinatario: venta.telefonoDestinatario,
       });
       await this.#clientes.sumarCompra(cliente, correo);
 

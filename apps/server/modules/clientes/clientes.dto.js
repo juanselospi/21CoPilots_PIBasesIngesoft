@@ -17,6 +17,13 @@ export const aUsuarioRegistrado = (usuario) => ({
   rol: usuario.rol,
 });
 
+/** Lo justo para reconocer al cliente en el buscador del panel. */
+export const aClienteEnBusqueda = (cliente) => ({
+  correo: cliente.correo,
+  nombre: cliente.nombre,
+  cedula: cliente.cedula,
+});
+
 /** RF-37: lo que el cliente ve de sí mismo. */
 export const aClientePropio = (cliente) => ({
   nombre: cliente.nombre,

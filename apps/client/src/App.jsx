@@ -20,6 +20,7 @@ import Products from './pages/products/Products.jsx'
 import Families from './pages/families/Families.jsx'
 import Merchandise from './pages/merchandise/Merchandise.jsx'
 import Orders from './pages/orders/Orders.jsx'
+import Sales from './pages/sales/Sales.jsx'
 import OrderDetail from './pages/orders/OrderDetail.jsx'
 import Settings from './pages/settings/Settings.jsx'
 import Access from './pages/access/Access.jsx'
@@ -58,6 +59,7 @@ function App() {
               <Route path='productos' element={<Products />} />
               <Route path='familias' element={<Families />} />
               <Route path='mercancia' element={<Merchandise />} />
+              <Route path='ventas' element={<Sales />} />
               <Route path='pedidos' element={<Orders />} />
               <Route path='pedidos/:correo/:numCarrito' element={<OrderDetail />} />
               <Route path='configuracion' element={<Settings />} />

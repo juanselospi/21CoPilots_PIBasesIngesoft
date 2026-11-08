@@ -12,6 +12,7 @@ const sections = [
     { to: '/admin/productos', label: 'Productos' },
     { to: '/admin/familias', label: 'Familias' },
     { to: '/admin/mercancia', label: 'Mercancía' },
+    { to: '/admin/ventas', label: 'Ventas' },
     { to: '/admin/pedidos', label: 'Pedidos' },
     { to: '/admin/configuracion', label: 'Configuración' },
 ]
