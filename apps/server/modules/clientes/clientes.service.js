@@ -18,6 +18,9 @@ import { ROLES } from "../../shared/http/autorizacion-por-rol.js";
 import { validarRegistro } from "./validar-registro.js";
 import { validarCambiosDeContacto } from "./validar-cambios-de-contacto.js";
 
+const LARGO_MINIMO_DE_BUSQUEDA = 2;
+const MAXIMO_DE_RESULTADOS = 8;
+
 const MENSAJE_DE_REPETIDO = Object.freeze({
   correo: "Ya existe una cuenta con ese correo.",
   cedula: "Ya existe una cuenta con esa cédula.",
@@ -53,6 +56,13 @@ export class ClientesService {
     }
 
     return this.#abrirSesion({ correo: cliente.correo, nombre: cliente.nombre, rol: ROLES.CLIENTE });
+  }
+
+  /** Clientes por nombre, correo o cédula; sin un término de verdad no devuelve a nadie. */
+  async buscarParaAdministracion(q) {
+    const termino = typeof q === "string" ? q.trim() : "";
+    if (termino.length < LARGO_MINIMO_DE_BUSQUEDA) return [];
+    return this.#repositorio.buscarClientes(termino, MAXIMO_DE_RESULTADOS);
   }
 
   /** RF-37: lo que el cliente ve de sí mismo en "Mi cuenta" y lo que precarga el checkout. */

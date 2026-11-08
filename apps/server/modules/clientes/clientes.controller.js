@@ -11,7 +11,7 @@
  */
 
 import { escribirCookieDeSesion } from "../../shared/http/autenticacion.js";
-import { aClientePropio, aMisCreditos, aUsuarioRegistrado } from "./clientes.dto.js";
+import { aClienteEnBusqueda, aClientePropio, aMisCreditos, aUsuarioRegistrado } from "./clientes.dto.js";
 
 export class ClientesController {
   #servicio;
@@ -28,6 +28,12 @@ export class ClientesController {
 
     escribirCookieDeSesion(respuesta, token, venceEn, { segura: this.#cookieSegura });
     respuesta.status(201).json({ datos: aUsuarioRegistrado(usuario) });
+  };
+
+  // GET /admin?q=
+  buscarParaAdministracion = async (peticion, respuesta) => {
+    const clientes = await this.#servicio.buscarParaAdministracion(peticion.query.q);
+    respuesta.json({ datos: clientes.map(aClienteEnBusqueda) });
   };
 
   // GET /me

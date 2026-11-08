@@ -9,6 +9,7 @@
  */
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
+import { CORREO_DE_VENTA_SIN_CUENTA } from "../../shared/cuentas/venta-sin-cuenta.js";
 
 // Restricciones únicas que se pueden disparar si dos registros se cruzan
 const CAMPO_POR_RESTRICCION = Object.freeze({
@@ -71,6 +72,23 @@ export class ClientesRepository {
   }
 
   /** RF-37: los datos del cliente con sus teléfonos, o null si el correo no es de un cliente. */
+  /** La cédula se compara solo por sus dígitos: se escriba o esté guardada con guiones o sin ellos. */
+  async buscarClientes(termino, limite) {
+    const { rows } = await this.#pool.query(
+      `SELECT u.correo, u.nombre, c.cedula
+         FROM clientes.cliente c
+         JOIN usuarios.usuario u ON u.correo = c.correo_usuario
+        WHERE c.correo_usuario <> $3
+          AND (u.nombre ILIKE '%' || $1 || '%'
+               OR u.correo ILIKE '%' || $1 || '%'
+               OR ($2 <> '' AND regexp_replace(c.cedula, '\\D', '', 'g') LIKE '%' || $2 || '%'))
+        ORDER BY u.nombre, u.correo
+        LIMIT $4`,
+      [termino, termino.replace(/\D/g, ""), CORREO_DE_VENTA_SIN_CUENTA, limite]
+    );
+    return rows;
+  }
+
   async obtenerPorCorreo(correo) {
     const { rows } = await this.#pool.query(
       `SELECT u.correo, u.nombre, c.cedula, c.direccion, c.num_compras, c.fecha_aceptacion_terminos,
