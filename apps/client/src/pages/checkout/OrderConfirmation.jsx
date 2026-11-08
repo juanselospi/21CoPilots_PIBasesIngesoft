@@ -4,7 +4,7 @@ import './Checkout.css'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useCarrito } from '../../hooks/useCarrito.js'
 import { useRecursoRemoto } from '../../hooks/useRecursoRemoto.js'
-import { backState, catalogPath, invoicePath } from '../../routes.js'
+import { MY_ORDERS_PATH, backState, catalogPath, invoicePath } from '../../routes.js'
 import { nombreDelMetodo } from '../../utils/checkout.js'
 
 const CASH_ON_DELIVERY = 'contra_entrega'
@@ -16,8 +16,8 @@ const paymentStates = {
     pendiente: { label: 'Pendiente de cobro', className: 'chip chip-aviso' },
 }
 
-// Pantalla despues de comprar. El pedido llega en el estado de la navegacion porque el servidor
-// todavia no tiene como consultar un pedido, por eso sobrevive a recargar pero sin el no hay nada que mostrar
+// Pantalla despues de comprar. El pedido llega en el estado de la navegacion,
+// por eso sobrevive a recargar pero sin el no hay nada que mostrar
 function OrderConfirmation() {
     const location = useLocation()
     const { pedido, deliveryName } = location.state ?? {}
@@ -99,6 +99,7 @@ function OrderConfirmation() {
 
                 <InvoiceNote pedido={pedido} state={backState(location)} />
 
+                <Link to={MY_ORDERS_PATH} className='checkout-keep-shopping'>Ver mis pedidos</Link>
                 <Link to={catalogPath()} className='checkout-keep-shopping'>Seguir comprando</Link>
             </div>
         </main>

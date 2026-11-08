@@ -92,6 +92,41 @@ export const aFactura = (factura) => ({
   numReferencia: factura.numReferencia,
 });
 
+// Lo que el cliente ve de sus pedidos. Va aparte del panel para que no le llegue
+// el canal, quien lo creo ni los botones de accion
+const datosDeMiPedido = (pedido) => ({
+  numCarrito: pedido.numCarrito,
+  fecha: pedido.fecha,
+  estado: pedido.estado,
+  modalidadEntrega: pedido.modalidadEntrega,
+  subtotal: pedido.subtotal,
+  impuesto: pedido.impuesto,
+  costoEntrega: pedido.costoEntrega,
+  total: pedido.total,
+  moneda: "USD",
+});
+
+export const aMiPedidoEnListado = (pedido) => ({
+  ...datosDeMiPedido(pedido),
+  unidades: pedido.unidades,
+});
+
+export const aMiPedido = (pedido) => ({
+  ...datosDeMiPedido(pedido),
+  direccion: pedido.direccion,
+  lineas: pedido.lineas.map((linea) => ({
+    sku: linea.sku,
+    nombre: linea.nombre,
+    cantidad: linea.cantidad,
+    precioUnitario: linea.precioUnitario,
+    subtotal: linea.subtotal,
+  })),
+  pagos: pedido.pagos.map(aPago),
+  creditoOtorgado: pedido.creditoOtorgado ?? 0,
+  // El enlace a la factura solo sale si ya hay una, contra entrega no la tiene hasta que se pague
+  factura: pedido.factura && { numFactura: pedido.factura.numFactura },
+});
+
 // Lo que el panel muestra de cualquier pedido, en el listado y en el detalle
 const datosDelPedido = (pedido) => ({
   correoCliente: pedido.correoCliente,

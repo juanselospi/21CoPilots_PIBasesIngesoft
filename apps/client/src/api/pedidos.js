@@ -26,6 +26,16 @@ export function obtenerFactura(numCarrito, { signal } = {}) {
     return pedir(`/api/pedidos/${encodeURIComponent(numCarrito)}/factura`, { signal })
 }
 
+// Los pedidos del cliente con sesión y su estado vigente, del más nuevo al más viejo.
+export function listarMisPedidos({ signal } = {}) {
+    return pedir('/api/pedidos', { signal })
+}
+
+// Un pedido del cliente con sus líneas y pagos. Si no es suyo el servidor responde 404.
+export function obtenerMiPedido(numCarrito, { signal } = {}) {
+    return pedir(`/api/pedidos/${encodeURIComponent(numCarrito)}`, { signal })
+}
+
 // Un pedido se identifica por el correo del cliente y su número: el número solo no es único
 const rutaDelPedido = (correo, numCarrito) =>
     `/api/pedidos/admin/${encodeURIComponent(correo)}/${encodeURIComponent(numCarrito)}`

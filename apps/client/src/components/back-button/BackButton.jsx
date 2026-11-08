@@ -12,6 +12,7 @@ const destinations = [
     ['/catalogo', 'al catálogo'],
     ['/carrito', 'al carrito'],
     ['/mi-cuenta', 'a Mi cuenta'],
+    ['/mis-pedidos', 'a Mis pedidos'],
 ]
 const destination = (path) => {
     const [pathname, search = ''] = path.split('#')[0].split('?')

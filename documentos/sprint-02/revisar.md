@@ -78,12 +78,11 @@ Como administrador:
 Las capturas están en `evidencias/mi-cuenta/datos-de-contacto/`. La dirección
 nueva ya se ve en el checkout (`direccion-nueva-en-el-checkout.png`).
 
-### Pendiente que depende de otras tareas
+### Pendiente
 
-- El enlace «Mis pedidos» lleva a `/mis-pedidos`, que todavía no existe (página
-  en blanco). Se completa con SCRUM-137.
-- Saldo a favor: no se muestra porque los créditos (SCRUM-145, PR #113) todavía
-  no están en `develop`.
+- Saldo a favor: la tarea pide mostrarlo si entraba la épica de créditos. El servidor
+  ya lo manda en `saldoCredito` y el checkout lo usa, pero Mi cuenta todavía no lo
+  muestra.
 
 ## «Agregar al carrito» y contador: probado, con capturas
 
@@ -216,7 +215,35 @@ Con `cliente@correo.test` / `Cliente123!` y algo en el carrito:
   hay que cargarlos en `facturacion.emisor`.
 - **Contra entrega por nivel de fidelidad:** hoy lo pueden escoger todos los
   clientes, porque el nivel todavía no existe. Ver `cambios-siguiente-sprint.md`.
-- **Mis pedidos:** la confirmación no enlaza a «Mis pedidos» porque esa página
-  todavía no existe (SCRUM-137).
-- **Pago con crédito a favor:** el servidor está en el PR #114 (SCRUM-146); falta
-  la parte de la pantalla.
+
+## «Mis pedidos» del cliente: probado, con capturas
+
+La lista `/mis-pedidos` y el detalle de cada pedido (SCRUM-137) ya están hechos y se
+probaron en el navegador con la base de datos y el servidor levantados. El estado
+se cambió desde el panel del administrador y el cliente lo vio cambiar. La lista
+trae los últimos 100 pedidos; el historial con filtros es del Sprint 3.
+
+| Tarea | Estado al 8/11 |
+|---|---|
+| SCRUM-137: «Mis pedidos» con el estado vigente y su detalle | Probado, con capturas |
+
+Las capturas están en `evidencias/pedidos/mis-pedidos/`. Las del criterio de la
+tarea son `estado-antes-del-cambio.png`, `administrador-cambia-el-estado.png` y
+`estado-despues-del-cambio.png`.
+
+### Cómo repetir la prueba
+
+Con `cliente@correo.test` / `Cliente123!`:
+
+1. Entrar a «Mis pedidos» desde el menú de la cuenta o desde Mi cuenta: salen los
+   pedidos con número, fecha, estado y total, del más nuevo al más viejo.
+2. Abrir un pedido: salen la entrega, las líneas, los totales, los pagos y el enlace
+   a la factura. No hay botón de cancelar.
+3. Con `admin@dchobbies.test` / `Admin123!`, entrar a `/admin/pedidos`, abrir el
+   pedido n.º 4 y darle «Marcar procesado». Recargar «Mis pedidos»: sale «Procesado».
+
+### Pendientes
+
+- El botón «Recibí mi pedido» (opcional en la tarea) se dejó fuera de este sprint.
+- `documentos/diseño/matriz-permisos.md` todavía dice que el cliente puede cancelar
+  su pedido, lo que contradice la entrevista 2, punto 2. Se corrige con SCRUM-156.

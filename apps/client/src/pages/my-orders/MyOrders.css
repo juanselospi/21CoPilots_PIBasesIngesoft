@@ -1,0 +1,297 @@
+/* Mis pedidos del cliente y su detalle */
+
+.my-orders {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  text-align: left;
+}
+
+.my-orders-title {
+  font-size: clamp(24px, 4vw, var(--texto-seccion));
+}
+
+.my-orders-card {
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra);
+}
+
+/* Cargando, error y sin pedidos */
+.my-orders-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 32px 24px;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+.my-orders-status p {
+  margin: 0;
+}
+
+.my-orders-status .my-orders-status-title {
+  color: var(--color-titulo);
+  font-size: var(--texto-subtitulo);
+  font-weight: 800;
+}
+
+.my-orders-status-error {
+  border-color: transparent;
+  background: var(--estado-error-fondo);
+  color: var(--estado-error-texto);
+}
+
+.my-orders-button {
+  box-sizing: border-box;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radio-control);
+  background: var(--color-principal);
+  color: var(--color-sobre-principal);
+  font: inherit;
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.my-orders-button:hover {
+  background: var(--color-principal-hover);
+}
+
+.my-orders-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-orders-list li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Fila entera como enlace: el pedido, el estado, el total y la flecha */
+.my-orders-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 110px 20px;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  color: var(--color-texto);
+  text-decoration: none;
+}
+
+.my-orders-row:hover strong {
+  color: var(--color-enlace);
+}
+
+.my-orders-row-main,
+.my-orders-payments li > span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.my-orders-row-main span,
+.my-orders-payments li > span:first-child span {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.my-orders-row-total {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.my-orders-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.my-orders-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.my-orders-detail-header p {
+  margin: 4px 0 0;
+  color: var(--color-texto-suave);
+}
+
+.my-orders-detail section {
+  padding-top: 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-orders-detail h2 {
+  margin-bottom: 8px;
+  font-size: var(--texto-general);
+}
+
+.my-orders-detail section p {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.my-orders-table-wrapper {
+  overflow-x: auto;
+}
+
+.my-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.my-orders-table th,
+.my-orders-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-borde);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.my-orders-table th {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+}
+
+.my-orders-table th:first-child,
+.my-orders-table td:first-child {
+  padding-left: 0;
+  text-align: left;
+}
+
+.my-orders-table th:last-child,
+.my-orders-table td:last-child {
+  padding-right: 0;
+}
+
+.my-orders-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(100%, 320px);
+  margin: 16px 0 0 auto;
+}
+
+.my-orders-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.my-orders-totals dt {
+  color: var(--color-texto-suave);
+}
+
+.my-orders-totals dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.my-orders-totals .my-orders-total {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-orders-total dt,
+.my-orders-total dd {
+  color: var(--color-titulo);
+  font-size: var(--texto-precio);
+  font-weight: 800;
+}
+
+.my-orders-payments {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-orders-payments li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 110px;
+  gap: 16px;
+  align-items: center;
+  padding-block: 10px;
+}
+
+.my-orders-payments li + li {
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-orders-detail section .my-orders-credit {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radio-control);
+  background: var(--estado-info-fondo);
+  color: var(--estado-info-texto);
+  font-size: var(--texto-pequeno);
+}
+
+.my-orders-invoice {
+  align-self: flex-end;
+}
+
+.my-orders-note {
+  margin: 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+/* En celular el estado y el total bajan debajo del numero del pedido */
+@media (max-width: 640px) {
+  .my-orders-row {
+    grid-template-columns: minmax(0, 1fr) auto 20px;
+    gap: 8px 12px;
+    padding: 14px 16px;
+  }
+
+  .my-orders-row-main {
+    grid-column: 1 / -1;
+  }
+
+  /* Sin esto la etiqueta se estira a todo el ancho */
+  .my-orders-row .chip {
+    justify-self: start;
+  }
+
+  .my-orders-row-total {
+    grid-column: 2;
+  }
+
+  .my-orders-detail {
+    padding: 20px 16px;
+  }
+
+  .my-orders-payments li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .my-orders-payments li > span:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .my-orders-invoice {
+    align-self: stretch;
+  }
+}

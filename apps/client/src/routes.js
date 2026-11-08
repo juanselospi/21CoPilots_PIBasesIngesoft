@@ -13,6 +13,13 @@ export function productPath(sku) {
 export const CHECKOUT_PATH = '/finalizar-compra'
 export const CONFIRMATION_PATH = `${CHECKOUT_PATH}/confirmacion`
 
+// Mis pedidos del cliente y el detalle de uno, se identifica por su numero
+export const MY_ORDERS_PATH = '/mis-pedidos'
+
+export function myOrderPath(numCarrito) {
+    return `${MY_ORDERS_PATH}/${encodeURIComponent(numCarrito)}`
+}
+
 // Factura de un pedido, se identifica por su numero
 export function invoicePath(numCarrito) {
     return `/pedidos/${encodeURIComponent(numCarrito)}/factura`
