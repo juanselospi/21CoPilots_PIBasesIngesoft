@@ -44,6 +44,12 @@ export function cambiarEstadoPedido(correo, numCarrito, estado) {
     return pedir(`${rutaDelPedido(correo, numCarrito)}/estado`, { metodo: 'POST', cuerpo: { estado } })
 }
 
+// Registra una venta del local o de otro canal, todo junto o nada, y responde el pedido como quedó.
+// Si ya no alcanzan las existencias el servidor responde 409 con el código SIN_EXISTENCIAS.
+export function registrarVenta(venta) {
+    return pedir('/api/pedidos/admin', { metodo: 'POST', cuerpo: venta })
+}
+
 // Edición de las líneas: cada una responde el pedido completo, con los montos nuevos.
 // Si el estado ya no lo permite o no alcanzan las existencias, el servidor responde 409 con el motivo.
 const rutaDeLinea = (correo, numCarrito, sku) =>

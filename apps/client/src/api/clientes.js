@@ -25,3 +25,8 @@ export function obtenerMiCuenta({ signal } = {}) {
 export function corregirMiCuenta(cambios) {
     return pedir('/api/clientes/me', { metodo: 'PATCH', cuerpo: cambios })
 }
+
+// Clientes por nombre, correo o cédula para el panel: [{ correo, nombre, cedula }], hasta 8.
+export function buscarClientesAdmin(q, { signal } = {}) {
+    return pedir('/api/clientes/admin', { parametros: { q }, signal })
+}
