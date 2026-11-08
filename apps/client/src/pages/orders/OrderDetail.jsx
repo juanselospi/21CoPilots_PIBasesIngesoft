@@ -185,6 +185,12 @@ function OrderContent({ order, cambios, busy, onAction, onEdit }) {
                                 <dd>{order.nombreDestinatario}</dd>
                             </>
                         )}
+                        {order.telefonoDestinatario && (
+                            <>
+                                <dt>Teléfono del destinatario</dt>
+                                <dd>{order.telefonoDestinatario}</dd>
+                            </>
+                        )}
                         <dt>Canal</dt>
                         <dd>{CANALES[order.canal] ?? order.canal}</dd>
                         {order.creadoPor && (
