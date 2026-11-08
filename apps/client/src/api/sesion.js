@@ -14,32 +14,16 @@ const messagesByStatus = {
  * Si algo sale mal lanza un Error.
  */
 export async function logIn(correo, contrasena) {
-    let response
     try {
-        response = await fetch('/api/admin/sesion', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ correo, contrasena }),
-        })
-    } catch {
-        throw new Error('No se pudo conectar con el servidor. Revise su conexión e intente de nuevo.')
-    }
-
-    const body = await response.json().catch(() => null)
-
-    if (!response.ok) {
+        return await pedir('/api/admin/sesion', { metodo: 'POST', cuerpo: { correo, contrasena } })
+    } catch (error) {
+        if (!(error instanceof ErrorHttp)) throw error
+        // Aquí el mensaje del servidor no sirve, lo que se le muestra al usuario sale de la tabla de arriba
         throw new ErrorHttp(
-            messagesByStatus[response.status] ??
-            'No se pudo iniciar sesión. Intente de nuevo en unos minutos.',
-            {
-                estado: response.status,
-                codigo: body?.error?.codigo,
-                detalles: body?.error?.detalles,
-            },
+            messagesByStatus[error.estado] ?? 'No se pudo iniciar sesión. Intente de nuevo en unos minutos.',
+            { estado: error.estado, codigo: error.codigo, detalles: error.detalles },
         )
     }
-
-    return body.datos
 }
 
 // Cierra la sesión, el servidor la borra y quita la cookie

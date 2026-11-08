@@ -372,12 +372,19 @@ export const ORDENES_DE_ADMINISTRACION = Object.freeze({
   sku: porSku,
 });
 
+// Lo ultimo que entro va primero, lo que nunca tuvo un ingreso se va al final
+function porIngresoMasReciente(a, b) {
+  const fecha = ({ ultimoIngreso }) => (ultimoIngreso ? new Date(ultimoIngreso).getTime() : 0);
+  return fecha(b) - fecha(a);
+}
+
 /** Órdenes de la tienda; los empates van por SKU para que un producto no cambie de página. */
 export const ORDENES_DE_TIENDA = Object.freeze({
   nombre: porNombre,
   "-nombre": invertido(porNombre),
   precio: porPrecio,
   "-precio": invertido(porPrecio),
+  recientes: porIngresoMasReciente,
 });
 
 /**

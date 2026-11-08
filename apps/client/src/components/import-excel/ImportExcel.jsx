@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FileSpreadsheet, X } from 'lucide-react'
 import './ImportExcel.css'
-import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 
 // se evita subir un archivo que se va a rechazar
 const MAX_SIZE_MB = 5
 
 // Botón "Cargar Excel" del encabezado de Productos. Maneja su propio estado
 // para que la página solo tenga que ponerlo; `onImported` le avisa que recargue el listado.
-function ImportExcel({ onImported }) {
+// `onImport` sube el archivo y `templateUrl` es la plantilla, los dos vienen de la pagina porque aqui no se habla con el servidor
+function ImportExcel({ onImport, templateUrl, onImported }) {
     const [open, setOpen] = useState(false)
 
     return (
@@ -16,12 +16,19 @@ function ImportExcel({ onImported }) {
             <button type='button' className='products-button' onClick={() => setOpen(true)}>
                 <FileSpreadsheet size={20} />Cargar Excel
             </button>
-            {open && <ImportExcelModal onClose={() => setOpen(false)} onImported={onImported} />}
+            {open && (
+                <ImportExcelModal
+                    onImport={onImport}
+                    templateUrl={templateUrl}
+                    onClose={() => setOpen(false)}
+                    onImported={onImported}
+                />
+            )}
         </>
     )
 }
 
-function ImportExcelModal({ onClose, onImported }) {
+function ImportExcelModal({ onImport, templateUrl, onClose, onImported }) {
     const [file, setFile] = useState(null)
     const [error, setError] = useState(null)
     const [uploading, setUploading] = useState(false)
@@ -72,7 +79,7 @@ function ImportExcelModal({ onClose, onImported }) {
         setUploading(true)
         setError(null)
         try {
-            setResult(await importProducts(file))
+            setResult(await onImport(file))
             onImported?.()
         } catch (importError) {
             setError(importError.message)
@@ -119,7 +126,7 @@ function ImportExcelModal({ onClose, onImported }) {
                     <form className='import-excel-form' onSubmit={handleSubmit}>
                         <p className='import-excel-hint'>
                             Use la plantilla oficial o su hoja de siempre, con las mismas columnas.{' '}
-                            <a href={TEMPLATE_URL} download>Descargar plantilla</a>
+                            <a href={templateUrl} download>Descargar plantilla</a>
                         </p>
 
                         <label className='import-excel-file'>

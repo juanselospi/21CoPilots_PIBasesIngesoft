@@ -3,6 +3,7 @@ import {
     Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
 } from 'lucide-react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
+import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
 import Select from '../../components/select/Select.jsx'
@@ -186,7 +187,7 @@ function Products() {
             <section className='products-header'>
                 <h1>Productos</h1>
                 <div className='products-actions'>
-                    <ImportExcel onImported={listado.recargar} />
+                    <ImportExcel onImport={importProducts} templateUrl={TEMPLATE_URL} onImported={listado.recargar} />
                     <button
                         type='button'
                         className='products-button products-button-primary'
