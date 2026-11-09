@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FileSpreadsheet, X } from 'lucide-react'
 import './ImportExcel.css'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 
 // se evita subir un archivo que se va a rechazar
 const MAX_SIZE_MB = 5
@@ -16,14 +17,16 @@ function ImportExcel({ onImport, templateUrl, onImported }) {
             <button type='button' className='products-button' onClick={() => setOpen(true)}>
                 <FileSpreadsheet size={20} />Cargar Excel
             </button>
-            {open && (
-                <ImportExcelModal
-                    onImport={onImport}
-                    templateUrl={templateUrl}
-                    onClose={() => setOpen(false)}
-                    onImported={onImported}
-                />
-            )}
+            <ModalPresence>
+                {open && (
+                    <ImportExcelModal
+                        onImport={onImport}
+                        templateUrl={templateUrl}
+                        onClose={() => setOpen(false)}
+                        onImported={onImported}
+                    />
+                )}
+            </ModalPresence>
         </>
     )
 }

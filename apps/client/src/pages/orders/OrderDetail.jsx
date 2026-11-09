@@ -15,6 +15,7 @@ import { useCambiosDelPedido, usePedidoAdmin } from '../../hooks/usePedidosAdmin
 import { CANALES, ESTADOS, MODALIDADES, accionesDelPedido, describirCambio } from '../../utils/pedidosAdmin.js'
 import { OrderStatusChip, PaymentStatusChip } from './OrderChips.jsx'
 import OrderLines from './OrderLines.jsx'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 const formatDate = (fecha) => dateTimeFormat.format(new Date(fecha))
 
@@ -108,17 +109,19 @@ function OrderDetail() {
                 <OrderContent order={order} cambios={cambios} busy={busy} onAction={runAction} onEdit={editLines} />
             )}
 
-            {confirmingCancel && (
-                <ConfirmDialog
-                    title={`¿Cancelar el pedido n.º ${numCarrito}?`}
-                    message='Las unidades vuelven al inventario y lo ya cobrado queda como crédito a favor del cliente. Esto no se puede deshacer.'
-                    confirmLabel='Cancelar pedido'
-                    busyLabel='Cancelando…'
-                    cancelLabel='Volver'
-                    onConfirm={confirmCancel}
-                    onCancel={() => setConfirmingCancel(false)}
-                />
-            )}
+            <ModalPresence>
+                {confirmingCancel && (
+                    <ConfirmDialog
+                        title={`¿Cancelar el pedido n.º ${numCarrito}?`}
+                        message='Las unidades vuelven al inventario y lo ya cobrado queda como crédito a favor del cliente. Esto no se puede deshacer.'
+                        confirmLabel='Cancelar pedido'
+                        busyLabel='Cancelando…'
+                        cancelLabel='Volver'
+                        onConfirm={confirmCancel}
+                        onCancel={() => setConfirmingCancel(false)}
+                    />
+                )}
+            </ModalPresence>
         </main>
     )
 }

@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import './UserMenu.css'
 import ConfirmDialog from '../confirm-dialog/ConfirmDialog.jsx'
 import { MY_ORDERS_PATH } from '../../routes.js'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 
 const CLIENT_ROLE = 'cliente'
 
@@ -72,16 +73,18 @@ function UserMenu({ user, onLogOut, logOutMessage }) {
                 </div>
             )}
 
-            {confirming && (
-                <ConfirmDialog
-                    title='¿Cerrar sesión?'
-                    message={logOutMessage}
-                    confirmLabel='Cerrar sesión'
-                    busyLabel='Cerrando sesión…'
-                    onConfirm={onLogOut}
-                    onCancel={() => setConfirming(false)}
-                />
-            )}
+            <ModalPresence>
+                {confirming && (
+                    <ConfirmDialog
+                        title='¿Cerrar sesión?'
+                        message={logOutMessage}
+                        confirmLabel='Cerrar sesión'
+                        busyLabel='Cerrando sesión…'
+                        onConfirm={onLogOut}
+                        onCancel={() => setConfirming(false)}
+                    />
+                )}
+            </ModalPresence>
         </div>
     )
 }

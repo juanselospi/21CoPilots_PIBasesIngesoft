@@ -6,6 +6,7 @@ import Notice from '../../components/notice/Notice.jsx'
 import { cambiarActivoEmpleado, crearEmpleado } from '../../api/empleados.js'
 import { useEmpleados } from '../../hooks/useEmpleados.js'
 import EmployeeForm from './EmployeeForm.jsx'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 // Texto del diálogo de confirmación de cada acción
 const dialogByAction = {
@@ -167,15 +168,19 @@ function Employees() {
                 </div>
             )}
 
-            {creating && <EmployeeForm onClose={() => setCreating(false)} onSave={handleCreate} />}
+            <ModalPresence>
+                {creating && <EmployeeForm onClose={() => setCreating(false)} onSave={handleCreate} />}
+            </ModalPresence>
 
-            {pending && (
-                <ConfirmDialog
-                    {...dialogByAction[pending.action](pending.account)}
-                    onConfirm={runAction}
-                    onCancel={() => setPending(null)}
-                />
-            )}
+            <ModalPresence>
+                {pending && (
+                    <ConfirmDialog
+                        {...dialogByAction[pending.action](pending.account)}
+                        onConfirm={runAction}
+                        onCancel={() => setPending(null)}
+                    />
+                )}
+            </ModalPresence>
         </section>
     )
 }

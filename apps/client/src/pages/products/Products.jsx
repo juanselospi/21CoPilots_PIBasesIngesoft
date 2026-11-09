@@ -22,6 +22,7 @@ import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct, toFamilyOption, toModalFields, toServerFields } from './toAdminProduct.js'
 import { familyErrorFields, toServerFamily } from '../families/toAdminFamily.js'
 import { paginasVisibles } from '../../utils/paginas.js'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 // Opciones de orden; el value es lo que entiende el servidor
 const sortOptions = [
@@ -392,34 +393,40 @@ function Products() {
                 />
             </section>
 
-            {editingProduct && (
-                <EditProduct
-                    product={editingProduct}
-                    families={families}
-                    formatPrice={priceFormat.format}
-                    onClose={() => setEditingProduct(null)}
-                    onSave={handleSave}
-                />
-            )}
+            <ModalPresence>
+                {editingProduct && (
+                    <EditProduct
+                        product={editingProduct}
+                        families={families}
+                        formatPrice={priceFormat.format}
+                        onClose={() => setEditingProduct(null)}
+                        onSave={handleSave}
+                    />
+                )}
+            </ModalPresence>
 
-            {pendingAction && (
-                <ProductActionDialog
-                    action={pendingAction.action}
-                    product={pendingAction.product}
-                    onClose={() => setPendingAction(null)}
-                    onConfirm={handleAction}
-                />
-            )}
+            <ModalPresence>
+                {pendingAction && (
+                    <ProductActionDialog
+                        action={pendingAction.action}
+                        product={pendingAction.product}
+                        onClose={() => setPendingAction(null)}
+                        onConfirm={handleAction}
+                    />
+                )}
+            </ModalPresence>
 
-            {creating && (
-                <AddProduct
-                    families={families}
-                    formatPrice={priceFormat.format}
-                    onClose={() => setCreating(false)}
-                    onCreate={handleCreate}
-                    onCreateFamily={handleCreateFamily}
-                />
-            )}
+            <ModalPresence>
+                {creating && (
+                    <AddProduct
+                        families={families}
+                        formatPrice={priceFormat.format}
+                        onClose={() => setCreating(false)}
+                        onCreate={handleCreate}
+                        onCreateFamily={handleCreateFamily}
+                    />
+                )}
+            </ModalPresence>
         </main>
     )
 }

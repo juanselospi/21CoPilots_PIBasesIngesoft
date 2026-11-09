@@ -6,6 +6,7 @@ import Logo from '../logo/Logo.jsx'
 import UserMenu from '../user-menu/UserMenu.jsx'
 import InventoryAlerts from '../inventory-alerts/InventoryAlerts.jsx'
 import { alCambiarElInventario, useAlertasDeInventario } from '../../hooks/useAlertasDeInventario.js'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 
 // Pantallas del panel; NavLink marca con .active la que está abierta
 const sections = [
@@ -62,7 +63,9 @@ function AdminBar({ user, onLogOut }) {
             <Link to='/' className='admin-bar-link'><Store size={20} />Ver tienda</Link>
             <UserMenu user={user} onLogOut={onLogOut} logOutMessage='Vas a salir del panel de administración.' />
 
-            {showAlerts && <InventoryAlerts alerts={alerts} onClose={() => setShowAlerts(false)} />}
+            <ModalPresence>
+                {showAlerts && <InventoryAlerts alerts={alerts} onClose={() => setShowAlerts(false)} />}
+            </ModalPresence>
         </header>
     )
 }

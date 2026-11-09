@@ -10,6 +10,7 @@ import {
 import { aCantidad } from '../../utils/carrito.js'
 import { creditoNuevo, estaPagado, motivoSinEdicion, precioPagado } from '../../utils/pedidosAdmin.js'
 import OrderProductPicker from './OrderProductPicker.jsx'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 // Productos del pedido y su edición (HU-17). Si el estado no la permite, los controles quedan
 // bloqueados con el motivo. `onEdit` hace el cambio y devuelve el pedido como quedó.
@@ -114,45 +115,51 @@ function OrderLines({ order, busy, onEdit }) {
                 </table>
             </div>
 
-            {removing && (
-                <ConfirmDialog
-                    title={`¿Quitar ${removing.nombre}?`}
-                    message={`${removing.cantidad === 1 ? 'La unidad vuelve' : `Las ${removing.cantidad} unidades vuelven`} al inventario${
-                        paid ? ' y lo cobrado queda como crédito a favor del cliente' : ''
-                    }.`}
-                    confirmLabel='Quitar'
-                    busyLabel='Quitando…'
-                    cancelLabel='Volver'
-                    onConfirm={confirmRemove}
-                    onCancel={() => setRemoving(null)}
-                />
-            )}
+            <ModalPresence>
+                {removing && (
+                    <ConfirmDialog
+                        title={`¿Quitar ${removing.nombre}?`}
+                        message={`${removing.cantidad === 1 ? 'La unidad vuelve' : `Las ${removing.cantidad} unidades vuelven`} al inventario${
+                            paid ? ' y lo cobrado queda como crédito a favor del cliente' : ''
+                        }.`}
+                        confirmLabel='Quitar'
+                        busyLabel='Quitando…'
+                        cancelLabel='Volver'
+                        onConfirm={confirmRemove}
+                        onCancel={() => setRemoving(null)}
+                    />
+                )}
+            </ModalPresence>
 
-            {adding && (
-                <OrderProductPicker
-                    title='Agregar producto'
-                    description='El producto entra al pedido con el precio de hoy.'
-                    lines={order.lineas}
-                    askQuantity
-                    confirmLabel='Agregar'
-                    busyLabel='Agregando…'
-                    onConfirm={confirmAdd}
-                    onCancel={() => setAdding(false)}
-                />
-            )}
+            <ModalPresence>
+                {adding && (
+                    <OrderProductPicker
+                        title='Agregar producto'
+                        description='El producto entra al pedido con el precio de hoy.'
+                        lines={order.lineas}
+                        askQuantity
+                        confirmLabel='Agregar'
+                        busyLabel='Agregando…'
+                        onConfirm={confirmAdd}
+                        onCancel={() => setAdding(false)}
+                    />
+                )}
+            </ModalPresence>
 
-            {replacing && (
-                <OrderProductPicker
-                    title={`Reemplazar ${replacing.nombre}`}
-                    description={`Se pagó ${priceFormat.format(precioPagado(replacing))} por unidad, con impuesto: solo aparecen productos de ese precio o menos. La línea conserva el precio pagado y ${replacing.cantidad === 1 ? 'su unidad' : `sus ${replacing.cantidad} unidades`}; no se cobra ni se devuelve la diferencia.`}
-                    lines={order.lineas}
-                    maxPrice={precioPagado(replacing)}
-                    confirmLabel='Reemplazar'
-                    busyLabel='Reemplazando…'
-                    onConfirm={confirmReplace}
-                    onCancel={() => setReplacing(null)}
-                />
-            )}
+            <ModalPresence>
+                {replacing && (
+                    <OrderProductPicker
+                        title={`Reemplazar ${replacing.nombre}`}
+                        description={`Se pagó ${priceFormat.format(precioPagado(replacing))} por unidad, con impuesto: solo aparecen productos de ese precio o menos. La línea conserva el precio pagado y ${replacing.cantidad === 1 ? 'su unidad' : `sus ${replacing.cantidad} unidades`}; no se cobra ni se devuelve la diferencia.`}
+                        lines={order.lineas}
+                        maxPrice={precioPagado(replacing)}
+                        confirmLabel='Reemplazar'
+                        busyLabel='Reemplazando…'
+                        onConfirm={confirmReplace}
+                        onCancel={() => setReplacing(null)}
+                    />
+                )}
+            </ModalPresence>
         </>
     )
 }

@@ -6,6 +6,7 @@ import StockFields from './StockFields.jsx'
 import FamilyForm from '../family-form/FamilyForm.jsx'
 import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 
 // Datos del producto; los marcados como obligatorios también los exige el servidor.
 // El selector de familia va entre los dos grupos.
@@ -161,39 +162,42 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
                 ? `${inheritedLabel[key]} (${createdFamily[key]} %)`
                 : inheritedLabel[key]))
 
+        // Mismo fragmento y mismo fondo que el formulario: React reusa el fondo y no se vuelve a desvanecer
         return (
-            <div className='product-form-overlay' onClick={close}>
-                <div
-                    className='product-form-modal'
-                    role='dialog'
-                    aria-modal='true'
-                    aria-labelledby='add-product-title'
-                    onClick={(event) => event.stopPropagation()}
-                >
-                    <header className='product-form-header'>
-                        <div>
-                            <h2 id='add-product-title'>Producto agregado</h2>
-                            <p>{created.sku} · {created.name}</p>
-                        </div>
-                        <button type='button' className='product-form-close' aria-label='Cerrar' onClick={close}>
-                            <X size={20} />
-                        </button>
-                    </header>
+            <>
+                <div className='product-form-overlay' onClick={close}>
+                    <div
+                        className='product-form-modal'
+                        role='dialog'
+                        aria-modal='true'
+                        aria-labelledby='add-product-title'
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <header className='product-form-header'>
+                            <div>
+                                <h2 id='add-product-title'>Producto agregado</h2>
+                                <p>{created.sku} · {created.name}</p>
+                            </div>
+                            <button type='button' className='product-form-close' aria-label='Cerrar' onClick={close}>
+                                <X size={20} />
+                            </button>
+                        </header>
 
-                    <p className='product-form-success' role='status'>
-                        Se guardó con precio final de {formatPrice(created.price)} y{' '}
-                        {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
-                        {inherited.length > 0 && ` Usa ${inherited.join(' y ')} de la familia ${created.category}.`}
-                    </p>
+                        <p className='product-form-success' role='status'>
+                            Se guardó con precio final de {formatPrice(created.price)} y{' '}
+                            {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
+                            {inherited.length > 0 && ` Usa ${inherited.join(' y ')} de la familia ${created.category}.`}
+                        </p>
 
-                    <footer className='product-form-actions'>
-                        <button type='button' className='product-form-button' onClick={addAnother}>Agregar otro</button>
-                        <button type='button' className='product-form-button product-form-button-primary' onClick={close}>
-                            Cerrar
-                        </button>
-                    </footer>
+                        <footer className='product-form-actions'>
+                            <button type='button' className='product-form-button' onClick={addAnother}>Agregar otro</button>
+                            <button type='button' className='product-form-button product-form-button-primary' onClick={close}>
+                                Cerrar
+                            </button>
+                        </footer>
+                    </div>
                 </div>
-            </div>
+            </>
         )
     }
 
@@ -328,9 +332,11 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
             </div>
 
             {/* Fuera del <form> del producto: un formulario no puede ir dentro de otro */}
-            {creatingFamily && (
-                <FamilyForm family={null} onClose={() => setCreatingFamily(false)} onSave={handleFamilySave} />
-            )}
+            <ModalPresence>
+                {creatingFamily && (
+                    <FamilyForm family={null} onClose={() => setCreatingFamily(false)} onSave={handleFamilySave} />
+                )}
+            </ModalPresence>
         </>
     )
 }
