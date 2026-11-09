@@ -287,9 +287,86 @@
   cursor: pointer;
 }
 
-/* Más ancho que el modal base porque los dos tienen datos generales y precios */
+/* Mientras hay un modal abierto la página de atrás no se desplaza */
+html:has(.product-form-overlay) {
+  overflow: hidden;
+}
+
+/* Agregar y editar producto: más anchos que el modal base, con el título y los botones
+   fijos y solo los campos desplazándose. 90dvh deja ver el fondo arriba y abajo
+   (90vh queda para los navegadores sin dvh) */
 .product-form-wide {
-  max-width: 560px;
+  gap: 0;
+  max-width: 840px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  padding: 0;
+  overflow: hidden;
+}
+
+.product-form-wide > .product-form-header {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+/* min-height: 0 deja que el cuerpo se encoja y se desplace dentro del modal;
+   overscroll-behavior evita que al llegar al final se desplace la página */
+.product-form-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 20px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Avisos y botones; Notice.jsx cierra también este gap al irse un aviso */
+.product-form-footer {
+  --notice-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Dos campos lado a lado (Código y Nombre, Familia y Proveedor) */
+.product-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* En «Editar» importación y margen llevan las opciones encima del input:
+   el costo se alinea por abajo para que los tres inputs queden a la misma altura */
+.product-form-prices-edit {
+  align-items: end;
+}
+
+/* Celular: una sola columna, márgenes más cortos y el modal casi a todo el ancho */
+@media (max-width: 640px) {
+  .product-form-overlay:has(.product-form-wide) {
+    padding: 12px;
+  }
+
+  .product-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .product-form-wide > .product-form-header {
+    padding: 20px 16px 14px;
+  }
+
+  .product-form-body {
+    padding: 16px;
+  }
+
+  .product-form-footer {
+    padding: 14px 16px 16px;
+  }
 }
 
 /* Solo "Editar producto" */
@@ -364,6 +441,11 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* Sin alto extra junto a la etiqueta: así «Familia» queda a la par de «Proveedor» en la misma fila */
+.product-form-label-row .product-form-link {
+  line-height: 1;
 }
 
 .product-form-link:hover {

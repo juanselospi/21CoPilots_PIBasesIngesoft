@@ -13,6 +13,8 @@ const textFields = [
     { key: 'supplier', label: 'Proveedor' },
     { key: 'imageUrl', label: 'Imagen (dirección web)', type: 'url', placeholder: 'https://…' },
 ]
+// Nombre a todo el ancho, el proveedor junto a la familia y la imagen a todo el ancho
+const [nameField, supplierField, imageField] = textFields
 const generalFields = [...textFields.map(({ key }) => key), 'category', 'description']
 
 // Importación y margen pueden ser los de la familia (se envía null) o propios del producto
@@ -144,6 +146,23 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
 
     const fieldError = (key) => errors[key] && <p id={idError(key)} className='product-form-error'>{errors[key]}</p>
 
+    const renderTextField = ({ key, label, required, placeholder, type = 'text' }) => (
+        <label key={key} className='product-form-field'>
+            <span>{label}{!required && <small className='product-form-optional'> (opcional)</small>}</span>
+            <div className='product-form-input'>
+                <input
+                    type={type}
+                    disabled={saving}
+                    placeholder={placeholder}
+                    {...atributosCampo(key)}
+                    value={values[key]}
+                    onChange={(event) => setField(key, event.target.value)}
+                />
+            </div>
+            {fieldError(key)}
+        </label>
+    )
+
     return (
         <div className='product-form-overlay' onClick={close}>
             <form
@@ -166,158 +185,156 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
                     </button>
                 </header>
 
-                {textFields.map(({ key, label, required, placeholder, type = 'text' }) => (
-                    <label key={key} className='product-form-field'>
-                        <span>{label}{!required && <small className='product-form-optional'> (opcional)</small>}</span>
-                        <div className='product-form-input'>
-                            <input
-                                type={type}
-                                disabled={saving}
-                                placeholder={placeholder}
-                                {...atributosCampo(key)}
-                                value={values[key]}
-                                onChange={(event) => setField(key, event.target.value)}
-                            />
-                        </div>
-                        {fieldError(key)}
-                    </label>
-                ))}
+                {/* Solo esta parte se desplaza: el título y los botones quedan siempre a la vista */}
+                <div className='product-form-body'>
+                    {renderTextField(nameField)}
 
-                <label className='product-form-field'>
-                    <span>Familia</span>
-                    <div className='product-form-input'>
-                        <Select
-                            disabled={saving}
-                            {...atributosCampo('category')}
-                            value={values.category}
-                            onChange={(value) => setField('category', value)}
-                            options={familyOptions.map(({ name, active }) => ({
-                                value: name,
-                                label: `${name}${active === false ? ' (desactivada)' : ''}`,
-                            }))}
-                        />
-                    </div>
-                    {fieldError('category')}
-                </label>
-
-                <label className='product-form-field'>
-                    <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
-                    <div className='product-form-input'>
-                        <textarea
-                            rows={3}
-                            disabled={saving}
-                            {...atributosCampo('description')}
-                            value={values.description}
-                            onChange={(event) => setField('description', event.target.value)}
-                        />
-                    </div>
-                    {fieldError('description')}
-                </label>
-
-                {priceFields.map(({ key, label, unit, allowNegative }) => {
-                    const input = (
-                        <div className='product-form-input'>
-                            <input
-                                type='text'
-                                inputMode='decimal'
-                                aria-label={label}
-                                disabled={saving || inherited[key]}
-                                {...atributosCampo(key)}
-                                value={inherited[key] ? asText(family?.[key]) : values[key]}
-                                onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
-                            />
-                            <span>{unit}</span>
-                        </div>
-                    )
-
-                    if (!inheritableFields.includes(key)) {
-                        return (
-                            <label key={key} className='product-form-field'>
-                                <span>{label}</span>
-                                {input}
-                                {fieldError(key)}
-                            </label>
-                        )
-                    }
-
-                    const familyValue = family?.[key]
-                    return (
-                        <fieldset key={key} className='product-form-field product-form-inherit'>
-                            <legend>{label}</legend>
-                            <div className='product-form-modes'>
-                                <label className='product-form-check'>
-                                    <input
-                                        type='radio'
-                                        name={`${key}-modo`}
-                                        disabled={saving}
-                                        checked={inherited[key]}
-                                        onChange={() => changeMode(key, true)}
-                                    />
-                                    <span>
-                                        Usar el de la familia
-                                        {familyValue !== null && familyValue !== undefined && ` (${familyValue} ${unit})`}
-                                    </span>
-                                </label>
-                                <label className='product-form-check'>
-                                    <input
-                                        type='radio'
-                                        name={`${key}-modo`}
-                                        disabled={saving}
-                                        checked={!inherited[key]}
-                                        onChange={() => changeMode(key, false)}
-                                    />
-                                    <span>Propio</span>
-                                </label>
+                    <div className='product-form-row'>
+                        <label className='product-form-field'>
+                            <span>Familia</span>
+                            <div className='product-form-input'>
+                                <Select
+                                    disabled={saving}
+                                    {...atributosCampo('category')}
+                                    value={values.category}
+                                    onChange={(value) => setField('category', value)}
+                                    options={familyOptions.map(({ name, active }) => ({
+                                        value: name,
+                                        label: `${name}${active === false ? ' (desactivada)' : ''}`,
+                                    }))}
+                                />
                             </div>
-                            {input}
-                            {fieldError(key)}
-                        </fieldset>
-                    )
-                })}
+                            {fieldError('category')}
+                        </label>
+                        {renderTextField(supplierField)}
+                    </div>
 
-                <div className='product-form-field product-form-locked'>
-                    <span>Impuesto de venta</span>
-                    <strong>{saved.taxRate} %</strong>
+                    {renderTextField(imageField)}
+
+                    <label className='product-form-field'>
+                        <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
+                        <div className='product-form-input'>
+                            <textarea
+                                rows={3}
+                                disabled={saving}
+                                {...atributosCampo('description')}
+                                value={values.description}
+                                onChange={(event) => setField('description', event.target.value)}
+                            />
+                        </div>
+                        {fieldError('description')}
+                    </label>
+
+                    <section className='product-form-prices product-form-prices-edit'>
+                        {priceFields.map(({ key, label, unit, allowNegative }) => {
+                            const input = (
+                                <div className='product-form-input'>
+                                    <input
+                                        type='text'
+                                        inputMode='decimal'
+                                        aria-label={label}
+                                        disabled={saving || inherited[key]}
+                                        {...atributosCampo(key)}
+                                        value={inherited[key] ? asText(family?.[key]) : values[key]}
+                                        onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
+                                    />
+                                    <span>{unit}</span>
+                                </div>
+                            )
+
+                            if (!inheritableFields.includes(key)) {
+                                return (
+                                    <label key={key} className='product-form-field'>
+                                        <span>{label}</span>
+                                        {input}
+                                        {fieldError(key)}
+                                    </label>
+                                )
+                            }
+
+                            const familyValue = family?.[key]
+                            return (
+                                <fieldset key={key} className='product-form-field product-form-inherit'>
+                                    <legend>{label}</legend>
+                                    <div className='product-form-modes'>
+                                        <label className='product-form-check'>
+                                            <input
+                                                type='radio'
+                                                name={`${key}-modo`}
+                                                disabled={saving}
+                                                checked={inherited[key]}
+                                                onChange={() => changeMode(key, true)}
+                                            />
+                                            <span>
+                                                Usar el de la familia
+                                                {familyValue !== null && familyValue !== undefined && ` (${familyValue} ${unit})`}
+                                            </span>
+                                        </label>
+                                        <label className='product-form-check'>
+                                            <input
+                                                type='radio'
+                                                name={`${key}-modo`}
+                                                disabled={saving}
+                                                checked={!inherited[key]}
+                                                onChange={() => changeMode(key, false)}
+                                            />
+                                            <span>Propio</span>
+                                        </label>
+                                    </div>
+                                    {input}
+                                    {fieldError(key)}
+                                </fieldset>
+                            )
+                        })}
+                    </section>
+
+                    <div className='product-form-field product-form-locked'>
+                        <span>Impuesto de venta</span>
+                        <strong>{saved.taxRate} %</strong>
+                    </div>
+
+                    {/* Los recalcula el servidor al guardar */}
+                    <section className='product-form-derived'>
+                        {derivedFields.map(({ key, label }) => {
+                            const amount = saved.breakdown?.[key]
+                            return (
+                                <div key={key}>
+                                    <span>{label}</span>
+                                    <span>{priceWillChange || amount === null || amount === undefined ? 'Se calcula al guardar' : formatPrice(amount)}</span>
+                                </div>
+                            )
+                        })}
+                    </section>
+
+                    <StockFields
+                        stock={values.stock}
+                        backorder={values.backorder}
+                        error={errors.stock}
+                        inputProps={atributosCampo('stock')}
+                        errorId={idError('stock')}
+                        disabled={saving}
+                        onChange={setField}
+                    />
                 </div>
 
-                {/* Los recalcula el servidor al guardar */}
-                <section className='product-form-derived'>
-                    {derivedFields.map(({ key, label }) => {
-                        const amount = saved.breakdown?.[key]
-                        return (
-                            <div key={key}>
-                                <span>{label}</span>
-                                <span>{priceWillChange || amount === null || amount === undefined ? 'Se calcula al guardar' : formatPrice(amount)}</span>
-                            </div>
-                        )
-                    })}
-                </section>
+                {/* Los avisos van junto a los botones para que se vean sin desplazar */}
+                <div className='product-form-footer'>
+                    {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
+                    {savedNotice && <Notice onClose={() => setSavedNotice(false)}>Producto actualizado.</Notice>}
 
-                <StockFields
-                    stock={values.stock}
-                    backorder={values.backorder}
-                    error={errors.stock}
-                    inputProps={atributosCampo('stock')}
-                    errorId={idError('stock')}
-                    disabled={saving}
-                    onChange={setField}
-                />
-
-                {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
-                {savedNotice && <Notice onClose={() => setSavedNotice(false)}>Producto actualizado.</Notice>}
-
-                <footer className='product-form-actions'>
-                    <button type='button' className='product-form-button' disabled={saving} onClick={close}>
-                        {justSaved ? 'Cerrar' : 'Cancelar'}
-                    </button>
-                    <button
-                        type='submit'
-                        className='product-form-button product-form-button-primary'
-                        disabled={saving || !hasChanges}
-                    >
-                        {saving ? 'Guardando…' : 'Guardar'}
-                    </button>
-                </footer>
+                    <footer className='product-form-actions'>
+                        <button type='button' className='product-form-button' disabled={saving} onClick={close}>
+                            {justSaved ? 'Cerrar' : 'Cancelar'}
+                        </button>
+                        <button
+                            type='submit'
+                            className='product-form-button product-form-button-primary'
+                            disabled={saving || !hasChanges}
+                        >
+                            {saving ? 'Guardando…' : 'Guardar'}
+                        </button>
+                    </footer>
+                </div>
             </form>
         </div>
     )
