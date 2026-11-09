@@ -1,7 +1,8 @@
 import { useId, useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { ImageOff, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import AvailabilityChip from '../../components/product-card/AvailabilityChip.jsx'
+import ProductImage from '../../components/product-image/ProductImage.jsx'
 import QuantityStepper from '../../components/quantity-stepper/QuantityStepper.jsx'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useCarrito } from '../../hooks/useCarrito.js'
@@ -71,11 +72,7 @@ function CartLine({ linea }) {
         }
     }
 
-    const image = imagenUrl ? (
-        <img className='cart-line-image' src={imagenUrl} alt='' />
-    ) : (
-        <div className='cart-line-image cart-line-no-image'><ImageOff size={24} aria-hidden='true' />Sin imagen</div>
-    )
+    const image = <ProductImage src={imagenUrl} className='cart-line-image' emptyClassName='cart-line-no-image' iconSize={24} />
 
     return (
         <li className='cart-line' aria-busy={saving || removing}>

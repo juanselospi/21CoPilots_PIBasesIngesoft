@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router'
-import { ImageOff } from 'lucide-react'
 import './ProductCard.css'
 import AvailabilityChip from './AvailabilityChip.jsx'
+import ProductImage from '../product-image/ProductImage.jsx'
 import AddToCartButton from '../add-to-cart/AddToCartButton.jsx'
 import { priceFormat } from './productFormat.js'
 import { backState } from '../../routes.js'
@@ -16,11 +16,7 @@ function ProductCard({ product, to, compact = false }) {
     return (
         <article className={compact ? 'product-card product-card-compact' : 'product-card'}>
             <Link to={to} state={state} className='product-card-link' tabIndex={-1} aria-hidden='true'>
-                {image ? (
-                    <img className='product-card-image' src={image} alt={name} />
-                ) : (
-                    <div className='product-card-image product-card-no-image'><ImageOff size={28} />Sin imagen</div>
-                )}
+                <ProductImage src={image} alt={name} className='product-card-image' emptyClassName='product-card-no-image' />
             </Link>
 
             <div className='product-card-body'>

@@ -1,9 +1,9 @@
 import { useEffect, useId, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { ImageOff } from 'lucide-react'
 import './ProductDetail.css'
 import AddToCartButton from '../../components/add-to-cart/AddToCartButton.jsx'
 import AvailabilityChip from '../../components/product-card/AvailabilityChip.jsx'
+import ProductImage from '../../components/product-image/ProductImage.jsx'
 import QuantityStepper from '../../components/quantity-stepper/QuantityStepper.jsx'
 import { toCardProduct } from '../../components/product-card/toCardProduct.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
@@ -72,11 +72,14 @@ function ProductDetail() {
         <main className='product-detail'>
             {back}
             <article className='product-detail-section product-detail-content'>
-                {image ? (
-                    <img className='product-detail-image' src={image} alt={name} />
-                ) : (
-                    <div className='product-detail-image product-detail-no-image'><ImageOff size={40} />Sin imagen</div>
-                )}
+                <ProductImage
+                    src={image}
+                    alt={name}
+                    className='product-detail-image'
+                    emptyClassName='product-detail-no-image'
+                    iconSize={40}
+                    loading='eager'
+                />
 
                 <div className='product-detail-info'>
                     <h1 className='product-detail-name'>{name}</h1>

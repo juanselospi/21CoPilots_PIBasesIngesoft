@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ImageOff, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import QuantityStepper from '../../components/quantity-stepper/QuantityStepper.jsx'
+import ProductImage from '../../components/product-image/ProductImage.jsx'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { aCantidad } from '../../utils/carrito.js'
 
@@ -31,11 +32,7 @@ function SaleProductCard({ product, inSale, onAdd }) {
 
     return (
         <article className='products-card'>
-            {product.imagenUrl ? (
-                <img className='products-card-image' src={product.imagenUrl} alt='' />
-            ) : (
-                <div className='products-card-image'><ImageOff size={24} aria-hidden='true' />Sin imagen</div>
-            )}
+            <ProductImage src={product.imagenUrl} className='products-card-image' iconSize={24} />
             <div className='products-card-body'>
                 <span className='products-card-sku codigo'>{product.sku}</span>
                 <h2 className='products-card-name'>{product.nombre}</h2>
