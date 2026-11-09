@@ -21,15 +21,14 @@ El sprint se manejó en Jira, en el tablero «SCRUM Sprint 2» (21 de octubre al
 | SCRUM-82 | HU-10 Carrito persistente con contrapedido | 8 | 8 | 4 | 4 | Terminada |
 | SCRUM-83 | HU-12 y PB-02 Confirmar el pedido, pago emulado y factura | 18 | 5 | 6 | 6 | Parcial |
 | SCRUM-84 | HU-17 Administración de pedidos | 13 | 13 | 7 | 7 | Terminada |
-| SCRUM-85 | PB-31 Créditos a favor del cliente | 5 | 0 | 2 | 2 | Parcial |
+| SCRUM-85 | PB-31 Créditos a favor del cliente | 5 | 5 | 2 | 2 | Terminada |
 | SCRUM-86 | Cierre del Sprint 2: pruebas, evidencia, documentación y demo | — | — | 10 | 4 | En curso |
-| | **Total** | **88** | **65** | **70** | **64** | |
+| | **Total** | **88** | **70** | **70** | **64** | |
 
 Una historia puede tener todas sus tareas terminadas y quedar parcial, porque tiene criterios que esas tareas no cubrieron. Los puntos parciales no se cuentan como completos:
 
 - **SCRUM-80:** de los 16 puntos faltan los 5 de HU-02, porque el correo de recuperación no se envía de verdad. PB-05, PB-18 y PB-19 sí quedaron completas.
 - **SCRUM-83:** de los 18 puntos faltan los 13 de HU-12, porque la factura todavía dice «POR DEFINIR» en los datos del negocio. PB-02 sí quedó completa.
-- **SCRUM-85:** falta mostrar en Mi cuenta el saldo a favor y de qué pedido salió.
 
 ### Tareas del sprint
 
@@ -194,7 +193,7 @@ Partimos del Product Backlog del 22 de octubre y lo dejamos con el estado de tod
 | PB-23 | Buscar y filtrar pedidos en el panel | — | — | S2 | Terminada, dentro de HU-17. |
 | PB-26 | Configurar las tarifas de envío | — | — | S2 | Las tarifas están en la base de datos con montos de prueba; falta que el cliente pase los reales. |
 | PB-27 | Datos fiscales del negocio | — | — | S2 | Están en la base de datos (`facturacion.emisor`); falta que el cliente pase la cédula jurídica y la dirección. |
-| PB-31 | Créditos a favor del cliente | Media (S) | 5 | S2 | Parcial: falta mostrar en Mi cuenta el saldo y de qué pedido salió. Usarlo al pagar ya funciona. Nueva. |
+| PB-31 | Créditos a favor del cliente | Media (S) | 5 | S2 | Terminada. Nueva. |
 | **Sprint 3** | | | | | |
 | HU-13 | Descuento por nivel de cliente frecuente | Alta (M) | 8 | S3 | Sin cambios. |
 | HU-14 | Seguimiento de pedidos | Alta (M) | 5 | S3 | El cliente ya no cancela (solo el administrador, en HU-17). Queda el seguimiento del lado del cliente. |

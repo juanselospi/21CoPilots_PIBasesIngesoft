@@ -49,7 +49,7 @@ dudas por confirmar, etc.
 | Seguimiento del pedido del lado del cliente (HU-14) | Product Backlog | La cancelación quedó solo para el administrador (entrevista 2, punto 2); lo que queda es el seguimiento | Pendiente |
 | Reportes de ventas, inventario y pedidos por cliente (HU-15) | Product Backlog | Planeada para el Sprint 3; el módulo `reportes` todavía no tiene rutas | Pendiente |
 | Enviar de verdad el correo de recuperación de contraseña | [`revisar.md`](../sprint-02/revisar.md) | El enlace funciona, pero hoy se escribe en el log del servidor | Pendiente |
-| Mostrar en Mi cuenta el saldo a favor y de qué pedido salió (PB-31) | Criterio de PB-31 | El servidor ya lo manda y el checkout lo usa, pero la página Mi cuenta no lo muestra | Pendiente |
+| Mostrar en Mi cuenta el saldo a favor y de qué pedido salió (PB-31) | Criterio de PB-31 | El servidor ya lo manda y el checkout lo usa, pero la página Mi cuenta no lo muestra | ✅ Implementado |
 | Permisos de una cuenta que es administrador y cliente a la vez | Decisión del 26/10/2026 (opción a) | Se decidió que tenga los dos permisos, pero hoy el servidor le da un solo rol y gana administrador. Implica cambiar `exigirRol` y `buscarUsuarioPorSesion` | Pendiente |
 | Botón «Recibí mi pedido» para que el cliente confirme la entrega | Profesor, 13/10, § 1 (opcional) | Se dejó fuera de SCRUM-137 por ser opcional | Pendiente |
 | Canal de contacto al correo del negocio (PB-04) y pedidos activos sin límite (PB-03) | Product Backlog | No entraron en la planificación del Sprint 2 | Pendiente |

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { ChevronDown, ChevronRight, ChevronUp, Eye, EyeOff, Package } from 'lucide-react'
 import './MyAccount.css'
 import ContactSection from './ContactSection.jsx'
+import CreditSection from './CreditSection.jsx'
 import PasswordRules from '../../components/password-rules/PasswordRules.jsx'
 import { obtenerMiCuenta } from '../../api/clientes.js'
 import { cambiarContrasena } from '../../api/sesion.js'
@@ -73,6 +74,8 @@ function ClientData({ email }) {
             ]} />
 
             <ContactSection account={account} onSaved={setUpdated} />
+
+            <CreditSection email={email} />
 
             <Link to='/mis-pedidos' className='my-account-card my-account-orders'>
                 <Package size={22} aria-hidden='true' />

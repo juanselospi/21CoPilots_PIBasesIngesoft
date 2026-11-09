@@ -80,9 +80,8 @@ nueva ya se ve en el checkout (`direccion-nueva-en-el-checkout.png`).
 
 ### Pendiente
 
-- Saldo a favor: la tarea pide mostrarlo si entraba la épica de créditos. El servidor
-  ya lo manda en `saldoCredito` y el checkout lo usa, pero Mi cuenta todavía no lo
-  muestra.
+- Saldo a favor: listo. Mi cuenta muestra el saldo y sus movimientos, con el pedido de donde
+  salió cada uno. Las capturas están en `evidencias/mi-cuenta/saldo-a-favor/`.
 
 ## «Agregar al carrito» y contador: probado, con capturas
 

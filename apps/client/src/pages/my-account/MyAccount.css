@@ -273,6 +273,72 @@
   color: var(--color-enlace);
 }
 
+/* Saldo a favor: el texto a la izquierda y el monto a la derecha */
+.my-account-credit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.my-account-credit p {
+  margin: 2px 0 0;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.my-account-credit-amount {
+  color: var(--color-titulo);
+  font-size: var(--texto-seccion);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.my-account-credit-toggle {
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-account-credit-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-account-credit-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-borde);
+}
+
+.my-account-credit-list li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.my-account-credit-list span:not(.my-account-credit-movement) {
+  color: var(--color-texto-suave);
+  font-size: var(--texto-pequeno);
+}
+
+.my-account-credit-order {
+  color: var(--color-enlace);
+  font-size: var(--texto-pequeno);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.my-account-credit-movement {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* El margen lo alinea con la columna de los inputs */
 .my-account-link {
   align-self: flex-start;
