@@ -24,7 +24,7 @@ const COMO_ADMIN = { responsable: ADMIN };
 // Escenario: el pedido 7 de Ana tiene 2 LEG-001 a 100 y 4 BOO-001 a 10, de
 // los que solo salió 1 (el resto quedó en contrapedido). La "base" solo
 // guarda los cambios si la transacción termina bien.
-function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock, cobrado = 0 } = {}) {
+function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock, cobrado = 0, costoEntrega = 3.5 } = {}) {
   const estado = {
     lineas: {
       "BOO-001": { sku: "BOO-001", cantidad: 4, precioUnitario: 10, tasaImpuesto: 13 },
@@ -69,6 +69,7 @@ function crearEscenario({ estadoDelPedido = "procesado", canal = "web", stock, c
     bloquearPedido: async (_c, correo, numCarrito) => (correo === ANA && numCarrito === 7 ? { canal } : null),
     historialDeEstados: async () => [{ estado: "colocado" }, { estado: estadoDelPedido }],
     lineasDelPedido: async () => structuredClone(Object.values(estado.lineas)),
+    costoDeEntrega: async () => costoEntrega,
     guardarLinea: async (_correo, _num, linea) => {
       estado.lineas[linea.sku] = { ...linea };
     },
@@ -238,14 +239,44 @@ test("en un pedido pagado, lo que se quita queda como crédito con impuesto", as
 });
 
 test("nunca se acredita más de lo cobrado ni hay crédito si el pedido no se pagó", async () => {
+  // Pago 100 y al final se queda con 1 BOO-001 y el envio, que valen 14,80
   const pagadoAMedias = crearEscenario({ cobrado: 100 });
   await pagadoAMedias.servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
   await pagadoAMedias.servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 1 }, COMO_ADMIN);
-  assert.deepEqual(pagadoAMedias.estado.creditos.map((c) => c.monto), [100]);
+  assert.deepEqual(pagadoAMedias.estado.creditos.map((c) => c.monto), [51.3, 33.9]);
 
   const sinPagar = crearEscenario();
   await sinPagar.servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
   assert.deepEqual(sinPagar.estado.creditos, []);
+});
+
+test("agregar un producto y volver a quitarlo no deja credito", async () => {
+  const { servicio, estado } = crearEscenario({ cobrado: 274.7 });
+
+  await servicio.agregarLinea(ANA, 7, { sku: "PKM-001", cantidad: 1 }, COMO_ADMIN);
+  const { credito } = await servicio.quitarLinea(ANA, 7, "PKM-001", COMO_ADMIN);
+
+  assert.equal(credito, 0);
+  assert.deepEqual(estado.creditos, []);
+});
+
+test("subir una cantidad y volver a bajarla no deja credito", async () => {
+  const { servicio, estado } = crearEscenario({ cobrado: 274.7 });
+
+  await servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 6 }, COMO_ADMIN);
+  await servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 4 }, COMO_ADMIN);
+
+  assert.deepEqual(estado.creditos, []);
+});
+
+test("si quita algo pagado despues de agregar otro, lo agregado se descuenta del credito", async () => {
+  const { servicio, estado } = crearEscenario({ cobrado: 274.7 });
+
+  await servicio.agregarLinea(ANA, 7, { sku: "PKM-001", cantidad: 1 }, COMO_ADMIN);
+  await servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
+
+  // Se le quitaron 226 pero se queda con un PKM-001 de 101,70 que no pago
+  assert.deepEqual(estado.creditos.map((c) => c.monto), [124.3]);
 });
 
 test("editar las líneas es solo del administrador y responde el pedido actualizado", async (t) => {

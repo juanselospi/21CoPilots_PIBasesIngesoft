@@ -226,8 +226,8 @@ export class PedidosRepository {
     }));
   }
 
-  async costoDeEntrega(correo, numCarrito) {
-    const { rows } = await this.#pool.query(
+  async costoDeEntrega(correo, numCarrito, cliente = this.#pool) {
+    const { rows } = await cliente.query(
       `SELECT costo_entrega FROM pedidos.pedido WHERE correo_cliente = $1 AND num_carrito = $2`,
       [correo, numCarrito]
     );
