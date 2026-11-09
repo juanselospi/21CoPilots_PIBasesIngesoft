@@ -3,8 +3,9 @@
  * devuelve dinero, queda como saldo del cliente para otra compra.
  *
  * Nunca se acredita más de lo que se cobró por el pedido, contando los
- * créditos que ya se dieron por él. Así un producto que el administrador
- * agregó después (y no se cobró) no genera crédito al quitarlo.
+ * créditos que ya se dieron por él y lo que todavía sigue en el pedido.
+ * Así un producto que el administrador agregó después (y no se cobró) no
+ * genera crédito al quitarlo.
  */
 
 export class CreditosDePedidos {
@@ -20,12 +21,12 @@ export class CreditosDePedidos {
    * Dentro de la transacción del cambio al pedido.
    * @returns el monto acreditado, 0 si el pedido no estaba pagado
    */
-  async otorgar(cliente, { correo, numCarrito, monto, motivo }) {
+  async otorgar(cliente, { correo, numCarrito, monto, motivo, valorQueSigue = 0 }) {
     const cobrado = await this.#pagos.montoAprobado(correo, numCarrito, cliente);
     if (cobrado <= 0) return 0;
 
     const yaAcreditado = await this.#clientes.creditoOtorgadoPorPedido(correo, numCarrito, cliente);
-    const credito = redondear(Math.min(monto, cobrado - yaAcreditado));
+    const credito = redondear(Math.min(monto, cobrado - yaAcreditado - valorQueSigue));
     if (credito <= 0) return 0;
 
     await this.#clientes.otorgarCreditoEnTransaccion(cliente, { correo, numCarrito, monto: credito, motivo });

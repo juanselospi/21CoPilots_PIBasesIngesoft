@@ -187,13 +187,19 @@ export class EdicionDePedidosService {
           const salen = Math.min(unidades, Number(disponibles));
           if (salen > 0) await mover(sku, -salen, tipoDeSalida);
         },
-        acreditarLoQuitado: (linea, unidades) =>
-          this.#creditos.otorgar(cliente, {
+        acreditarLoQuitado: async (linea, unidades) => {
+          // Se mira como quedo el pedido, lo que sigue ahi ya esta cubierto con lo que pago el cliente.
+          // Por eso una linea que se agrego despues y nunca se cobro no deja credito al quitarla
+          const quedan = await this.#repositorio.lineasDelPedido(correo, numCarrito, cliente);
+          const costoEntrega = await this.#repositorio.costoDeEntrega(correo, numCarrito, cliente);
+          return this.#creditos.otorgar(cliente, {
             correo,
             numCarrito,
             monto: precioConImpuesto(linea) * unidades,
             motivo: `${unidades === 1 ? "Se quitó" : "Se quitaron"} ${unidades} de ${linea.sku} del pedido ${numCarrito}`,
-          }),
+            valorQueSigue: valorDelPedido(quedan, costoEntrega),
+          });
+        },
         guardar: (linea) => this.#repositorio.guardarLinea(correo, numCarrito, linea, cliente),
         quitar: (sku) => this.#repositorio.quitarLinea(correo, numCarrito, sku, cliente),
       };
@@ -221,6 +227,12 @@ function valorNuevoDeBitacora(nueva, credito) {
   if (credito <= 0) return valor;
   return { ...valor, creditoOtorgado: credito };
 }
+
+// Lo que vale el pedido con envio, con la misma cuenta del total al comprar
+const valorDelPedido = (lineas, costoEntrega) =>
+  redondear(lineas.reduce((suma, linea) => suma + redondear(precioConImpuesto(linea) * linea.cantidad), 0) + costoEntrega);
+
+const redondear = (monto) => Math.round((monto + Number.EPSILON) * 100) / 100;
 
 // Lo que el cliente pagó por unidad, con impuesto
 const precioConImpuesto = ({ precioUnitario, tasaImpuesto }) =>
