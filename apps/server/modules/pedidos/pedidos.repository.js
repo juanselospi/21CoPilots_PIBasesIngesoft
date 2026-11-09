@@ -1,5 +1,5 @@
 /**
- * CAPA DE PERSISTENCIA — Repositorio de carrito y pedidos.
+ * CAPA DE PERSISTENCIA: Repositorio de carrito y pedidos.
  *
  * El pedido se identifica por `(correo_cliente, num_carrito)`. Las líneas
  * viven en `agrega` con el precio sin impuesto y la tasa del momento, y el

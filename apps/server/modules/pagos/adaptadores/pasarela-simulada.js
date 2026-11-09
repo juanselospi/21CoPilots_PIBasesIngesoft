@@ -1,9 +1,9 @@
 /**
- * ADAPTADOR — pasarela simulada.
+ * ADAPTADOR: pasarela simulada.
  *
  * Implementa la interfaz completa con datos ficticios: el flujo de compra
  * se construye y se prueba entero, y la integración productiva queda como
- * trabajo posterior sin tocar la lógica de pedidos (§ 5.1).
+ * trabajo posterior sin tocar la lógica de pedidos.
  */
 
 import { randomUUID } from "node:crypto";

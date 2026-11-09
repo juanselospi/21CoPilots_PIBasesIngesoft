@@ -8,7 +8,7 @@ const raw = process.argv.slice(2).join('_');
 const name = raw
   .toLowerCase()
   .normalize('NFD')
-  .replace(/[̀-ͯ]/g, '') // quita tildes
+  .replace(/[\u0300-\u036f]/g, '') // quita tildes
   .replace(/[^a-z0-9]+/g, '_')
   .replace(/^_|_$/g, '');
 
@@ -27,13 +27,13 @@ const file = path.join(MIGRATIONS_DIR, `${version}_${name}.sql`);
 fs.writeFileSync(
   file,
   `-- =====================================================================
--- ${version} — ${name.replace(/_/g, ' ')}
+-- ${version}: ${name.replace(/_/g, ' ')}
 -- Historia/tarea: SCRUM-XX
--- Justificación: (anótela también en documentos/diseño/modelo-datos.md § 4)
+-- Justificación: (anótela también en documentos/diseño/modelo-datos.md, sección 4)
 -- Recuerde: nombres calificados por esquema (catalogo.producto, no producto)
 -- =====================================================================
 
 `
 );
-console.log(`✔ Creado ${path.relative(process.cwd(), file)}`);
+console.log(`Creado ${path.relative(process.cwd(), file)}`);
 console.log('  Escriba el SQL, luego:  npm run db:migrate   (o npm run db:reset si necesita repetirla)');

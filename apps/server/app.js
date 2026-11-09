@@ -1,15 +1,15 @@
 /**
  * Capa de API: arma la aplicación Express.
  *
- * Solo sabe de HTTP —rutas, middlewares y códigos de estado—. No contiene
+ * Solo sabe de HTTP (rutas, middlewares y códigos de estado). No contiene
  * reglas de negocio ni consultas a la base de datos: delega en los
  * módulos que recibe ya construidos.
  *
- * La cadena de middlewares es un Chain of Responsibility (§ 6.1): cada
+ * La cadena de middlewares es un Chain of Responsibility: cada
  * eslabón decide si atiende la petición o la pasa al siguiente.
  *
- *   identificarUsuario → rutas de cada módulo → rutaNoEncontrada
- *                                             → manejadorDeErrores
+ *   identificarUsuario -> rutas de cada módulo -> rutaNoEncontrada
+ *                                             -> manejadorDeErrores
  *
  * La interfaz (apps/client) se sirve aparte con Vite; este proceso solo
  * responde JSON bajo /api.

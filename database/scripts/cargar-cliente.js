@@ -21,7 +21,7 @@ const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-client
 
 (async () => {
   if (!isLocalHost()) {
-    console.error(`✖ DB_HOST es "${config.host}", no una BD local. db:cliente borra todo, así que se negó a correr.`);
+    console.error(`Error: DB_HOST es "${config.host}", no una BD local. db:cliente borra todo, así que se negó a correr.`);
     process.exit(1);
   }
 
@@ -29,7 +29,7 @@ const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-client
   const files = clientSeedFiles();
   if (!files) return;
 
-  console.log('→ Reconstruyendo la base con las semillas demo ...');
+  console.log('Reconstruyendo la base con las semillas demo ...');
   try {
     execFileSync(process.execPath, [path.join(__dirname, 'reset.js')], { stdio: 'inherit' });
   } catch {
@@ -41,17 +41,17 @@ const { clientSeedFiles, runClientSeeds, printSummary } = require('./seed-client
   try {
     await client.query('BEGIN');
     const deprueba = await desactivarProductosDePrueba(client);
-    console.log(`✔ ${deprueba} producto(s) de prueba desactivados (siguen en la base).`);
+    console.log(`${deprueba} producto(s) de prueba desactivados (siguen en la base).`);
     await runClientSeeds(client, files);
     const familiasDePrueba = await desactivarFamiliasDePrueba(client);
-    console.log(`✔ ${familiasDePrueba} familia(s) de prueba desactivadas (no tienen productos del cliente).`);
+    console.log(`${familiasDePrueba} familia(s) de prueba desactivadas (no tienen productos del cliente).`);
     await client.query('COMMIT');
 
     await printSummary(client);
-    console.log('\n✔ Base lista con el catálogo del cliente.');
+    console.log('\nBase lista con el catálogo del cliente.');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
-    console.error(`\n✖ ${err.message}\n  (quedó la base demo recién reconstruida, sin datos del cliente)`);
+    console.error(`\nError: ${err.message}\n  (quedó la base demo recién reconstruida, sin datos del cliente)`);
     process.exitCode = 1;
   } finally {
     await client.end();

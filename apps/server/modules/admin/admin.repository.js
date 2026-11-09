@@ -1,5 +1,5 @@
 /**
- * CAPA DE PERSISTENCIA —> Repositorio de administración.
+ * CAPA DE PERSISTENCIA: Repositorio de administración.
  *
  * Escribe en `usuarios.usuario`, `usuarios.sesion` y `admin.administrador`.
  * El usuario se identifica por su correo, que la base guarda en minusculas y sin espacios.

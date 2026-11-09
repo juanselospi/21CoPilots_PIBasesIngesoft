@@ -88,7 +88,7 @@ test('el resumen muestra los primeros productos y cuenta los demás', () => {
 test('la bitácora se describe en palabras y «finalizado» se lee «Entregado»', () => {
     assert.equal(
         describirCambio({ evento: 'estado_pedido_cambiado', valorAnterior: { estado: 'en_transito' }, valorNuevo: { estado: 'finalizado' } }),
-        'Estado: En tránsito → Entregado',
+        'Estado: de En tránsito a Entregado',
     )
     assert.equal(describirCambio({ evento: 'pedido_confirmado', valorAnterior: null, valorNuevo: {} }), 'El cliente confirmó el pedido')
     assert.equal(describirCambio({ evento: 'pedido_creado_manual', valorNuevo: { canal: 'whatsapp' } }), 'Pedido registrado a mano, canal WhatsApp')

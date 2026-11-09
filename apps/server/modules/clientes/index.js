@@ -1,5 +1,5 @@
 /**
- * Facade del módulo de clientes (§ 5.3).
+ * Facade del módulo de clientes.
  */
 
 import { ClientesRepository } from "./clientes.repository.js";

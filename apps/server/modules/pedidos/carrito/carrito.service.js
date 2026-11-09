@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Carrito del cliente (HU-10, RF-21 a RF-24).
+ * CAPA DE DOMINIO: Carrito del cliente (HU-10, RF-21 a RF-24).
  *
  * El carrito vive en la base y se conserva entre sesiones (RN-14). En el
  * carrito el precio es siempre el vigente: cada consulta lo recalcula con el

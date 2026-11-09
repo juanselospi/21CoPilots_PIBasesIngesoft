@@ -48,7 +48,7 @@ const searchProducts = (q, filters, signal, pagina = 0) =>
 
 // Pantalla «Ingreso de mercancía» del panel (HU-07, HU-08): ingreso, ajuste e historial en una sola pantalla.
 function Merchandise() {
-    // El producto elegido vive en la URL: las alertas de inventario abren /admin/mercancia?sku=…
+    // El producto elegido vive en la URL: las alertas de inventario abren /admin/mercancia?sku=...
     const [searchParams, setSearchParams] = useSearchParams()
     const location = useLocation()
     const sku = searchParams.get('sku')?.trim().toUpperCase() || null

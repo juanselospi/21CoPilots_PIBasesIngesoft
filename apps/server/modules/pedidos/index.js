@@ -1,5 +1,5 @@
 /**
- * Facade del módulo de pedidos (§ 5.3).
+ * Facade del módulo de pedidos.
  *
  * Es el módulo con más dependencias: confirmar una compra toca precio,
  * existencias, nivel del cliente, cobro y factura. Todas llegan por

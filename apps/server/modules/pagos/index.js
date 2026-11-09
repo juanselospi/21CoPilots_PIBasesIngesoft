@@ -1,7 +1,7 @@
 /**
  * Selector del adaptador de pago.
  *
- * Factory Method parametrizado (§ 4.1): traduce un valor de configuración
+ * Factory Method parametrizado: traduce un valor de configuración
  * a una implementación de la interfaz. Sustituir el placeholder por la integración real es agregar
  * una entrada a este mapa, sin tocar pedidos ni checkout (RNF-20).
  */

@@ -46,7 +46,7 @@ const COLUMNAS_DE_FAMILIA = `
        f.activa,
        (SELECT count(*) FROM catalogo.producto p WHERE p.categoria = f.nombre)::int AS total_de_productos`;
 
-// Campo del dominio → columna, para armar los UPDATE solo con lo que cambia.
+// Campo del dominio -> columna, para armar los UPDATE solo con lo que cambia.
 const COLUMNA_DE_PRODUCTO = Object.freeze({
   nombre: "nombre",
   descripcion: "descripcion",

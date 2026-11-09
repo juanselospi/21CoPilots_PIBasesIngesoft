@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Familias de productos (solo administrador).
+ * CAPA DE DOMINIO: Familias de productos (solo administrador).
  *
  * La familia define la importación y el margen que heredan sus productos.
  * Cambiar esos valores cambia el precio de todos los que heredan, por eso

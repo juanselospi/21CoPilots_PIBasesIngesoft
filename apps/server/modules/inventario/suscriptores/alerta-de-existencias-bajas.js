@@ -1,5 +1,5 @@
 /**
- * Suscriptor — alerta de existencias bajas (RF-16, RN-04).
+ * Suscriptor: alerta de existencias bajas (RF-16, RN-04).
  *
  * Escucha los movimientos de inventario y levanta la alerta cuando las
  * existencias quedan en el umbral o por debajo. El umbral es fijo e igual

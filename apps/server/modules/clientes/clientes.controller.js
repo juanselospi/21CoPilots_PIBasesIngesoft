@@ -1,13 +1,13 @@
 /**
- * CAPA DE API — Controlador de clientes.
+ * CAPA DE API: Controlador de clientes.
  *
  * POR IMPLEMENTAR
- *   registrar          RF-32, RF-33, RF-38 — pública, abre la sesión
+ *   registrar          RF-32, RF-33, RF-38: pública, abre la sesión
  *   verMiCuenta        RF-37
- *   corregirMiCuenta   RF-37 — dirección y teléfonos
+ *   corregirMiCuenta   RF-37: dirección y teléfonos
  *   consultarNivel     RF-34, RF-35
- *   listarClientes     aprobado #2 — solo administrador
- *   corregirDatos      aprobado #3 — solo administrador
+ *   listarClientes     aprobado #2: solo administrador
+ *   corregirDatos      aprobado #3: solo administrador
  */
 
 import { escribirCookieDeSesion } from "../../shared/http/autenticacion.js";

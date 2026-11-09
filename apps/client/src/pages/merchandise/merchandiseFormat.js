@@ -2,7 +2,7 @@
 
 export const unitsText = (count) => (count === 1 || count === -1 ? `${count} unidad` : `${count} unidades`)
 
-// Con signo: +10 suma y −2 resta
+// Con signo: +10 suma y -2 resta
 export const signedUnits = (count) => (count > 0 ? `+${count}` : String(count))
 
 export const signedUnitsText = (count) => `${signedUnits(count)} ${Math.abs(count) === 1 ? 'unidad' : 'unidades'}`

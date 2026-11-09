@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Servicio del catálogo.
+ * CAPA DE DOMINIO: Servicio del catálogo.
  *
  * Aquí viven las reglas; no sabe de Express ni de SQL. Recibe el
  * repositorio y el motor de precios por constructor, así que una prueba

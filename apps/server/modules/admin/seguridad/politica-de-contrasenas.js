@@ -39,7 +39,7 @@ export function exigirPoliticaDeContrasenas(contrasena, campo = "contrasena") {
   if (problema) throw new EntradaInvalida(problema, [campo]);
 }
 
-// ["a", "b", "c"] → "a, b y c"
+// ["a", "b", "c"] -> "a, b y c"
 function unirConY(partes) {
   if (partes.length === 1) return partes[0];
   return `${partes.slice(0, -1).join(", ")} y ${partes.at(-1)}`;

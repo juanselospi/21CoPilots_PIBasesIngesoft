@@ -86,7 +86,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
     const priceWillChange = changedPrices.length > 0
         || (changedGeneral.includes('category') && inheritableFields.some((key) => inherited[key]))
 
-    // Heredado → null; texto vacío → null para borrar el dato opcional
+    // Heredado -> null; texto vacío -> null para borrar el dato opcional
     const valueToSend = (key) => {
         if (inherited[key]) return null
         return generalFields.includes(key) ? values[key].trim() || null : values[key]

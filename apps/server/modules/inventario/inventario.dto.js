@@ -5,7 +5,7 @@
  * son administrativas: se sirven detrás de `exigirRol` (RNF-10).
  *
  * POR IMPLEMENTAR
- *   aExistencias()     RF-16 — producto, existencias, estado de alerta
+ *   aExistencias()     RF-16: producto, existencias, estado de alerta
  */
 
 /** Producto con existencias bajas, para el aviso del panel. */

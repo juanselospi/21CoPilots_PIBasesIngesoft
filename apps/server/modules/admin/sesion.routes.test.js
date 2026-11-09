@@ -19,7 +19,7 @@ const USUARIOS_POR_TOKEN = {
 const RENOVADA_HASTA = new Date("2030-01-01T12:00:00Z");
 
 // Levanta las rutas reales de admin detrás de la misma cadena que app.js:
-// cookie → identificarUsuario → rutas → manejador de errores.
+// cookie -> identificarUsuario -> rutas -> manejador de errores.
 async function levantarServidor() {
   const accesosDenegados = [];
   const sesiones = new Map(Object.entries(USUARIOS_POR_TOKEN));

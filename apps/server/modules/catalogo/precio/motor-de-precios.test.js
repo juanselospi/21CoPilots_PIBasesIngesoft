@@ -21,7 +21,7 @@ test("RN-01: aplica importación, margen e impuesto en ese orden", () => {
     tasaImpuesto: 13,
   });
 
-  // 100 → 120 (aranceles) → 180 (margen) → 203,4 (impuesto)
+  // 100 -> 120 (aranceles) -> 180 (margen) -> 203,4 (impuesto)
   assert.equal(precioFinal, 203.4);
   assert.deepEqual(
     desglose.map((paso) => paso.paso),

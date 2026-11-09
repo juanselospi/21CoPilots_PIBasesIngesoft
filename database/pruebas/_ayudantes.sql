@@ -12,13 +12,13 @@ BEGIN
         EXECUTE p_sql;
     EXCEPTION WHEN OTHERS THEN
         IF SQLSTATE <> p_codigo THEN
-            RAISE EXCEPTION '✖ %: se esperaba el error %, pero ocurrió % (%)',
+            RAISE EXCEPTION '%: se esperaba el error %, pero ocurrió % (%)',
                 p_prueba, p_codigo, SQLSTATE, SQLERRM;
         END IF;
-        RAISE NOTICE '✔ %', p_prueba;
+        RAISE NOTICE 'OK %', p_prueba;
         RETURN;
     END;
-    RAISE EXCEPTION '✖ %: se esperaba el error %, pero la instrucción se aceptó', p_prueba, p_codigo;
+    RAISE EXCEPTION '%: se esperaba el error %, pero la instrucción se aceptó', p_prueba, p_codigo;
 END;
 $$;
 
@@ -27,9 +27,9 @@ CREATE FUNCTION pg_temp.debe_funcionar(p_prueba text, p_sql text) RETURNS void
 LANGUAGE plpgsql AS $$
 BEGIN
     EXECUTE p_sql;
-    RAISE NOTICE '✔ %', p_prueba;
+    RAISE NOTICE 'OK %', p_prueba;
 EXCEPTION WHEN OTHERS THEN
-    RAISE EXCEPTION '✖ %: se esperaba éxito, pero ocurrió % (%)', p_prueba, SQLSTATE, SQLERRM;
+    RAISE EXCEPTION '%: se esperaba éxito, pero ocurrió % (%)', p_prueba, SQLSTATE, SQLERRM;
 END;
 $$;
 
@@ -38,9 +38,9 @@ CREATE FUNCTION pg_temp.debe_cumplirse(p_prueba text, p_condicion boolean) RETUR
 LANGUAGE plpgsql AS $$
 BEGIN
     IF p_condicion IS NOT TRUE THEN
-        RAISE EXCEPTION '✖ %: la condición no se cumple', p_prueba;
+        RAISE EXCEPTION '%: la condición no se cumple', p_prueba;
     END IF;
-    RAISE NOTICE '✔ %', p_prueba;
+    RAISE NOTICE 'OK %', p_prueba;
 END;
 $$;
 

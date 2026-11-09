@@ -6,8 +6,8 @@
  * ninguna circunstancia se incluye el hash de la contraseña.
  *
  * POR IMPLEMENTAR
- *   aClienteAdministrativo()  aprobado #2 — lista de clientes del panel
- *   aNivelDeFidelidad()       RF-34 — nivel, compras acumuladas, descuento
+ *   aClienteAdministrativo()  aprobado #2: lista de clientes del panel
+ *   aNivelDeFidelidad()       RF-34: nivel, compras acumuladas, descuento
  */
 
 /** Lo mismo que devuelve iniciar sesión, para que la tienda lo trate igual. */

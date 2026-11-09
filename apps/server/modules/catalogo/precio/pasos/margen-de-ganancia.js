@@ -1,10 +1,10 @@
 /**
- * Paso 2 — margen de ganancia configurable.
+ * Paso 2: margen de ganancia configurable.
  * RN-01, RF-04.
  *
  * El margen puede ser negativo: RN-02 permite vender por debajo del costo
  * un producto defectuoso o de liquidación (RF-43). Por eso aquí no hay
- * ninguna validación de signo (§ 6.5); la tabla solo impide que llegue a
+ * ninguna validación de signo; la tabla solo impide que llegue a
  * -100 % o menos, para que el precio no quede en cero.
  */
 

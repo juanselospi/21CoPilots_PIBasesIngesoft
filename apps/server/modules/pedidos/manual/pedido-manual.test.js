@@ -173,7 +173,7 @@ test("HU-09: una venta por WhatsApp de dos productos es un solo pedido que descu
     ["LEG-001", -2, "venta_externa", ADMIN, `Pedido ${ANA}/4`],
     ["BOO-001", -1, "venta_externa", ADMIN, `Pedido ${ANA}/4`],
   ]);
-  // 2 × 113 + 4 × 11,30 + 3,50 de envío, cobrado en el momento
+  // 2 x 113 + 4 x 11,30 + 3,50 de envío, cobrado en el momento
   assert.deepEqual(estado.pagos.map((p) => [p.metodoPago, p.monto, p.estadoPago]), [["sinpe_movil", 274.7, "aprobado"]]);
   assert.equal(estado.facturas.length, 1);
   assert.equal(estado.compras, 1);

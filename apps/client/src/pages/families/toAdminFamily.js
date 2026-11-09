@@ -1,6 +1,6 @@
 // Traduce las familias entre el formato del servidor y el de la pantalla Familias y su modal.
 
-// Nombre del campo en el modal → nombre en el servidor
+// Nombre del campo en el modal -> nombre en el servidor
 const serverFieldByModalField = {
     name: 'nombre',
     description: 'descripcion',
@@ -8,7 +8,7 @@ const serverFieldByModalField = {
     margenPct: 'margenGanancia',
 }
 
-// Familia del servidor → datos para la tabla y el modal
+// Familia del servidor -> datos para la tabla y el modal
 export const toAdminFamily = ({ nombre, descripcion, porcentajeImportacion, margenGanancia, activa, totalDeProductos }) => ({
     name: nombre,
     description: descripcion,
@@ -18,11 +18,11 @@ export const toAdminFamily = ({ nombre, descripcion, porcentajeImportacion, marg
     productCount: totalDeProductos,
 })
 
-// Valores del modal → cuerpo que espera el servidor
+// Valores del modal -> cuerpo que espera el servidor
 export const toServerFamily = (values) =>
     Object.fromEntries(Object.entries(values).map(([field, value]) => [serverFieldByModalField[field], value]))
 
-// Campos con error que reporta el servidor → campos del modal
+// Campos con error que reporta el servidor -> campos del modal
 export const toModalFields = (serverFields = []) =>
     Object.keys(serverFieldByModalField).filter((field) => serverFields.includes(serverFieldByModalField[field]))
 
