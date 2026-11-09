@@ -4,6 +4,7 @@
 
 import { crearPool } from "./shared/db/pool.js";
 import { BusDeEventos } from "./shared/eventos/bus-de-eventos.js";
+import { crearEnviadorDeCorreo } from "./shared/correo/index.js";
 import { crearExigirRol } from "./shared/http/autorizacion-por-rol.js";
 import { crearIdentificarUsuario } from "./shared/http/autenticacion.js";
 
@@ -33,6 +34,8 @@ export function componerSistema(configuracion) {
     configuracion.adaptadores.facturacionElectronica
   );
 
+  const enviadorDeCorreo = crearEnviadorDeCorreo(configuracion.correo);
+
   const exigirRol = crearExigirRol(busDeEventos);
 
   // Los modulos van en orden de dependencia
@@ -59,6 +62,7 @@ export function componerSistema(configuracion) {
     exigirRol,
     sesion: configuracion.sesion,
     recuperacion: configuracion.recuperacion,
+    enviadorDeCorreo,
     importacion: configuracion.importacion,
     catalogo,
     negocio: configuracion.negocio,

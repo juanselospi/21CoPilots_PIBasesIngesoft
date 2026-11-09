@@ -45,8 +45,8 @@ export class AdminService {
     duracionSesionMinutos = 25,
     renovarSesion = false,
     importacionDeExcel,
-    recuperacion = { duracionMinutos: 30, urlDeLaTienda: "http://localhost:5173", devolverEnlace: false },
-    // Mientras no haya envío de correos, el enlace sale en el log del servidor
+    recuperacion = { duracionMinutos: 30, urlDeLaTienda: "http://localhost:5173", devolverEnlace: false, esperaEntreEnlacesSegundos: 60 },
+    // El modulo admin pasa aqui el envio del correo, sin eso el enlace sale en el log
     avisarEnlace = (correo, enlace) => console.info(`Enlace para recuperar la contraseña de ${correo}: ${enlace}`),
   }) {
     this.#repositorio = repositorio;
@@ -145,7 +145,7 @@ export class AdminService {
   /**
    * RF-54: crea el enlace para cambiar la contraseña y lo "envía". La
    * respuesta es la misma exista o no el correo, para no revelar cuáles
-   * tienen cuenta; fuera de producción trae el enlace para poder probarlo.
+   * tienen cuenta; con el correo simulado trae el enlace para poder probarlo.
    * @returns `{ enlace }`, con null si no hay que devolverlo
    */
   async solicitarRecuperacion(datos) {
@@ -155,15 +155,26 @@ export class AdminService {
     if (!usuario?.rol || usuario.correo === CORREO_DE_VENTA_SIN_CUENTA) return { enlace: null };
 
     const token = generarToken();
-    await this.#repositorio.crearRecuperacion({
+    const creada = await this.#repositorio.crearRecuperacion({
       correoUsuario: usuario.correo,
       tokenHash: hashearToken(token),
       venceEn: new Date(Date.now() + this.#recuperacion.duracionMinutos * 60 * 1000),
+      esperaSegundos: this.#recuperacion.esperaEntreEnlacesSegundos,
     });
+    // Si acaba de pedir uno no se manda otro, asi nadie le llena la bandeja a alguien
+    if (!creada) return { enlace: null };
 
     const enlace = `${this.#recuperacion.urlDeLaTienda}/restablecer?token=${token}`;
-    this.#avisarEnlace(usuario.correo, enlace);
+    this.#avisarSinEsperar(usuario.correo, enlace);
     return { enlace: this.#recuperacion.devolverEnlace ? enlace : null };
+  }
+
+  // No se espera el envio: si no, las cuentas que existen tardarian mas y se notaria cuales son.
+  // Si falla solo se avisa en el log, sin el enlace, porque la respuesta tiene que ser la misma
+  #avisarSinEsperar(correo, enlace) {
+    Promise.resolve()
+      .then(() => this.#avisarEnlace(correo, enlace))
+      .catch((error) => console.error(`No se pudo enviar el correo de recuperacion a ${correo}: ${error.message}`));
   }
 
   /**

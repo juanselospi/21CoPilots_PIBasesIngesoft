@@ -11,7 +11,7 @@ funcionalidad terminada.
 
 | Servicio | Tareas | Estado al 2/11 |
 |---|---|---|
-| Recuperar contraseña (RF-54): enlace de un solo uso y con vencimiento | SCRUM-117 (servidor), SCRUM-118 (pantallas) | Las pantallas están hechas. El servidor todavía no tiene las rutas ni el envío del correo |
+| Recuperar contraseña (RF-54): enlace de un solo uso y con vencimiento | SCRUM-117 (servidor), SCRUM-118 (pantallas), SCRUM-157 (envío) | El envío por SMTP está implementado y probado contra un servidor SMTP local. Falta configurar la cuenta de correo y hacer la verificación de abajo con una bandeja real |
 
 Si en el sprint aparece otro servicio que mande correos, se agrega a esta tabla.
 
@@ -24,6 +24,12 @@ Si en el sprint aparece otro servicio que mande correos, se agrega a esta tabla.
   (`/restablecer?token=...`), configurable para desarrollo y para la demo.
 - El mensaje al pedir el enlace sigue siendo neutro: no dice si el correo existe.
 - El enlace se puede usar una sola vez y vence.
+
+### Cómo se activa
+
+En `apps/server/.env`, poner `CORREO=smtp` y llenar `SMTP_HOST`, `SMTP_PORT`, `SMTP_USUARIO`,
+`SMTP_CONTRASENA` y `CORREO_REMITENTE` (ver `.env.example`). Con Gmail hace falta verificación
+en dos pasos y una contraseña de aplicación. Si falta alguno de esos datos, el servidor no arranca.
 
 ### Cómo se verifica
 
