@@ -26,6 +26,14 @@ export function corregirMiCuenta(cambios) {
     return pedir('/api/clientes/me', { metodo: 'PATCH', cuerpo: cambios })
 }
 
+/**
+ * Saldo a favor del cliente con sesión: `{ saldo, otorgado, usado, moneda, movimientos }`.
+ * Cada movimiento trae `tipo` ('otorgado' o 'usado'), `fecha`, `monto`, `motivo` y `numCarrito`, del más nuevo al más viejo.
+ */
+export function obtenerMisCreditos({ signal } = {}) {
+    return pedir('/api/clientes/me/creditos', { signal })
+}
+
 // Clientes por nombre, correo o cédula para el panel: [{ correo, nombre, cedula }], hasta 8.
 export function buscarClientesAdmin(q, { signal } = {}) {
     return pedir('/api/clientes/admin', { parametros: { q }, signal })

@@ -13,7 +13,7 @@ Estas son las historias que trabajamos en el Sprint 2, con el mismo formato de l
 
 ## Resumen
 
-De las 10 historias, 7 quedaron terminadas (49 de 72 puntos). De los 45 criterios, 42 están cumplidos, 3 parciales y 0 pendientes.
+De las 10 historias, 8 quedaron terminadas (54 de 72 puntos). De los 45 criterios, 43 están cumplidos, 2 parciales y 0 pendientes.
 
 | Historia | Puntos | Estado | Criterios cumplidos |
 |---|---|---|---|
@@ -26,7 +26,7 @@ De las 10 historias, 7 quedaron terminadas (49 de 72 puntos). De los 45 criterio
 | HU-12 — Confirmar el pedido, pagar y facturar | 13 | Parcial | 4 de 5 |
 | HU-16 — Familias de productos con importación y margen heredados (nueva) | 8 | Terminada | 6 de 6 |
 | HU-17 — Administración de pedidos (nueva) | 13 | Terminada | 7 de 7 |
-| PB-31 — Créditos a favor del cliente (nueva) | 5 | Parcial | 2 de 3 |
+| PB-31 — Créditos a favor del cliente (nueva) | 5 | Terminada | 3 de 3 |
 
 ## HU-02 — Iniciar sesión con permisos por rol (continuación) · Parcial
 
@@ -143,7 +143,7 @@ Historia nueva. Absorbe HU-09 (ventas de otros canales), PB-23 (buscar pedidos) 
 | Dado un pedido<br>Cuando lo cancelo<br>Entonces las unidades vuelven al inventario<br>Y solo el administrador puede cancelar, el cliente no | Cumplido<br>Ajustado | Captura `pedidos/mis-pedidos/pedido-cancelado.png`. Prueba «RF-28: cancelar devuelve lo que salió del inventario y no lo que quedó en contrapedido», «solo el administrador cambia el estado: el cliente no puede cancelar su pedido». Decisión del cliente (entrevista 2, punto 2): en el SRS el cliente podía cancelar. |
 | Dada una venta por WhatsApp, Facebook, teléfono o presencial<br>Cuando la registro con sus productos<br>Entonces se crea un pedido con su canal y quién lo creó, y descuenta el inventario | Cumplido | Captura `ventas/registro/venta-en-curso.png`, `ventas/registro/venta-registrada-con-alerta.png`, `ventas/registro/venta-presencial-en-pedidos.png`. Prueba «HU-09: una venta por WhatsApp de dos productos es un solo pedido que descuenta el inventario». |
 
-## PB-31 — Créditos a favor del cliente · Parcial
+## PB-31 — Créditos a favor del cliente · Terminada
 
 Como cliente, quiero que cuando la tienda quite un producto de un pedido que ya pagué me quede un crédito a favor, para usarlo en mi siguiente compra. · EP-05 · Nueva, sin RF en el SRS (profesor, 13/10) · 5 puntos
 
@@ -152,7 +152,7 @@ Usar el crédito en el pago estaba planeado para el Sprint 3, pero entró en est
 | Criterio | Estado | Evidencia y notas |
 |---|---|---|
 | Dado un pedido pagado<br>Cuando el administrador quita o reduce una línea<br>Entonces se registra un crédito por el monto pagado de esa línea y no se devuelve dinero | Cumplido | Captura `pedidos/mis-pedidos/pedido-cancelado.png`. Prueba «en un pedido pagado, lo que se quita queda como crédito con impuesto», «cancelar un pedido pagado deja a favor lo cobrado que no se había acreditado». Probado en el panel el 9/11: bajar la cantidad de una línea dejó el crédito. |
-| Dado que tengo crédito<br>Cuando entro a «Mi cuenta»<br>Entonces veo mi saldo y de qué pedido salió | Parcial | Prueba «el cliente ve su saldo a favor con lo que le otorgaron y lo que usó». El servidor manda el saldo y el checkout lo usa, pero la página Mi cuenta todavía no lo muestra. |
+| Dado que tengo crédito<br>Cuando entro a «Mi cuenta»<br>Entonces veo mi saldo y de qué pedido salió | Cumplido | Captura `mi-cuenta/saldo-a-favor/saldo-y-movimientos.png`, `mi-cuenta/saldo-a-favor/sin-saldo-a-favor.png`, `mi-cuenta/saldo-a-favor/saldo-en-celular.png`. Prueba «el cliente ve su saldo a favor con lo que le otorgaron y lo que usó». |
 | Dado que tengo crédito<br>Cuando quiero retirarlo<br>Entonces no se puede retirar en efectivo | Cumplido | Prueba «con crédito suficiente el pedido se paga sin pasarela y sin medio de pago», «con crédito parcial se cobra solo la diferencia con el otro medio». No hay ninguna ruta ni pantalla para retirarlo, solo se usa al pagar. |
 
 ## Historias nuevas en el Product Backlog
@@ -181,7 +181,6 @@ Las tres historias que no venían del Sprint 0, con su estimación. La actualiza
 |---|---|---|
 | HU-02 | Enviar el correo de recuperación de verdad, hoy el enlace va al log del servidor | Sin tarea propia, ver `revisar.md` |
 | HU-12 | Cargar la cédula jurídica y la dirección del negocio en `facturacion.emisor` | Depende de los datos del cliente |
-| PB-31 | Mostrar el saldo a favor y de qué pedido salió en Mi cuenta | Sin tarea propia |
 
 Si alguna de estas entra antes de la entrega, hay que actualizar el estado del criterio y su evidencia.
 
