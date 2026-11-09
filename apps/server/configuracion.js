@@ -11,6 +11,8 @@ const numero = (valor, porDefecto) =>
     ? Number(valor)
     : porDefecto;
 
+const adaptadorDeCorreo = process.env.CORREO || "simulado";
+
 export const configuracion = Object.freeze({
   puerto: numero(process.env.PUERTO, 3000),
 
@@ -30,14 +32,27 @@ export const configuracion = Object.freeze({
   }),
 
   /**
-   * RF-54: el enlace para recuperar la contraseña. No hay envío de correos,
-   * así que el enlace se escribe en el log y, fuera de producción, también
-   * se devuelve en la respuesta para poder probarlo.
+   * RF-54: el enlace para recuperar la contraseña. Solo se devuelve en la
+   * respuesta con el correo simulado y fuera de producción, para poder
+   * probarlo. Con correo real nadie más que el dueño puede verlo.
    */
   recuperacion: Object.freeze({
     duracionMinutos: numero(process.env.DURACION_RECUPERACION_MINUTOS, 30),
     urlDeLaTienda: process.env.URL_DE_LA_TIENDA ?? "http://localhost:5173",
-    devolverEnlace: process.env.NODE_ENV !== "production",
+    devolverEnlace: process.env.NODE_ENV !== "production" && adaptadorDeCorreo === "simulado",
+    esperaEntreEnlacesSegundos: numero(process.env.ESPERA_ENTRE_ENLACES_SEGUNDOS, 60),
+  }),
+
+  // simulado escribe el correo en el log, smtp lo manda de verdad
+  correo: Object.freeze({
+    adaptador: adaptadorDeCorreo,
+    smtp: Object.freeze({
+      host: process.env.SMTP_HOST ?? "",
+      puerto: numero(process.env.SMTP_PORT, 465),
+      usuario: process.env.SMTP_USUARIO ?? "",
+      contrasena: process.env.SMTP_CONTRASENA ?? "",
+      remitente: process.env.CORREO_REMITENTE ?? "",
+    }),
   }),
 
   /** Importación del Excel de productos. La hoja real pesa unos pocos KB. */

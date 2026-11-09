@@ -14,6 +14,7 @@ import { ImportacionDeExcel } from "./importacion/importacion-de-excel.js";
 import { crearRecibirExcel } from "./importacion/recibir-excel.js";
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
+import { correoDeRecuperacion } from "./seguridad/correo-de-recuperacion.js";
 import { crearExigirPropietario } from "../../shared/http/autorizacion-por-rol.js";
 
 export function crearModuloAdmin({
@@ -22,6 +23,7 @@ export function crearModuloAdmin({
   exigirRol,
   sesion,
   recuperacion,
+  enviadorDeCorreo,
   importacion,
   catalogo,
   negocio,
@@ -40,6 +42,8 @@ export function crearModuloAdmin({
     renovarSesion: sesion.renovar,
     importacionDeExcel,
     recuperacion,
+    avisarEnlace: (para, enlace) =>
+      enviadorDeCorreo.enviar(correoDeRecuperacion({ para, enlace, duracionMinutos: recuperacion.duracionMinutos })),
   });
   const controlador = new AdminController({
     servicio,

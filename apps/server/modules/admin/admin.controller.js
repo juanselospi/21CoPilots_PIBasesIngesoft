@@ -82,7 +82,7 @@ export class AdminController {
     respuesta.status(202).json({
       datos: {
         mensaje: "Si el correo está registrado, le llegará un enlace para crear una contraseña nueva.",
-        // Solo fuera de producción, mientras no haya envío de correos
+        // Solo con el correo simulado, para poder probarlo
         ...(enlace ? { enlace } : {}),
       },
     });

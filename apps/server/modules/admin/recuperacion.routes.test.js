@@ -10,13 +10,14 @@ import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import { hashearToken } from "./seguridad/tokens-de-sesion.js";
 import { verificarContrasena } from "./seguridad/contrasenas.js";
 import { CORREO_DE_VENTA_SIN_CUENTA } from "../../shared/cuentas/venta-sin-cuenta.js";
+import { correoDeRecuperacion } from "./seguridad/correo-de-recuperacion.js";
 
 const ANA = "ana@correo.test";
 const NUEVA = "Nueva123!";
 
 // Una "base" en memoria con las mismas reglas que la tabla: un enlace sirve
 // una vez y solo antes de vencer.
-function crearEscenario({ duracionMinutos = 30 } = {}) {
+function crearEscenario({ duracionMinutos = 30, esperaEntreEnlacesSegundos = 0, avisarEnlace = null } = {}) {
   const usuarios = new Map([
     [ANA, { correo: ANA, nombre: "Ana", rol: ROLES.CLIENTE, contrasenaHash: "viejo" }],
     ["inactivo@dchobbies.test", { correo: "inactivo@dchobbies.test", nombre: "Ex", rol: null, contrasenaHash: "x" }],
@@ -28,11 +29,13 @@ function crearEscenario({ duracionMinutos = 30 } = {}) {
 
   const repositorio = {
     buscarUsuarioPorCorreo: async (correo) => usuarios.get(correo) ?? null,
-    crearRecuperacion: async ({ correoUsuario, tokenHash, venceEn }) => {
+    crearRecuperacion: async ({ correoUsuario, tokenHash, venceEn, esperaSegundos }) => {
+      if (esperaSegundos > 0 && [...enlaces.values()].some((enlace) => enlace.correo === correoUsuario)) return false;
       for (const [hash, enlace] of enlaces) {
         if (enlace.correo === correoUsuario && !enlace.usado) enlaces.delete(hash);
       }
       enlaces.set(tokenHash, { correo: correoUsuario, venceEn, usado: false });
+      return true;
     },
     restablecerContrasena: async ({ tokenHash, contrasenaHash }) => {
       const enlace = enlaces.get(tokenHash);
@@ -46,8 +49,8 @@ function crearEscenario({ duracionMinutos = 30 } = {}) {
   const servicio = new AdminService({
     repositorio,
     busDeEventos: { publicar: async () => {} },
-    recuperacion: { duracionMinutos, urlDeLaTienda: "http://tienda.test", devolverEnlace: true },
-    avisarEnlace: (correo, enlace) => avisos.push([correo, enlace]),
+    recuperacion: { duracionMinutos, urlDeLaTienda: "http://tienda.test", devolverEnlace: true, esperaEntreEnlacesSegundos },
+    avisarEnlace: avisarEnlace ?? ((correo, enlace) => avisos.push([correo, enlace])),
   });
   return { servicio, usuarios, enlaces, sesionesCerradas, avisos };
 }
@@ -94,7 +97,7 @@ test("RF-54: el enlace sirve una vez, cambia la contraseña y cierra las sesione
   const pedido = await enviar("/recuperacion", { correo: " Ana@Correo.test " });
   assert.equal(pedido.estado, 202);
   assert.match(pedido.cuerpo.datos.enlace, /^http:\/\/tienda\.test\/restablecer\?token=/);
-  // El mismo enlace va al log, que hace de correo mientras no haya envío
+  // El enlace que se avisa es el mismo que se devuelve
   assert.deepEqual(avisos, [[ANA, pedido.cuerpo.datos.enlace]]);
   const token = tokenDe(pedido.cuerpo.datos.enlace);
 
@@ -172,11 +175,68 @@ test("en producción el enlace no viaja en la respuesta", async () => {
   const servicio = new AdminService({
     repositorio: {
       buscarUsuarioPorCorreo: async () => ({ correo: ANA, rol: ROLES.CLIENTE }),
-      crearRecuperacion: async () => {},
+      crearRecuperacion: async () => true,
     },
     recuperacion: { duracionMinutos: 30, urlDeLaTienda: "https://tienda", devolverEnlace: false },
     avisarEnlace: () => {},
   });
 
   assert.deepEqual(await servicio.solicitarRecuperacion({ correo: ANA }), { enlace: null });
+});
+
+test("si el correo no se puede enviar responde igual y el enlace no queda en el log", async (t) => {
+  const errores = t.mock.method(console, "error", () => {});
+  const { servicio } = crearEscenario({
+    avisarEnlace: async () => {
+      throw new Error("SMTP caido");
+    },
+  });
+  const { enviar, cerrar } = await levantarServidor(servicio);
+  t.after(cerrar);
+
+  const pedido = await enviar("/recuperacion", { correo: ANA });
+  await new Promise((resolver) => setImmediate(resolver));
+
+  assert.equal(pedido.estado, 202);
+  assert.equal(errores.mock.callCount(), 1);
+  const mensaje = errores.mock.calls[0].arguments[0];
+  assert.match(mensaje, /SMTP caido/);
+  assert.ok(!mensaje.includes(tokenDe(pedido.cuerpo.datos.enlace)));
+});
+
+test("no espera a que el correo salga para responder", async () => {
+  let terminar;
+  const { servicio } = crearEscenario({ avisarEnlace: () => new Promise((resolver) => (terminar = resolver)) });
+
+  await servicio.solicitarRecuperacion({ correo: ANA });
+  await new Promise((resolver) => setImmediate(resolver));
+
+  // Si hubiera esperado el envio nunca habria llegado hasta aqui
+  assert.equal(typeof terminar, "function");
+  terminar();
+});
+
+test("durante la espera no manda otro enlace y responde igual", async (t) => {
+  const { servicio, avisos, enlaces } = crearEscenario({ esperaEntreEnlacesSegundos: 60 });
+  const { enviar, cerrar } = await levantarServidor(servicio);
+  t.after(cerrar);
+
+  const primero = await enviar("/recuperacion", { correo: ANA });
+  const segundo = await enviar("/recuperacion", { correo: ANA });
+
+  assert.equal(segundo.estado, 202);
+  assert.equal(segundo.cuerpo.datos.mensaje, primero.cuerpo.datos.mensaje);
+  assert.equal(segundo.cuerpo.datos.enlace, undefined);
+  assert.equal(avisos.length, 1);
+  assert.equal(enlaces.size, 1);
+});
+
+test("el correo trae el enlace y dice cuanto dura", () => {
+  const enlace = "http://tienda.test/restablecer?token=abc";
+  const correo = correoDeRecuperacion({ para: ANA, enlace, duracionMinutos: 30 });
+
+  assert.equal(correo.para, ANA);
+  assert.ok(correo.texto.includes(enlace));
+  assert.ok(correo.html.includes(`href="${enlace}"`));
+  assert.match(correo.texto, /30 minutos/);
 });

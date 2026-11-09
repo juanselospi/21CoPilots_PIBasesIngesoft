@@ -166,8 +166,16 @@ export class AdminRepository {
    * RF-54: guarda el hash de un enlace nuevo. Los que la persona había pedido
    * antes y no usó dejan de servir, así solo vale el último correo.
    */
-  async crearRecuperacion({ correoUsuario, tokenHash, venceEn }) {
-    await enTransaccion(this.#pool, async (cliente) => {
+  async crearRecuperacion({ correoUsuario, tokenHash, venceEn, esperaSegundos = 0 }) {
+    return enTransaccion(this.#pool, async (cliente) => {
+      // El candado es para que dos pedidos al mismo tiempo no pasen los dos la espera
+      await cliente.query(`SELECT 1 FROM usuarios.usuario WHERE correo = $1 FOR NO KEY UPDATE`, [correoUsuario]);
+      const { rows } = await cliente.query(
+        `SELECT 1 FROM usuarios.recuperacion WHERE correo_usuario = $1 AND fecha_creacion > now() - make_interval(secs => $2)`,
+        [correoUsuario, esperaSegundos]
+      );
+      if (rows.length > 0) return false;
+
       await cliente.query(`DELETE FROM usuarios.recuperacion WHERE correo_usuario = $1 AND fecha_uso IS NULL`, [
         correoUsuario,
       ]);
@@ -175,6 +183,7 @@ export class AdminRepository {
         `INSERT INTO usuarios.recuperacion (token_hash, correo_usuario, fecha_vencimiento) VALUES ($1, $2, $3)`,
         [tokenHash, correoUsuario, venceEn]
       );
+      return true;
     });
   }
 
