@@ -20,18 +20,19 @@ escribe en su esquema; las llaves foráneas entre esquemas sí se permiten.
 
 | Esquema | Tablas | Migración |
 |---|---|---|
-| `usuarios` | `usuario`, `sesion` | `002_usuarios.sql` |
+| `usuarios` | `usuario`, `sesion`, `recuperacion` | `002_usuarios.sql`, `021_recuperacion_de_contrasena.sql` |
 | `admin` | `administrador`, `bitacora` | `003_admin.sql`, `015_bitacora.sql`, `016_empleados.sql` |
-| `clientes` | `cliente`, `cliente_telefono`, `credito` | `004_clientes.sql`, `017_creditos.sql` |
-| `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql` |
-| `inventario` | `producto_administra` | `006_inventario.sql` |
-| `pedidos` | `carrito`, `agrega`, `oferta`, `pedido`, `historial_estado` | `007_pedidos.sql` |
-| `pagos` | `pago` | `008_pagos_facturacion.sql` |
-| `facturacion` | `factura` | `008_pagos_facturacion.sql` |
-| `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia`, `v_saldo_credito` | `009_reportes.sql`, `017_creditos.sql` |
+| `clientes` | `cliente`, `cliente_telefono`, `credito` | `004_clientes.sql`, `014_pedidos_y_terminos.sql`, `017_creditos.sql`, `020_cliente_sin_cuenta.sql` |
+| `catalogo` | `familia`, `producto` | `005_catalogo.sql`, `011_familias.sql`, `012_estado_producto.sql` |
+| `inventario` | `producto_administra` | `006_inventario.sql`, `013_inventario.sql` |
+| `pedidos` | `carrito`, `agrega`, `oferta`, `pedido`, `historial_estado`, `tarifa_envio` | `007_pedidos.sql`, `010_alinear_eer.sql`, `014_pedidos_y_terminos.sql`, `018_tarifas_de_envio.sql`, `022_telefono_del_destinatario.sql` |
+| `pagos` | `pago` | `008_pagos_facturacion.sql`, `017_creditos.sql` |
+| `facturacion` | `factura`, `emisor` | `008_pagos_facturacion.sql`, `019_emisor_de_facturas.sql` |
+| `reportes` | vistas `v_estado_pedido`, `v_venta_por_producto`, `v_existencias`, `v_pedidos_por_cliente`, `v_registro_mercancia`, `v_saldo_credito` | `009_reportes.sql`, `011_familias.sql`, `013_inventario.sql`, `017_creditos.sql` |
 
-En total son 17 tablas y 6 vistas. `001_esquemas_y_utilidades.sql` crea los esquemas y
-las funciones de los triggers técnicos.
+En total son 20 tablas y 6 vistas, en 22 migraciones. `001_esquemas_y_utilidades.sql`
+crea los esquemas y las funciones de los triggers técnicos. `public.esquema_version`
+es del script de migraciones, no del modelo, y no aparece en `schema.sql`.
 
 Convenciones: nombres en español, `snake_case` y sin tildes; **llaves naturales**
 (el correo del usuario, el SKU del producto, el código de la oferta) y llaves
@@ -44,6 +45,9 @@ erDiagram
     USUARIO ||--o| ADMINISTRADOR : "es (traslapada)"
     USUARIO ||--o| CLIENTE : "es (traslapada)"
     USUARIO ||--o{ SESION : "Necesita (RF-53)"
+    USUARIO ||--o{ RECUPERACION : "Solicita (RF-54)"
+    FAMILIA ||--o{ PRODUCTO : "Pertenece (C-15)"
+    ADMINISTRADOR |o--o{ PEDIDO : "Registra (C-18)"
     CLIENTE ||--o{ CLIENTE_TELEFONO : "Teléfonos (multivaluado)"
     CLIENTE ||--o{ CARRITO : "Tiene (RN-14)"
     CARRITO ||--o{ AGREGA : Agrega
@@ -59,7 +63,20 @@ erDiagram
     ADMINISTRADOR |o--o{ ADMINISTRADOR : "Crea (C-21)"
     CLIENTE ||--o{ CREDITO : "Tiene a favor (C-22)"
     PEDIDO |o--o{ CREDITO : Origina
+    TARIFA_ENVIO {
+        string modalidad PK
+        decimal monto
+    }
+    EMISOR {
+        boolean unica PK
+        string razon_social
+        string cedula_juridica
+        string direccion
+    }
 ```
+
+`TARIFA_ENVIO` y `EMISOR` no tienen llaves foráneas: el pedido copia el monto de la
+tarifa en `costo_entrega` y la factura lee los datos del emisor al mostrarse.
 
 ---
 
@@ -274,7 +291,7 @@ llave `(correo_cliente, num_carrito)`, que identifica al pedido (RF-30).
 | `canal` | Por dónde llegó: `web` (por defecto), `whatsapp`, `facebook`, `telefono` o `presencial` (C-18) |
 | `creado_por` | Administrador que registró un pedido manual; opcional. Llave foránea a `admin.administrador`, indexada (`ix_pedido_creado_por`) |
 | `nombre_destinatario` | A nombre de quién va un pedido manual, si no es el cliente; opcional y no en blanco |
-| `telefono_destinatario` | Teléfono de contacto de quien compra sin cuenta en un pedido manual; opcional y no en blanco |
+| `telefono_destinatario` | Teléfono de contacto de quien compra sin cuenta en un pedido manual; opcional y no en blanco (C-27) |
 
 El pedido no guarda su estado ni sus montos: el estado sale del historial y los montos
 de las líneas en `agrega`.
@@ -402,16 +419,14 @@ coinciden con los del documento del Sprint 1, § 3.2.
 | C-21 | **Administrador:** puede haber varios. Se quita `ux_administrador_unico` y se agregan `es_propietario` (con índice único parcial: un solo dueño), `creado_por` y `activo`. Migración 016 (A8, SCRUM-94). | Un empleado es otra cuenta de administrador, no un rol nuevo; puede todo lo del administrador salvo crear cuentas y configurar, que son del propietario. Sigue habiendo un solo dueño. Cambia el índice de C-13. | RF-49, `e1-24-9-2026` punto 6, `e2-6-10-2026` punto 3 |
 | C-22 | Entidad nueva **Crédito** (`clientes.credito`), débil de Cliente y de solo inserción: monto mayor que 0, motivo obligatorio y el pedido que lo originó (opcional). Llave `(correo_cliente, fecha)` con `clock_timestamp()`. Se usa como un pago con `metodo_pago = 'credito'`; el saldo lo calcula `reportes.v_saldo_credito` y un trigger impide usar más crédito del saldo. Migración 017 (A9, SCRUM-95). | Al quitar un producto de un pedido pagado no se devuelve dinero: se otorga un crédito, que cubre el total o una parte del siguiente pago, y la diferencia se cobra con otro medio. Una columna de saldo no puede bajar en una tabla de solo inserción, así que el saldo se deriva. Como pago, el uso queda ligado al pedido y a su factura sin otra tabla. | `requerimientos-profesor` § 6 |
 | C-23 | **Especialización de Usuario** traslapada: se quita el trigger `verificar_usuario_disjunto`. **Historial del estado** sin Número de cambio, con llave parcial `(estado, fecha)`: la llave es `(correo_cliente, num_carrito, estado, fecha)`. Migración 010 (A2, SCRUM-88). | Alinea la base de datos con el EER, que marca la especialización con «O» y tiene el historial con solo estado y fecha. Una cuenta puede ser administrador y cliente y tiene los dos permisos. Con `estado` solo en la llave, un pedido no podría volver a «en disputa», que puede repetirse. Cambia la llave de C-12. | RF-26, `e2-6-10-2026` punto 1 |
-| C-24 | Entidades nuevas para las **tarifas de envío** por modalidad (propuesta: `pedidos.tarifa_envio (modalidad PK, monto)`) y los **datos del negocio** (una tabla de una sola fila: razón social, cédula jurídica, dirección). El **pago** guarda su moneda. Migración 018 (falta crear la tarea en Jira). | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`. La factura va en la moneda en que se hizo el pago. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-62, RN-16, RN-18, RNF-17 |
-
+| C-24 | Entidades nuevas **Tarifa de envío** (`pedidos.tarifa_envio`: modalidad como llave y monto, 0 o más; una fila por modalidad) y **Emisor** (`facturacion.emisor`: una sola fila con razón social, cédula jurídica y dirección; su llave `unica` solo puede ser `true`). Al confirmar, el pedido copia la tarifa en `costo_entrega`. Migraciones 018 (SCRUM-135) y 019 (SCRUM-134). La moneda del pago **no** se agregó: todo sigue en dólares (C-03) hasta que se defina si se aceptan otras. | Las tarifas y los datos fiscales se guardan en la base de datos y no en `.env`, para que el propietario los cambie sin tocar el servidor. Abierto: qué monedas se aceptan y el tipo de cambio; los montos de las tarifas, la razón social y la cédula jurídica (Daniel). | RF-41, RF-62, RN-16, RN-18, RNF-17 |
 | C-25 | **Cliente para ventas sin cuenta:** una fila fija en `usuarios.usuario` y `clientes.cliente` (`venta.sin.cuenta@dchobbies.local`, cédula `SIN-CUENTA`) con una contraseña que nadie conoce. Un pedido manual para alguien sin cuenta va a su nombre y el nombre real queda en `nombre_destinatario`. Migración 020 (SCRUM-141). | El pedido necesita un cliente (la llave es el correo del cliente), pero quien compra en el local o por WhatsApp muchas veces no tiene cuenta y no se le puede pedir que se registre. Decidido el 05/11/2026 (I4). | RF-17, HU-09, `requerimientos-profesor` § 3 |
-| C-26 | **Teléfono de quien compra sin cuenta:** `telefono_destinatario` en `pedidos.pedido`, opcional. Migración 022 (SCRUM-144). | La cuenta de ventas sin cuenta (C-25) no tiene los datos de cada comprador; sin este campo no habría cómo contactarlo. | RF-17, HU-09 |
-
 | C-26 | Entidad nueva **Recuperación** (`usuarios.recuperacion`), débil de Usuario: hash del token, fecha de creación, de vencimiento y de uso. Migración 021 (SCRUM-117). | El enlace para recuperar la contraseña necesita un token de un solo uso que vence. En una tabla aparte no se toca `usuario`, puede haber más de un enlace pedido y queda registro de cuándo se pidió y se usó cada uno. Decidido el 05/11/2026 (E4). | RF-54, RNF-08 |
+| C-27 | **Teléfono de quien compra sin cuenta:** `telefono_destinatario` en `pedidos.pedido`, opcional. Migración 022 (SCRUM-144). | La cuenta de ventas sin cuenta (C-25) no tiene los datos de cada comprador; sin este campo no habría cómo contactarlo. | RF-17, HU-09 |
 
-C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87) y todavía no están en las
-migraciones ni en el EER: cada migración completa su fila, actualiza § 2 y el
-diagrama.
+C-15 a C-24 se decidieron el 26/10/2026 (SCRUM-87); C-25 a C-27 salieron del trabajo
+del Sprint 2. Todas están en las migraciones 010 a 022, en el EER y en el mapeo
+(`EER 21 CoPilots.drawio.xml`).
 
 ### Lo que se conservó del prototipo
 
@@ -431,7 +446,7 @@ Las decisiones abiertas que afectan al modelo son:
 - qué monedas se aceptan y, si se aceptan colones, de dónde sale el tipo de cambio
   (Daniel; C-24);
 - los montos de las tarifas de envío, la razón social y la cédula jurídica (el PO los
-  pide a Daniel; C-24), y crear en Jira la tarea de la migración 018.
+  pide a Daniel; C-24).
 
 El detalle está en
 [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md). Cuando
