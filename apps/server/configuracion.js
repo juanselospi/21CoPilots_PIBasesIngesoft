@@ -68,7 +68,7 @@ export const configuracion = Object.freeze({
     umbralDeExistenciasBajas: numero(process.env.UMBRAL_EXISTENCIAS_BAJAS, 2),
   }),
 
-  /** RES-03 — ambos sistemas externos son placeholder en esta versión. */
+  /** RES-03: ambos sistemas externos son placeholder en esta versión. */
   adaptadores: Object.freeze({
     pasarelaDePago: process.env.PASARELA_DE_PAGO ?? "simulada",
     facturacionElectronica: process.env.FACTURACION_ELECTRONICA ?? "simulada",

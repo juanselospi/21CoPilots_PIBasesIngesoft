@@ -20,7 +20,7 @@ const res = spawnSync(
 );
 
 if (res.status !== 0) {
-  console.error(`✖ pg_dump falló:\n${res.stderr || res.error}`);
+  console.error(`Error: pg_dump falló:\n${res.stderr || res.error}`);
   process.exit(1);
 }
 
@@ -39,4 +39,4 @@ const header =
   '-- =====================================================================\n';
 
 fs.writeFileSync(out, header + body);
-console.log(`✔ DDL escrito en ${path.relative(process.cwd(), out)}`);
+console.log(`DDL escrito en ${path.relative(process.cwd(), out)}`);

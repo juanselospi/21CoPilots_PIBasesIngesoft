@@ -38,7 +38,7 @@ La primera vez tarda un poco porque descarga la imagen de PostgreSQL 17.
 npm run db:reset
 ```
 
-Debe terminar con `✔ BD reconstruida desde cero.`
+Debe terminar con `BD reconstruida desde cero.`
 
 **5. Compruebe que todo funciona**
 
@@ -46,7 +46,7 @@ Debe terminar con `✔ BD reconstruida desde cero.`
 npm run db:test
 ```
 
-Debe terminar con `✔ 210 prueba(s) aprobada(s).`
+Debe terminar con `210 prueba(s) aprobada(s).`
 
 Listo: la base de datos está corriendo.
 
@@ -79,7 +79,7 @@ Pruebe con `SELECT sku, stock FROM reportes.v_existencias;` y salga con `\q`.
 
 ## Para el día a día
 
-| Quiero… | Comando |
+| Quiero... | Comando |
 |---|---|
 | Apagar la base de datos (los datos se conservan) | `npm run db:down` |
 | Volver a encenderla | `npm run db:up` |

@@ -55,7 +55,7 @@ export const COLUMNAS = Object.freeze([
 export const normalizarEncabezado = (texto) =>
   String(texto ?? "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase()
     .replace(/\s+/g, "_");

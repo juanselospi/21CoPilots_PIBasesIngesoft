@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Clientes y niveles de fidelidad.
+ * CAPA DE DOMINIO: Clientes y niveles de fidelidad.
  *
  * Toda cuenta nueva que se registra desde la tienda es de cliente.
  *

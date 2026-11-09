@@ -1,5 +1,5 @@
 /**
- * CAPA DE API — Controlador de carrito y pedidos.
+ * CAPA DE API: Controlador de carrito y pedidos.
  */
 
 import { EntradaInvalida } from "../../shared/errores/errores-de-dominio.js";

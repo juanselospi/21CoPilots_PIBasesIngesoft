@@ -1,11 +1,11 @@
 /**
- * CAPA DE API — Controlador de inventario.
+ * CAPA DE API: Controlador de inventario.
  *
  * Traduce HTTP a llamadas de dominio y de vuelta. No calcula, no consulta
  * la base y no decide reglas.
  *
  * POR IMPLEMENTAR
- *   listarAlertas        RF-16 — existencias en el umbral o por debajo
+ *   listarAlertas        RF-16: existencias en el umbral o por debajo
  */
 
 import { aAlerta, aMovimiento, aMovimientoRegistrado } from "./inventario.dto.js";

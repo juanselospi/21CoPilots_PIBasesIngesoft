@@ -1,19 +1,19 @@
-# Base de datos — DC Hobbies Cultura Geek Online
+# Base de datos: DC Hobbies Cultura Geek Online
 
 > **Esta base de datos sigue al pie de la letra el EER y el mapeo del equipo**
 > (`EER 21 CoPilots.drawio`), más la entidad débil **Sesión** para el login: llaves
-> naturales (correo, SKU, número de referencia, número de factura), especialización
-> Usuario → Administrador / Cliente, Carrito, Pedido e Historial como entidades débiles,
+> naturales (correo, SKU, número de referencia, número de factura), especialización de
+> Usuario en Administrador / Cliente, Carrito, Pedido e Historial como entidades débiles,
 > y Stock, Costo Total y Tasa de impuesto guardados en Producto. En `apps/server` ya
 > está adaptado el inicio de sesión; los demás módulos todavía usan el modelo anterior
-> (ver `documentos/diseño/modelo-datos.md` § 4).
+> (ver `documentos/diseño/modelo-datos.md`, sección 4).
 
 Guía para levantar, cambiar y probar la base de datos (PostgreSQL 17). Léala completa
 una vez; después use la [chuleta de comandos](#9-chuleta-de-comandos).
 
 ¿Solo quiere levantarla en su computadora? Siga la [guía rápida](guia.md).
 
-- Criterios de diseño: [`documentos/diseño/arquitectura.md`](../documentos/diseño/arquitectura.md) § 9
+- Criterios de diseño: [`documentos/diseño/arquitectura.md`](../documentos/diseño/arquitectura.md), sección 9
 - Diccionario de datos y cambios al modelo: [`documentos/diseño/modelo-datos.md`](../documentos/diseño/modelo-datos.md)
 
 Las herramientas vienen del prototipo `kit-bd-21copilots_4`; el esquema es nuevo
@@ -28,7 +28,7 @@ Las herramientas vienen del prototipo `kit-bd-21copilots_4`; el esquema es nuevo
 | ¿Docker? | **Sí, pero solo para PostgreSQL.** Backend y frontend corren con `npm` normal. | Todos tienen la misma versión de PostgreSQL (17) sin instalarla, en Linux o Windows. Backend y frontend fuera de Docker = recarga en caliente y depuración más simples. |
 | ¿Cómo se comparte la BD? | **No se comparte una BD; se comparten los scripts.** Cada quien tiene su BD local, reconstruible con un comando. | Nadie rompe el trabajo del otro, se puede trabajar sin internet y Git guarda la historia de cada cambio al modelo. |
 | ¿Cómo cambia el esquema? | **Migraciones SQL numeradas** en `database/migraciones/`. Nunca se edita una que ya está en `main`. | Cada cambio queda documentado, revisado en PR y aplicable en todas las máquinas con `npm run db:migrate`. |
-| Organización | **Un esquema de PostgreSQL por módulo** (`catalogo`, `inventario`, `pedidos`…). | Refleja los módulos de `apps/server/` (DD-11). |
+| Organización | **Un esquema de PostgreSQL por módulo** (`catalogo`, `inventario`, `pedidos`...). | Refleja los módulos de `apps/server/` (DD-11). |
 | Datos de prueba | **Semillas** en `database/semillas/`: `referencia/` (necesarias para arrancar) y `demo/` (de prueba). | Todos ven los mismos productos y usuarios; sirven para las capturas de evidencia. |
 | Pruebas | **Pruebas SQL** en `database/pruebas/` (`npm run db:test`). | Cada restricción se comprueba; si alguien la rompe, se entera antes del PR. |
 | DDL para entregar | `database/schema.sql` **generado** con `npm run db:dump`. | Siempre coincide con lo que realmente hay; no hay dos fuentes de verdad. |
@@ -42,7 +42,7 @@ Las herramientas vienen del prototipo `kit-bd-21copilots_4`; el esquema es nuevo
 | Git | cualquiera reciente | gestor de paquetes | [git-scm.com](https://git-scm.com) |
 | Node.js | **22 LTS** (ver `.nvmrc`) | con [nvm](https://github.com/nvm-sh/nvm): `nvm install 22` | instalador LTS de nodejs.org (o nvm-windows) |
 | Docker | Engine + Compose v2 | ver abajo | **Docker Desktop** con backend WSL 2 |
-| Cliente SQL (opcional) | — | DBeaver, o la extensión *PostgreSQL* de VS Code | igual |
+| Cliente SQL (opcional) | - | DBeaver, o la extensión *PostgreSQL* de VS Code | igual |
 
 **Docker en Zorin OS / Ubuntu** (Zorin se basa en Ubuntu, por eso se usa `UBUNTU_CODENAME`):
 
@@ -85,7 +85,7 @@ cp .env.example .env       # en Windows PowerShell: copy .env.example .env
 npm install                # instala las herramientas de BD (pg, dotenv)
 npm run db:up              # descarga y levanta PostgreSQL 17 en Docker (puerto 5433)
 npm run db:reset           # crea todos los esquemas y tablas y carga las semillas
-npm run db:test            # debe terminar con "✔ 210 prueba(s) aprobada(s)" (§ 5.6)
+npm run db:test            # debe terminar con "210 prueba(s) aprobada(s)" (sección 5.6)
 ```
 
 Desde la raíz del repositorio también funciona con `--prefix`, por ejemplo
@@ -156,7 +156,7 @@ database/
 ├── docker-compose.yml             PostgreSQL 17 (y Adminer opcional)
 ├── .env.example                   plantilla de variables (el .env real NO se sube)
 ├── .nvmrc                         versión de Node (22)
-├── migraciones/                   001 … 022: un archivo por módulo, en orden de dependencias
+├── migraciones/                   001 ... 022: un archivo por módulo, en orden de dependencias
 ├── semillas/
 │   └── demo/                      usuarios, productos, mercancía, ofertas y pedidos de prueba
 ├── pruebas/                       pruebas SQL de las restricciones
@@ -195,22 +195,19 @@ database/
 
 ```
 Jira: tome la tarea (SCRUM-12) y muévala a "En curso"
-  │
-  ├─ git checkout main && git pull
-  ├─ npm --prefix database run db:migrate   ← aplica lo que otros agregaron
-  ├─ git checkout -b feature/SCRUM-12-crear-producto
-  │
-  ├─ ...programar, commits pequeños:  git commit -m "SCRUM-12: valida SKU duplicado"
-  │
-  ├─ git pull --rebase origin main      ← antes de abrir el PR
-  ├─ git push -u origin feature/SCRUM-12-crear-producto
-  └─ Abrir Pull Request → 1 compañero revisa → "Squash and merge" → Jira a "Hecho"
+  git checkout main && git pull
+  npm --prefix database run db:migrate   # aplica lo que otros agregaron
+  git checkout -b feature/SCRUM-12-crear-producto
+  ...programar, commits pequeños:  git commit -m "SCRUM-12: valida SKU duplicado"
+  git pull --rebase origin main   # antes de abrir el PR
+  git push -u origin feature/SCRUM-12-crear-producto
+  Abrir Pull Request -> 1 compañero revisa -> "Squash and merge" -> Jira a "Hecho"
 ```
 
-1. **Nadie hace push directo a `main`.** En GitHub → *Settings → Branches → Add rule*:
+1. **Nadie hace push directo a `main`.** En GitHub -> *Settings -> Branches -> Add rule*:
    *Require a pull request before merging* + *Require approvals: 1*.
-2. **Nombres de rama:** `feature/SCRUM-<n>-descripcion`, `fix/SCRUM-<n>-…`, `docs/…`.
-3. **Commits con la llave de Jira** (`SCRUM-12: …`).
+2. **Nombres de rama:** `feature/SCRUM-<n>-descripcion`, `fix/SCRUM-<n>-...`, `docs/...`.
+3. **Commits con la llave de Jira** (`SCRUM-12: ...`).
 4. **Un PR = una historia o tarea.**
 5. **Quien revisa un PR que toca `database/`** corre `npm run db:reset` y
    `npm run db:test` en la rama antes de aprobar.
@@ -234,7 +231,7 @@ Supongamos que se definen las tarifas de envío (DEP-07):
 ```bash
 git checkout -b feature/SCRUM-40-tarifas-envio
 npm run db:new -- tarifas de envio
-# ✔ Creado database/migraciones/010_tarifas_de_envio.sql
+# Creado database/migraciones/010_tarifas_de_envio.sql
 ```
 
 Escriba el SQL, **siempre con el nombre del esquema**:
@@ -258,7 +255,7 @@ Edítela y corra `npm run db:reset`.
 
 Antes del PR:
 
-1. Agregue una fila en `documentos/diseño/modelo-datos.md` § 4 explicando **qué**
+1. Agregue una fila en `documentos/diseño/modelo-datos.md`, sección 4 explicando **qué**
    cambió y **por qué**, y refleje el cambio en el diagrama EER y en el mapeo.
 2. Si agregó una restricción, agregue su prueba en `database/pruebas/`.
 3. Si cambió una tabla que usan las semillas, actualícelas.
@@ -266,7 +263,7 @@ Antes del PR:
 
 ### 5.3 Reglas de oro
 
-| ✅ Hacer | ❌ No hacer |
+| Hacer | No hacer |
 |---|---|
 | Una migración nueva por cada cambio | Editar una migración que ya está en `main` (el script lo detecta y se detiene) |
 | Nombres calificados: `catalogo.producto` | Crear tablas en `public` |
@@ -280,10 +277,10 @@ Antes del PR:
 Es normal. El script lo detecta:
 
 ```
-✖ Dos migraciones con el número 010: "010_a.sql" y "010_b.sql".
+Error: Dos migraciones con el número 010: "010_a.sql" y "010_b.sql".
 ```
 
-Quien **todavía no hizo merge** renombra la suya a `010_…`, corre `npm run db:reset` y sigue.
+Quien **todavía no hizo merge** renombra la suya a `010_...`, corre `npm run db:reset` y sigue.
 
 ### 5.5 ¿Cuándo usar cada comando?
 
@@ -296,7 +293,7 @@ Quien **todavía no hizo merge** renombra la suya a `010_…`, corre `npm run db
 | Agregué datos de prueba nuevos | `npm run db:seed` (o `db:reset`) |
 | Quiero comprobar que las restricciones funcionan | `npm run db:test` |
 | Necesito una BD sin datos de prueba | `npm run db:reset -- --solo-referencia` |
-| Quiero la BD con el catálogo real del cliente | `npm run db:generar-semillas-cliente` (cuando cambia el Excel) + `npm run db:cliente` (ver § 6) |
+| Quiero la BD con el catálogo real del cliente | `npm run db:generar-semillas-cliente` (cuando cambia el Excel) + `npm run db:cliente` (ver sección 6) |
 | Voy a entregar / cambió el esquema | `npm run db:dump` |
 
 `db:reset` **solo** corre contra `localhost`; si su `.env` apunta a otro servidor, se
@@ -330,10 +327,10 @@ cargadas, comprueban además que los datos de prueba son coherentes.
 |---|---|---|---|
 | `01_catalogo.sql` | Producto | 005 | 12 |
 | `02_inventario.sql` | Registro de mercancía: tipo, costo y motivo | 006, 013 | 19 |
-| `03_usuarios_clientes.sql` | Usuarios, administradores y clientes | 002–004, 010 | 16 |
+| `03_usuarios_clientes.sql` | Usuarios, administradores y clientes | 002-004, 010 | 16 |
 | `04_pedidos.sql` | Carritos, ofertas, pedidos e historial | 007, 010 | 28 |
 | `05_pagos_facturacion.sql` | Pagos y facturas | 008 | 10 |
-| `06_invariantes.sql` | Reglas entre tablas | — | 11 |
+| `06_invariantes.sql` | Reglas entre tablas | - | 11 |
 | `07_sesion.sql` | Sesiones | 002 | 8 |
 | `08_familias.sql` | Familias y herencia de importación y margen | 011 | 17 |
 | `09_estado_producto.sql` | Estado del producto y eliminación | 012 | 9 |
@@ -367,10 +364,10 @@ Si agrega pruebas, actualice esta tabla y el total de `guia.md`.
 
 El servidor tiene su propio `apps/server/.env` con los mismos valores `DB_*` que
 `database/.env`. Lo lee **solo** `configuracion.js`, y el pool se crea una vez en
-`composicion.js` y se inyecta en los repositorios (arquitectura § 4.5, sin Singleton):
+`composicion.js` y se inyecta en los repositorios (arquitectura, sección 4.5, sin Singleton):
 
 ```js
-// apps/server/configuracion.js — único lector de variables de entorno
+// apps/server/configuracion.js: único lector de variables de entorno
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 
@@ -411,13 +408,13 @@ Reglas para el código de acceso a datos:
 
 - **Siempre use parámetros** (`$1`, `$2`); nunca arme SQL concatenando texto.
 - **Traduzca los errores de PostgreSQL a mensajes de negocio**, usando el nombre de la
-  restricción (`err.constraint`): `23505` en `producto_pkey` → "El código ya existe"
-  (RF-01); `23514` en `ck_producto_stock` → "No hay suficiente stock";
-  `23001` → "Este registro es histórico y no se puede modificar".
+  restricción (`err.constraint`): `23505` en `producto_pkey` -> "El código ya existe"
+  (RF-01); `23514` en `ck_producto_stock` -> "No hay suficiente stock";
+  `23001` -> "Este registro es histórico y no se puede modificar".
 - **Valide también en el servidor.** Las restricciones de la BD son la última línea de
   defensa, no los mensajes al usuario.
 - **Toda escritura que toque varias tablas va en una transacción** (`enTransaccion`),
-  y el stock se bloquea en orden de `sku` (arquitectura § 7.3).
+  y el stock se bloquea en orden de `sku` (arquitectura, sección 7.3).
 
 ---
 
@@ -425,10 +422,10 @@ Reglas para el código de acceso a datos:
 
 | Entregable | De dónde sale |
 |---|---|
-| Script de BD (DDL) | `npm run db:dump` → `database/schema.sql` |
+| Script de BD (DDL) | `npm run db:dump` -> `database/schema.sql` |
 | Datos de prueba | `database/semillas/` |
-| Cambios respecto al Sprint 0 y su justificación | `documentos/diseño/modelo-datos.md` § 4 |
-| Diagrama ER actualizado | `EER 21 CoPilots.drawio` (EER + mapeo). Para verificarlo contra la BD real: DBeaver → clic derecho en la base → *View Diagram* |
+| Cambios respecto al Sprint 0 y su justificación | `documentos/diseño/modelo-datos.md`, sección 4 |
+| Diagrama ER actualizado | `EER 21 CoPilots.drawio` (EER + mapeo). Para verificarlo contra la BD real: DBeaver -> clic derecho en la base -> *View Diagram* |
 | Evidencia de pruebas | Salida de `npm run db:test` y capturas con los productos de las semillas |
 
 ---
@@ -461,7 +458,7 @@ npm run db:psql      # consola SQL dentro del contenedor
 | `port is already allocated` / `address already in use` | Otro PostgreSQL (¿el del prototipo?) usa el puerto. Bájelo, o cambie `DB_PORT` en `.env` y vuelva a correr `npm run db:up`. |
 | `No se pudo conectar a PostgreSQL` | ¿Corrió `npm run db:up`? ¿Existe `.env`? En Windows: ¿Docker Desktop está abierto? |
 | `password authentication failed` después de cambiar la clave en `.env` | El volumen guarda la clave original. Corra `docker compose down -v` (borra la BD local), luego `db:up` y `db:reset`. |
-| `✖ Estas migraciones ... su contenido cambió` | Alguien editó una migración aplicada. Si es suya y no está en `main`: `db:reset`. Si está en `main`: revierta la edición y cree una migración nueva. |
+| `Error: Estas migraciones ... su contenido cambió` | Alguien editó una migración aplicada. Si es suya y no está en `main`: `db:reset`. Si está en `main`: revierta la edición y cree una migración nueva. |
 | `relation "producto" does not exist` | Falta el esquema: use `catalogo.producto`. |
 | `La tabla ... es de solo inserción` | Es intencional (RF-19). Registre un nuevo registro compensatorio (p. ej. mercancía con cantidad negativa) en lugar de editar. |
 | Todo raro después de cambiar de rama | `npm run db:reset` |

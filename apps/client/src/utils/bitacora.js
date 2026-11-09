@@ -89,7 +89,7 @@ const conMayuscula = (texto) => {
     return frase.charAt(0).toUpperCase() + frase.slice(1)
 }
 
-// «correoAdministrador» → «Correo administrador»
+// «correoAdministrador» -> «Correo administrador»
 const etiquetaDe = (campo) => ETIQUETAS[campo] ?? conMayuscula(campo.replace(/[A-Z]/g, (letra) => ` ${letra.toLowerCase()}`))
 
 function textoDe(campo, valor) {

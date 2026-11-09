@@ -9,16 +9,16 @@
  */
 
 export const EVENTOS = Object.freeze({
-  /** RF-15 — toda venta, por cualquier canal, mueve el inventario. */
+  /** RF-15: toda venta, por cualquier canal, mueve el inventario. */
   MOVIMIENTO_REGISTRADO: "movimiento_registrado",
-  /** RF-16 / RN-04 — existencias en el umbral o por debajo. */
+  /** RF-16 / RN-04: existencias en el umbral o por debajo. */
   EXISTENCIAS_BAJAS: "existencias_bajas",
 
   /** RF-25 */
   PEDIDO_CONFIRMADO: "pedido_confirmado",
   /** RF-26 / RF-27 */
   ESTADO_DE_PEDIDO_CAMBIADO: "estado_pedido_cambiado",
-  /** RF-28 / RN-15 — las unidades regresan al inventario. */
+  /** RF-28 / RN-15: las unidades regresan al inventario. */
   PEDIDO_CANCELADO: "pedido_cancelado",
   /** El administrador cambió las líneas de un pedido; va con el valor anterior y el nuevo. */
   PEDIDO_MODIFICADO: "pedido_modificado",
@@ -30,13 +30,13 @@ export const EVENTOS = Object.freeze({
   /** Un producto sin historial se borró del catálogo. */
   PRODUCTO_ELIMINADO: "producto_eliminado",
 
-  /** RF-51 — cambio de precio, margen o descuento. */
+  /** RF-51: cambio de precio, margen o descuento. */
   PARAMETRO_MODIFICADO: "parametro_modificado",
   /** El propietario creó una cuenta de empleado. */
   EMPLEADO_CREADO: "empleado_creado",
   /** El propietario activó o desactivó la cuenta de un empleado. */
   ESTADO_DE_EMPLEADO_CAMBIADO: "estado_empleado_cambiado",
 
-  /** RNF-10 — el 100 % de los intentos no autorizados debe registrarse. */
+  /** RNF-10: el 100 % de los intentos no autorizados debe registrarse. */
   ACCESO_DENEGADO: "acceso_denegado",
 });

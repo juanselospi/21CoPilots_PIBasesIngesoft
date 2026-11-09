@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Inventario. NÚCLEO DEL SISTEMA.
+ * CAPA DE DOMINIO: Inventario. NÚCLEO DEL SISTEMA.
  *
  * El stock vive en `catalogo.producto.stock` y cada cambio deja una fila
  * en `inventario.producto_administra`. Los productos se identifican por

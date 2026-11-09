@@ -467,7 +467,7 @@ test("un producto sin valores propios toma la importación y el margen de su fam
     productos: [leg001],
   } = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
 
-  // 100 → 120 → 180 → 203,40
+  // 100 -> 120 -> 180 -> 203,40
   assert.equal(leg001.precioFinal, 203.4);
   assert.equal(leg001.porcentajeImportacion, 20);
   assert.equal(leg001.margenGanancia, 50);
@@ -483,7 +483,7 @@ test("un margen propio sobrescribe el de la familia y la importación se sigue h
     productos: [leg002],
   } = await servicio.listarCatalogo({ limite: 10, desplazamiento: 0 });
 
-  // 100 → 120 → 150 → 169,50
+  // 100 -> 120 -> 150 -> 169,50
   assert.equal(leg002.precioFinal, 169.5);
   assert.deepEqual(leg002.heredado, { porcentajeImportacion: true, margenGanancia: false });
 });

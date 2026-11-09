@@ -8,11 +8,11 @@
 --   Cliente                  Carrito  Canal       Estado actual  Pago
 --   cliente@correo.test      1        web         finalizado     tarjeta (1 rechazado, 1 aprobado)
 --   presencial@correo.test   1        presencial  finalizado     efectivo
---   cliente@correo.test      2        web         cancelado      tarjeta → crédito a favor
+--   cliente@correo.test      2        web         cancelado      tarjeta -> crédito a favor
 --   cliente@correo.test      3        web         en_disputa     tarjeta
 --   presencial@correo.test   2        whatsapp    en_transito    SINPE Móvil (lo registró el empleado)
 --   cliente@correo.test      4        web         colocado       contra entrega (pendiente)
---   cliente@correo.test      5        —           carrito activo, sin pedido
+--   cliente@correo.test      5        -           carrito activo, sin pedido
 
 -- Montos de prueba de las tarifas (018 las crea en 0). Solo se llenan las que
 -- siguen en 0, para no pisar los montos reales cuando el cliente los defina.
@@ -36,7 +36,7 @@ BEGIN
     END IF;
 
     -- 1) Pedido en línea entregado: 2 sobres Pokémon y 1 Yu-Gi-Oh!.
-    --    6.78 × 2 + 20.34 = 33.90 con impuesto (subtotal 30.00) + envío 4.00 = 37.90
+    --    6.78 x 2 + 20.34 = 33.90 con impuesto (subtotal 30.00) + envío 4.00 = 37.90
     INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_creacion, fecha_cierre)
     VALUES ('cliente@correo.test', 1, 'convertido',
             TIMESTAMPTZ '2026-09-09 20:00-06', TIMESTAMPTZ '2026-09-10 11:00-06');
@@ -89,8 +89,8 @@ BEGIN
 
     -- 3) Pedido en línea pagado y cancelado por el administrador: no se devuelve
     --    dinero, se otorga un crédito a favor por lo pagado (C-22) y el
-    --    inventario se repone (requerimientos-profesor.md § 5 y § 6).
-    --    70.51 + 6.78 × 3 = 90.85 con impuesto (subtotal 80.40) + envío 3.50 = 94.35
+    --    inventario se repone.
+    --    70.51 + 6.78 x 3 = 90.85 con impuesto (subtotal 80.40) + envío 3.50 = 94.35
     INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_creacion, fecha_cierre)
     VALUES ('cliente@correo.test', 2, 'convertido',
             TIMESTAMPTZ '2026-10-15 09:40-06', TIMESTAMPTZ '2026-10-15 10:00-06');
@@ -145,7 +145,7 @@ BEGIN
             'cliente@correo.test', 3);
 
     -- 5) Pedido manual por WhatsApp, registrado por el empleado y a nombre de
-    --    otra persona (C-18). 16.37 × 2 = 32.75 + 61.02 = 93.77 con impuesto
+    --    otra persona (C-18). 16.37 x 2 = 32.75 + 61.02 = 93.77 con impuesto
     --    (subtotal 82.98) + envío 5.00 = 98.77
     INSERT INTO pedidos.carrito (correo_cliente, num_carrito, estado_carrito, fecha_creacion, fecha_cierre)
     VALUES ('presencial@correo.test', 2, 'convertido',

@@ -8,7 +8,7 @@ export const emptyFilters = {
     precioMax: '',
 }
 
-// Filtros → parámetros del listado del panel; las casillas sin marcar no se envían
+// Filtros -> parámetros del listado del panel; las casillas sin marcar no se envían
 export const filterParams = (filters) => ({
     ...filters,
     existenciasBajas: filters.existenciasBajas || undefined,

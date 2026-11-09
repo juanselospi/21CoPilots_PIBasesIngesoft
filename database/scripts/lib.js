@@ -41,7 +41,7 @@ async function connect() {
     await client.connect();
   } catch (err) {
     console.error(
-      `\n✖ No se pudo conectar a PostgreSQL en ${config.host}:${config.port} (${err.code || err.message}).\n` +
+      `\nError: No se pudo conectar a PostgreSQL en ${config.host}:${config.port} (${err.code || err.message}).\n` +
         '  ¿Está levantado el contenedor?  ->  npm run db:up\n' +
         '  ¿Copió el .env?                 ->  cp .env.example .env\n'
     );

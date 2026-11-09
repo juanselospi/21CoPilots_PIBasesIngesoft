@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Reportes.
+ * CAPA DE DOMINIO: Reportes.
  *
  * POR IMPLEMENTAR
  *   RF-44, RF-45  Ventas por producto y por familia
@@ -12,8 +12,8 @@
  *   · Las vistas no traen precio de venta (DD-13): si un reporte lo
  *     necesita, se calcula con el motor de precios de catalogo.
  *   · Las consultas de un mismo reporte pueden lanzarse concurrentemente
- *     (Parallel Task, § 8): solapa las esperas de entrada/salida.
- *   · Un reporte pesado no debe bloquear la capa síncrona (§ 7.2).
+ *     (Parallel Task): solapa las esperas de entrada/salida.
+ *   · Un reporte pesado no debe bloquear la capa síncrona.
  */
 
 export class ReportesService {

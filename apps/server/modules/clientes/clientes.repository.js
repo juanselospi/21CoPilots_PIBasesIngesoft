@@ -1,11 +1,11 @@
 /**
- * CAPA DE PERSISTENCIA —> Repositorio de clientes.
+ * CAPA DE PERSISTENCIA: Repositorio de clientes.
  *
  * El cliente se identifica por `correo_usuario`, el mismo correo de su
  * cuenta en `usuarios.usuario`. La cédula se guarda solo con dígitos.
  *
  * POR IMPLEMENTAR
- *   actualizarDatosFiscales()      aprobado #3 — corregir la cédula (solo administrador)
+ *   actualizarDatosFiscales()      aprobado #3: corregir la cédula (solo administrador)
  */
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";

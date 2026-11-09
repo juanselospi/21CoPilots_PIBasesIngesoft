@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — Carrito y pedidos.
+ * CAPA DE DOMINIO: Carrito y pedidos.
  *
  * El carrito está en carrito/carrito.service.js.
  *

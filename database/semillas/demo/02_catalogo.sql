@@ -6,7 +6,7 @@
 -- familia (011). Un producto con importación o margen en NULL usa el de su
 -- familia; con valor propio, lo sobrescribe (C-15). «Funko Pop» y «Discos de
 -- vinilo» son las dos familias nuevas que pidió el profesor, con 5 productos
--- cada una (requerimientos-profesor.md § 8).
+-- cada una.
 --
 -- Incluye a propósito los casos que exige probar el SRS:
 --   * con existencias ........................ la mayoría

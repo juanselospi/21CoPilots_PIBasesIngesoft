@@ -1,7 +1,7 @@
 // Traduce los productos del panel entre el formato del servidor
 // y el que usan la tarjeta, la tabla y los modales de agregar y editar producto.
 
-// Nombre del campo en los modales → nombre en el servidor
+// Nombre del campo en los modales -> nombre en el servidor
 const serverFieldByModalField = {
     sku: 'sku',
     name: 'nombre',
@@ -30,7 +30,7 @@ const labelByEtiqueta = {
 const montoDelPaso = (desglosePrecio, paso) =>
     desglosePrecio?.find((linea) => linea.paso === paso)?.monto ?? null
 
-// Producto del servidor → datos para la tarjeta, la tabla y los modales
+// Producto del servidor -> datos para la tarjeta, la tabla y los modales
 export const toAdminProduct = ({
     sku, nombre, categoria, descripcion, proveedor, imagenUrl, precioFinal, existencias, admiteContrapedido,
     etiquetas = [], costoItem, porcentajeImportacion, margenGanancia, heredado, tasaImpuesto, desglosePrecio,
@@ -60,7 +60,7 @@ export const toAdminProduct = ({
     },
 })
 
-// Familia del servidor → opción del selector de familia del modal de editar
+// Familia del servidor -> opción del selector de familia del modal de editar
 export const toFamilyOption = ({ nombre, porcentajeImportacion, margenGanancia, activa }) => ({
     name: nombre,
     importacionPct: porcentajeImportacion,
@@ -68,7 +68,7 @@ export const toFamilyOption = ({ nombre, porcentajeImportacion, margenGanancia, 
     active: activa,
 })
 
-// Valores de un modal → cuerpo que espera el servidor. Los campos vacíos no se envían;
+// Valores de un modal -> cuerpo que espera el servidor. Los campos vacíos no se envían;
 // los null sí (al editar, heredar de la familia o borrar un dato opcional).
 export const toServerFields = (values) =>
     Object.fromEntries(
@@ -77,6 +77,6 @@ export const toServerFields = (values) =>
             .map(([field, value]) => [serverFieldByModalField[field], value]),
     )
 
-// Campos con error que reporta el servidor → campos del modal
+// Campos con error que reporta el servidor -> campos del modal
 export const toModalFields = (serverFields = []) =>
     Object.keys(serverFieldByModalField).filter((field) => serverFields.includes(serverFieldByModalField[field]))

@@ -1,5 +1,5 @@
 /**
- * CAPA DE API — Controlador de reportes.
+ * CAPA DE API: Controlador de reportes.
  *
  * POR IMPLEMENTAR
  *   ventasPorProducto   RF-44

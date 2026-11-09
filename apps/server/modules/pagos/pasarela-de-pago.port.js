@@ -1,5 +1,5 @@
 /**
- * INTERFAZ — Pasarela de pago (la "abstracción" del Bridge, § 5.2).
+ * INTERFAZ: Pasarela de pago (la "abstracción" del Bridge).
  *
  * La solicitud de cobro es `{ correoCliente, numCarrito, monto, metodo }`,
  * con el monto en dólares como el resto del sistema. El pedido tiene que

@@ -18,7 +18,7 @@ function clientSeedFiles() {
   if (files.length > 0) return files;
 
   console.error(
-    `✖ No hay semillas del cliente en ${CLIENT_SEEDS_DIR}.\n` +
+    `Error: No hay semillas del cliente en ${CLIENT_SEEDS_DIR}.\n` +
       '  Genérelas desde el Excel:  npm run db:generar-semillas-cliente'
   );
   process.exitCode = 1;
@@ -33,7 +33,7 @@ async function runClientSeeds(client, files) {
   }
 
   for (const file of files) {
-    process.stdout.write(`→ Semilla cliente/${file} ... `);
+    process.stdout.write(`Semilla cliente/${file} ... `);
     await client.query(fs.readFileSync(path.join(CLIENT_SEEDS_DIR, file), 'utf8'));
     console.log('ok');
   }
@@ -48,7 +48,7 @@ async function printSummary(client) {
            (SELECT count(*)::int FROM inventario.producto_administra)     AS movimientos
       FROM catalogo.producto`);
   const r = rows[0];
-  console.log(`✔ ${r.productos} producto(s) (${r.con_existencias} con existencias), ${r.familias} familia(s), ${r.movimientos} movimiento(s) de inventario.`);
+  console.log(`${r.productos} producto(s) (${r.con_existencias} con existencias), ${r.familias} familia(s), ${r.movimientos} movimiento(s) de inventario.`);
 }
 
 module.exports = { clientSeedFiles, runClientSeeds, printSummary };
@@ -64,10 +64,10 @@ if (require.main === module) {
       await runClientSeeds(client, files);
       await client.query('COMMIT');
       await printSummary(client);
-      console.log('\n✔ Semillas del cliente cargadas.');
+      console.log('\nSemillas del cliente cargadas.');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => {});
-      console.error(`\n✖ Error cargando las semillas del cliente: ${err.message}\n  (no se cargó ninguna)\n`);
+      console.error(`\nError cargando las semillas del cliente: ${err.message}\n  (no se cargó ninguna)\n`);
       process.exitCode = 1;
     } finally {
       await client.end();

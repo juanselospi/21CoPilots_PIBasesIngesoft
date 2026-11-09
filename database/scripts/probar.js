@@ -14,9 +14,9 @@ async function probar() {
   let passed = 0;
   let failedFiles = 0;
 
-  // Cada prueba aprobada emite un NOTICE que empieza con ✔
+  // Cada prueba aprobada emite un NOTICE que empieza con "OK "
   client.on('notice', (n) => {
-    if (n.message.startsWith('✔')) {
+    if (n.message.startsWith('OK ')) {
       passed++;
       console.log(`    ${n.message}`);
     }
@@ -24,7 +24,7 @@ async function probar() {
 
   try {
     for (const file of sqlFiles(TESTS_DIR).filter((f) => !f.startsWith('_'))) {
-      console.log(`→ ${file}`);
+      console.log(`${file}`);
       try {
         await client.query('BEGIN');
         await client.query(helpers);
@@ -41,10 +41,10 @@ async function probar() {
   }
 
   if (failedFiles) {
-    console.error(`\n✖ ${passed} prueba(s) aprobada(s); ${failedFiles} archivo(s) con fallas.`);
+    console.error(`\n${passed} prueba(s) aprobada(s); ${failedFiles} archivo(s) con fallas.`);
     process.exitCode = 1;
   } else {
-    console.log(`\n✔ ${passed} prueba(s) aprobada(s).`);
+    console.log(`\n${passed} prueba(s) aprobada(s).`);
   }
 }
 

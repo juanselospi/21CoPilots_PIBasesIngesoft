@@ -43,32 +43,32 @@ async function main() {
     modulos = await cargarImportadorDelServidor();
   } catch (err) {
     console.error(
-      `✖ No se pudo cargar el importador de apps/server (${err.code ?? err.message}).\n` +
+      `Error: No se pudo cargar el importador de apps/server (${err.code ?? err.message}).\n` +
         '  ¿Instaló las dependencias del servidor?  ->  npm --prefix apps/server install'
     );
     process.exitCode = 1;
     return;
   }
 
-  console.log(`→ Leyendo ${path.basename(archivo)} ...`);
+  console.log(`Leyendo ${path.basename(archivo)} ...`);
   let lectura;
   try {
     lectura = await leerExcel(fs.readFileSync(archivo), modulos);
   } catch (err) {
     // EntradaInvalida: no es .xlsx o le faltan columnas obligatorias
-    console.error(`✖ ${err.message}`);
+    console.error(`Error: ${err.message}`);
     process.exitCode = 1;
     return;
   }
 
   const { resumen, productos } = lectura;
-  console.log(`✔ Filas leídas: ${resumen.leidas}, válidas: ${productos.length}, rechazadas: ${resumen.rechazadas.length}.`);
+  console.log(`Filas leídas: ${resumen.leidas}, válidas: ${productos.length}, rechazadas: ${resumen.rechazadas.length}.`);
   // Solo línea, SKU y motivo: nunca costos ni márgenes en la consola
   for (const { linea, fila, motivos } of resumen.rechazadas) {
     console.log(`  · Fila ${linea} (${fila.codigoSku ?? 'sin código'}): ${motivos.join('; ')}`);
   }
   if (productos.length === 0) {
-    console.error('✖ El Excel no tiene ningún producto válido; no se generaron semillas.');
+    console.error('Error: El Excel no tiene ningún producto válido; no se generaron semillas.');
     process.exitCode = 1;
     return;
   }
@@ -82,13 +82,13 @@ async function main() {
   escribirSemillas(archivos, path.basename(archivo));
 
   const bajas = existencias.filter((e) => e.baja);
-  console.log(`✔ ${contarFamilias(productos)} familia(s) en la hoja (se crean solo las que no existan).`);
+  console.log(`${contarFamilias(productos)} familia(s) en la hoja (se crean solo las que no existan).`);
   console.log(
-    `✔ Existencias iniciales: ${existencias.length - bajas.length} producto(s) entre ` +
+    `Existencias iniciales: ${existencias.length - bajas.length} producto(s) entre ` +
       `${EXISTENCIAS_NORMALES.minimo} y ${EXISTENCIAS_NORMALES.maximo} unidades; existencias bajas: ` +
       bajas.map((e) => `${e.sku} (${e.cantidad})`).join(', ')
   );
-  console.log(`\n✔ Semillas escritas en ${path.relative(process.cwd(), CLIENT_SEEDS_DIR) || '.'}/`);
+  console.log(`\nSemillas escritas en ${path.relative(process.cwd(), CLIENT_SEEDS_DIR) || '.'}/`);
   console.log('  Cárguelas con  npm run db:cliente  (BD limpia) o  npm run db:seed:cliente  (incremental).');
 }
 
@@ -96,7 +96,7 @@ async function main() {
 function buscarExcel(ruta) {
   if (ruta) {
     if (fs.existsSync(ruta)) return path.resolve(ruta);
-    console.error(`✖ No existe el archivo ${ruta}.`);
+    console.error(`Error: No existe el archivo ${ruta}.`);
     process.exitCode = 1;
     return null;
   }
@@ -108,8 +108,8 @@ function buscarExcel(ruta) {
 
   console.error(
     excels.length === 0
-      ? `✖ No hay ningún .xlsx en ${CLIENT_DIR}.\n  Copie ahí el Excel del cliente (se pide por Drive/Teams).`
-      : `✖ Hay ${excels.length} archivos .xlsx en ${CLIENT_DIR}. Deje uno o pase la ruta:\n` +
+      ? `Error: No hay ningún .xlsx en ${CLIENT_DIR}.\n  Copie ahí el Excel del cliente (se pide por Drive/Teams).`
+      : `Error: Hay ${excels.length} archivos .xlsx en ${CLIENT_DIR}. Deje uno o pase la ruta:\n` +
           '  npm run db:generar-semillas-cliente -- ruta/al/excel.xlsx'
   );
   process.exitCode = 1;
@@ -222,7 +222,7 @@ ON CONFLICT (nombre) DO NOTHING;
 }
 
 /**
- * Mismo upsert que catalogo.repository.js → guardarPorSku. La categoría es el
+ * Mismo upsert que catalogo.repository.js (guardarPorSku). La categoría es el
  * nombre de la familia ya existente que coincide; si no hubiera ninguna,
  * queda NULL y la restricción NOT NULL aborta toda la transacción.
  */

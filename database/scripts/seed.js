@@ -17,16 +17,16 @@ async function seed({ client: external, onlyReference = false } = {}) {
     for (const group of groups) {
       const dir = path.join(SEEDS_DIR, group);
       for (const file of sqlFiles(dir)) {
-        process.stdout.write(`→ Semilla ${group}/${file} ... `);
+        process.stdout.write(`Semilla ${group}/${file} ... `);
         await client.query(fs.readFileSync(path.join(dir, file), 'utf8'));
         console.log('ok');
       }
     }
     await client.query('COMMIT');
-    console.log(onlyReference ? '✔ Datos de referencia cargados.' : '✔ Datos de referencia y de prueba cargados.');
+    console.log(onlyReference ? 'Datos de referencia cargados.' : 'Datos de referencia y de prueba cargados.');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error(`\n✖ Error cargando semillas: ${err.message}\n  (no se cargó ninguna semilla)\n`);
+    console.error(`\nError cargando semillas: ${err.message}\n  (no se cargó ninguna semilla)\n`);
     process.exitCode = 1;
   } finally {
     if (!external) await client.end();

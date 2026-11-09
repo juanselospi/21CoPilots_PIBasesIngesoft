@@ -1,4 +1,4 @@
-# Base de datos local de desarrollo — DC Hobbies Cultura Geek Online
+# Base de datos local de desarrollo: DC Hobbies Cultura Geek Online
 #
 # Solo PostgreSQL corre en Docker. El backend (apps/server) y el frontend
 # (apps/client) se ejecutan directamente con npm para tener recarga en caliente.

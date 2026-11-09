@@ -229,7 +229,7 @@ test("en un pedido pagado, lo que se quita queda como crédito con impuesto", as
   await servicio.quitarLinea(ANA, 7, "LEG-001", COMO_ADMIN);
   await servicio.cambiarCantidad(ANA, 7, "BOO-001", { cantidad: 3 }, COMO_ADMIN);
 
-  // 2 × 113 y 1 × 11,30
+  // 2 x 113 y 1 x 11,30
   assert.deepEqual(estado.creditos, [
     { correo: ANA, numCarrito: 7, monto: 226, motivo: "Se quitaron 2 de LEG-001 del pedido 7" },
     { correo: ANA, numCarrito: 7, monto: 11.3, motivo: "Se quitó 1 de BOO-001 del pedido 7" },

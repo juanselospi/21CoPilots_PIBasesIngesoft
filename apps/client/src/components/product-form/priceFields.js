@@ -11,7 +11,7 @@ export const priceFields = [
 const positiveNumber = /^\d*(\.\d{0,2})?$/
 const signedNumber = /^-?\d*(\.\d{0,2})?$/
 
-// Lo que escribió el usuario (coma → punto), o null si no se acepta
+// Lo que escribió el usuario (coma -> punto), o null si no se acepta
 export const readPriceInput = (input, allowNegative) => {
     const value = input.replace(',', '.')
     return (allowNegative ? signedNumber : positiveNumber).test(value) ? value : null

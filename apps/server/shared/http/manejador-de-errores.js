@@ -1,7 +1,7 @@
 /**
  * Traductor de errores a respuestas HTTP.
  *
- * Último eslabón de la cadena de middlewares (§ 6.1). Es el único lugar
+ * Último eslabón de la cadena de middlewares. Es el único lugar
  * que decide códigos de estado, y nunca filtra la traza al cliente.
  */
 
@@ -21,7 +21,7 @@ const CODIGO_HTTP_POR_ERROR = {
 
 /**
  * Restricciones de la base de datos que se dispararon. Son la segunda
- * línea de defensa (§ 9.2): si llegan aquí, el servicio dejó pasar algo.
+ * línea de defensa: si llegan aquí, el servicio dejó pasar algo.
  * El mensaje es fijo para no exponer nombres de tablas ni columnas.
  */
 const ERROR_DE_POSTGRES = {

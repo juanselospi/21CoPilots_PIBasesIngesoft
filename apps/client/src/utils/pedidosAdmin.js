@@ -113,7 +113,7 @@ export function describirCambio({ evento, valorAnterior, valorNuevo }) {
         case 'pedido_creado_manual':
             return `Pedido registrado a mano, canal ${CANALES[valorNuevo?.canal] ?? valorNuevo?.canal}`
         case 'estado_pedido_cambiado':
-            return `Estado: ${nombreDelEstado(valorAnterior?.estado)} → ${nombreDelEstado(valorNuevo?.estado)}`
+            return `Estado: de ${nombreDelEstado(valorAnterior?.estado)} a ${nombreDelEstado(valorNuevo?.estado)}`
         case 'pedido_cancelado': {
             const unidades = (valorNuevo?.unidadesRepuestas ?? []).reduce((suma, { cantidad }) => suma + cantidad, 0)
             return `Pedido cancelado: ${unidades} ${unidades === 1 ? 'unidad vuelve' : 'unidades vuelven'} al inventario${conCredito(valorNuevo)}`

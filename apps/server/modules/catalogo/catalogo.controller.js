@@ -1,5 +1,5 @@
 /**
- * CAPA DE API — Controlador del catálogo.
+ * CAPA DE API: Controlador del catálogo.
  *
  * Traduce HTTP a llamadas de dominio y de vuelta. No calcula precios, no
  * consulta la base y no decide reglas: si este archivo crece con `if` de

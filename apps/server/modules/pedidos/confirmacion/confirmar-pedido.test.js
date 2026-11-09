@@ -159,7 +159,7 @@ test("el precio queda congelado y el total suma el envío", async () => {
   const pedido = await servicio.confirmar(ANA, checkout);
 
   assert.deepEqual(estado.precios, { "BOO-001": 10, "LEG-001": 100 });
-  // 4 × 11,30 + 2 × 113 = 271,20; más 3,50 de envío
+  // 4 x 11,30 + 2 x 113 = 271,20; más 3,50 de envío
   assert.deepEqual([pedido.subtotal, pedido.impuesto, pedido.costoEntrega, pedido.total], [240, 31.2, 3.5, 274.7]);
 });
 

@@ -60,7 +60,7 @@ async function migrate({ statusOnly = false, client: external } = {}) {
       console.log('\nEstado de migraciones:');
       for (const m of migrations) {
         const a = applied.get(m.version);
-        const mark = !a ? '· pendiente ' : a.checksum !== m.checksum ? '✖ EDITADA  ' : '✔ aplicada  ';
+        const mark = !a ? 'pendiente' : a.checksum !== m.checksum ? 'EDITADA  ' : 'aplicada ';
         console.log(`  ${mark} ${m.file}`);
       }
       for (const o of orphan) console.log(`  ? no está en esta rama: ${o.archivo}`);
@@ -70,7 +70,7 @@ async function migrate({ statusOnly = false, client: external } = {}) {
 
     if (edited.length) {
       console.error(
-        '\n✖ Estas migraciones ya estaban aplicadas en su BD y su contenido cambió:\n' +
+        '\nError: Estas migraciones ya estaban aplicadas en su BD y su contenido cambió:\n' +
           edited.map((m) => `    - ${m.file}`).join('\n') +
           '\n\n  Regla del equipo: una migración que ya está en main NO se edita; se crea una nueva.\n' +
           '  Si la migración es suya y todavía no está en main, reconstruya su BD local con:  npm run db:reset\n'
@@ -80,7 +80,7 @@ async function migrate({ statusOnly = false, client: external } = {}) {
     }
     if (orphan.length) {
       console.warn(
-        '⚠ Su BD tiene migraciones que no existen en esta rama (¿cambió de rama?):\n' +
+        'Aviso: su BD tiene migraciones que no existen en esta rama (¿cambió de rama?):\n' +
           orphan.map((o) => `    - ${o.archivo}`).join('\n') +
           '\n  Si algo falla, use:  npm run db:reset\n'
       );
@@ -88,12 +88,12 @@ async function migrate({ statusOnly = false, client: external } = {}) {
 
     const pending = migrations.filter((m) => !applied.has(m.version));
     if (!pending.length) {
-      console.log('✔ La base de datos está al día. No hay migraciones pendientes.');
+      console.log('La base de datos está al día. No hay migraciones pendientes.');
       return;
     }
 
     for (const m of pending) {
-      process.stdout.write(`→ Aplicando ${m.file} ... `);
+      process.stdout.write(`Aplicando ${m.file} ... `);
       try {
         await client.query('BEGIN');
         await client.query(m.sql);
@@ -107,12 +107,12 @@ async function migrate({ statusOnly = false, client: external } = {}) {
       } catch (err) {
         await client.query('ROLLBACK');
         console.log('FALLÓ');
-        console.error(`\n✖ Error en ${m.file}: ${err.message}\n  (se revirtió; la BD quedó como antes de esta migración)\n`);
+        console.error(`\nError en ${m.file}: ${err.message}\n  (se revirtió; la BD quedó como antes de esta migración)\n`);
         process.exitCode = 1;
         return;
       }
     }
-    console.log(`✔ ${pending.length} migración(es) aplicada(s).`);
+    console.log(`${pending.length} migración(es) aplicada(s).`);
   } finally {
     if (!external) await client.end();
   }
@@ -122,7 +122,7 @@ module.exports = { migrate };
 
 if (require.main === module) {
   migrate({ statusOnly: process.argv.includes('--status') }).catch((err) => {
-    console.error(`✖ ${err.message}`);
+    console.error(`Error: ${err.message}`);
     process.exit(1);
   });
 }

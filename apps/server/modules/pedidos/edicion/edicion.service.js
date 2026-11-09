@@ -1,5 +1,5 @@
 /**
- * CAPA DE DOMINIO — El administrador cambia las líneas de un pedido.
+ * CAPA DE DOMINIO: El administrador cambia las líneas de un pedido.
  *
  * Cada cambio es una transacción: bloquea el pedido y después los
  * productos, mueve el inventario por la diferencia y guarda la línea. Las

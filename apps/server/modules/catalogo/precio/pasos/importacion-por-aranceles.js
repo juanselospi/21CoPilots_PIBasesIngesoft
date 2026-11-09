@@ -1,5 +1,5 @@
 /**
- * Paso 1 — costo más el porcentaje de importación por aranceles.
+ * Paso 1: costo más el porcentaje de importación por aranceles.
  * RN-01, RF-03.
  */
 
