@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
-    Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, ImageOff, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
+    Archive, ArchiveRestore, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, List, Pencil, Plus, SlidersHorizontal, Trash2, X,
 } from 'lucide-react'
 import ImportExcel from '../../components/import-excel/ImportExcel.jsx'
 import { TEMPLATE_URL, importProducts } from '../../api/importaciones.js'
 import ProductFilters from '../../components/product-filters/ProductFilters.jsx'
 import ProductTable from '../../components/product-table/ProductTable.jsx'
+import ProductImage from '../../components/product-image/ProductImage.jsx'
 import Select from '../../components/select/Select.jsx'
 import { activeFilterTags, emptyFilters, filterParams } from '../../components/product-filters/productFilters.js'
 import './Products.css'
@@ -302,11 +303,7 @@ function Products() {
                         <section className='products-grid'>
                             {products.map((product) => (
                                 <article key={product.sku} className='products-card'>
-                                    {product.image ? (
-                                        <img className='products-card-image' src={product.image} alt={product.name} />
-                                    ) : (
-                                        <div className='products-card-image'><ImageOff size={28} />Sin imagen</div>
-                                    )}
+                                    <ProductImage src={product.image} alt={product.name} className='products-card-image' />
                                     <div className='products-card-body'>
                                         <p className='products-card-sku codigo'>{product.sku}</p>
                                         <h3 className='products-card-name'>{product.name}</h3>

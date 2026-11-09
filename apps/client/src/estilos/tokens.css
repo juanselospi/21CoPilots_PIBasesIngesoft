@@ -35,6 +35,10 @@
   --color-overlay: color-mix(in srgb, var(--color-oscuro) 55%, transparent);
   --sombra: 0 8px 24px color-mix(in srgb, var(--color-oscuro) 10%, transparent);
 
+  /* Skeleton de las imagenes mientras cargan (components/product-image) */
+  --esqueleto-fondo: var(--estado-neutro-fondo);
+  --esqueleto-brillo: color-mix(in srgb, #FFFFFF 70%, transparent);
+
   /* Colores de estado; siempre van con palabra e icono, nunca solo el color */
   --estado-ok-fondo: #DCFCE7;
   --estado-ok-texto: #15803D;
@@ -88,6 +92,8 @@
     --color-titulo: var(--color-texto);
 
     --sombra: none;
+
+    --esqueleto-brillo: color-mix(in srgb, #FFFFFF 7%, transparent);
 
     --estado-ok-fondo: #12341F;
     --estado-ok-texto: #6EE7A0;
