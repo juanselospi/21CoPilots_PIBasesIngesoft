@@ -41,23 +41,26 @@ lo incluimos porque la tienda pública tiene que funcionar para esa persona.
 | Iniciar sesión / crear cuenta | ✅ | — | — | — |
 | Ver y editar sus propios datos | ❌ | ✅ | ✅ | ✅ |
 | Usar el carrito, hacer pedidos y ver sus propios pedidos | ❌ | ✅ | ❌ | ❌ |
+| Consultar su saldo a favor y usarlo al pagar | ❌ | ✅ | ❌ | ❌ |
 | Cancelar un pedido antes del despacho (RF-28; el cliente no, entrevista 2) | ❌ | ❌ | ✅ | ✅ |
 | Entrar al panel de administración | ❌ | ❌ | ✅ | ✅ |
 | Ver costos, márgenes y productos ocultos en la tienda (listado del panel) | ❌ | ❌ | ✅ | ✅ |
-| Agregar, editar, excluir y consultar productos | ❌ | ❌ | ✅ | ✅ |
+| Agregar, editar, desactivar, eliminar y consultar productos | ❌ | ❌ | ✅ | ✅ |
+| Administrar las familias de productos | ❌ | ❌ | ✅ | ✅ |
 | Importar el catálogo desde Excel y descargar la plantilla (RF-57 a RF-59) | ❌ | ❌ | ✅ | ✅ |
 | Cambiar precios y márgenes (RF-51) y gestionar ofertas de descuento (aprobado #10) | ❌ | ❌ | ✅ | ✅ |
 | Registrar ingresos y salidas de mercancía (RF-13, RF-14) | ❌ | ❌ | ✅ | ✅ |
-| Registrar ventas y gestionar pedidos | ❌ | ❌ | ✅ | ✅ |
+| Registrar ventas y gestionar pedidos (estado, edición de líneas y pedidos manuales) | ❌ | ❌ | ✅ | ✅ |
 | Consultar clientes y reportes | ❌ | ❌ | ✅ | ✅ |
 | Corregir los datos de un cliente (aprobado #3) | ❌ | ❌ | ✅ | ✅ |
 | Configurar tarifas de envío, datos fiscales y términos (aprobados #11 a #13) | ❌ | ❌ | ❌ | ✅ |
 | Crear, listar y desactivar cuentas de empleados | ❌ | ❌ | ❌ | ✅ |
 | Ver la bitácora de auditoría (RF-52) | ❌ | ❌ | ✅ | ✅ |
 
-Algunas de estas acciones (carrito, pedidos, mercancía, ofertas, reportes y
-configuración) se implementan en sprints posteriores; la matriz las incluye para que
-la regla quede definida desde ahora.
+Todavía no tienen ruta en el servidor: gestionar ofertas, consultar la lista de
+clientes y los reportes, corregir los datos de un cliente, y configurar tarifas, datos fiscales y
+términos. Se implementan en sprints posteriores; la matriz las incluye para que la
+regla quede definida desde ahora.
 
 En resumen: **el cliente solo ve la parte pública de la tienda y lo suyo**; todo lo
 que está dentro del panel es del administrador y sus empleados, salvo crear cuentas y
@@ -73,7 +76,11 @@ configurar el negocio, que solo hace el propietario.
   - un índice único parcial impide que exista más de un propietario (RF-49); los
     empleados son otras filas de `admin.administrador` (§ 4);
   - la especialización es traslapada, como en el EER: una misma cuenta puede estar
-    en las dos tablas. Cómo se combinan los permisos de esa cuenta está por definir
+    en las dos tablas. El 26/10 se decidió que esa cuenta tenga **los dos permisos**,
+    pero eso **todavía no está implementado**: hoy el servidor le da un solo rol
+    (`ROL_DEL_USUARIO` en `admin.repository.js`). Si es administrador activo gana ese
+    rol y las rutas de cliente le responden 403; si su cuenta de administrador está
+    desactivada, queda como cliente
     (ver [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md));
   - el carrito y el pedido apuntan a `clientes.cliente`, así que solo un cliente
     puede tenerlos;
@@ -83,25 +90,75 @@ configurar el negocio, que solo hace el propietario.
   deja al usuario de la cookie en la petición, sin bloquear. Cada ruta protegida
   agrega la cadena `exigirSesion → exigirRol(ADMINISTRADOR)`
   ([`arquitectura.md`](arquitectura.md) § 6.1). Sin sesión se responde 401 y con un
-  rol sin permiso, 403. Las rutas protegidas hoy son:
+  rol sin permiso, 403. Las rutas del servidor son las de la tabla de abajo.
+  «Administrador» incluye a los empleados; lo que solo hace el dueño lleva
+  `exigirPropietario`.
 
-  | Ruta | Acción |
-  |---|---|
-  | `GET /api/catalogo/admin/productos` | Listado del panel, con costos y márgenes |
-  | `POST /api/catalogo/productos` | Agregar un producto |
-  | `PATCH /api/catalogo/productos/:sku` | Editar precio, existencias o contrapedido |
-  | `POST /api/admin/importaciones` | Importar el Excel |
-  | `GET /api/admin/importaciones/plantilla` | Descargar la plantilla |
+  | Quién | Ruta | Acción |
+  |---|---|---|
+  | Público | `GET /api/salud` | Estado del servidor |
+  | Público | `GET /api/catalogo/productos` | Catálogo de la tienda |
+  | Público | `GET /api/catalogo/productos/:sku` | Ficha de un producto |
+  | Público | `GET /api/catalogo/familias` y `GET /api/catalogo/categorias` | Familias visibles |
+  | Público | `GET /api/pedidos/modalidades` | Modalidades de entrega con su costo |
+  | Público | `POST /api/clientes` | Crear cuenta de cliente |
+  | Público | `POST /api/admin/sesion` | Iniciar sesión |
+  | Público | `DELETE /api/admin/sesion` | Cerrar sesión |
+  | Público | `POST /api/admin/contrasena/recuperacion` | Pedir el enlace de recuperación |
+  | Público | `POST /api/admin/contrasena/restablecimiento` | Cambiar la contraseña con el enlace |
+  | Con sesión | `GET /api/admin/sesion` | Consultar la sesión propia |
+  | Con sesión | `PATCH /api/admin/contrasena` | Cambiar la contraseña propia |
+  | Cliente | `GET /api/clientes/me` | Ver sus datos |
+  | Cliente | `PATCH /api/clientes/me` | Corregir dirección y teléfonos |
+  | Cliente | `GET /api/clientes/me/creditos` | Ver su saldo a favor |
+  | Cliente | `GET /api/pedidos/carrito` | Ver su carrito |
+  | Cliente | `POST /api/pedidos/carrito/lineas` | Agregar un producto al carrito |
+  | Cliente | `PATCH /api/pedidos/carrito/lineas/:sku` | Cambiar la cantidad |
+  | Cliente | `DELETE /api/pedidos/carrito/lineas/:sku` | Quitar una línea |
+  | Cliente | `POST /api/pedidos` | Confirmar la compra |
+  | Cliente | `GET /api/pedidos` | Listar sus pedidos |
+  | Cliente | `GET /api/pedidos/:numCarrito` | Ver un pedido suyo |
+  | Cliente | `GET /api/pedidos/:numCarrito/pagos` | Ver los pagos de un pedido suyo |
+  | Cliente | `GET /api/pedidos/:numCarrito/factura` | Ver la factura de un pedido suyo |
+  | Administrador | `GET /api/catalogo/admin/productos` | Listado del panel, con costos y márgenes |
+  | Administrador | `POST /api/catalogo/productos` | Agregar un producto |
+  | Administrador | `PATCH /api/catalogo/productos/:sku` | Editar un producto |
+  | Administrador | `PATCH /api/catalogo/productos/:sku/estado` | Desactivar o reactivar un producto |
+  | Administrador | `DELETE /api/catalogo/productos/:sku` | Eliminar un producto sin historial |
+  | Administrador | `GET /api/catalogo/admin/familias` | Listado de familias del panel |
+  | Administrador | `POST /api/catalogo/familias` | Agregar una familia |
+  | Administrador | `PATCH /api/catalogo/familias/:nombre` | Editar o desactivar una familia |
+  | Administrador | `DELETE /api/catalogo/familias/:nombre` | Eliminar una familia sin productos |
+  | Administrador | `POST /api/admin/importaciones` | Importar el Excel |
+  | Administrador | `GET /api/admin/importaciones/plantilla` | Descargar la plantilla |
+  | Administrador | `GET /api/admin/bitacora` | Consultar la bitácora |
+  | Administrador | `GET /api/clientes/admin` | Buscar clientes para registrar una venta |
+  | Administrador | `GET /api/inventario/alertas` | Alertas de existencias bajas |
+  | Administrador | `POST /api/inventario/ingresos` | Registrar un ingreso de mercancía |
+  | Administrador | `POST /api/inventario/ajustes` | Registrar un ajuste con motivo |
+  | Administrador | `GET /api/inventario/movimientos` | Historial de movimientos |
+  | Administrador | `GET /api/pedidos/admin` | Listado de pedidos con filtros |
+  | Administrador | `POST /api/pedidos/admin` | Registrar un pedido manual |
+  | Administrador | `GET /api/pedidos/admin/:correo/:numCarrito` | Detalle de un pedido |
+  | Administrador | `POST /api/pedidos/admin/:correo/:numCarrito/estado` | Cambiar el estado o cancelar |
+  | Administrador | `POST /api/pedidos/admin/:correo/:numCarrito/lineas` | Agregar una línea |
+  | Administrador | `PATCH /api/pedidos/admin/:correo/:numCarrito/lineas/:sku` | Cambiar la cantidad de una línea |
+  | Administrador | `DELETE /api/pedidos/admin/:correo/:numCarrito/lineas/:sku` | Quitar una línea |
+  | Administrador | `POST /api/pedidos/admin/:correo/:numCarrito/lineas/:sku/reemplazo` | Reemplazar una línea por igual o menor valor |
+  | Propietario | `POST /api/admin/usuarios` | Crear una cuenta de empleado |
+  | Propietario | `GET /api/admin/usuarios` | Listar administradores y empleados |
+  | Propietario | `PATCH /api/admin/usuarios/:correo/activo` | Activar o desactivar un empleado |
 
-  `GET /api/admin/sesion` solo exige sesión: cualquier rol puede consultar la suya.
-  Las pruebas API-01 a API-03 del documento del Sprint 1 verifican el 401 y el 403.
+  Todo `/api/reportes` exige ser administrador, pero todavía no tiene rutas (HU-15).
+  Las pruebas de rutas de cada módulo verifican el 401 y el 403.
 - **En la bitácora:** cada intento no autorizado publica el evento `acceso_denegado`
-  (RNF-10). Dónde se guarda está por definir
-  (ver [`cambios-siguiente-sprint.md`](../requerimientos/cambios-siguiente-sprint.md)).
+  (RNF-10), que se guarda en `admin.bitacora` (migración 015).
 - **En el cliente web:** `AdminRoute` manda al visitante a `/acceso` y al cliente de
   vuelta a la tienda, y el encabezado solo muestra el enlace al panel al
-  administrador. Esto es solo para la experiencia de uso; la protección real es la
-  del servidor, porque cualquiera puede escribir la URL a mano.
+  administrador. `SessionRoute` pide sesión sin importar el rol, y `ClientRoute`
+  deja pasar solo al cliente. Esto es solo para la experiencia
+  de uso; la protección real es la del servidor, porque cualquiera puede escribir la
+  URL a mano.
 
 No usamos tablas de `rol`, `permiso` y `rol_permiso`: con solo dos roles, una matriz
 en la base de datos sería más compleja que lo que resuelve.

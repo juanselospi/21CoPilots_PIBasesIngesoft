@@ -1,6 +1,6 @@
 # Historias de usuario y criterios de aceptación del Sprint 2
 
-Estado al 8 de noviembre de 2026 · Entrega: 10 de noviembre de 2026
+Estado al 9 de noviembre de 2026 · Entrega: 10 de noviembre de 2026
 
 Estas son las historias que trabajamos en el Sprint 2, con el mismo formato de la sección 7 del documento del Sprint 1: historia, épica, requerimientos, puntos, criterios en formato Gherkin, estado y evidencia. Esta sección pasa tal cual al documento del Sprint 2.
 
@@ -8,12 +8,12 @@ Estas son las historias que trabajamos en el Sprint 2, con el mismo formato de l
 
 - **Cumplido:** el criterio se cumple y la evidencia de la fila lo respalda. **Parcial:** funciona solo una parte, y la nota dice qué falta. **Pendiente:** no se hizo.
 - **Ajustado:** el criterio cambió respecto al SRS por una decisión del cliente, del profesor o del PDF del sprint.
-- **Captura:** archivo dentro de `documentos/sprint-02/evidencias/`. Las marcadas con (PR #123) entran cuando se mergee «Mis pedidos».
+- **Captura:** archivo dentro de `documentos/sprint-02/evidencias/`.
 - **Prueba:** nombre de una prueba automatizada del servidor. «Sin captura» significa que hoy esa prueba es la única evidencia.
 
 ## Resumen
 
-De las 10 historias, 6 quedaron terminadas (36 de 72 puntos). De los 45 criterios, 38 están cumplidos, 7 parciales y 0 pendientes.
+De las 10 historias, 7 quedaron terminadas (49 de 72 puntos). De los 45 criterios, 42 están cumplidos, 3 parciales y 0 pendientes.
 
 | Historia | Puntos | Estado | Criterios cumplidos |
 |---|---|---|---|
@@ -25,8 +25,8 @@ De las 10 historias, 6 quedaron terminadas (36 de 72 puntos). De los 45 criterio
 | HU-11 — Registrarme como cliente | 5 | Terminada | 4 de 4 |
 | HU-12 — Confirmar el pedido, pagar y facturar | 13 | Parcial | 4 de 5 |
 | HU-16 — Familias de productos con importación y margen heredados (nueva) | 8 | Terminada | 6 de 6 |
-| HU-17 — Administración de pedidos (nueva) | 13 | Parcial | 4 de 7 |
-| PB-31 — Créditos a favor del cliente (nueva) | 5 | Parcial | 1 de 3 |
+| HU-17 — Administración de pedidos (nueva) | 13 | Terminada | 7 de 7 |
+| PB-31 — Créditos a favor del cliente (nueva) | 5 | Parcial | 2 de 3 |
 
 ## HU-02 — Iniciar sesión con permisos por rol (continuación) · Parcial
 
@@ -36,9 +36,9 @@ En este sprint se completó lo que pide el PDF en § c) «Seguridad básica» y 
 
 | Criterio | Estado | Evidencia y notas |
 |---|---|---|
-| Dado que tengo sesión<br>Cuando cierro sesión<br>Entonces la cookie deja de servir y el panel responde 401 | Cumplido | Prueba «RF-53: cerrar sesión borra la cookie y después responde 401». |
-| Dado que pasa el tiempo configurado sin actividad<br>Cuando vuelvo<br>Entonces el sistema me avisa que la sesión venció | Cumplido | Prueba «una sesión vencida ya no identifica a nadie», «la duración de la sesión sale de la configuración». La duración se ajusta con `DURACION_SESION_MINUTOS`. Sin captura. |
-| Dado que elijo una contraseña sin mayúscula, número o carácter especial<br>Cuando la guardo<br>Entonces el sistema la rechaza indicando qué falta | Cumplido | Prueba «una contraseña sin mayúscula se rechaza con ese motivo», «dice todo lo que falta en un solo mensaje». Sin captura. |
+| Dado que tengo sesión<br>Cuando cierro sesión<br>Entonces la cookie deja de servir y el panel responde 401 | Cumplido | Captura `acceso/cierre-de-sesion/confirmar-cierre.png`, `acceso/cierre-de-sesion/sesion-cerrada.png`. Prueba «RF-53: cerrar sesión borra la cookie y después responde 401». |
+| Dado que pasa el tiempo configurado sin actividad<br>Cuando vuelvo<br>Entonces el sistema me avisa que la sesión venció | Cumplido | Captura `acceso/sesion-vencida/aviso-de-sesion-vencida.png`. Prueba «una sesión vencida ya no identifica a nadie», «la duración de la sesión sale de la configuración». La duración se ajusta con `DURACION_SESION_MINUTOS`. |
+| Dado que elijo una contraseña sin mayúscula, número o carácter especial<br>Cuando la guardo<br>Entonces el sistema la rechaza indicando qué falta | Cumplido | Captura `mi-cuenta/contrasena/no-cumple-la-politica.png`, `mi-cuenta/contrasena/contrasena-actualizada.png`. Prueba «una contraseña sin mayúscula se rechaza con ese motivo», «dice todo lo que falta en un solo mensaje». |
 | Dado que olvidé mi contraseña<br>Cuando solicito recuperarla<br>Entonces recibo un enlace de un solo uso con vencimiento | Parcial | Prueba «RF-54: el enlace sirve una vez, cambia la contraseña y cierra las sesiones», «un enlace vencido o inventado no sirve». El enlace funciona, pero **no se envía por correo**: se escribe en el log del servidor. Falta el envío real (ver `revisar.md`). |
 | Dado que soy el propietario<br>Cuando creo una cuenta de empleado<br>Entonces esa persona entra al panel y cada cambio que hace queda con su nombre en la bitácora | Cumplido | Prueba «el propietario crea un empleado con la contraseña guardada como hash», «solo el propietario gestiona empleados: un empleado recibe 403 y queda registrado», «el administrador avanza el pedido y queda en el historial con quién lo hizo». Sin captura. |
 | Dado que cambio un margen o edito un pedido<br>Cuando consulto la bitácora<br>Entonces veo usuario, fecha, valor anterior y nuevo | Cumplido | Prueba «RF-52: un cambio de margen se guarda con usuario, entidad, valor anterior y nuevo», «cada cambio queda en la bitácora con la línea anterior y la nueva». Se consulta en Configuración y en el detalle del pedido. Sin captura. |
@@ -95,9 +95,9 @@ En el SRS el registro era al momento de la primera compra. El PDF del Sprint 2 p
 
 | Criterio | Estado | Evidencia y notas |
 |---|---|---|
-| Dado que no tengo cuenta<br>Cuando ingreso nombre, correo, contraseña, cédula, teléfono y dirección y acepto los términos<br>Entonces el sistema crea mi cuenta de cliente, guarda la fecha de aceptación y me deja con sesión iniciada | Cumplido<br>Ajustado | Prueba «HU-11: crear la cuenta responde 201 con el usuario y deja la cookie de sesión», «RF-32: guarda el cliente con la contraseña en hash y deja la sesión abierta como cliente». Sin captura. |
-| Dado que no acepto los términos<br>Cuando intento continuar<br>Entonces el sistema no me permite avanzar | Cumplido | Prueba «sin aceptar los términos responde 400 con el campo». Sin captura. |
-| Dado que envío el formulario con campos vacíos<br>Entonces todos los obligatorios se marcan en rojo a la vez | Cumplido | Prueba «informa todos los campos con problemas a la vez». Sin captura. |
+| Dado que no tengo cuenta<br>Cuando ingreso nombre, correo, contraseña, cédula, teléfono y dirección y acepto los términos<br>Entonces el sistema crea mi cuenta de cliente, guarda la fecha de aceptación y me deja con sesión iniciada | Cumplido<br>Ajustado | Captura `acceso/registro/cuenta-creada.png`. Prueba «HU-11: crear la cuenta responde 201 con el usuario y deja la cookie de sesión», «RF-32: guarda el cliente con la contraseña en hash y deja la sesión abierta como cliente». |
+| Dado que no acepto los términos<br>Cuando intento continuar<br>Entonces el sistema no me permite avanzar | Cumplido | Captura `acceso/registro/terminos-sin-aceptar.png`. Prueba «sin aceptar los términos responde 400 con el campo». |
+| Dado que envío el formulario con campos vacíos<br>Entonces todos los obligatorios se marcan en rojo a la vez | Cumplido | Captura `acceso/registro/validacion-todos-los-campos.png`. Prueba «informa todos los campos con problemas a la vez». |
 | Dado que ya soy cliente<br>Cuando vuelvo a comprar<br>Entonces el sistema recupera mis datos sin pedirlos de nuevo | Cumplido | Captura `checkout/compra/paso-1-entrega-con-direccion-precargada.png`, `mi-cuenta/datos-de-contacto/direccion-nueva-en-el-checkout.png`. |
 
 ## HU-12 — Confirmar el pedido, pagar y facturar · Parcial
@@ -127,7 +127,7 @@ Como administrador, quiero administrar las familias de productos con su costo de
 | Dada una familia con productos<br>Cuando intento eliminarla<br>Entonces el sistema lo rechaza | Cumplido | Captura `familias/administracion/rechazo-por-productos-asociados.png`. Prueba «no elimina una familia con productos y dice cuántos tiene». |
 | Dado el panel<br>Cuando administro las familias<br>Entonces puedo consultarlas, ingresarlas, modificarlas, desactivarlas y eliminarlas | Cumplido | Captura `familias/administracion/consultar-familias.png`, `familias/administracion/familia-agregada.png`, `familias/administracion/familia-modificada.png`, `familias/administracion/familia-desactivada.png`, `familias/administracion/familia-eliminada.png`. |
 
-## HU-17 — Administración de pedidos · Parcial
+## HU-17 — Administración de pedidos · Terminada
 
 Como administrador, quiero ver los pedidos con su cliente, productos y estado, cambiarles el estado, corregirlos mientras no se hayan enviado, cancelarlos y registrar los que me llegan por otros canales, para controlar todas las ventas desde un solo lugar. · EP-03 · RF-26, RF-28 y los de HU-09 (RF-15, RF-17, RF-19) · 13 puntos
 
@@ -136,12 +136,12 @@ Historia nueva. Absorbe HU-09 (ventas de otros canales), PB-23 (buscar pedidos) 
 | Criterio | Estado | Evidencia y notas |
 |---|---|---|
 | Dado el panel<br>Cuando abro «Pedidos»<br>Entonces veo cada pedido con cliente, productos, canal y estado, y puedo filtrar por estado | Cumplido | Prueba «el listado acepta el estado en disputa y rechaza estados, canales y fechas que no existen», «el detalle junta cliente, líneas con el precio pagado, pagos, factura e historial». Sin captura de la lista. |
-| Dado un pedido<br>Cuando lo paso a procesado, en tránsito o entregado<br>Entonces el cambio queda en el historial con su fecha y el cliente lo ve | Cumplido | Captura `pedidos/mis-pedidos/estado-antes-del-cambio.png` (PR #123), `pedidos/mis-pedidos/administrador-cambia-el-estado.png` (PR #123), `pedidos/mis-pedidos/estado-despues-del-cambio.png` (PR #123). Prueba «el administrador avanza el pedido y queda en el historial con quién lo hizo». |
-| Dado un pedido con un problema<br>Cuando lo pongo «en disputa»<br>Entonces se mantiene así hasta que lo resuelvo y queda en el historial que pasó por ese estado | Cumplido | Captura `pedidos/mis-pedidos/pedido-en-disputa.png` (PR #123). Prueba «una disputa vuelve al estado en que estaba el pedido». |
-| Dado un pedido no enviado<br>Cuando cambio la cantidad, quito, agrego o reemplazo un producto<br>Entonces el inventario se ajusta y el cambio queda en la bitácora<br>Y el reemplazo solo se acepta por un producto de igual o menor valor, sin cobrar diferencia | Parcial<br>Ajustado | Prueba «el reemplazo por uno de igual o menor precio conserva el precio pagado», «el reemplazo por uno más caro se rechaza, aunque sea por un centavo», «cada cambio queda en la bitácora con la línea anterior y la nueva». Regla de reemplazo decidida por el cliente (entrevista 2, punto 4). El servidor está listo; falta la pantalla (SCRUM-143). |
-| Dado un pedido en tránsito o entregado<br>Cuando intento editarlo<br>Entonces el sistema lo rechaza | Parcial | Prueba «un pedido en tránsito o finalizado ya no se edita y nada cambia». Lo rechaza el servidor; falta la pantalla de edición (SCRUM-143). |
-| Dado un pedido<br>Cuando lo cancelo<br>Entonces las unidades vuelven al inventario<br>Y solo el administrador puede cancelar, el cliente no | Cumplido<br>Ajustado | Captura `pedidos/mis-pedidos/pedido-cancelado.png` (PR #123). Prueba «RF-28: cancelar devuelve lo que salió del inventario y no lo que quedó en contrapedido», «solo el administrador cambia el estado: el cliente no puede cancelar su pedido». Decisión del cliente (entrevista 2, punto 2): en el SRS el cliente podía cancelar. |
-| Dada una venta por WhatsApp, Facebook, teléfono o presencial<br>Cuando la registro con sus productos<br>Entonces se crea un pedido con su canal y quién lo creó, y descuenta el inventario | Parcial | Prueba «HU-09: una venta por WhatsApp de dos productos es un solo pedido que descuenta el inventario». El servidor está listo; falta la pantalla (SCRUM-144). |
+| Dado un pedido<br>Cuando lo paso a procesado, en tránsito o entregado<br>Entonces el cambio queda en el historial con su fecha y el cliente lo ve | Cumplido | Captura `pedidos/mis-pedidos/estado-antes-del-cambio.png`, `pedidos/mis-pedidos/administrador-cambia-el-estado.png`, `pedidos/mis-pedidos/estado-despues-del-cambio.png`. Prueba «el administrador avanza el pedido y queda en el historial con quién lo hizo». |
+| Dado un pedido con un problema<br>Cuando lo pongo «en disputa»<br>Entonces se mantiene así hasta que lo resuelvo y queda en el historial que pasó por ese estado | Cumplido | Captura `pedidos/mis-pedidos/pedido-en-disputa.png`. Prueba «una disputa vuelve al estado en que estaba el pedido». |
+| Dado un pedido no enviado<br>Cuando cambio la cantidad, quito, agrego o reemplazo un producto<br>Entonces el inventario se ajusta y el cambio queda en la bitácora<br>Y el reemplazo solo se acepta por un producto de igual o menor valor, sin cobrar diferencia | Cumplido<br>Ajustado | Prueba «el reemplazo por uno de igual o menor precio conserva el precio pagado», «el reemplazo por uno más caro se rechaza, aunque sea por un centavo», «cada cambio queda en la bitácora con la línea anterior y la nueva». Regla de reemplazo decidida por el cliente (entrevista 2, punto 4). Probado en el panel el 9/11: cambiar la cantidad, reemplazar, agregar y quitar. Sin captura. |
+| Dado un pedido en tránsito o entregado<br>Cuando intento editarlo<br>Entonces el sistema lo rechaza | Cumplido | Prueba «un pedido en tránsito o finalizado ya no se edita y nada cambia». En el panel los controles quedan bloqueados con el motivo (probado el 9/11). Sin captura. |
+| Dado un pedido<br>Cuando lo cancelo<br>Entonces las unidades vuelven al inventario<br>Y solo el administrador puede cancelar, el cliente no | Cumplido<br>Ajustado | Captura `pedidos/mis-pedidos/pedido-cancelado.png`. Prueba «RF-28: cancelar devuelve lo que salió del inventario y no lo que quedó en contrapedido», «solo el administrador cambia el estado: el cliente no puede cancelar su pedido». Decisión del cliente (entrevista 2, punto 2): en el SRS el cliente podía cancelar. |
+| Dada una venta por WhatsApp, Facebook, teléfono o presencial<br>Cuando la registro con sus productos<br>Entonces se crea un pedido con su canal y quién lo creó, y descuenta el inventario | Cumplido | Captura `ventas/registro/venta-en-curso.png`, `ventas/registro/venta-registrada-con-alerta.png`, `ventas/registro/venta-presencial-en-pedidos.png`. Prueba «HU-09: una venta por WhatsApp de dos productos es un solo pedido que descuenta el inventario». |
 
 ## PB-31 — Créditos a favor del cliente · Parcial
 
@@ -151,7 +151,7 @@ Usar el crédito en el pago estaba planeado para el Sprint 3, pero entró en est
 
 | Criterio | Estado | Evidencia y notas |
 |---|---|---|
-| Dado un pedido pagado<br>Cuando el administrador quita o reduce una línea<br>Entonces se registra un crédito por el monto pagado de esa línea y no se devuelve dinero | Parcial | Captura `pedidos/mis-pedidos/pedido-cancelado.png` (PR #123). Prueba «en un pedido pagado, lo que se quita queda como crédito con impuesto», «cancelar un pedido pagado deja a favor lo cobrado que no se había acreditado». Al cancelar ya funciona desde el panel; quitar o reducir una línea espera la pantalla de edición (SCRUM-143). |
+| Dado un pedido pagado<br>Cuando el administrador quita o reduce una línea<br>Entonces se registra un crédito por el monto pagado de esa línea y no se devuelve dinero | Cumplido | Captura `pedidos/mis-pedidos/pedido-cancelado.png`. Prueba «en un pedido pagado, lo que se quita queda como crédito con impuesto», «cancelar un pedido pagado deja a favor lo cobrado que no se había acreditado». Probado en el panel el 9/11: bajar la cantidad de una línea dejó el crédito. |
 | Dado que tengo crédito<br>Cuando entro a «Mi cuenta»<br>Entonces veo mi saldo y de qué pedido salió | Parcial | Prueba «el cliente ve su saldo a favor con lo que le otorgaron y lo que usó». El servidor manda el saldo y el checkout lo usa, pero la página Mi cuenta todavía no lo muestra. |
 | Dado que tengo crédito<br>Cuando quiero retirarlo<br>Entonces no se puede retirar en efectivo | Cumplido | Prueba «con crédito suficiente el pedido se paga sin pasarela y sin medio de pago», «con crédito parcial se cobra solo la diferencia con el otro medio». No hay ninguna ruta ni pantalla para retirarlo, solo se usa al pagar. |
 
@@ -179,8 +179,6 @@ Las tres historias que no venían del Sprint 0, con su estimación. La actualiza
 
 | Historia | Falta | Tarea |
 |---|---|---|
-| HU-17 y PB-31 | Pantalla para editar las líneas de un pedido | SCRUM-143 (en progreso) |
-| HU-17 | Pantalla para registrar un pedido manual | SCRUM-144 (en progreso) |
 | HU-02 | Enviar el correo de recuperación de verdad, hoy el enlace va al log del servidor | Sin tarea propia, ver `revisar.md` |
 | HU-12 | Cargar la cédula jurídica y la dirección del negocio en `facturacion.emisor` | Depende de los datos del cliente |
 | PB-31 | Mostrar el saldo a favor y de qué pedido salió en Mi cuenta | Sin tarea propia |

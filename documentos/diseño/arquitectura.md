@@ -500,6 +500,9 @@ Aplicaciones concretas:
 - **RNF-10**: `exigirRol` publica el evento `acceso_denegado` antes de cortar, para
   que el 100 % de los accesos no autorizados quede documentado. El middleware no sabe
   cómo se guarda la auditoría: eso le toca al observador de bitácora (§ 6.2).
+- **Empleados**: un empleado es un administrador más para `exigirRol`; lo que solo
+  hace el dueño usa `exigirPropietario` en su lugar, que también responde 403 y publica
+  `acceso_denegado`.
 - El manejador de errores es el último eslabón y el único que decide códigos HTTP,
   traduciendo errores de dominio a respuestas.
 
@@ -547,16 +550,24 @@ catálogo se le atribuye a Mediator.
 ### 6.4 State — variante tabular
 
 Los estados son los que fija RF-26 (colocado, procesado, en tránsito, finalizado), más
-el estado cancelado que introduce RF-28:
+el estado cancelado que introduce RF-28 y «en disputa», que pidió el cliente en la
+entrevista 2 para marcar un pedido con un problema mientras se resuelve:
 
 ```mermaid
 stateDiagram-v2
     [*] --> colocado : RF-25
-    colocado --> procesado : RF-36 exige pago previo si el nivel es menor a 3
+    colocado --> procesado
     colocado --> cancelado : RN-15
     procesado --> en_transito : despacho (RF-63)
     procesado --> cancelado : RN-15
     en_transito --> finalizado
+    colocado --> en_disputa
+    procesado --> en_disputa
+    en_transito --> en_disputa
+    en_disputa --> colocado : vuelve al estado anterior
+    en_disputa --> procesado : vuelve al estado anterior
+    en_disputa --> en_transito : vuelve al estado anterior
+    en_disputa --> cancelado : si el anterior se podía cancelar
     cancelado --> [*]
     finalizado --> [*]
 
@@ -565,6 +576,12 @@ stateDiagram-v2
         cancelar (RN-15, RF-28)
     end note
 ```
+
+«En disputa» entra desde cualquier estado que no sea final y solo sale al estado en
+que estaba el pedido, que se lee del historial, o a cancelado si ese estado todavía se
+podía cancelar. Solo el administrador cambia estados y cancela; el cliente no tiene
+ruta para hacerlo (entrevista 2, punto 2). La regla de RF-36 (pago previo según el
+nivel) todavía no se aplica, porque el nivel de fidelidad no existe.
 
 Las transiciones legales viven en una **tabla** dentro de un solo archivo del módulo
 de pedidos, no repartidas en condicionales por todo el servicio. RN-15 —"cancelable
@@ -1149,23 +1166,33 @@ apps/client/
 └── src/
     ├── main.jsx                 Montaje de React
     ├── App.jsx                  Proveedores + mapa de rutas (el panel va detrás de AdminRoute)
-    ├── routes.js                Funciones que arman las rutas del catálogo y de la ficha
+    ├── routes.js                Funciones que arman las rutas de la tienda
     ├── estilos/                 Sistema de diseño: tokens · base · componentes
     ├── components/              Presentacionales, una carpeta por componente
-    │                            (header, footer, product-card, product-table, product-form, ...)
-    ├── pages/                   Una por ruta; son los contenedores
-    │                            (home, catalog, product-detail, access, products)
-    ├── hooks/                   useCatalogo · useProducto · useCategorias · useSesion · ...
+    │                            (header, footer, product-card, product-table, product-form,
+    │                            add-to-cart, quantity-stepper, pagination, import-excel,
+    │                            inventory-alerts, admin-route, session-route, client-route, ...)
+    ├── pages/                   Una carpeta por área; son los contenedores
+    │   ├── home/ · catalog/ · product-detail/    Tienda
+    │   ├── access/                                Iniciar sesión, crear cuenta y recuperar la contraseña
+    │   ├── my-account/ · my-orders/               Lo del cliente
+    │   ├── cart/ · checkout/ · invoice/           Carrito, finalizar la compra y factura
+    │   └── products/ · families/ · merchandise/ · orders/ · sales/ · settings/    Panel
+    ├── hooks/                   useCatalogo · useProducto · useSesion · useCarrito ·
+    │                            usePedidosAdmin · useFormulario · useRecursoRemoto · ...
     ├── api/                     clienteHttp + endpoints por módulo
-    └── context/                 Estado compartido: la sesión del usuario
+    │                            (catalogo, clientes, carrito, pedidos, inventario, sesion,
+    │                            importaciones, empleados, bitacora)
+    ├── utils/                   Funciones puras con sus pruebas (validarCampos, carrito, checkout, ...)
+    └── context/                 Estado compartido: la sesión del usuario y el carrito
 ```
 
 En el frontend, la separación equivalente a las capas del servidor es
 **Contenedor/Presentacional** (§ 3.3): `components/` no conoce el origen de los datos,
 `pages/` resuelve los datos con los hooks, y `api/` es el único lugar que habla con la
 red. La regla verificable en revisión de código: **ningún componente de `components/`
-importa de `api/`**. Cuando se implemente el carrito, se persiste en la base de datos
-(RF-24) y el contexto de React solo mantiene la copia que se muestra.
+importa de `api/`**. El carrito se persiste en la base de datos (RF-24) y el contexto
+de React solo mantiene la copia que se muestra.
 
 ### 11.2 `apps/server/`
 
@@ -1179,24 +1206,36 @@ apps/server/
 ├── shared/
 │   ├── db/                      Pool · Unit of Work
 │   ├── eventos/                 Observer: bus y catálogo de eventos
+│   ├── bitacora/                Observador que guarda los eventos de auditoría
+│   ├── cuentas/                 Cuenta para las ventas a alguien sin cuenta
 │   ├── errores/                 Errores de dominio (sin conocimiento de HTTP)
+│   ├── validacion/              Reúne todos los problemas de un formulario en un solo error
 │   └── http/                    Chain of Responsibility: middlewares
 └── modules/
     ├── catalogo/                Primer módulo implementado; sirve de plantilla para los demás
     │   └── precio/              Strategy compuesta (Pipes & Filters)
-    ├── admin/                   Sesión e importación implementadas + observador de bitácora
+    ├── admin/                   Sesión, contraseñas, importación, empleados y consulta de la bitácora
     │   ├── importacion/         Template Method
-    │   └── seguridad/           Hash de contraseñas y tokens de sesión
+    │   ├── empleados/           Validación de las cuentas de empleados
+    │   ├── bitacora/            Validación de la consulta de la bitácora
+    │   └── seguridad/           Hash de contraseñas, tokens y política de contraseñas
     ├── inventario/              Núcleo (RES-07)
     │   └── suscriptores/        Observador de alertas
     ├── pedidos/
+    │   ├── carrito/             Carrito del cliente
+    │   ├── confirmacion/        Validación de lo que manda el checkout
+    │   ├── entrega/             Modalidades de entrega y su costo
+    │   ├── administracion/      Validación de las consultas y cambios del panel
+    │   ├── edicion/             Editar las líneas de un pedido
+    │   ├── manual/              Pedidos manuales de otros canales
+    │   ├── creditos/            Crédito a favor por lo que se quita de un pedido pagado
     │   └── estados/             State (máquina de estados)
-    ├── clientes/                Strategy de descuento
+    ├── clientes/                Registro, Mi cuenta y saldo a favor
     ├── pagos/                   Bridge: interfaz + Adapter + Null Object
     │   └── adaptadores/
     ├── facturacion/             Bridge: interfaz + Adapter + Null Object
     │   └── adaptadores/
-    └── reportes/                Consultas de lectura sobre las vistas de reportes
+    └── reportes/                Consultas sobre las vistas de reportes (sin rutas todavía, HU-15)
 ```
 
 El equipo acordó implementar `catalogo` primero, completo en todas sus capas, para que
@@ -1234,7 +1273,20 @@ database/
 │   ├── 006_inventario.sql
 │   ├── 007_pedidos.sql
 │   ├── 008_pagos_facturacion.sql
-│   └── 009_reportes.sql                Vistas de solo lectura
+│   ├── 009_reportes.sql                Vistas de solo lectura
+│   ├── 010_alinear_eer.sql
+│   ├── 011_familias.sql
+│   ├── 012_estado_producto.sql
+│   ├── 013_inventario.sql
+│   ├── 014_pedidos_y_terminos.sql
+│   ├── 015_bitacora.sql
+│   ├── 016_empleados.sql
+│   ├── 017_creditos.sql
+│   ├── 018_tarifas_de_envio.sql
+│   ├── 019_emisor_de_facturas.sql
+│   ├── 020_cliente_sin_cuenta.sql
+│   ├── 021_recuperacion_de_contrasena.sql
+│   └── 022_telefono_del_destinatario.sql
 ├── semillas/
 │   └── demo/                    Datos de prueba para desarrollo y evidencias
 ├── pruebas/                     SQL que verifica restricciones e invariantes (npm run db:test)
