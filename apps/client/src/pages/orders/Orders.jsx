@@ -132,12 +132,12 @@ function Orders() {
                     </p>
 
                     <div className='product-table-wrapper'>
-                        <table className='product-table'>
+                        <table className='product-table orders-table'>
                             <thead>
                                 <tr>
-                                    <th scope='col'>N.º</th>
+                                    <th scope='col' className='orders-client'>Cliente</th>
+                                    <th scope='col'>Pedido</th>
                                     <th scope='col'>Fecha</th>
-                                    <th scope='col'>Cliente</th>
                                     <th scope='col'>Productos</th>
                                     <th scope='col'>Canal</th>
                                     <th scope='col' className='product-table-number'>Total</th>
@@ -153,25 +153,34 @@ function Orders() {
                                         className='orders-row'
                                         onClick={() => openOrder(order)}
                                     >
+                                        {/* El número es por cliente: el correo de esta columna es lo que lo distingue */}
+                                        <td className='orders-client'>
+                                            {order.cliente.nombre}
+                                            <span className='orders-secondary orders-email'>{order.correoCliente}</span>
+                                            {order.nombreDestinatario && (
+                                                <span className='orders-secondary'>Para {order.nombreDestinatario}</span>
+                                            )}
+                                        </td>
                                         <td>
                                             <Link
                                                 className='orders-number codigo'
                                                 to={adminOrderPath(order.correoCliente, order.numCarrito)}
                                                 state={backState(location)}
-                                                aria-label={`Ver el pedido ${order.numCarrito} de ${order.cliente.nombre}`}
+                                                aria-label={`Ver el pedido #${order.numCarrito} de ${order.cliente.nombre}`}
                                                 onClick={(event) => event.stopPropagation()}
                                             >
-                                                {order.numCarrito}
+                                                #{order.numCarrito}
                                             </Link>
                                         </td>
                                         <td className='orders-nowrap'>{dateTimeFormat.format(new Date(order.fecha))}</td>
-                                        <td>
-                                            {order.cliente.nombre}
-                                            <span className='orders-secondary'>
-                                                {order.nombreDestinatario ? `Para ${order.nombreDestinatario}` : order.correoCliente}
-                                            </span>
+                                        {/* Se recorta a dos líneas; la lista completa queda en el title y en el detalle */}
+                                        <td className='orders-products'>
+                                            {order.productos.length > 0 ? (
+                                                <span className='orders-products-summary' title={resumenDeProductos(order.productos, Infinity)}>
+                                                    {resumenDeProductos(order.productos)}
+                                                </span>
+                                            ) : '—'}
                                         </td>
-                                        <td>{resumenDeProductos(order.productos) || '—'}</td>
                                         <td className='orders-nowrap'>{CANALES[order.canal] ?? order.canal}</td>
                                         <td className='product-table-number'>{priceFormat.format(order.total)}</td>
                                         <td><PaymentStatusChip estadoPago={order.estadoPago} /></td>

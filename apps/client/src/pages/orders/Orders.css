@@ -33,6 +33,36 @@ td > .orders-secondary {
   display: block;
 }
 
+/* Un ancho mínimo para que en pantallas angostas la tabla se desplace de lado
+   (ya lo hace .product-table-wrapper) en vez de apretar las columnas */
+.orders-table {
+  min-width: 960px;
+}
+
+/* Cliente: un correo largo se corta donde haga falta sin ensanchar la columna */
+.orders-client {
+  min-width: 180px;
+  max-width: 260px;
+}
+
+.orders-email {
+  overflow-wrap: anywhere;
+}
+
+/* Productos: el resumen se recorta a dos líneas con "..." */
+.orders-products {
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.orders-products-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
 /* Detalle */
 
 .order-card {
@@ -313,5 +343,24 @@ td > .orders-secondary {
 @media (max-width: 800px) {
   .order-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Al desplazar la tabla de lado el cliente queda fijo, así cada número sigue junto a su dueño */
+  .orders-table .orders-client {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    min-width: 160px;
+    max-width: 200px;
+    background: var(--color-superficie);
+    box-shadow: inset -1px 0 0 var(--color-borde);
+  }
+
+  .orders-table th.orders-client {
+    background: var(--color-fondo);
+  }
+
+  .orders-table tbody tr:hover .orders-client {
+    background: var(--color-tinte);
   }
 }
