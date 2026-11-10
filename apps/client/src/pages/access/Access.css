@@ -179,18 +179,54 @@
   font-size: var(--texto-pequeno);
 }
 
-/* Dos campos en la misma fila (telefono y cedula), en celular se apilan */
-.access-row {
+/* Crear cuenta (SignUpForm.jsx): dos columnas en escritorio, como las filas de los
+   modales de producto. Las áreas ponen los requisitos debajo de las dos contraseñas,
+   aunque en el HTML van justo después de «Contraseña» (así quedan pegados a ella en celular).
+   minmax(0, 1fr) deja que las columnas se encojan sin desbordar la tarjeta */
+.access-signup-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    'nombre correo'
+    'contrasena confirmar'
+    'requisitos requisitos'
+    'telefono cedula'
+    'direccion direccion';
+  gap: 20px;
+  align-items: start;
+}
+
+.access-area-nombre { grid-area: nombre; }
+.access-area-correo { grid-area: correo; }
+.access-area-contrasena { grid-area: contrasena; }
+.access-area-confirmar { grid-area: confirmar; }
+.access-area-requisitos { grid-area: requisitos; }
+.access-area-telefono { grid-area: telefono; }
+.access-area-cedula { grid-area: cedula; }
+.access-area-direccion { grid-area: direccion; }
+
+/* Requisitos en pastillas con su título en la misma línea si cabe; pegados a las contraseñas */
+.access-password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: -8px;
+  color: var(--color-texto-suave);
+  font-size: var(--texto-etiqueta);
 }
 
 /* Ayuda debajo de un campo, por ejemplo para que se pide la cedula */
 .access-hint {
-  margin-top: -12px;
   color: var(--color-texto-suave);
   font-size: var(--texto-etiqueta);
+  font-weight: 400;
+}
+
+/* Al enfocar un campo (o al saltar al primer error) queda aire arriba y abajo,
+   así no lo tapan el borde de la pantalla ni el teclado del celular */
+.access-field input {
+  scroll-margin-block: 24px 96px;
 }
 
 .access-terms {
@@ -306,8 +342,14 @@
 }
 
 @media (max-width: 640px) {
-  .access-row {
-    grid-template-columns: 1fr;
+  /* Una columna en el orden del HTML: los requisitos quedan debajo de «Contraseña» */
+  .access-signup-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+  }
+
+  .access-signup-grid > * {
+    grid-area: auto;
   }
 
   .access-form {

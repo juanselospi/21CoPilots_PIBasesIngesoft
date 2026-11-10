@@ -64,6 +64,20 @@
   border-radius: var(--radio-modal);
   background: var(--color-superficie);
   box-shadow: var(--sombra);
+  transition: max-width 200ms ease;
+}
+
+/* Crear cuenta tiene muchos campos y va más ancha, en dos columnas; iniciar sesión y
+   las demás pantallas se quedan angostas. Al cambiar de pestaña el ancho se ajusta con
+   una transición corta; en celular las dos ocupan todo el ancho y no se mueve nada */
+.access-card:has(.access-form-wide) {
+  max-width: 840px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-card {
+    transition: none;
+  }
 }
 
 /* En celular no caben las tres cosas en una fila, asi que "Volver a la tienda" baja a la siguiente */

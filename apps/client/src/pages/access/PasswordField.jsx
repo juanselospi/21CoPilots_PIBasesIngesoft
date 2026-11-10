@@ -3,12 +3,13 @@ import { Eye, EyeOff } from 'lucide-react'
 
 // Input de contraseña con el boton para mostrarla u ocultarla, igual al de iniciar sesion.
 // Lo usan crear cuenta, restablecer contraseña y agregar empleado; `children` va debajo del error (por ejemplo los requisitos)
-function PasswordField({ label, value, onChange, disabled, inputAttributes, error, errorId, children }) {
+// `className` agrega clases al contenedor (por ejemplo su lugar en una cuadrícula)
+function PasswordField({ label, value, onChange, disabled, inputAttributes, error, errorId, className, children }) {
     const [visible, setVisible] = useState(false)
     const inputId = useId()
 
     return (
-        <div className='access-field'>
+        <div className={className ? `access-field ${className}` : 'access-field'}>
             <label htmlFor={inputId}>{label}</label>
             <div className='access-password'>
                 <input

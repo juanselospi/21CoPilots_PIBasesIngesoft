@@ -51,7 +51,6 @@ function SignUpForm({ backTo, onLogIn }) {
     const [sending, setSending] = useState(false)
     const [error, setError] = useState(null)
     const rulesId = useId()
-    const cedulaHintId = useId()
     const termsId = useId()
 
     const handleSubmit = async (event) => {
@@ -91,12 +90,15 @@ function SignUpForm({ backTo, onLogIn }) {
     }
 
     // Los inputs de texto comunes, el de contraseña y la casilla van aparte.
-    // El error queda fuera del label para que no se lea como parte del nombre del campo
-    const textField = (campo, label, { type = 'text', autoComplete, inputMode, placeholder, hintId } = {}) => {
+    // El error queda fuera del label para que no se lea como parte del nombre del campo.
+    // Cada campo lleva su área en la cuadrícula (access-area-<campo>, en Access.css).
+    // `hint` es una ayuda debajo del input, ligada por aria-describedby.
+    const textField = (campo, label, { type = 'text', autoComplete, inputMode, placeholder, hint, ...extra } = {}) => {
         const atributos = atributosCampo(campo)
         const inputId = `${idError(campo)}-input`
+        const hintId = `${inputId}-ayuda`
         return (
-            <div className='access-field'>
+            <div className={`access-field access-area-${campo}`}>
                 <label htmlFor={inputId}>{label}</label>
                 <input
                     id={inputId}
@@ -104,61 +106,75 @@ function SignUpForm({ backTo, onLogIn }) {
                     autoComplete={autoComplete}
                     inputMode={inputMode}
                     placeholder={placeholder}
-                    {...(hintId ? withDescription(atributos, hintId) : atributos)}
+                    {...extra}
+                    {...(hint ? withDescription(atributos, hintId) : atributos)}
                     value={valores[campo]}
                     onChange={(event) => setField(campo, event.target.value)}
                     disabled={sending}
                 />
                 {errores[campo] && <p id={idError(campo)} className='access-field-error'>{errores[campo]}</p>}
+                {hint && <p id={hintId} className='access-hint'>{hint}</p>}
             </div>
         )
     }
 
     return (
-        <form ref={formularioRef} className='access-form' onSubmit={handleSubmit} noValidate>
+        <form ref={formularioRef} className='access-form access-form-wide' onSubmit={handleSubmit} noValidate>
             <div className='access-heading'>
                 <h1>Crear cuenta</h1>
                 <p>Empiezas en nivel 1. Con cada compra subes de nivel y obtienes descuentos.</p>
             </div>
 
-            {error && <p className='access-error' role='alert'>{error}</p>}
+            {/* Dos columnas en escritorio y una en celular (Access.css). Los requisitos van
+                después de «Contraseña» para que en celular queden pegados a ella; en escritorio
+                la cuadrícula los pasa debajo de las dos contraseñas */}
+            <div className='access-signup-grid'>
+                {textField('nombre', 'Nombre completo', {
+                    autoComplete: 'name', autoCapitalize: 'words', placeholder: 'Nombre y apellidos',
+                })}
+                {textField('correo', 'Correo electrónico', {
+                    type: 'email', autoComplete: 'email', autoCapitalize: 'none', spellCheck: false,
+                    placeholder: 'nombre@correo.com',
+                })}
 
-            {textField('nombre', 'Nombre completo', { autoComplete: 'name', placeholder: 'Nombre y apellidos' })}
-            {textField('correo', 'Correo electrónico', { type: 'email', autoComplete: 'email', placeholder: 'nombre@correo.com' })}
+                <PasswordField
+                    className='access-area-contrasena'
+                    label='Contraseña'
+                    value={valores.contrasena}
+                    onChange={(valor) => setField('contrasena', valor)}
+                    disabled={sending}
+                    inputAttributes={withDescription(atributosCampo('contrasena'), rulesId)}
+                    error={errores.contrasena}
+                    errorId={idError('contrasena')}
+                />
 
-            <PasswordField
-                label='Contraseña'
-                value={valores.contrasena}
-                onChange={(valor) => setField('contrasena', valor)}
-                disabled={sending}
-                inputAttributes={withDescription(atributosCampo('contrasena'), rulesId)}
-                error={errores.contrasena}
-                errorId={idError('contrasena')}
-            >
-                <PasswordRules id={rulesId} value={valores.contrasena} />
-            </PasswordField>
+                <div id={rulesId} className='access-password-rules access-area-requisitos'>
+                    <span>La contraseña debe incluir:</span>
+                    <PasswordRules value={valores.contrasena} compact />
+                </div>
 
-            <PasswordField
-                label='Confirmar contraseña'
-                value={valores.confirmarContrasena}
-                onChange={(valor) => setField('confirmarContrasena', valor)}
-                disabled={sending}
-                inputAttributes={atributosCampo('confirmarContrasena')}
-                error={errores.confirmarContrasena}
-                errorId={idError('confirmarContrasena')}
-            />
+                <PasswordField
+                    className='access-area-confirmar'
+                    label='Confirmar contraseña'
+                    value={valores.confirmarContrasena}
+                    onChange={(valor) => setField('confirmarContrasena', valor)}
+                    disabled={sending}
+                    inputAttributes={atributosCampo('confirmarContrasena')}
+                    error={errores.confirmarContrasena}
+                    errorId={idError('confirmarContrasena')}
+                />
 
-            {/* Telefono y cedula en la misma fila como en el wireframe, en celular se apilan */}
-            <div className='access-row'>
                 {textField('telefono', 'Teléfono', { type: 'tel', autoComplete: 'tel', placeholder: '8888-8888' })}
-                {textField('cedula', 'Cédula', { inputMode: 'numeric', placeholder: '0-0000-0000', hintId: cedulaHintId })}
-            </div>
-            <p id={cedulaHintId} className='access-hint'>La cédula se necesita para la factura.</p>
+                {textField('cedula', 'Cédula', {
+                    inputMode: 'numeric', autoComplete: 'off', placeholder: '0-0000-0000',
+                    hint: 'La cédula se necesita para la factura.',
+                })}
 
-            {textField('direccion', 'Dirección', {
-                autoComplete: 'street-address',
-                placeholder: 'Provincia, cantón, distrito y otras señas',
-            })}
+                {textField('direccion', 'Dirección', {
+                    autoComplete: 'street-address',
+                    placeholder: 'Provincia, cantón, distrito y otras señas',
+                })}
+            </div>
 
             <div className='access-terms'>
                 <label className='access-checkbox'>
@@ -185,6 +201,9 @@ function SignUpForm({ backTo, onLogIn }) {
                     </p>
                 </details>
             </div>
+
+            {/* Junto al botón: al enviar, la vista está aquí y no arriba del formulario */}
+            {error && <p className='access-error' role='alert'>{error}</p>}
 
             <button type='submit' className='access-submit' disabled={sending}>
                 {sending ? 'Creando cuenta…' : 'Crear cuenta'}
