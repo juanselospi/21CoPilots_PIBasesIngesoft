@@ -29,6 +29,10 @@ export const configuracion = Object.freeze({
     duracionMinutos: numero(process.env.DURACION_SESION_MINUTOS, 25),
     renovar: process.env.SESION_RENOVAR === "true",
     cookieSegura: process.env.NODE_ENV === "production",
+    // Tras tantos intentos fallidos con un correo dentro de la ventana, ese correo espera el bloqueo
+    intentosMaximos: numero(process.env.INTENTOS_DE_INICIO_MAXIMOS, 5),
+    ventanaDeIntentosMinutos: numero(process.env.VENTANA_DE_INTENTOS_MINUTOS, 15),
+    bloqueoMinutos: numero(process.env.BLOQUEO_DE_INICIO_MINUTOS, 10),
   }),
 
   /**

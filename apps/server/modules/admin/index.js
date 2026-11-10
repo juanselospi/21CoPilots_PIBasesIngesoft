@@ -15,6 +15,7 @@ import { crearRecibirExcel } from "./importacion/recibir-excel.js";
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 import { hashearContrasena } from "./seguridad/contrasenas.js";
 import { correoDeRecuperacion } from "./seguridad/correo-de-recuperacion.js";
+import { crearLimiteDeIntentos } from "./seguridad/limite-de-intentos.js";
 import { crearExigirPropietario } from "../../shared/http/autorizacion-por-rol.js";
 
 export function crearModuloAdmin({
@@ -44,6 +45,11 @@ export function crearModuloAdmin({
     recuperacion,
     avisarEnlace: (para, enlace) =>
       enviadorDeCorreo.enviar(correoDeRecuperacion({ para, enlace, duracionMinutos: recuperacion.duracionMinutos })),
+    limiteDeIntentos: crearLimiteDeIntentos({
+      maximo: sesion.intentosMaximos,
+      ventanaMinutos: sesion.ventanaDeIntentosMinutos,
+      bloqueoMinutos: sesion.bloqueoMinutos,
+    }),
   });
   const controlador = new AdminController({
     servicio,
