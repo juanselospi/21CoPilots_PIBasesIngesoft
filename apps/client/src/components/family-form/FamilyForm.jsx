@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { X } from 'lucide-react'
 // Mismo aspecto que los modales de producto
 import '../product-form/ProductForm.css'
-import { priceRules, readPriceInput } from '../product-form/priceFields.js'
+import { percentHelp, priceRules, readPriceInput } from '../product-form/priceFields.js'
+import InfoTip from '../info-tip/InfoTip.jsx'
+import InputUnit from '../input-unit/InputUnit.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import { productCountText } from '../../pages/families/toAdminFamily.js'
 
 // Porcentajes que usan los productos de la familia que no tienen uno propio
 const percentFields = [
-    { key: 'importacionPct', label: 'Importación', allowNegative: false },
-    { key: 'margenPct', label: 'Margen', allowNegative: true },
+    { key: 'importacionPct', label: 'Importación (%)', allowNegative: false },
+    { key: 'margenPct', label: 'Margen (%)', allowNegative: true },
 ]
 const percentKeys = percentFields.map(({ key }) => key)
 
@@ -39,6 +41,7 @@ function FamilyForm({ family, onClose, onSave }) {
     } = useFormulario(() => valuesOf(family), rulesFor(editing))
     const [saving, setSaving] = useState(false)
     const [saveError, setSaveError] = useState(null)
+    const formId = useId()
 
     // Al editar solo se envía lo que cambió
     const initial = valuesOf(family)
@@ -142,11 +145,18 @@ function FamilyForm({ family, onClose, onSave }) {
                     {fieldError('description')}
                 </label>
 
+                {/* No es un <label> que envuelve: el texto de la ayuda quedaría en el nombre del input */}
                 {percentFields.map(({ key, label, allowNegative }) => (
-                    <label key={key} className='product-form-field'>
-                        <span>{label}{!editing && <small className='product-form-optional'> (opcional)</small>}</span>
+                    <div key={key} className='product-form-field'>
+                        <span className='product-form-label-help'>
+                            <label htmlFor={`${formId}-${key}`}>
+                                {label}{!editing && <small className='product-form-optional'> (opcional)</small>}
+                            </label>
+                            <InfoTip label={label}>{percentHelp[key]}</InfoTip>
+                        </span>
                         <div className='product-form-input'>
                             <input
+                                id={`${formId}-${key}`}
                                 type='text'
                                 inputMode='decimal'
                                 disabled={saving}
@@ -155,10 +165,10 @@ function FamilyForm({ family, onClose, onSave }) {
                                 value={values[key]}
                                 onChange={(event) => handlePercentChange(key, allowNegative, event.target.value)}
                             />
-                            <span>%</span>
+                            <InputUnit unit='%' />
                         </div>
                         {fieldError(key)}
-                    </label>
+                    </div>
                 ))}
 
                 {editing && family.productCount > 0 && (

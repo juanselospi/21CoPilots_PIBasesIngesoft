@@ -4,6 +4,7 @@ import { readStockInput } from '../../components/product-form/stockInput.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import Notice from '../../components/notice/Notice.jsx'
 import { adjustmentModes, signedUnitsText, unitsText } from './merchandiseFormat.js'
+import InputUnit from '../../components/input-unit/InputUnit.jsx'
 
 // «Dejar en» acepta 0 (se acabó todo); sumar y restar piden al menos una unidad
 const rulesFor = (mode) => ({
@@ -123,7 +124,7 @@ function AdjustmentForm({ product, onRegister, onPreview }) {
                             value={values.cantidad}
                             onChange={(event) => setField('cantidad', readStockInput(event.target.value))}
                         />
-                        <span>unidades</span>
+                        <InputUnit unit='unidades' />
                     </div>
                     {fieldError('cantidad')}
                 </label>

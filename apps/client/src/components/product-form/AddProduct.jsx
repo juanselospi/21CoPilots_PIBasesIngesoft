@@ -1,9 +1,11 @@
 import { useEffect, useId, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import './ProductForm.css'
-import { priceFields, priceRules, readPriceInput } from './priceFields.js'
+import { percentHelp, priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
 import FamilyForm from '../family-form/FamilyForm.jsx'
+import InfoTip from '../info-tip/InfoTip.jsx'
+import InputUnit from '../input-unit/InputUnit.jsx'
 import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import ModalPresence from '../modal-presence/ModalPresence.jsx'
@@ -23,7 +25,7 @@ const [supplierField, imageField] = detailFields
 
 // Importación y margen vacíos: el producto usa los de su familia
 const inheritableFields = ['importacionPct', 'margenPct']
-const inheritedLabel = { importacionPct: 'la importación', margenPct: 'el margen' }
+const inheritedLabel = Object.fromEntries(priceFields.map(({ key, shortLabel }) => [key, shortLabel]))
 
 const fieldRules = {
     ...Object.fromEntries([...identityFields, ...detailFields].map(({ key, required, type }) => [key, { obligatorio: required, tipo: type }])),
@@ -64,6 +66,7 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
     // Familias creadas desde aquí; se muestran aunque la lista todavía se esté recargando
     const [newFamilies, setNewFamilies] = useState([])
     const familySelectId = useId()
+    const formId = useId()
 
     const familyOptions = [
         ...families.filter(({ active }) => active),
@@ -104,11 +107,18 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
         return result
     }
 
-    // «Hereda 25 % de Coleccionables» debajo de importación y margen cuando quedan vacíos
+    // Debajo de importación y margen: qué porcentaje se aplica si quedan vacíos, con el
+    // valor real de la familia elegida, o que el escrito es propio del producto
     const inheritHint = (key) => {
-        if (!inheritableFields.includes(key) || values[key] !== '') return null
-        if (!hasValue(family?.[key])) return 'Vacío: usa el de la familia.'
-        return `Hereda ${family[key]} % de ${family.name}`
+        const familyValue = hasValue(family?.[key]) ? `${family[key]}\u00a0%` : null
+        if (values[key] !== '') {
+            return familyValue
+                ? `Valor propio. Bórrelo para usar ${familyValue} de la familia ${family.name}.`
+                : 'Valor propio. Bórrelo para usar el de la familia.'
+        }
+        if (!family) return 'Vacío: se usará el de la familia que elija.'
+        if (!familyValue) return `Vacío: se usará el de ${family.name}.`
+        return `Se aplicará ${familyValue} de la familia ${family.name}.`
     }
 
     const handleSubmit = async (event) => {
@@ -281,24 +291,47 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
 
                         <section className='product-form-prices'>
                             {priceFields.map(({ key, label, unit, allowNegative }) => {
-                                const hint = inheritHint(key)
+                                const inheritable = inheritableFields.includes(key)
+                                const inputId = `${formId}-${key}`
+                                const hintId = `${inputId}-ayuda`
+                                const attributes = atributosCampo(key)
+                                const input = (
+                                    <div className='product-form-input'>
+                                        <input
+                                            id={inputId}
+                                            type='text'
+                                            inputMode='decimal'
+                                            disabled={saving}
+                                            placeholder={inheritable && hasValue(family?.[key]) ? String(family[key]) : undefined}
+                                            {...attributes}
+                                            aria-describedby={attributes['aria-describedby'] ?? (inheritable ? hintId : undefined)}
+                                            value={values[key]}
+                                            onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
+                                        />
+                                        <InputUnit unit={unit} />
+                                    </div>
+                                )
+
+                                if (!inheritable) {
+                                    return (
+                                        <label key={key} className='product-form-field'>
+                                            <span>{label}</span>
+                                            {input}
+                                            {fieldError(key)}
+                                        </label>
+                                    )
+                                }
+
+                                // No es un <label> que envuelve: el texto de la ayuda quedaría en el nombre del input
                                 return (
-                                    <label key={key} className='product-form-field'>
-                                        <span>{label}</span>
-                                        <div className='product-form-input'>
-                                            <input
-                                                type='text'
-                                                inputMode='decimal'
-                                                disabled={saving}
-                                                placeholder={inheritableFields.includes(key) && hasValue(family?.[key]) ? String(family[key]) : undefined}
-                                                {...atributosCampo(key)}
-                                                value={values[key]}
-                                                onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
-                                            />
-                                            <span>{unit}</span>
-                                        </div>
-                                        {fieldError(key) || (hint && <p className='product-form-hint'>{hint}</p>)}
-                                    </label>
+                                    <div key={key} className='product-form-field'>
+                                        <span className='product-form-label-help'>
+                                            <label htmlFor={inputId}>{label}</label>
+                                            <InfoTip label={label}>{percentHelp[key]}</InfoTip>
+                                        </span>
+                                        {input}
+                                        {fieldError(key) || <p id={hintId} className='product-form-hint'>{inheritHint(key)}</p>}
+                                    </div>
                                 )
                             })}
                         </section>
