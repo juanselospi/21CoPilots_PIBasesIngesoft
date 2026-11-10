@@ -1,0 +1,67 @@
+/* Entrada y salida de todos los modales: los de producto, familia, empleado y alertas
+   (.product-form-*), las confirmaciones, ventas y el buscador de pedidos (.confirm-dialog*)
+   y la carga de Excel (.import-excel-*).
+   El fondo se desvanece y la tarjeta, que va dentro, se desvanece con él mientras crece
+   un poco (0.98 → 1) y sube 8px. La tarjeta no anima su propia opacidad: se sumaría a la
+   del fondo y aparecería más tarde. Solo se animan opacity y transform. */
+
+:is(.product-form-overlay, .confirm-dialog-overlay, .import-excel-overlay) {
+  --modal-entrada: 220ms;
+  --modal-salida: 180ms;
+  animation: modal-fondo-entrar var(--modal-entrada) ease-out;
+}
+
+:is(.product-form-modal, .confirm-dialog, .import-excel-modal) {
+  animation: modal-entrar var(--modal-entrada) ease-out;
+}
+
+/* No ocupa lugar en la página: el modal es fixed y se ubica igual que sin el envoltorio */
+.modal-presence {
+  display: contents;
+}
+
+/* Salida (ModalPresence.jsx): `forwards` deja el modal oculto hasta que se desmonta */
+.modal-presence[data-closing] :is(.product-form-overlay, .confirm-dialog-overlay, .import-excel-overlay) {
+  animation: modal-fondo-salir var(--modal-salida) ease-in forwards;
+}
+
+.modal-presence[data-closing] :is(.product-form-modal, .confirm-dialog, .import-excel-modal) {
+  animation: modal-salir var(--modal-salida) ease-in forwards;
+}
+
+@keyframes modal-fondo-entrar {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-fondo-salir {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-entrar {
+  from {
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes modal-salir {
+  to {
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* Con menos movimiento queda solo el desvanecido, más corto y sin desplazamiento ni escala */
+@media (prefers-reduced-motion: reduce) {
+  :is(.product-form-overlay, .confirm-dialog-overlay, .import-excel-overlay) {
+    --modal-entrada: 150ms;
+    --modal-salida: 120ms;
+  }
+
+  :is(.product-form-modal, .confirm-dialog, .import-excel-modal),
+  .modal-presence[data-closing] :is(.product-form-modal, .confirm-dialog, .import-excel-modal) {
+    animation: none;
+  }
+}

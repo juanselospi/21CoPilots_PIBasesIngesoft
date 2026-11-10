@@ -6,6 +6,7 @@ import StockFields from './StockFields.jsx'
 import FamilyForm from '../family-form/FamilyForm.jsx'
 import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 
 // Datos del producto; los marcados como obligatorios también los exige el servidor.
 // El selector de familia va entre los dos grupos.
@@ -17,6 +18,8 @@ const detailFields = [
     { key: 'supplier', label: 'Proveedor' },
     { key: 'imageUrl', label: 'Imagen (dirección web)', type: 'url', placeholder: 'https://…' },
 ]
+// El proveedor va en la fila de la familia y la imagen ocupa todo el ancho
+const [supplierField, imageField] = detailFields
 
 // Importación y margen vacíos: el producto usa los de su familia
 const inheritableFields = ['importacionPct', 'margenPct']
@@ -159,39 +162,42 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
                 ? `${inheritedLabel[key]} (${createdFamily[key]} %)`
                 : inheritedLabel[key]))
 
+        // Mismo fragmento y mismo fondo que el formulario: React reusa el fondo y no se vuelve a desvanecer
         return (
-            <div className='product-form-overlay' onClick={close}>
-                <div
-                    className='product-form-modal'
-                    role='dialog'
-                    aria-modal='true'
-                    aria-labelledby='add-product-title'
-                    onClick={(event) => event.stopPropagation()}
-                >
-                    <header className='product-form-header'>
-                        <div>
-                            <h2 id='add-product-title'>Producto agregado</h2>
-                            <p>{created.sku} · {created.name}</p>
-                        </div>
-                        <button type='button' className='product-form-close' aria-label='Cerrar' onClick={close}>
-                            <X size={20} />
-                        </button>
-                    </header>
+            <>
+                <div className='product-form-overlay' onClick={close}>
+                    <div
+                        className='product-form-modal'
+                        role='dialog'
+                        aria-modal='true'
+                        aria-labelledby='add-product-title'
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <header className='product-form-header'>
+                            <div>
+                                <h2 id='add-product-title'>Producto agregado</h2>
+                                <p>{created.sku} · {created.name}</p>
+                            </div>
+                            <button type='button' className='product-form-close' aria-label='Cerrar' onClick={close}>
+                                <X size={20} />
+                            </button>
+                        </header>
 
-                    <p className='product-form-success' role='status'>
-                        Se guardó con precio final de {formatPrice(created.price)} y{' '}
-                        {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
-                        {inherited.length > 0 && ` Usa ${inherited.join(' y ')} de la familia ${created.category}.`}
-                    </p>
+                        <p className='product-form-success' role='status'>
+                            Se guardó con precio final de {formatPrice(created.price)} y{' '}
+                            {created.stock} {created.stock === 1 ? 'unidad' : 'unidades'} en existencia.
+                            {inherited.length > 0 && ` Usa ${inherited.join(' y ')} de la familia ${created.category}.`}
+                        </p>
 
-                    <footer className='product-form-actions'>
-                        <button type='button' className='product-form-button' onClick={addAnother}>Agregar otro</button>
-                        <button type='button' className='product-form-button product-form-button-primary' onClick={close}>
-                            Cerrar
-                        </button>
-                    </footer>
+                        <footer className='product-form-actions'>
+                            <button type='button' className='product-form-button' onClick={addAnother}>Agregar otro</button>
+                            <button type='button' className='product-form-button product-form-button-primary' onClick={close}>
+                                Cerrar
+                            </button>
+                        </footer>
+                    </div>
                 </div>
-            </div>
+            </>
         )
     }
 
@@ -218,105 +224,119 @@ function AddProduct({ families, formatPrice, onClose, onCreate, onCreateFamily }
                         </button>
                     </header>
 
-                    {identityFields.map(renderTextField)}
+                    {/* Solo esta parte se desplaza: el título y los botones quedan siempre a la vista */}
+                    <div className='product-form-body'>
+                        <div className='product-form-row'>
+                            {identityFields.map(renderTextField)}
+                        </div>
 
-                    {/* No es un <label> que envuelve: el botón «Crear familia» quedaría asociado a la etiqueta */}
-                    <div className='product-form-field'>
-                        <div className='product-form-label-row'>
-                            <label htmlFor={familySelectId}>Familia</label>
-                            <button
-                                type='button'
-                                className='product-form-link'
-                                disabled={saving}
-                                onClick={() => setCreatingFamily(true)}
-                            >
-                                <Plus size={14} />Crear familia
-                            </button>
+                        <div className='product-form-row'>
+                            {/* No es un <label> que envuelve: el botón «Crear familia» quedaría asociado a la etiqueta */}
+                            <div className='product-form-field'>
+                                <div className='product-form-label-row'>
+                                    <label htmlFor={familySelectId}>Familia</label>
+                                    <button
+                                        type='button'
+                                        className='product-form-link'
+                                        disabled={saving}
+                                        onClick={() => setCreatingFamily(true)}
+                                    >
+                                        <Plus size={14} />Crear familia
+                                    </button>
+                                </div>
+                                <div className='product-form-input'>
+                                    <Select
+                                        id={familySelectId}
+                                        disabled={saving}
+                                        {...atributosCampo('category')}
+                                        value={values.category}
+                                        onChange={(value) => setField('category', value)}
+                                        options={[
+                                            { value: '', label: 'Seleccione una familia' },
+                                            ...familyOptions.map(({ name }) => ({ value: name, label: name })),
+                                        ]}
+                                    />
+                                </div>
+                                {fieldError('category')}
+                            </div>
+
+                            {renderTextField(supplierField)}
                         </div>
-                        <div className='product-form-input'>
-                            <Select
-                                id={familySelectId}
-                                disabled={saving}
-                                {...atributosCampo('category')}
-                                value={values.category}
-                                onChange={(value) => setField('category', value)}
-                                options={[
-                                    { value: '', label: 'Seleccione una familia' },
-                                    ...familyOptions.map(({ name }) => ({ value: name, label: name })),
-                                ]}
-                            />
-                        </div>
-                        {fieldError('category')}
+
+                        {renderTextField(imageField)}
+
+                        <label className='product-form-field'>
+                            <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
+                            <div className='product-form-input'>
+                                <textarea
+                                    rows={3}
+                                    disabled={saving}
+                                    {...atributosCampo('description')}
+                                    value={values.description}
+                                    onChange={(event) => setField('description', event.target.value)}
+                                />
+                            </div>
+                            {fieldError('description')}
+                        </label>
+
+                        <section className='product-form-prices'>
+                            {priceFields.map(({ key, label, unit, allowNegative }) => {
+                                const hint = inheritHint(key)
+                                return (
+                                    <label key={key} className='product-form-field'>
+                                        <span>{label}</span>
+                                        <div className='product-form-input'>
+                                            <input
+                                                type='text'
+                                                inputMode='decimal'
+                                                disabled={saving}
+                                                placeholder={inheritableFields.includes(key) && hasValue(family?.[key]) ? String(family[key]) : undefined}
+                                                {...atributosCampo(key)}
+                                                value={values[key]}
+                                                onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
+                                            />
+                                            <span>{unit}</span>
+                                        </div>
+                                        {fieldError(key) || (hint && <p className='product-form-hint'>{hint}</p>)}
+                                    </label>
+                                )
+                            })}
+                        </section>
+
+                        <StockFields
+                            stock={values.stock}
+                            backorder={values.backorder}
+                            error={errors.stock}
+                            inputProps={atributosCampo('stock')}
+                            errorId={idError('stock')}
+                            disabled={saving}
+                            optional
+                            onChange={setField}
+                        />
                     </div>
 
-                    {detailFields.map(renderTextField)}
+                    {/* El aviso del servidor va junto a los botones para que se vea sin desplazar */}
+                    <div className='product-form-footer'>
+                        {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
 
-                    <label className='product-form-field'>
-                        <span>Descripción<small className='product-form-optional'> (opcional)</small></span>
-                        <div className='product-form-input'>
-                            <textarea
-                                rows={3}
-                                disabled={saving}
-                                {...atributosCampo('description')}
-                                value={values.description}
-                                onChange={(event) => setField('description', event.target.value)}
-                            />
-                        </div>
-                        {fieldError('description')}
-                    </label>
-
-                    <section className='product-form-prices'>
-                        {priceFields.map(({ key, label, unit, allowNegative }) => {
-                            const hint = inheritHint(key)
-                            return (
-                                <label key={key} className='product-form-field'>
-                                    <span>{label}</span>
-                                    <div className='product-form-input'>
-                                        <input
-                                            type='text'
-                                            inputMode='decimal'
-                                            disabled={saving}
-                                            placeholder={inheritableFields.includes(key) && hasValue(family?.[key]) ? String(family[key]) : undefined}
-                                            {...atributosCampo(key)}
-                                            value={values[key]}
-                                            onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
-                                        />
-                                        <span>{unit}</span>
-                                    </div>
-                                    {fieldError(key) || (hint && <p className='product-form-hint'>{hint}</p>)}
-                                </label>
-                            )
-                        })}
-                    </section>
-
-                    <StockFields
-                        stock={values.stock}
-                        backorder={values.backorder}
-                        error={errors.stock}
-                        inputProps={atributosCampo('stock')}
-                        errorId={idError('stock')}
-                        disabled={saving}
-                        optional
-                        onChange={setField}
-                    />
-
-                    {saveError && <p className='product-form-alert' role='alert'>{saveError}</p>}
-
-                    <footer className='product-form-actions'>
-                        <button type='button' className='product-form-button' disabled={saving} onClick={close}>
-                            Cancelar
-                        </button>
-                        <button type='submit' className='product-form-button product-form-button-primary' disabled={saving}>
-                            {saving ? 'Guardando…' : 'Agregar'}
-                        </button>
-                    </footer>
+                        <footer className='product-form-actions'>
+                            <button type='button' className='product-form-button' disabled={saving} onClick={close}>
+                                Cancelar
+                            </button>
+                            <button type='submit' className='product-form-button product-form-button-primary' disabled={saving}>
+                                {saving ? 'Guardando…' : 'Agregar'}
+                            </button>
+                        </footer>
+                    </div>
                 </form>
             </div>
 
             {/* Fuera del <form> del producto: un formulario no puede ir dentro de otro */}
-            {creatingFamily && (
-                <FamilyForm family={null} onClose={() => setCreatingFamily(false)} onSave={handleFamilySave} />
-            )}
+            <ModalPresence>
+                {creatingFamily && (
+                    <FamilyForm family={null} onClose={() => setCreatingFamily(false)} onSave={handleFamilySave} />
+                )}
+            </ModalPresence>
         </>
     )
 }

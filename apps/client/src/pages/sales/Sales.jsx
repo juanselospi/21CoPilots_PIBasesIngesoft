@@ -26,6 +26,7 @@ import {
 import { ConfirmSaleDialog, SaleDetailDialog } from './SaleDialogs.jsx'
 import SaleCustomerField from './SaleCustomerField.jsx'
 import SaleProductCard from './SaleProductCard.jsx'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 // Espera para buscar hasta que el usuario deje de escribir
 const SEARCH_DELAY_MS = 300
@@ -425,19 +426,23 @@ function Sales() {
                 </form>
             </div>
 
-            {confirming && (
-                <ConfirmSaleDialog
-                    lines={lines}
-                    customerName={customerName}
-                    channel={values.canal}
-                    shipping={shipping}
-                    total={total}
-                    onConfirm={confirmSale}
-                    onCancel={() => setConfirming(false)}
-                />
-            )}
+            <ModalPresence>
+                {confirming && (
+                    <ConfirmSaleDialog
+                        lines={lines}
+                        customerName={customerName}
+                        channel={values.canal}
+                        shipping={shipping}
+                        total={total}
+                        onConfirm={confirmSale}
+                        onCancel={() => setConfirming(false)}
+                    />
+                )}
+            </ModalPresence>
 
-            {soldOrder && <SaleDetailDialog order={soldOrder} onClose={() => setSoldOrder(null)} />}
+            <ModalPresence>
+                {soldOrder && <SaleDetailDialog order={soldOrder} onClose={() => setSoldOrder(null)} />}
+            </ModalPresence>
         </main>
     )
 }

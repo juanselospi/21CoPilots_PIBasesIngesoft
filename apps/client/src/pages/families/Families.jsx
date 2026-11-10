@@ -10,6 +10,7 @@ import Notice from '../../components/notice/Notice.jsx'
 import { actualizarFamilia, crearFamilia, eliminarFamilia } from '../../api/catalogo.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
 import { familyErrorFields, productCountText, toAdminFamily, toServerFamily } from './toAdminFamily.js'
+import ModalPresence from '../../components/modal-presence/ModalPresence.jsx'
 
 // Texto del diálogo de confirmación de cada acción
 const dialogByAction = {
@@ -241,15 +242,19 @@ function Families() {
                 </div>
             )}
 
-            {form && <FamilyForm family={form.family} onClose={() => setForm(null)} onSave={handleSave} />}
+            <ModalPresence>
+                {form && <FamilyForm family={form.family} onClose={() => setForm(null)} onSave={handleSave} />}
+            </ModalPresence>
 
-            {pending && (
-                <ConfirmDialog
-                    {...dialogByAction[pending.action](pending.family)}
-                    onConfirm={runAction}
-                    onCancel={() => setPending(null)}
-                />
-            )}
+            <ModalPresence>
+                {pending && (
+                    <ConfirmDialog
+                        {...dialogByAction[pending.action](pending.family)}
+                        onConfirm={runAction}
+                        onCancel={() => setPending(null)}
+                    />
+                )}
+            </ModalPresence>
         </main>
     )
 }
