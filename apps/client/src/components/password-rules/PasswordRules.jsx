@@ -3,10 +3,11 @@ import './PasswordRules.css'
 import { requisitosContrasena } from '../../utils/politicaContrasena.js'
 
 // Lista con la politica de contraseñas, cada requisito se marca cuando `value` ya lo cumple.
-// El `id` es para conectar la lista con el input por aria-describedby
-function PasswordRules({ value, id }) {
+// El `id` es para conectar la lista con el input por aria-describedby.
+// `compact` los muestra como pastillas en fila que bajan de línea si no caben (crear cuenta)
+function PasswordRules({ value, id, compact = false }) {
     return (
-        <ul id={id} className='password-rules'>
+        <ul id={id} className={compact ? 'password-rules password-rules-compact' : 'password-rules'}>
             {requisitosContrasena.map(({ texto, patron }) => {
                 const met = patron.test(value)
                 const Icon = met ? Check : Circle
