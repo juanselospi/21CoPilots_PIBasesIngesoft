@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { ChevronRight, Eye, EyeOff } from 'lucide-react'
 import './Access.css'
@@ -7,6 +7,7 @@ import { logIn } from '../../api/sesion.js'
 import { useSesion } from '../../hooks/useSesion.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import { rutaDeVuelta } from '../../utils/rutaDeVuelta.js'
+import { finDelBloqueo, mensajeDeEspera, minutosRestantes } from '../../utils/esperaDeInicio.js'
 
 const ADMIN_ROLE = 'administrador'
 const SIGN_UP_TAB = 'crear-cuenta'
@@ -84,11 +85,28 @@ function LogInForm({ backTo, onSignUp }) {
     const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState(null)
     const [sending, setSending] = useState(false)
+    // Tras muchos intentos fallidos el servidor bloquea ese correo un rato: { correo, hasta }
+    const [blocked, setBlocked] = useState(null)
+    const [now, setNow] = useState(() => Date.now())
+
+    // El bloqueo es por correo, asi que con otro correo se puede intentar de una vez
+    const waitMinutes = blocked && blocked.correo === correo.trim().toLowerCase() ? minutosRestantes(blocked.hasta, now) : 0
+
+    // Mientras dure el bloqueo el reloj avanza para que los minutos bajen solos
+    useEffect(() => {
+        if (!blocked) return undefined
+        const timer = setInterval(() => {
+            const current = Date.now()
+            setNow(current)
+            if (current >= blocked.hasta) setBlocked(null)
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [blocked])
 
     const handleSubmit = async (event) => {
         event.preventDefault()
 
-        if (sending || !validar()) return
+        if (sending || waitMinutes > 0 || !validar()) return
 
         setSending(true)
         setError(null)
@@ -98,8 +116,14 @@ function LogInForm({ backTo, onSignUp }) {
             // El administrador siempre va al panel, el cliente regresa a donde venia (por ejemplo el checkout)
             navigate(usuario.rol === ADMIN_ROLE ? '/admin/productos' : (backTo ?? '/'), { replace: true })
         } catch (logInError) {
-            setError(logInError.message)
-            erroresServidor(logInError.detalles?.campos)
+            const until = finDelBloqueo(logInError)
+            if (until) {
+                setBlocked({ correo: correo.trim().toLowerCase(), hasta: until })
+                setNow(Date.now())
+            } else {
+                setError(logInError.message)
+                erroresServidor(logInError.detalles?.campos)
+            }
             setSending(false)
         }
     }
@@ -116,8 +140,9 @@ function LogInForm({ backTo, onSignUp }) {
                 <p>Inicia sesión para dar seguimiento a tus pedidos.</p>
             </div>
 
-            {notice && !error && <p className='access-notice' role='status'>{notice}</p>}
+            {notice && !error && !waitMinutes && <p className='access-notice' role='status'>{notice}</p>}
             {error && <p className='access-error' role='alert'>{error}</p>}
+            {waitMinutes > 0 && <p className='access-error' role='status'>{mensajeDeEspera(waitMinutes)}</p>}
 
             <label className='access-field'>
                 <span>Correo electrónico</span>
@@ -164,7 +189,7 @@ function LogInForm({ backTo, onSignUp }) {
                 {errores.contrasena && <p id={idError('contrasena')} className='access-field-error'>{errores.contrasena}</p>}
             </div>
 
-            <button type='submit' className='access-submit' disabled={sending}>
+            <button type='submit' className='access-submit' disabled={sending || waitMinutes > 0}>
                 {sending ? 'Ingresando…' : 'Iniciar sesión'}
             </button>
 
