@@ -153,7 +153,10 @@ export function conCambios(parametros, cambios) {
     return siguiente
 }
 
-// El número buscado, sin el #, o null si lo escrito no es un número
-export function numeroBuscado(q) {
-    return /^#?\d+$/.test(q) ? q.replace('#', '') : null
+// El buscador entiende el nombre o el correo del cliente (texto con letras o @), igual que
+// el servidor; lo demás no coincide con ningún pedido.
+// Devuelve qué decirle al usuario cuando lo escrito no sirve, o null si sirve.
+export function problemaDeBusqueda(q) {
+    if (!q || /[\p{L}@]/u.test(q)) return null
+    return `«${q}» no es un nombre ni un correo`
 }

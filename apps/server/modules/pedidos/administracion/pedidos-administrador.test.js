@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 
-import { validarConsultaDePedidos } from "./validar-consulta-de-pedidos.js";
+import { interpretarBusqueda, validarConsultaDePedidos } from "./validar-consulta-de-pedidos.js";
 import { PedidosService } from "../pedidos.service.js";
 import { PedidosController } from "../pedidos.controller.js";
 import { crearRutasDePedidos } from "../pedidos.routes.js";
@@ -52,11 +52,27 @@ test("los filtros del listado se normalizan y la página por defecto es la 0 de 
   assert.equal(filtros.estado, "colocado");
   assert.equal(filtros.canal, "whatsapp");
   assert.equal(filtros.correo, "ana@correo.test");
-  assert.equal(filtros.q, "halcón");
+  assert.deepEqual(filtros.busqueda, { texto: "halcon" });
   // "hasta" incluye todo el día
   assert.equal(filtros.hasta.getTime() - filtros.desde.getTime(), 3 * 24 * 60 * 60 * 1000);
   assert.equal(filtros.pagina, 0);
   assert.equal(filtros.limite, 50);
+});
+
+test("el buscador solo entiende nombre o correo: texto con letras o @", () => {
+  // Nombre y correo: por partes, sin mayúsculas, sin tildes y sin espacios de más
+  assert.deepEqual(interpretarBusqueda("José  NÚÑEZ"), { texto: "jose nunez" });
+  assert.deepEqual(interpretarBusqueda("gmail.com"), { texto: "gmail.com" });
+  assert.deepEqual(interpretarBusqueda("@"), { texto: "@" });
+  // Los comodines de LIKE se buscan tal cual
+  assert.deepEqual(interpretarBusqueda("ana_m%"), { texto: "ana\\_m\\%" });
+
+  // Números, fechas, horas o montos: no coinciden con nada
+  for (const q of ["4", "#4", "28/10", "28/10/2026", "2026-10-28", "10:30", "49.99"]) {
+    assert.deepEqual(interpretarBusqueda(q), { invalida: true }, q);
+  }
+  assert.equal(interpretarBusqueda(null), null);
+  assert.equal(validarConsultaDePedidos({ q: "   " }).busqueda, null);
 });
 
 test("el listado acepta el estado en disputa y rechaza estados, canales y fechas que no existen", () => {

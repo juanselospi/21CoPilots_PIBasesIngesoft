@@ -11,7 +11,7 @@ import { priceFormat } from '../../components/product-card/productFormat.js'
 import { dateTimeFormat } from '../merchandise/merchandiseFormat.js'
 import { usePedidosAdmin } from '../../hooks/usePedidosAdmin.js'
 import { adminOrderPath, backState } from '../../routes.js'
-import { CANALES, ESTADOS, conCambios, leerConsulta, numeroBuscado, resumenDeProductos } from '../../utils/pedidosAdmin.js'
+import { CANALES, ESTADOS, conCambios, leerConsulta, problemaDeBusqueda, resumenDeProductos } from '../../utils/pedidosAdmin.js'
 import { OrderStatusChip, PaymentStatusChip } from './OrderChips.jsx'
 
 // Espera para buscar hasta que el usuario deje de escribir
@@ -54,10 +54,16 @@ function Orders() {
         setSearchParams({}, { replace: true })
     }
 
+    // Quita solo la búsqueda; los filtros de estado y canal se quedan
+    const clearSearch = () => {
+        setSearch('')
+        change({ q: '' })
+    }
+
     const openOrder = (order) =>
         navigate(adminOrderPath(order.correoCliente, order.numCarrito), { state: backState(location) })
 
-    const number = numeroBuscado(q)
+    const searchProblem = problemaDeBusqueda(q)
     const filtered = Boolean(estado || canal)
 
     return (
@@ -69,8 +75,8 @@ function Orders() {
             <input
                 type='search'
                 className='products-search'
-                placeholder='Buscar por número de pedido o cliente...'
-                aria-label='Buscar por número de pedido o cliente'
+                placeholder='Buscar por nombre o correo del cliente...'
+                aria-label='Buscar pedidos por nombre o correo del cliente'
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
             />
@@ -95,6 +101,11 @@ function Orders() {
                         Limpiar filtros
                     </button>
                 )}
+                {search.trim() && (
+                    <button type='button' className='products-clear-filters' onClick={clearSearch}>
+                        Limpiar búsqueda
+                    </button>
+                )}
             </section>
 
             {listado.cargando ? (
@@ -107,11 +118,12 @@ function Orders() {
                     </button>
                 </div>
             ) : orders.length === 0 ? (
-                number && !filtered ? (
+                // Lo escrito no es nombre ni correo: se explica en vez de mostrar «sin coincidencias»
+                searchProblem ? (
                     <section className='products-empty'>
-                        <h2>No hay ningún pedido con el número {number}</h2>
-                        <p>Revise el número o busque por nombre del cliente.</p>
-                        <button type='button' className='products-button' onClick={clearAll}>Limpiar búsqueda</button>
+                        <h2>{searchProblem}</h2>
+                        <p>Busque por el nombre o el correo del cliente, por ejemplo «Ana» o «gmail.com».</p>
+                        <button type='button' className='products-button' onClick={clearSearch}>Limpiar búsqueda</button>
                     </section>
                 ) : q || filtered || pagina > 0 ? (
                     <section className='products-empty'>

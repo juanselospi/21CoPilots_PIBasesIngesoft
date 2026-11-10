@@ -60,10 +60,26 @@ export function validarConsultaDePedidos(consulta = {}) {
     estado,
     canal,
     correo: leer("correo")?.toLowerCase() ?? null,
-    q: leer("q"),
+    busqueda: interpretarBusqueda(leer("q")),
     desde,
     hasta,
     limite,
     pagina,
   };
 }
+
+/**
+ * El buscador del panel solo busca por nombre del cliente o correo:
+ *  - `{ texto }` si tiene letras o @: va sin tildes, en minúsculas y con los
+ *    comodines de LIKE escapados, para compararlo por partes con el nombre y el correo;
+ *  - `{ invalida: true }` para lo demás (como «4» o «28/10»), que no coincide con nada.
+ * @returns la búsqueda, o null si no se escribió nada
+ */
+export function interpretarBusqueda(q) {
+  if (!q) return null;
+  if (!/[\p{L}@]/u.test(q)) return { invalida: true };
+  return { texto: sinTildes(q).replace(/\s+/g, " ").replace(/[\\%_]/g, "\\$&") };
+}
+
+// «José Núñez» -> «jose nunez»; la consulta le hace lo mismo al nombre guardado
+export const sinTildes = (texto) => texto.normalize("NFD").replace(/\p{Mn}/gu, "").toLowerCase();

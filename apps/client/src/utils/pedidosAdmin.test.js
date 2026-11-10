@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
     accionesDelPedido, conCambios, creditoNuevo, describirCambio, estaPagado, leerConsulta, motivoSinEdicion,
-    numeroBuscado, precioPagado, precioParaComparar, productosElegibles, resumenDeProductos, topeDeBusqueda,
+    precioPagado, problemaDeBusqueda, precioParaComparar, productosElegibles, resumenDeProductos, topeDeBusqueda,
 } from './pedidosAdmin.js'
 
 const producto = (sku, margen, extra = {}) => ({
@@ -127,9 +127,8 @@ test('cambiar un filtro vuelve a la primera página; cambiar de página conserva
     assert.equal(conCambios(actual, { pagina: 0 }).toString(), 'estado=colocado')
 })
 
-test('solo cuenta como número lo que tiene únicamente dígitos, con # opcional', () => {
-    assert.equal(numeroBuscado('1099'), '1099')
-    assert.equal(numeroBuscado('#1099'), '1099')
-    assert.equal(numeroBuscado('ana'), null)
-    assert.equal(numeroBuscado('P-1099'), null)
+test('el buscador acepta nombre o correo; números, fechas y montos tienen aviso', () => {
+    for (const q of ['', 'Ana', 'josé', 'gmail.com', '@', 'ana4']) assert.equal(problemaDeBusqueda(q), null, q)
+    assert.equal(problemaDeBusqueda('4'), '«4» no es un nombre ni un correo')
+    for (const q of ['#4', '28/10', '28/10/2026', '10:30', '49.99']) assert.ok(problemaDeBusqueda(q), q)
 })
