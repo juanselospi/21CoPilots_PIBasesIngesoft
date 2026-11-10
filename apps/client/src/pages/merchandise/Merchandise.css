@@ -14,6 +14,11 @@
   background: var(--color-superficie);
 }
 
+/* Al cambiar de página de resultados la vista sube hasta aquí, con el mismo aire que separa las secciones */
+.merchandise-search-card {
+  scroll-margin-top: 16px;
+}
+
 .merchandise-card h2,
 .merchandise-history h2 {
   margin: 0;

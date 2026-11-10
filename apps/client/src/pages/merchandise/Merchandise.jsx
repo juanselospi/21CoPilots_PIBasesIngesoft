@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useSearchParams } from 'react-router'
 import { ChevronDown, Info, PackagePlus, RefreshCw, Search, SlidersHorizontal, X } from 'lucide-react'
 // Mismo aspecto que la página de productos, su tabla y sus formularios
@@ -15,6 +15,7 @@ import { registrarAjuste, registrarIngreso } from '../../api/inventario.js'
 import { useRecursoRemoto } from '../../hooks/useRecursoRemoto.js'
 import { useFamilias } from '../../hooks/useFamilias.js'
 import { useMovimientos } from '../../hooks/useMovimientos.js'
+import { useIrAlListado } from '../../hooks/useIrAlListado.js'
 import { avisarCambioDeInventario } from '../../hooks/useAlertasDeInventario.js'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { toAdminProduct } from '../products/toAdminProduct.js'
@@ -90,6 +91,16 @@ function Merchandise() {
     const foundTotal = results.datos?.meta.total ?? 0
     const resultsPageCount = Math.max(1, Math.ceil(foundTotal / SEARCH_PAGE_SIZE))
     const firstShown = resultsPage * SEARCH_PAGE_SIZE + 1
+
+    // Otra página de resultados: cuando llega, la vista sube al inicio de la búsqueda
+    // (la tarjeta, que no se desmonta al cargar) en vez de quedar en el historial
+    const searchCardRef = useRef(null)
+    const goToResults = useIrAlListado(searchCardRef, !results.cargando)
+    const changeResultsPage = (next) => {
+        if (next === resultsPage) return
+        setResultsPage(next)
+        goToResults()
+    }
 
     const selected = useRecursoRemoto((signal) => searchProducts(sku, emptyFilters, signal), [sku])
     const loaded = selected.datos?.datos.map(toAdminProduct).find((product) => product.sku === sku)
@@ -174,7 +185,7 @@ function Merchandise() {
                 )}
             </section>
 
-            <section className='merchandise-card'>
+            <section ref={searchCardRef} className='merchandise-card merchandise-search-card'>
                 {sku && selected.cargando ? (
                     <p className='merchandise-help' role='status'>Cargando producto…</p>
                 ) : product ? (
@@ -282,7 +293,7 @@ function Merchandise() {
                                     label='Páginas de resultados'
                                     page={resultsPage}
                                     pageCount={resultsPageCount}
-                                    onChange={setResultsPage}
+                                    onChange={changeResultsPage}
                                 />
                             </>
                         ))}
