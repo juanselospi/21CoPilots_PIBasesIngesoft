@@ -32,6 +32,9 @@
   --color-sobre-oscuro: #FFFFFF;
   --color-sobre-oscuro-suave: color-mix(in srgb, var(--color-sobre-oscuro) 75%, var(--color-oscuro));
 
+  /* Fondo del marco de las fotos de producto: blanco en los dos modos, como el de las fotos */
+  --color-fondo-foto: #FFFFFF;
+
   --color-overlay: color-mix(in srgb, var(--color-oscuro) 55%, transparent);
   --sombra: 0 8px 24px color-mix(in srgb, var(--color-oscuro) 10%, transparent);
 

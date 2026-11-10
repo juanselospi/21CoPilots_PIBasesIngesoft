@@ -79,6 +79,7 @@ function ProductDetail() {
                     emptyClassName='product-detail-no-image'
                     iconSize={40}
                     loading='eager'
+                    fetchPriority='high'
                 />
 
                 <div className='product-detail-info'>

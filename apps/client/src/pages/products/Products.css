@@ -230,8 +230,8 @@
   gap: 4px;
   width: 100%;
   aspect-ratio: 16 / 10;
-  object-fit: cover;
   background: var(--color-tinte);
+  --product-image-margen: 8px;
   color: var(--color-texto-suave);
   font-size: var(--texto-etiqueta);
 }
