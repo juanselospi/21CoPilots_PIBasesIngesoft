@@ -40,6 +40,23 @@
   color: var(--color-enlace);
 }
 
+/* Alertas, «Ver tienda» y la cuenta; el margen las lleva a la derecha y, si no caben
+   junto a las pantallas, bajan juntas a otra fila sin dejar de estar a la derecha */
+.admin-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Línea que separa las acciones del menu de la cuenta */
+.admin-bar-separator {
+  width: 1px;
+  height: 24px;
+  margin: 0 8px;
+  background: var(--color-borde);
+}
+
 /* Botón «Alertas» con el contador de productos con existencias bajas */
 .admin-bar-alerts {
   display: inline-flex;
@@ -76,12 +93,13 @@
   text-align: center;
 }
 
-/* El margen empuja el menu de la cuenta a la derecha */
+/* Mismo relleno que «Alertas» para que las dos acciones queden igual de separadas */
 .admin-bar-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: auto;
+  padding: 6px 12px;
+  border-radius: var(--radio-control);
   color: var(--color-texto);
   font-weight: 600;
   text-decoration: none;
@@ -96,5 +114,21 @@
   .admin-bar {
     gap: 12px 16px;
     padding: 12px 16px;
+  }
+
+  /* En celular las acciones ocupan su propia fila; si la cuenta no cabe, baja sola
+     y se queda a la derecha. Sin separador, que quedaría colgando al partirse */
+  .admin-bar-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .admin-bar-separator {
+    display: none;
+  }
+
+  .admin-bar-actions .user-menu {
+    margin-left: auto;
   }
 }

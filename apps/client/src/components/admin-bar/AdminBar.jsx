@@ -18,8 +18,8 @@ const sections = [
     { to: '/admin/configuracion', label: 'Configuración' },
 ]
 
-// Barra de arriba del panel con el logo, las pantallas, las alertas de inventario,
-// el enlace a la tienda y el menu de la cuenta
+// Barra de arriba del panel: a la izquierda el logo y las pantallas; a la derecha
+// las alertas de inventario, el enlace a la tienda y el menu de la cuenta
 function AdminBar({ user, onLogOut }) {
     // Las alertas se recalculan al cambiar de pantalla, al volver a la pestaña
     // (por ejemplo, después de una venta en la tienda), al abrir el modal
@@ -50,18 +50,22 @@ function AdminBar({ user, onLogOut }) {
             <nav className='admin-bar-nav' aria-label='Panel de administración'>
                 {sections.map(({ to, label }) => <NavLink key={to} to={to}>{label}</NavLink>)}
             </nav>
-            <button
-                type='button'
-                className='admin-bar-alerts'
-                aria-haspopup='dialog'
-                aria-label={alertCount > 0 ? `Alertas de inventario: ${alertCount}` : 'Alertas de inventario'}
-                onClick={openAlerts}
-            >
-                <TriangleAlert size={18} />Alertas
-                {alertCount > 0 && <span className='admin-bar-badge' aria-hidden='true'>{alertCount}</span>}
-            </button>
-            <Link to='/' className='admin-bar-link'><Store size={20} />Ver tienda</Link>
-            <UserMenu user={user} onLogOut={onLogOut} logOutMessage='Vas a salir del panel de administración.' />
+            {/* Acciones complementarias y la cuenta, juntas a la derecha */}
+            <div className='admin-bar-actions'>
+                <button
+                    type='button'
+                    className='admin-bar-alerts'
+                    aria-haspopup='dialog'
+                    aria-label={alertCount > 0 ? `Alertas de inventario: ${alertCount}` : 'Alertas de inventario'}
+                    onClick={openAlerts}
+                >
+                    <TriangleAlert size={18} />Alertas
+                    {alertCount > 0 && <span className='admin-bar-badge' aria-hidden='true'>{alertCount}</span>}
+                </button>
+                <Link to='/' className='admin-bar-link'><Store size={20} />Ver tienda</Link>
+                <span className='admin-bar-separator' aria-hidden='true' />
+                <UserMenu user={user} onLogOut={onLogOut} logOutMessage='Vas a salir del panel de administración.' />
+            </div>
 
             <ModalPresence>
                 {showAlerts && <InventoryAlerts alerts={alerts} onClose={() => setShowAlerts(false)} />}
