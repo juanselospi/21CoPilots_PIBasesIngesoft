@@ -12,6 +12,7 @@
 import {
   CredencialesInvalidas,
   DatoDuplicado,
+  DemasiadosIntentos,
   EntradaInvalida,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
@@ -25,6 +26,7 @@ import { validarCorreoDeRecuperacion } from "./seguridad/validar-recuperacion.js
 import { validarConsultaDeBitacora } from "./bitacora/validar-consulta-de-bitacora.js";
 import { generarToken, hashearToken } from "./seguridad/tokens-de-sesion.js";
 import { validarActivo, validarEmpleadoNuevo } from "./empleados/validar-empleado.js";
+import { crearLimiteDeIntentos } from "./seguridad/limite-de-intentos.js";
 
 // Si el correo no existe se compara igual contra este hash para que la respuesta tarde lo mismo y no se pueda adivinar qué correos existen.
 // PD: Gracias profe Maeva por el TIP que nos dio en redes!!!
@@ -38,6 +40,7 @@ export class AdminService {
   #importacionDeExcel;
   #recuperacion;
   #avisarEnlace;
+  #intentos;
 
   constructor({
     repositorio,
@@ -48,6 +51,7 @@ export class AdminService {
     recuperacion = { duracionMinutos: 30, urlDeLaTienda: "http://localhost:5173", devolverEnlace: false, esperaEntreEnlacesSegundos: 60 },
     // El modulo admin pasa aqui el envio del correo, sin eso el enlace sale en el log
     avisarEnlace = (correo, enlace) => console.info(`Enlace para recuperar la contraseña de ${correo}: ${enlace}`),
+    limiteDeIntentos = crearLimiteDeIntentos(),
   }) {
     this.#repositorio = repositorio;
     this.#busDeEventos = busDeEventos;
@@ -56,20 +60,30 @@ export class AdminService {
     this.#importacionDeExcel = importacionDeExcel;
     this.#recuperacion = recuperacion;
     this.#avisarEnlace = avisarEnlace;
+    this.#intentos = limiteDeIntentos;
   }
 
   // Valida las credenciales y abre la sesion, hace return del token para la cookie
+  // Un correo con demasiados intentos fallidos queda bloqueado un rato, aunque luego mande la contraseña correcta
   async iniciarSesion({ correo, contrasena }) {
-    const usuario = await this.#repositorio.buscarUsuarioPorCorreo(normalizarCorreo(correo));
+    const correoNormalizado = normalizarCorreo(correo);
+    const espera = this.#intentos.segundosDeBloqueo(correoNormalizado);
+    if (espera > 0) throw new DemasiadosIntentos(espera);
+
+    const usuario = await this.#repositorio.buscarUsuarioPorCorreo(correoNormalizado);
     const contrasenaCorrecta = await verificarContrasena(
       contrasena,
       usuario?.contrasenaHash ?? HASH_DE_RELLENO
     );
 
     if (!usuario || !usuario.rol || !contrasenaCorrecta) {
-      throw new CredencialesInvalidas();
+      this.#intentos.registrarFallo(correoNormalizado);
+      // El intento que llega al máximo ya avisa del bloqueo
+      const bloqueo = this.#intentos.segundosDeBloqueo(correoNormalizado);
+      throw bloqueo > 0 ? new DemasiadosIntentos(bloqueo) : new CredencialesInvalidas();
     }
 
+    this.#intentos.olvidar(correoNormalizado);
     return this.abrirSesion(usuario);
   }
 

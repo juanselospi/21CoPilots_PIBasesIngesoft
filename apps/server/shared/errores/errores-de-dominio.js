@@ -58,6 +58,17 @@ export class TokenInvalido extends ErrorDeDominio {
   }
 }
 
+/** Demasiados intentos fallidos de inicio de sesión con el mismo correo. */
+export class DemasiadosIntentos extends ErrorDeDominio {
+  constructor(segundos) {
+    const minutos = Math.ceil(segundos / 60);
+    super(
+      `Demasiados intentos fallidos. Espere ${minutos} ${minutos === 1 ? "minuto" : "minutos"} antes de volver a intentarlo.`,
+      { codigo: "DEMASIADOS_INTENTOS", detalles: { reintentarEnSegundos: segundos } }
+    );
+  }
+}
+
 /** Identificado, pero sin el rol necesario (RF-50, RNF-10). */
 export class NoAutorizado extends ErrorDeDominio {
   constructor(accion) {
