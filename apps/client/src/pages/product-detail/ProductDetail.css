@@ -24,8 +24,8 @@
   aspect-ratio: 5 / 4;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-tarjeta);
-  object-fit: cover;
   background: var(--color-tinte);
+  --product-image-margen: 24px;
 }
 
 .product-detail-no-image {
@@ -169,6 +169,10 @@
   .product-detail-content {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  .product-detail-image {
+    --product-image-margen: 16px;
   }
 }
 

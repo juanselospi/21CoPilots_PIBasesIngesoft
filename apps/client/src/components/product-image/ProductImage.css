@@ -1,5 +1,5 @@
 /* Imagen de producto (ProductImage.jsx). El tamaño, la proporción, el borde y el radio
-   vienen de la clase de cada pantalla; aquí solo va la carga.
+   vienen de la clase de cada pantalla; aquí van la carga y cómo se acomoda la foto.
    Mientras carga: fondo neutro con un brillo que cruza de izquierda a derecha.
    Al cargar: la foto pasa de transparente y borrosa a nítida, y el brillo se apaga. */
 .product-image {
@@ -34,7 +34,7 @@
 }
 
 /* La foto ocupa todo el espacio reservado. Arranca un poco ampliada para que
-   el borde borroso no se vea; el contenedor la recorta */
+   el borde borroso no se vea; el contenedor la recorta. En modo cover llena el marco */
 .product-image-photo {
   position: absolute;
   inset: 0;
@@ -56,6 +56,28 @@
   opacity: 1;
   filter: blur(0);
   transform: none;
+}
+
+/* Modo contain (el de los productos): la foto completa, centrada y sin deformar, con
+   aire alrededor. Las fotos de las tiendas suelen venir sobre blanco: el marco usa el
+   mismo fondo de foto para que se vean naturales, sin filtros sobre sus colores.
+   Las medidas máximas (el doble del tamaño real, desde ProductImage.jsx) evitan ampliar
+   de más una foto pequeña; si la caja queda más chica, margin: auto la centra */
+.product-image-contain[data-status='loaded'] {
+  background: var(--color-fondo-foto);
+}
+
+/* --product-image-margen es el aire entre la foto y el borde; lo pone la clase de cada
+   pantalla (sin él, 0). No se declara aquí para no competir con esa clase */
+.product-image-contain .product-image-photo {
+  inset: var(--product-image-margen, 0px);
+  width: calc(100% - 2 * var(--product-image-margen, 0px));
+  height: calc(100% - 2 * var(--product-image-margen, 0px));
+  max-width: var(--product-image-max-ancho, none);
+  max-height: var(--product-image-max-alto, none);
+  margin: auto;
+  object-fit: contain;
+  object-position: center;
 }
 
 /* Error: el mismo espacio que "Sin imagen", con el texto centrado para las miniaturas pequeñas */

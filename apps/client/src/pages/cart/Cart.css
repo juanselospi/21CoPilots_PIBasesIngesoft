@@ -102,8 +102,8 @@
   aspect-ratio: 1;
   border: 1px solid var(--color-borde);
   border-radius: var(--radio-control);
-  object-fit: cover;
   background: var(--color-tinte);
+  --product-image-margen: 4px;
 }
 
 .cart-line-no-image {

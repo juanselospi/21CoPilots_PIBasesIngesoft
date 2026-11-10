@@ -23,12 +23,13 @@
   display: block;
   width: 100%;
   aspect-ratio: 5 / 4;
-  object-fit: cover;
   background: var(--color-tinte);
+  --product-image-margen: 12px;
 }
 
 .product-card-compact .product-card-image {
   aspect-ratio: 16 / 7;
+  --product-image-margen: 8px;
 }
 
 .product-card-no-image {
