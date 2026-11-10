@@ -112,10 +112,51 @@
   font: inherit;
 }
 
-/* Unidad a la derecha del input ($ para costo, % para importación y margen) */
-.product-form-input span {
+/* Unidad integrada a la caja (InputUnit.jsx): % y unidades a la derecha, $ a la izquierda.
+   Fondo gris suave y una línea la separan del valor sin que parezca otro campo.
+   align-self: stretch la lleva de borde a borde; el radio sigue el de la caja (menos su borde) */
+.product-form-unit {
+  display: flex;
+  flex: none;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
   padding: 0 12px;
+  border-left: 1px solid var(--color-borde);
+  border-radius: 0 calc(var(--radio-control) - 1px) calc(var(--radio-control) - 1px) 0;
+  background: var(--color-fondo);
   color: var(--color-texto-suave);
+  font-weight: 600;
+  white-space: nowrap;
+  user-select: none;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+/* El $ va antes del monto: queda a la izquierda aunque en el HTML esté después del input */
+.product-form-unit-prefix {
+  order: -1;
+  border-right: 1px solid var(--color-borde);
+  border-left: none;
+  border-radius: calc(var(--radio-control) - 1px) 0 0 calc(var(--radio-control) - 1px);
+}
+
+/* Con foco, la unidad toma el color del borde de la caja */
+.product-form-input:focus-within .product-form-unit {
+  color: var(--color-enlace);
+}
+
+/* Con error, la línea y el símbolo van en rojo como el borde */
+.product-form-input:has([aria-invalid='true']) .product-form-unit {
+  border-color: var(--estado-error-texto);
+  color: var(--estado-error-texto);
+}
+
+/* Etiqueta seguida del ícono de ayuda (InfoTip.jsx) */
+.product-form-label-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 /* Campo de solo lectura con fondo gris: el impuesto de venta */
@@ -270,11 +311,13 @@
   border-top: 1px solid var(--color-borde);
 }
 
-/* Aviso de que el producto queda oculto en la tienda */
+/* Ayuda debajo de un campo (ej. el porcentaje que se hereda de la familia) o
+   aviso de que el producto queda oculto en la tienda; sin la negrita de la etiqueta */
 .product-form-hint {
   margin: 0;
   color: var(--color-texto-suave);
   font-size: var(--texto-etiqueta);
+  font-weight: 400;
 }
 
 /* Casilla de contrapedido con su texto al lado */
@@ -379,16 +422,6 @@ html:has(.product-form-overlay) {
   box-shadow: none;
 }
 
-/* El texto y la flecha del selector no son una unidad: sin el relleno ni el gris de arriba */
-.product-form-input .select-trigger > span:first-child {
-  padding: 0;
-  color: inherit;
-}
-
-.product-form-input .select-chevron {
-  padding: 0;
-}
-
 /* Con el menú abierto el foco pasa a la lista: la caja sigue marcada */
 .product-form-input:has(.select-trigger[data-state='open']) {
   border-color: var(--color-enlace);
@@ -417,6 +450,16 @@ html:has(.product-form-overlay) {
 /* Fondo gris mientras el valor viene de la familia */
 .product-form-input:has(input:disabled) {
   background: var(--color-fondo);
+}
+
+/* El valor heredado (o el de un campo mientras guarda) en gris: no parece escrito a mano */
+.product-form-input input:disabled {
+  color: var(--color-texto-suave);
+}
+
+/* La unidad se apaga con el campo deshabilitado */
+.product-form-input:has(input:disabled) .product-form-unit {
+  opacity: 0.7;
 }
 
 /* Solo "Agregar producto" */

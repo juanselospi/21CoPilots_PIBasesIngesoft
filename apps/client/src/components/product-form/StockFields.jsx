@@ -1,4 +1,5 @@
 import { readStockInput } from './stockInput.js'
+import InputUnit from '../input-unit/InputUnit.jsx'
 
 // Existencias y contrapedido; los usan los modales de agregar y editar producto.
 // `onChange` recibe el campo ('stock' o 'backorder') y su valor nuevo.
@@ -25,7 +26,7 @@ function StockFields({ stock, backorder, error, inputProps, errorId, disabled, o
                         value={stock}
                         onChange={(event) => handleStockChange(event.target.value)}
                     />
-                    <span>unidades</span>
+                    <InputUnit unit='unidades' />
                 </div>
                 {error && <p id={errorId} className='product-form-error'>{error}</p>}
             </label>

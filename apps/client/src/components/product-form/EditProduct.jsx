@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { X } from 'lucide-react'
 import './ProductForm.css'
-import { priceFields, priceRules, readPriceInput } from './priceFields.js'
+import { percentHelp, priceFields, priceRules, readPriceInput } from './priceFields.js'
 import StockFields from './StockFields.jsx'
+import InfoTip from '../info-tip/InfoTip.jsx'
+import InputUnit from '../input-unit/InputUnit.jsx'
 import Notice from '../notice/Notice.jsx'
 import Select from '../select/Select.jsx'
 import { useFormulario } from '../../hooks/useFormulario.js'
@@ -62,6 +64,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
     const [justSaved, setJustSaved] = useState(false)
     // El aviso «Producto actualizado» se va solo; justSaved sigue cambiando el botón a «Cerrar»
     const [savedNotice, setSavedNotice] = useState(false)
+    const formId = useId()
 
     // Familias activas; la actual se muestra aunque esté desactivada o la lista no haya cargado
     const familyOptions = families.some(({ name }) => name === saved.category)
@@ -227,22 +230,26 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
 
                     <section className='product-form-prices product-form-prices-edit'>
                         {priceFields.map(({ key, label, unit, allowNegative }) => {
+                            const inheritable = inheritableFields.includes(key)
                             const input = (
                                 <div className='product-form-input'>
                                     <input
                                         type='text'
                                         inputMode='decimal'
-                                        aria-label={label}
+                                        // El costo lo nombra su <label>; importación y margen van en un fieldset
+                                        aria-label={inheritable ? label : undefined}
                                         disabled={saving || inherited[key]}
+                                        // Si la familia no ha cargado, el campo heredado no queda en blanco sin explicación
+                                        placeholder={inherited[key] ? 'De la familia' : undefined}
                                         {...atributosCampo(key)}
                                         value={inherited[key] ? asText(family?.[key]) : values[key]}
                                         onChange={(event) => handlePriceChange(key, allowNegative, event.target.value)}
                                     />
-                                    <span>{unit}</span>
+                                    <InputUnit unit={unit} />
                                 </div>
                             )
 
-                            if (!inheritableFields.includes(key)) {
+                            if (!inheritable) {
                                 return (
                                     <label key={key} className='product-form-field'>
                                         <span>{label}</span>
@@ -253,9 +260,16 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
                             }
 
                             const familyValue = family?.[key]
+                            const legendId = `${formId}-${key}-titulo`
+                            // aria-labelledby: el nombre del grupo es la etiqueta, sin el texto del ícono de ayuda
                             return (
-                                <fieldset key={key} className='product-form-field product-form-inherit'>
-                                    <legend>{label}</legend>
+                                <fieldset key={key} className='product-form-field product-form-inherit' aria-labelledby={legendId}>
+                                    <legend>
+                                        <span className='product-form-label-help'>
+                                            <span id={legendId}>{label}</span>
+                                            <InfoTip label={label}>{percentHelp[key]}</InfoTip>
+                                        </span>
+                                    </legend>
                                     <div className='product-form-modes'>
                                         <label className='product-form-check'>
                                             <input
@@ -267,7 +281,7 @@ function EditProduct({ product, families, formatPrice, onClose, onSave }) {
                                             />
                                             <span>
                                                 Usar el de la familia
-                                                {familyValue !== null && familyValue !== undefined && ` (${familyValue} ${unit})`}
+                                                {familyValue !== null && familyValue !== undefined && ` (${familyValue}\u00a0${unit})`}
                                             </span>
                                         </label>
                                         <label className='product-form-check'>

@@ -6,6 +6,7 @@ import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import Notice from '../../components/notice/Notice.jsx'
 import { unitsText } from './merchandiseFormat.js'
+import InputUnit from '../../components/input-unit/InputUnit.jsx'
 
 const rules = {
     cantidad: { obligatorio: true, tipo: 'entero', minimo: 1, mensajeMinimo: 'La cantidad tiene que ser mayor que 0.' },
@@ -84,7 +85,7 @@ function RestockForm({ product, onRegister, onPreview }) {
                             value={values.cantidad}
                             onChange={(event) => setField('cantidad', readStockInput(event.target.value))}
                         />
-                        <span>unidades</span>
+                        <InputUnit unit='unidades' />
                     </div>
                     {fieldError('cantidad')}
                 </label>
@@ -100,7 +101,7 @@ function RestockForm({ product, onRegister, onPreview }) {
                             value={values.costoUnitario}
                             onChange={(event) => setField('costoUnitario', readPriceInput(event.target.value, false))}
                         />
-                        <span>$</span>
+                        <InputUnit unit='$' />
                     </div>
                     {fieldError('costoUnitario')}
                 </label>

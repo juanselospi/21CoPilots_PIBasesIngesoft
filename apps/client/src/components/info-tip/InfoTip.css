@@ -1,0 +1,77 @@
+/* Ayuda de un campo (InfoTip.jsx): ícono (i) junto a la etiqueta y globo con la explicación */
+
+/* 24 × 24 px para tocarlo con el dedo aunque el ícono sea pequeño */
+.info-tip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radio-pastilla);
+  background: none;
+  color: var(--color-texto-suave);
+  cursor: help;
+  vertical-align: middle;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.info-tip-trigger:hover,
+.info-tip-trigger[data-state='open'] {
+  background: var(--color-tinte);
+  color: var(--color-enlace);
+}
+
+.info-tip-trigger:focus-visible {
+  outline: 2px solid var(--color-enlace);
+  outline-offset: 1px;
+}
+
+/* Va en un portal, por encima de los modales (z-index 10), como Select y DateField */
+.info-tip-content {
+  z-index: 50;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 10px 12px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-control);
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  box-shadow: var(--sombra);
+  font-size: var(--texto-etiqueta);
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.info-tip-content strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: var(--texto-etiqueta);
+}
+
+.info-tip-content p {
+  margin: 0;
+  color: var(--color-texto-suave);
+}
+
+.info-tip-arrow {
+  fill: var(--color-superficie);
+  stroke: var(--color-borde);
+}
+
+.info-tip-content[data-state='open'] {
+  animation: info-tip-abrir 120ms ease-out;
+}
+
+@keyframes info-tip-abrir {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-tip-content[data-state='open'] {
+    animation: none;
+  }
+}
