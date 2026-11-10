@@ -11,6 +11,11 @@
 
 import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 
+// Lo mismo que sinTildes() de validar-consulta-de-pedidos.js, pero en SQL (sin la extensión unaccent)
+const CON_TILDE = "áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ";
+const SIN_TILDE = "aaaaaeeeeiiiiooooouuuuncAAAAAEEEEIIIIOOOOOUUUUNC";
+const SIN_TILDES = (columna) => `lower(translate(${columna}, '${CON_TILDE}', '${SIN_TILDE}'))`;
+
 export class PedidosRepository {
   #pool;
 
@@ -238,10 +243,12 @@ export class PedidosRepository {
 
   /**
    * RF-46: los pedidos con su estado vigente, el de su último pago y un
-   * resumen de productos, del más nuevo al más viejo. `q` busca en el número
-   * (con o sin #), el cliente, el destinatario y los productos.
+   * resumen de productos, del más nuevo al más viejo. `busqueda` (ver
+   * interpretarBusqueda) compara por partes el nombre del cliente y su correo.
    */
-  async listarParaAdministracion({ estado, canal, correo, q, desde, hasta, limite, pagina }) {
+  async listarParaAdministracion({ estado, canal, correo, busqueda = null, desde, hasta, limite, pagina }) {
+    if (busqueda?.invalida) return { pedidos: [], total: 0 };
+
     const { rows } = await this.#pool.query(
       `SELECT v.correo_cliente, v.cliente, v.cedula, v.num_carrito, v.fecha_pedido_realizado,
               v.modalidad_entrega, v.subtotal, v.impuesto, v.costo_entrega, v.estado,
@@ -270,19 +277,11 @@ export class PedidosRepository {
           AND ($4::timestamptz IS NULL OR v.fecha_pedido_realizado >= $4)
           AND ($5::timestamptz IS NULL OR v.fecha_pedido_realizado < $5)
           AND ($6::text IS NULL
-               OR v.num_carrito::text = ltrim($6, '#')
-               OR v.cliente ILIKE '%' || $6 || '%'
-               OR v.correo_cliente ILIKE '%' || $6 || '%'
-               OR v.cedula ILIKE '%' || $6 || '%'
-               OR p.nombre_destinatario ILIKE '%' || $6 || '%'
-               OR EXISTS (SELECT 1
-                            FROM pedidos.agrega a
-                            JOIN catalogo.producto pr ON pr.sku = a.sku
-                           WHERE a.correo_cliente = v.correo_cliente AND a.num_carrito = v.num_carrito
-                             AND (pr.nombre ILIKE '%' || $6 || '%' OR a.sku ILIKE '%' || $6 || '%')))
+               OR ${SIN_TILDES("v.cliente")} LIKE '%' || $6 || '%'
+               OR lower(v.correo_cliente) LIKE '%' || $6 || '%')
         ORDER BY v.fecha_pedido_realizado DESC, v.correo_cliente, v.num_carrito DESC
         LIMIT $7 OFFSET $8`,
-      [estado, canal, correo, desde, hasta, q, limite, pagina * limite]
+      [estado, canal, correo, desde, hasta, busqueda?.texto ?? null, limite, pagina * limite]
     );
 
     return {
