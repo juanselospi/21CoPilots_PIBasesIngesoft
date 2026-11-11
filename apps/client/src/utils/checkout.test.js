@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-    PAGO_VACIO, camposDelPago, creditoQueSeUsa, cuerpoDeConfirmacion, formatoVencimiento, marcaDeTarjeta, nombreDelMetodo,
+    PAGO_VACIO, camposDelPago, creditoQueSeUsa, cuerpoDeConfirmacion, formatoCvv, formatoTarjeta, formatoVencimiento,
+    largoConEspacios, marcaDeTarjeta, nombreDelMetodo,
     pasoDeLosCampos, reglasDeEntrega, reglasDePago, restantePorPagar, tarjetaVencida, totalConEnvio, ultimosDigitos,
 } from './checkout.js'
 import { validarCampos } from './validarCampos.js'
@@ -46,10 +47,41 @@ test('pago: revisa el formato de la tarjeta', () => {
     assert.deepEqual(errores({}), {})
     // La de la demo que se rechaza sigue siendo válida en la pantalla
     assert.deepEqual(errores({ numeroTarjeta: '4111-1111-1111-0000' }), {})
-    assert.equal(errores({ numeroTarjeta: '41111' }).numeroTarjeta, 'Ingrese de 12 a 19 dígitos.')
+    assert.equal(errores({ numeroTarjeta: '41111' }).numeroTarjeta, 'Las tarjetas Visa llevan 16 dígitos.')
     assert.equal(errores({ vencimiento: '13/29' }).vencimiento, 'Ingrese el mes y el año, por ejemplo 08/29.')
     assert.equal(errores({ vencimiento: '10/26' }).vencimiento, 'Esta tarjeta ya venció.')
     assert.equal(errores({ cvv: '12' }).cvv, 'Ingrese los 3 dígitos de atrás de la tarjeta.')
+})
+
+test('tarjeta: cada marca pide su cantidad de dígitos y las demás de 12 a 19', () => {
+    const numero = (valor) => validarCampos({ numeroTarjeta: valor }, { numeroTarjeta: reglasDePago('tarjeta', HOY).numeroTarjeta }).numeroTarjeta
+
+    assert.equal(numero('4111 1111 1111 1111'), undefined)
+    assert.equal(numero('4111 1111 1111 111'), 'Las tarjetas Visa llevan 16 dígitos.')
+    assert.equal(numero('5555 5555 5555 444'), 'Las tarjetas Mastercard llevan 16 dígitos.')
+    assert.equal(numero('3782 8224 6310 005'), undefined)
+    assert.equal(numero('3782 8224 6310 0055'), 'Las tarjetas American Express llevan 15 dígitos.')
+    assert.equal(numero('6011 0000 0000'), undefined)
+    assert.equal(numero('6011 0000 000'), 'Ingrese de 12 a 19 dígitos.')
+    assert.equal(numero('4111 1111 abcd 1111'), 'El número de la tarjeta solo lleva dígitos.')
+})
+
+test('tarjeta: al escribir deja solo dígitos, en grupos de 4 y sin pasarse del largo de la marca', () => {
+    assert.equal(formatoTarjeta('4111111111111111'), '4111 1111 1111 1111')
+    assert.equal(formatoTarjeta('4111-1111-1111-1111-99'), '4111 1111 1111 1111')
+    assert.equal(formatoTarjeta('41a1 1'), '4111')
+    assert.equal(formatoTarjeta('378282246310005999'), '3782 8224 6310 005')
+    assert.equal(formatoTarjeta('60110000000000000000000'), '6011 0000 0000 0000 000')
+    assert.equal(formatoTarjeta(''), '')
+    assert.equal(largoConEspacios('visa'), 19)
+    assert.equal(largoConEspacios('amex'), 18)
+    assert.equal(largoConEspacios(null), 23)
+})
+
+test('tarjeta: el CVV solo deja escribir dígitos y los que lleva la marca', () => {
+    assert.equal(formatoCvv('12a34', 'visa'), '123')
+    assert.equal(formatoCvv('12345', 'amex'), '1234')
+    assert.equal(formatoCvv('12345', null), '1234')
 })
 
 test('tarjeta: reconoce la marca por cómo empieza el número', () => {

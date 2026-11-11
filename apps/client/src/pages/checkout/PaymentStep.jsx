@@ -2,8 +2,8 @@ import { useEffect, useId, useState } from 'react'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import {
-    METODOS_DE_PAGO, camposDelPago, creditoQueSeUsa, formatoVencimiento, largoDelCvv, marcaDeTarjeta, nombreDeMarca,
-    reglasDePago, restantePorPagar,
+    METODOS_DE_PAGO, camposDelPago, creditoQueSeUsa, formatoCvv, formatoTarjeta, formatoVencimiento, largoConEspacios,
+    largoDelCvv, marcaDeTarjeta, nombreDeMarca, reglasDePago, restantePorPagar,
 } from '../../utils/checkout.js'
 import StepTitle from './StepTitle.jsx'
 
@@ -124,7 +124,8 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
 
                             {cardField('numeroTarjeta', 'Número de tarjeta', {
                                 placeholder: '0000 0000 0000 0000',
-                                maxLength: 23,
+                                maxLength: largoConEspacios(brand),
+                                format: formatoTarjeta,
                                 hint: brand && `Tarjeta ${nombreDeMarca(brand)}`,
                             })}
 
@@ -138,6 +139,7 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
                                     type: 'password',
                                     placeholder: cvvLength === 4 ? '1234' : '123',
                                     maxLength: cvvLength ?? 4,
+                                    format: (texto) => formatoCvv(texto, brand),
                                 })}
                             </div>
                         </>
