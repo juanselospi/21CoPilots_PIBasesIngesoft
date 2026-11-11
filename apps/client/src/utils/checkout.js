@@ -64,13 +64,36 @@ export function reglasDePago(metodoPago, hoy = new Date(), { creditoCubreTodo = 
         },
         cvv: {
             obligatorio: true,
-            patron: /^\d{3,4}$/,
-            mensajePatron: 'Ingrese los 3 o 4 dígitos de atrás de la tarjeta.',
+            comprobar: (valor, valores) => problemaDelCvv(valor, marcaDeTarjeta(valores.numeroTarjeta)),
         },
     }
 }
 
 const soloDigitos = (texto) => texto.replace(/\D/g, '')
+
+const NOMBRE_DE_MARCA = { visa: 'Visa', mastercard: 'Mastercard', amex: 'American Express' }
+export const nombreDeMarca = (marca) => NOMBRE_DE_MARCA[marca] ?? null
+
+// La marca sale de como empieza el numero. null si no es ninguna de las que se reconocen
+export function marcaDeTarjeta(numero = '') {
+    const digitos = soloDigitos(numero)
+    if (/^3[47]/.test(digitos)) return 'amex'
+    if (/^4/.test(digitos)) return 'visa'
+    const primeros = Number(digitos.slice(0, 4))
+    if (/^5[1-5]/.test(digitos) || (digitos.length >= 4 && primeros >= 2221 && primeros <= 2720)) return 'mastercard'
+    return null
+}
+
+// Cuantos digitos lleva el CVV: American Express trae 4 al frente, Visa y Mastercard 3 atras
+export const largoDelCvv = (marca) => (marca === 'amex' ? 4 : marca ? 3 : null)
+
+export function problemaDelCvv(cvv, marca) {
+    const largo = largoDelCvv(marca)
+    if (largo === 4 && !/^\d{4}$/.test(cvv)) return 'Las American Express llevan 4 dígitos al frente de la tarjeta.'
+    if (largo === 3 && !/^\d{3}$/.test(cvv)) return 'Ingrese los 3 dígitos de atrás de la tarjeta.'
+    if (!largo && !/^\d{3,4}$/.test(cvv)) return 'Ingrese los 3 o 4 dígitos de atrás de la tarjeta.'
+    return null
+}
 
 export const ultimosDigitos = (numeroTarjeta) => soloDigitos(numeroTarjeta).slice(-4)
 

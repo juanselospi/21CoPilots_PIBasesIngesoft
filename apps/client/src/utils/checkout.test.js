@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
-    PAGO_VACIO, camposDelPago, creditoQueSeUsa, cuerpoDeConfirmacion, formatoVencimiento, nombreDelMetodo,
+    PAGO_VACIO, camposDelPago, creditoQueSeUsa, cuerpoDeConfirmacion, formatoVencimiento, marcaDeTarjeta, nombreDelMetodo,
     pasoDeLosCampos, reglasDeEntrega, reglasDePago, restantePorPagar, tarjetaVencida, totalConEnvio, ultimosDigitos,
 } from './checkout.js'
 import { validarCampos } from './validarCampos.js'
@@ -44,11 +44,36 @@ test('pago: revisa el formato de la tarjeta', () => {
     const errores = (cambios) => validarCampos({ metodoPago: 'tarjeta', numeroTarjeta: '4111 1111 1111 1111', vencimiento: '08/29', cvv: '123', ...cambios }, reglas)
 
     assert.deepEqual(errores({}), {})
-    assert.deepEqual(errores({ numeroTarjeta: '4111-1111-1111-0000', cvv: '1234' }), {})
+    // La de la demo que se rechaza sigue siendo válida en la pantalla
+    assert.deepEqual(errores({ numeroTarjeta: '4111-1111-1111-0000' }), {})
     assert.equal(errores({ numeroTarjeta: '41111' }).numeroTarjeta, 'Ingrese de 12 a 19 dígitos.')
     assert.equal(errores({ vencimiento: '13/29' }).vencimiento, 'Ingrese el mes y el año, por ejemplo 08/29.')
     assert.equal(errores({ vencimiento: '10/26' }).vencimiento, 'Esta tarjeta ya venció.')
-    assert.equal(errores({ cvv: '12' }).cvv, 'Ingrese los 3 o 4 dígitos de atrás de la tarjeta.')
+    assert.equal(errores({ cvv: '12' }).cvv, 'Ingrese los 3 dígitos de atrás de la tarjeta.')
+})
+
+test('tarjeta: reconoce la marca por cómo empieza el número', () => {
+    assert.equal(marcaDeTarjeta('4111 1111 1111 1111'), 'visa')
+    assert.equal(marcaDeTarjeta('5555 5555 5555 4444'), 'mastercard')
+    assert.equal(marcaDeTarjeta('2221 0000 0000 0009'), 'mastercard')
+    assert.equal(marcaDeTarjeta('2721 0000 0000 0000'), null)
+    assert.equal(marcaDeTarjeta('3782 822463 10005'), 'amex')
+    assert.equal(marcaDeTarjeta('6011 0000 0000 0000'), null)
+    assert.equal(marcaDeTarjeta(''), null)
+})
+
+test('tarjeta: el CVV lleva 4 dígitos en American Express y 3 en Visa y Mastercard', () => {
+    const reglas = reglasDePago('tarjeta', HOY)
+    const cvv = (numeroTarjeta, valor) =>
+        validarCampos({ metodoPago: 'tarjeta', numeroTarjeta, vencimiento: '08/29', cvv: valor }, reglas).cvv
+
+    assert.equal(cvv('3782 822463 10005', '1234'), undefined)
+    assert.equal(cvv('3782 822463 10005', '123'), 'Las American Express llevan 4 dígitos al frente de la tarjeta.')
+    assert.equal(cvv('4111 1111 1111 1111', '1234'), 'Ingrese los 3 dígitos de atrás de la tarjeta.')
+    assert.equal(cvv('5555 5555 5555 4444', '123'), undefined)
+    // Una marca que no se reconoce acepta 3 o 4
+    assert.equal(cvv('6011 0000 0000 0000', '1234'), undefined)
+    assert.equal(cvv('6011 0000 0000 0000', '12'), 'Ingrese los 3 o 4 dígitos de atrás de la tarjeta.')
 })
 
 test('vencimiento: pone la barra mientras se escribe', () => {
