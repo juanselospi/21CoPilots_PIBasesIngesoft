@@ -250,7 +250,7 @@ CREATE TABLE catalogo.producto (
     contrapedido boolean DEFAULT false NOT NULL,
     estado character varying(20) DEFAULT 'activo'::character varying NOT NULL,
     CONSTRAINT ck_producto_categoria CHECK ((btrim((categoria)::text) <> ''::text)),
-    CONSTRAINT ck_producto_estado CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'descontinuado'::character varying])::text[]))),
+    CONSTRAINT ck_producto_estado CHECK (((estado)::text = ANY ((ARRAY['activo'::character varying, 'descontinuado'::character varying, 'eliminado'::character varying])::text[]))),
     CONSTRAINT ck_producto_importacion CHECK ((importacion >= (0)::numeric)),
     CONSTRAINT ck_producto_item CHECK ((item >= (0)::numeric)),
     CONSTRAINT ck_producto_margen CHECK ((margen_ganancia > ('-100'::integer)::numeric)),
@@ -506,7 +506,8 @@ CREATE VIEW reportes.v_existencias AS
     p.tasa_impuesto,
     p.contrapedido
    FROM (catalogo.producto p
-     JOIN catalogo.familia f ON (((f.nombre)::text = (p.categoria)::text)));
+     JOIN catalogo.familia f ON (((f.nombre)::text = (p.categoria)::text)))
+  WHERE ((p.estado)::text <> 'eliminado'::text);
 
 
 --
