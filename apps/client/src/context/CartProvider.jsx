@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { agregarAlCarrito, cambiarCantidadDeLinea, obtenerCarrito, quitarDelCarrito } from '../api/carrito.js'
 import { useRecursoRemoto } from '../hooks/useRecursoRemoto.js'
 import { useSesion } from '../hooks/useSesion.js'
 import { cantidadEnCarrito } from '../utils/carrito.js'
+import { tomarPendiente } from '../utils/carritoPendiente.js'
 import { CartContext } from './CartContext.js'
 
 const CLIENT_ROLE = 'cliente'
@@ -44,6 +45,33 @@ function CartProvider({ children }) {
 
     const quitar = useCallback(async (sku) => keep(await quitarDelCarrito(sku)), [keep])
 
+    // Lo que el visitante quiso agregar antes de entrar se agrega apenas entra como cliente.
+    // El resultado queda aqui para que el boton de ese producto diga como salio
+    const [pendingResult, setPendingResult] = useState(null)
+    const checkedFor = useRef(null)
+    useEffect(() => {
+        // Al cerrar sesion se olvida, asi lo que agregue como visitante cuenta al volver a entrar
+        if (!usuario) {
+            checkedFor.current = null
+            return
+        }
+        if (checkedFor.current === usuario.correo) return
+        checkedFor.current = usuario.correo
+
+        const pendiente = tomarPendiente()
+        // El administrador no tiene carrito, asi que lo pendiente se descarta
+        if (!pendiente || !correo) return
+
+        agregarAlCarrito(pendiente.sku, pendiente.cantidad)
+            .then((actualizado) => {
+                setLatest({ correo, carrito: actualizado })
+                setPendingResult({ sku: pendiente.sku, carrito: actualizado })
+            })
+            .catch((addError) => setPendingResult({ sku: pendiente.sku, error: addError.message }))
+    }, [usuario, correo])
+
+    const olvidarResultadoPendiente = useCallback(() => setPendingResult(null), [])
+
     // Vuelve a pedir el carrito pero deja el anterior mientras llega, asi el contador no baja a 0 un momento.
     // Lo usa la pagina del carrito al entrar para traer los precios y las existencias de hoy
     const actualizar = useCallback(async (signal) => {
@@ -60,8 +88,10 @@ function CartProvider({ children }) {
             quitar,
             actualizar,
             recargar,
+            resultadoPendiente: pendingResult,
+            olvidarResultadoPendiente,
         }),
-        [carrito, agregar, cambiarCantidad, quitar, actualizar, recargar],
+        [carrito, agregar, cambiarCantidad, quitar, actualizar, recargar, pendingResult, olvidarResultadoPendiente],
     )
 
     return <CartContext value={cart}>{children}</CartContext>
