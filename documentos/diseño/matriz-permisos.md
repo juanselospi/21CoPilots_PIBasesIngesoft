@@ -124,7 +124,7 @@ configurar el negocio, que solo hace el propietario.
   | Administrador | `POST /api/catalogo/productos` | Agregar un producto |
   | Administrador | `PATCH /api/catalogo/productos/:sku` | Editar un producto |
   | Administrador | `PATCH /api/catalogo/productos/:sku/estado` | Desactivar o reactivar un producto |
-  | Administrador | `DELETE /api/catalogo/productos/:sku` | Eliminar un producto sin historial |
+  | Administrador | `DELETE /api/catalogo/productos/:sku` | Eliminar un producto que no está en un pedido sin finalizar (su historial se conserva) |
   | Administrador | `GET /api/catalogo/admin/familias` | Listado de familias del panel |
   | Administrador | `POST /api/catalogo/familias` | Agregar una familia |
   | Administrador | `PATCH /api/catalogo/familias/:nombre` | Editar o desactivar una familia |

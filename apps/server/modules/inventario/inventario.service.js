@@ -61,7 +61,7 @@ export class InventarioService {
 
     const movimiento = await this.#repositorio.enTransaccion(async (cliente) => {
       const productos = await this.#repositorio.bloquearProductos(cliente, [sku]);
-      if (!productos.has(sku)) throw new RecursoNoEncontrado("el producto", sku);
+      if (!existeEnElCatalogo(productos.get(sku))) throw new RecursoNoEncontrado("el producto", sku);
 
       await this.#repositorio.actualizarCosto(cliente, sku, costoUnitario);
       return this.#repositorio.registrarMovimiento(cliente, {
@@ -138,7 +138,7 @@ export class InventarioService {
     const movimiento = await this.#repositorio.enTransaccion(async (cliente) => {
       const productos = await this.#repositorio.bloquearProductos(cliente, [sku]);
       const producto = productos.get(sku);
-      if (!producto) throw new RecursoNoEncontrado("el producto", sku);
+      if (!existeEnElCatalogo(producto)) throw new RecursoNoEncontrado("el producto", sku);
 
       const cantidad = calcularCantidad(producto.stock);
       if (cantidad === 0) return null;
@@ -164,3 +164,6 @@ export class InventarioService {
     return movimiento;
   }
 }
+
+// Un producto eliminado conserva su historial, pero ya no recibe mercancía ni ajustes
+const existeEnElCatalogo = (producto) => Boolean(producto) && producto.estado !== "eliminado";

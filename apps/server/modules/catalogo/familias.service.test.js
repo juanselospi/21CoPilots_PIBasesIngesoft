@@ -141,3 +141,19 @@ test("no elimina una familia con productos y dice cuántos tiene", async () => {
   });
   assert.ok(familias.has("legos"));
 });
+
+test("no elimina una familia que solo tiene productos eliminados con historial", async () => {
+  const { servicio, familias } = crearServicio();
+  const repositorio = {
+    buscarFamilia: async () => ({ nombre: "Funkos", totalDeProductos: 0 }),
+    eliminarFamilia: async () => "con_productos_eliminados",
+  };
+  const conEliminados = new FamiliasService({ repositorio });
+
+  await assert.rejects(conEliminados.eliminar("Funkos"), (error) => {
+    assert.ok(error instanceof ReglaDeNegocioViolada);
+    assert.match(error.message, /productos eliminados que conservan su historial/);
+    return true;
+  });
+  assert.ok(familias.has("funkos"));
+});

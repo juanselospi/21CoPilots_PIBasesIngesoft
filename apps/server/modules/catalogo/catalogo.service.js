@@ -8,7 +8,7 @@
 
 import {
   EntradaInvalida,
-  ProductoConHistorial,
+  ProductoEnPedidoActivo,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -29,8 +29,16 @@ export const DISPONIBILIDAD = Object.freeze({
   DESCONTINUADO: "descontinuado",
 });
 
-/** Estado del producto (RF-18): uno descontinuado sale de la tienda pero conserva su historial. */
-export const ESTADOS_DE_PRODUCTO = Object.freeze({ ACTIVO: "activo", DESCONTINUADO: "descontinuado" });
+/**
+ * Estado del producto (RF-18): uno descontinuado sale de la tienda pero sigue en
+ * el panel y se puede reactivar; uno eliminado que conserva su historial ya no
+ * sale en ningún lado y no vuelve.
+ */
+export const ESTADOS_DE_PRODUCTO = Object.freeze({
+  ACTIVO: "activo",
+  DESCONTINUADO: "descontinuado",
+  ELIMINADO: "eliminado",
+});
 
 /** Avisos que el panel dibuja junto al producto (RF-43). */
 export const ETIQUETAS = Object.freeze({
@@ -197,7 +205,12 @@ export class CatalogoService {
     const categoria = await this.#familiaExistente(producto.categoria);
     const sku = await this.#repositorio.crear({ ...producto, categoria });
     if (sku === null) {
-      throw new ReglaDeNegocioViolada(`Ya existe un producto con el código ${producto.sku}.`, "RF-01");
+      const estado = await this.#repositorio.estadoPorSku(producto.sku);
+      const mensaje =
+        estado === ESTADOS_DE_PRODUCTO.ELIMINADO
+          ? `El código ${producto.sku} es de un producto eliminado que conserva su historial; use otro código.`
+          : `Ya existe un producto con el código ${producto.sku}.`;
+      throw new ReglaDeNegocioViolada(mensaje, "RF-01");
     }
 
     return this.#conPrecioYDisponibilidad(await this.#repositorio.obtenerPorSku(sku));
@@ -267,23 +280,30 @@ export class CatalogoService {
   }
 
   /**
-   * Borra un producto que nunca se vendió ni tuvo movimientos. Si tiene
-   * historial hay que desactivarlo, para no perder los reportes.
+   * RF-18: elimina un producto que no está en ningún pedido sin finalizar; lo
+   * quita también de los carritos abiertos. Su historial (movimientos y pedidos
+   * finalizados o cancelados) no lo impide: si lo tiene, el producto queda
+   * `eliminado` para conservarlo; si no, se borra.
    */
   async eliminarProducto(sku, { responsable = null } = {}) {
     const producto = await this.#repositorio.obtenerPorSku(sku);
     if (!producto) throw new RecursoNoEncontrado("el producto", sku);
 
-    const resultado = await this.#repositorio.eliminar(sku);
+    const { resultado, pedidos, conservaHistorial } = await this.#repositorio.eliminar(sku);
     if (resultado === "no_existe") throw new RecursoNoEncontrado("el producto", sku);
-    if (resultado === "con_historial") throw new ProductoConHistorial();
+    if (resultado === "en_pedido_activo") throw new ProductoEnPedidoActivo(pedidos);
 
     await this.#busDeEventos.publicar(EVENTOS.PRODUCTO_ELIMINADO, {
       correoUsuario: responsable,
       entidad: "producto",
       entidadId: sku,
-      valorAnterior: { nombre: producto.nombre, categoria: producto.categoria, costoItem: producto.costoItem },
-      valorNuevo: null,
+      valorAnterior: {
+        nombre: producto.nombre,
+        categoria: producto.categoria,
+        costoItem: producto.costoItem,
+        estado: producto.estado,
+      },
+      valorNuevo: conservaHistorial ? { estado: ESTADOS_DE_PRODUCTO.ELIMINADO } : null,
     });
   }
 
@@ -418,8 +438,11 @@ export function calcularEtiquetas(producto, umbralDeExistenciasBajas) {
   return etiquetas;
 }
 
+// Un eliminado solo llega aquí desde pedidos (obtenerVarios): para vender es como descontinuado
 function determinarDisponibilidad(producto) {
-  if (producto.estado === ESTADOS_DE_PRODUCTO.DESCONTINUADO) return DISPONIBILIDAD.DESCONTINUADO;
+  if (producto.estado === ESTADOS_DE_PRODUCTO.DESCONTINUADO || producto.estado === ESTADOS_DE_PRODUCTO.ELIMINADO) {
+    return DISPONIBILIDAD.DESCONTINUADO;
+  }
   if (producto.existencias > 0) return DISPONIBILIDAD.EN_EXISTENCIA;
   if (producto.admiteContrapedido) return DISPONIBILIDAD.POR_CONTRAPEDIDO;
   return DISPONIBILIDAD.NO_DISPONIBLE;

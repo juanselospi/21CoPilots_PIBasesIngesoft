@@ -9,7 +9,7 @@ import { MargenDeGanancia } from "./precio/pasos/margen-de-ganancia.js";
 import { ImpuestoDeVenta } from "./precio/pasos/impuesto-de-venta.js";
 import {
   EntradaInvalida,
-  ProductoConHistorial,
+  ProductoEnPedidoActivo,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -32,7 +32,8 @@ function crearServicio() {
       productos.set(producto.sku, { estado: "activo", ...producto, tasaImpuesto: 13 });
       return producto.sku;
     },
-    obtenerPorSku: async (sku) => productos.get(sku) ?? null,
+    obtenerPorSku: async (sku) => (productos.get(sku)?.estado === "eliminado" ? null : productos.get(sku) ?? null),
+    estadoPorSku: async (sku) => productos.get(sku)?.estado ?? null,
     // Existen todas las familias salvo "Sin familia", y se guardan con mayúscula inicial
     buscarFamilia: async (nombre) =>
       nombre === "Sin familia" ? null : { nombre: nombre[0].toUpperCase() + nombre.slice(1) },
@@ -89,6 +90,21 @@ test("RF-01: registrar PKM-001 dos veces da error la segunda vez", async () => {
     return true;
   });
   assert.equal(productos.size, 1);
+});
+
+test("RF-01: el código de un producto eliminado con historial no se reutiliza y lo dice", async () => {
+  const { servicio, productos } = crearServicio();
+  await servicio.crearProducto(pkm001);
+  productos.get("PKM-001").estado = "eliminado";
+
+  await assert.rejects(servicio.crearProducto(pkm001), (error) => {
+    assert.ok(error instanceof ReglaDeNegocioViolada);
+    assert.equal(
+      error.message,
+      "El código PKM-001 es de un producto eliminado que conserva su historial; use otro código."
+    );
+    return true;
+  });
 });
 
 test("no guarda nada si los datos no son válidos", async () => {
@@ -713,29 +729,42 @@ function crearServicioParaEliminar(resultado) {
 }
 
 test("borra un producto sin historial y lo publica para la bitácora", async () => {
-  const { servicio, eventos } = crearServicioParaEliminar("eliminado");
+  const { servicio, eventos } = crearServicioParaEliminar({ resultado: "eliminado", conservaHistorial: false });
 
   await servicio.eliminarProducto("NUEVO-1", { responsable: "admin@dchobbies.test" });
 
   assert.equal(eventos[0].evento, "producto_eliminado");
   assert.equal(eventos[0].datos.entidadId, "NUEVO-1");
   assert.equal(eventos[0].datos.valorAnterior.nombre, pkm001.nombre);
+  assert.equal(eventos[0].datos.valorNuevo, null);
 });
 
-test("un producto con ventas o movimientos no se borra y pide desactivarlo", async () => {
-  const { servicio, eventos } = crearServicioParaEliminar("con_historial");
+test("RF-18: un producto con historial se elimina conservándolo, y la bitácora lo dice", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar({ resultado: "eliminado", conservaHistorial: true });
+
+  await servicio.eliminarProducto("PKM-001", { responsable: "admin@dchobbies.test" });
+
+  assert.equal(eventos[0].evento, "producto_eliminado");
+  assert.deepEqual(eventos[0].datos.valorNuevo, { estado: "eliminado" });
+});
+
+test("RF-18: un producto en pedidos sin finalizar no se elimina y dice cuáles", async () => {
+  const { servicio, eventos } = crearServicioParaEliminar({ resultado: "en_pedido_activo", pedidos: [4, 7] });
 
   await assert.rejects(servicio.eliminarProducto("PKM-001"), (error) => {
-    assert.ok(error instanceof ProductoConHistorial);
-    assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
-    assert.equal(error.message, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+    assert.ok(error instanceof ProductoEnPedidoActivo);
+    assert.equal(error.codigo, "PRODUCTO_EN_PEDIDO_ACTIVO");
+    assert.equal(
+      error.message,
+      "Este producto está en pedidos sin finalizar (n.º 4, 7). Elimínelo cuando se entreguen o se cancelen, o desactívelo en su lugar."
+    );
     return true;
   });
   assert.deepEqual(eventos, []);
 });
 
 test("borrar un producto que no existe responde no encontrado", async () => {
-  const { servicio } = crearServicioParaEliminar("eliminado");
+  const { servicio } = crearServicioParaEliminar({ resultado: "eliminado", conservaHistorial: false });
 
   await assert.rejects(servicio.eliminarProducto("NO-EXISTE"), RecursoNoEncontrado);
 });

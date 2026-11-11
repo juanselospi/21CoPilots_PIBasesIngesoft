@@ -10,7 +10,7 @@ import { crearExigirRol, ROLES } from "../../shared/http/autorizacion-por-rol.js
 import { manejadorDeErrores } from "../../shared/http/manejador-de-errores.js";
 import {
   EntradaInvalida,
-  ProductoConHistorial,
+  ProductoEnPedidoActivo,
   RecursoNoEncontrado,
   ReglaDeNegocioViolada,
 } from "../../shared/errores/errores-de-dominio.js";
@@ -480,11 +480,11 @@ test("cambiar el estado de un producto exige administrador y responde el product
 
 // Eliminar
 
-test("eliminar responde 204 sin cuerpo, 409 si tiene historial y exige administrador", async (t) => {
+test("eliminar responde 204 sin cuerpo, 409 si está en un pedido sin finalizar y exige administrador", async (t) => {
   const { url, cerrar } = await levantarServidor({
     ...servicio,
     eliminarProducto: async (sku) => {
-      if (sku === "PKM-001") throw new ProductoConHistorial();
+      if (sku === "PKM-001") throw new ProductoEnPedidoActivo([4]);
     },
   });
   t.after(cerrar);
@@ -498,11 +498,14 @@ test("eliminar responde 204 sin cuerpo, 409 si tiene historial y exige administr
   assert.equal(borrado.status, 204);
   assert.equal(await borrado.text(), "");
 
-  const conHistorial = await eliminar("PKM-001", ROLES.ADMINISTRADOR);
-  const { error } = await conHistorial.json();
-  assert.equal(conHistorial.status, 409);
-  assert.equal(error.codigo, "PRODUCTO_CON_HISTORIAL");
-  assert.equal(error.mensaje, "Este producto tiene ventas o movimientos; desactívelo en su lugar.");
+  const enPedido = await eliminar("PKM-001", ROLES.ADMINISTRADOR);
+  const { error } = await enPedido.json();
+  assert.equal(enPedido.status, 409);
+  assert.equal(error.codigo, "PRODUCTO_EN_PEDIDO_ACTIVO");
+  assert.equal(
+    error.mensaje,
+    "Este producto está en un pedido sin finalizar (n.º 4). Elimínelo cuando se entregue o se cancele, o desactívelo en su lugar."
+  );
 });
 
 test("el catálogo público pagina, filtra y ordena, y responde el total en meta", async (t) => {

@@ -85,7 +85,7 @@ cp .env.example .env       # en Windows PowerShell: copy .env.example .env
 npm install                # instala las herramientas de BD (pg, dotenv)
 npm run db:up              # descarga y levanta PostgreSQL 17 en Docker (puerto 5433)
 npm run db:reset           # crea todos los esquemas y tablas y carga las semillas
-npm run db:test            # debe terminar con "210 prueba(s) aprobada(s)" (sección 5.6)
+npm run db:test            # debe terminar con "216 prueba(s) aprobada(s)" (sección 5.6)
 ```
 
 Desde la raíz del repositorio también funciona con `--prefix`, por ejemplo
