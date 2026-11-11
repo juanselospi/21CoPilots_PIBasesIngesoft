@@ -83,8 +83,8 @@ export function cambiarEstadoProducto(sku, estado, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}/estado`, { metodo: 'PATCH', cuerpo: { estado }, signal })
 }
 
-// Borra un producto sin historial. Si tiene ventas o movimientos el servidor responde 409
-// (PRODUCTO_CON_HISTORIAL) y hay que desactivarlo en su lugar.
+// Elimina un producto; su historial se conserva. Si está en un pedido sin finalizar el servidor
+// responde 409 (PRODUCTO_EN_PEDIDO_ACTIVO) y se puede desactivar en su lugar.
 export function eliminarProducto(sku, { signal } = {}) {
     return pedir(`/api/catalogo/productos/${encodeURIComponent(sku)}`, { metodo: 'DELETE', signal })
 }

@@ -166,7 +166,7 @@ function Products() {
     }
 
     // Desactiva, reactiva o elimina el producto, cierra el diálogo y recarga el listado.
-    // Si falla, le devuelve al diálogo el error; un 409 al eliminar es que tiene historial.
+    // Si falla, le devuelve al diálogo el error; un 409 al eliminar es que está en un pedido sin finalizar.
     const handleAction = async (action, product) => {
         try {
             if (action === 'eliminar') await eliminarProducto(product.sku)
@@ -177,7 +177,7 @@ function Products() {
             avisarCambioDeInventario()
             return {}
         } catch (error) {
-            return { error: error.message, withHistory: action === 'eliminar' && error.estado === 409 }
+            return { error: error.message, inActiveOrder: action === 'eliminar' && error.estado === 409 }
         }
     }
 

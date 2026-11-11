@@ -9,7 +9,13 @@
  * La importación y el margen del producto salen tal como están guardados
  * (null si usa los de la familia) junto con los de su familia; cuál vale lo
  * decide el dominio.
+ *
+ * Un producto eliminado que conserva su historial (estado `eliminado`) no
+ * sale en ningún listado ni consulta por SKU; solo `obtenerVarios` lo trae,
+ * para que pedidos lo reconozca y lo trate como fuera de venta.
  */
+
+import { enTransaccion } from "../../shared/db/unidad-de-trabajo.js";
 
 const COLUMNAS_DE_PRODUCTO = `
        p.sku,
@@ -44,7 +50,8 @@ const COLUMNAS_DE_FAMILIA = `
        f.importacion,
        f.margen_ganancia,
        f.activa,
-       (SELECT count(*) FROM catalogo.producto p WHERE p.categoria = f.nombre)::int AS total_de_productos`;
+       (SELECT count(*) FROM catalogo.producto p
+         WHERE p.categoria = f.nombre AND p.estado <> 'eliminado')::int AS total_de_productos`;
 
 // Campo del dominio -> columna, para armar los UPDATE solo con lo que cambia.
 const COLUMNA_DE_PRODUCTO = Object.freeze({
@@ -92,7 +99,8 @@ export class CatalogoRepository {
                  FROM inventario.producto_administra pa
                 WHERE pa.sku = p.sku AND pa.tipo = 'ingreso') AS ultimo_ingreso
          FROM ${PRODUCTO_CON_FAMILIA}
-        WHERE ($1::text IS NULL OR p.categoria = $1)
+        WHERE p.estado <> 'eliminado'
+          AND ($1::text IS NULL OR p.categoria = $1)
           AND ($2::text IS NULL OR p.nombre ILIKE '%' || $2 || '%')
         ORDER BY p.nombre`,
       [categoria, termino]
@@ -106,7 +114,8 @@ export class CatalogoRepository {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
          FROM ${PRODUCTO_CON_FAMILIA}
-        WHERE ($1::text IS NULL OR p.nombre ILIKE '%' || $1 || '%'
+        WHERE p.estado <> 'eliminado'
+          AND ($1::text IS NULL OR p.nombre ILIKE '%' || $1 || '%'
                                 OR p.sku ILIKE '%' || $1 || '%')
           AND ($2::text IS NULL OR p.categoria = $2)
           AND ($3::text IS NULL OR p.proveedor = $3)
@@ -117,7 +126,7 @@ export class CatalogoRepository {
     return rows.map(aProducto);
   }
 
-  /** Varios productos por SKU de una vez, para el carrito. */
+  /** Varios productos por SKU de una vez, para el carrito; incluye los eliminados. */
   async obtenerVarios(skus) {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
@@ -132,11 +141,18 @@ export class CatalogoRepository {
     const { rows } = await this.#pool.query(
       `SELECT ${COLUMNAS_DE_PRODUCTO}
          FROM ${PRODUCTO_CON_FAMILIA}
-        WHERE p.sku = $1`,
+        WHERE p.sku = $1
+          AND p.estado <> 'eliminado'`,
       [sku]
     );
 
     return rows[0] ? aProducto(rows[0]) : null;
+  }
+
+  /** El estado guardado del SKU, aunque esté eliminado; null si no existe. */
+  async estadoPorSku(sku) {
+    const { rows } = await this.#pool.query(`SELECT estado FROM catalogo.producto WHERE sku = $1`, [sku]);
+    return rows[0]?.estado ?? null;
   }
 
   /**
@@ -186,28 +202,64 @@ export class CatalogoRepository {
   }
 
   /**
-   * Borra el producto solo si no tiene líneas de pedido ni movimientos.
-   * @returns "eliminado", "con_historial" o "no_existe"
+   * Elimina el producto si no está en un pedido sin finalizar. Antes lo quita
+   * de los carritos abiertos. Sin historial lo borra; con movimientos o con
+   * pedidos finalizados o cancelados lo marca `eliminado`, porque ese
+   * historial no se puede borrar.
+   * @returns `{ resultado: "eliminado", conservaHistorial }`,
+   *   `{ resultado: "en_pedido_activo", pedidos }` o `{ resultado: "no_existe" }`
    */
   async eliminar(sku) {
-    try {
-      const { rows } = await this.#pool.query(
-        `DELETE FROM catalogo.producto p
-          WHERE p.sku = $1
-            AND NOT EXISTS (SELECT 1 FROM pedidos.agrega a WHERE a.sku = p.sku)
-            AND NOT EXISTS (SELECT 1 FROM inventario.producto_administra m WHERE m.sku = p.sku)
-         RETURNING sku`,
+    return enTransaccion(this.#pool, async (cliente) => {
+      // Bloquea el producto: nadie lo agrega a un carrito o pedido mientras tanto
+      const { rows: productos } = await cliente.query(
+        `SELECT estado FROM catalogo.producto WHERE sku = $1 FOR UPDATE`,
         [sku]
       );
-      if (rows[0]) return "eliminado";
-    } catch (error) {
-      // Una venta entró entre la revisión y el borrado: la llave foránea lo frena
-      if (error.code === "23503") return "con_historial";
-      throw error;
-    }
+      if (!productos[0] || productos[0].estado === "eliminado") return { resultado: "no_existe" };
 
-    const { rows } = await this.#pool.query(`SELECT 1 FROM catalogo.producto WHERE sku = $1`, [sku]);
-    return rows[0] ? "con_historial" : "no_existe";
+      const { rows: activos } = await cliente.query(
+        `SELECT DISTINCT a.num_carrito
+           FROM pedidos.agrega a
+           JOIN pedidos.carrito c
+             ON c.correo_cliente = a.correo_cliente AND c.num_carrito = a.num_carrito
+           LEFT JOIN reportes.v_estado_pedido e
+             ON e.correo_cliente = a.correo_cliente AND e.num_carrito = a.num_carrito
+          WHERE a.sku = $1
+            AND c.estado_carrito = 'convertido'
+            AND coalesce(e.estado, 'colocado') NOT IN ('finalizado', 'cancelado')
+          ORDER BY a.num_carrito`,
+        [sku]
+      );
+      if (activos.length > 0) {
+        return { resultado: "en_pedido_activo", pedidos: activos.map((fila) => fila.num_carrito) };
+      }
+
+      // Un carrito abierto no es una venta: la línea se quita
+      await cliente.query(
+        `DELETE FROM pedidos.agrega a
+          USING pedidos.carrito c
+          WHERE a.sku = $1
+            AND c.correo_cliente = a.correo_cliente
+            AND c.num_carrito = a.num_carrito
+            AND c.estado_carrito = 'activo'`,
+        [sku]
+      );
+
+      const { rows: historial } = await cliente.query(
+        `SELECT EXISTS (SELECT 1 FROM pedidos.agrega WHERE sku = $1)
+             OR EXISTS (SELECT 1 FROM inventario.producto_administra WHERE sku = $1) AS conserva`,
+        [sku]
+      );
+      const conservaHistorial = historial[0].conserva;
+
+      if (conservaHistorial) {
+        await cliente.query(`UPDATE catalogo.producto SET estado = 'eliminado' WHERE sku = $1`, [sku]);
+      } else {
+        await cliente.query(`DELETE FROM catalogo.producto WHERE sku = $1`, [sku]);
+      }
+      return { resultado: "eliminado", conservaHistorial };
+    });
   }
 
   /**
@@ -291,8 +343,18 @@ export class CatalogoRepository {
     );
   }
 
+  /**
+   * @returns "eliminada", o "con_productos_eliminados" si todavía la usan
+   *   productos eliminados que conservan su historial
+   */
   async eliminarFamilia(nombre) {
-    await this.#pool.query(`DELETE FROM catalogo.familia WHERE nombre = $1`, [nombre]);
+    try {
+      await this.#pool.query(`DELETE FROM catalogo.familia WHERE nombre = $1`, [nombre]);
+      return "eliminada";
+    } catch (error) {
+      if (error.code === "23503") return "con_productos_eliminados";
+      throw error;
+    }
   }
 }
 

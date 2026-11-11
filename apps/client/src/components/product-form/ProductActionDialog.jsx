@@ -16,15 +16,15 @@ const textByAction = {
     },
     eliminar: {
         title: 'Eliminar producto',
-        message: 'Se borra para siempre. Si tiene ventas o movimientos no se puede eliminar; en ese caso, desactívelo.',
+        message: 'Desaparece del panel, de la tienda y de los carritos, y no se puede recuperar. Sus ventas y movimientos se conservan. No se puede eliminar si está en un pedido sin finalizar.',
         confirm: 'Eliminar',
         danger: true,
     },
 }
 
 // Confirmación de desactivar, reactivar o eliminar un producto. No llama a la API:
-// usa onConfirm(action, product), que devuelve {} si salió bien o { error, withHistory } si no.
-// Si no se puede eliminar porque tiene historial, ofrece desactivarlo.
+// usa onConfirm(action, product), que devuelve {} si salió bien o { error, inActiveOrder } si no.
+// Si no se puede eliminar porque está en un pedido sin finalizar, ofrece desactivarlo.
 function ProductActionDialog({ action, product, onClose, onConfirm }) {
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState(null)
@@ -52,7 +52,7 @@ function ProductActionDialog({ action, product, onClose, onConfirm }) {
 
         if (result.error) {
             setError(result.error)
-            setOfferDeactivate(result.withHistory && !product.discontinued)
+            setOfferDeactivate(result.inActiveOrder && !product.discontinued)
         }
     }
 

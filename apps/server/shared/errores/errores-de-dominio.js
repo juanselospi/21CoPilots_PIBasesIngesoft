@@ -89,12 +89,21 @@ export class EntradaInvalida extends ErrorDeDominio {
   }
 }
 
-/** Un producto con ventas o movimientos no se borra: se desactiva (RF-18). */
-export class ProductoConHistorial extends ErrorDeDominio {
-  constructor() {
-    super("Este producto tiene ventas o movimientos; desactívelo en su lugar.", {
-      codigo: "PRODUCTO_CON_HISTORIAL",
-    });
+/**
+ * Un producto que está en un pedido sin finalizar no se elimina (RF-18): hay
+ * que esperar a que el pedido se entregue o se cancele, o desactivarlo.
+ * `pedidos` son los números de esos pedidos.
+ */
+export class ProductoEnPedidoActivo extends ErrorDeDominio {
+  constructor(pedidos = []) {
+    const cuales = pedidos.length > 0 ? ` (n.º ${pedidos.join(", ")})` : "";
+    const uno = pedidos.length === 1;
+    const enCuantos = uno ? "un pedido sin finalizar" : "pedidos sin finalizar";
+    const cuando = uno ? "se entregue o se cancele" : "se entreguen o se cancelen";
+    super(
+      `Este producto está en ${enCuantos}${cuales}. Elimínelo cuando ${cuando}, o desactívelo en su lugar.`,
+      { codigo: "PRODUCTO_EN_PEDIDO_ACTIVO", detalles: { pedidos } }
+    );
   }
 }
 

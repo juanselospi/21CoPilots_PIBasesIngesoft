@@ -68,7 +68,14 @@ export class FamiliasService {
       );
     }
 
-    await this.#repositorio.eliminarFamilia(familia.nombre);
+    // Los productos eliminados con historial no cuentan, pero siguen ligados a la familia
+    const resultado = await this.#repositorio.eliminarFamilia(familia.nombre);
+    if (resultado === "con_productos_eliminados") {
+      throw new ReglaDeNegocioViolada(
+        `La familia ${familia.nombre} tiene productos eliminados que conservan su historial. Desactívela en su lugar.`,
+        "FAMILIA_CON_PRODUCTOS"
+      );
+    }
   }
 
   async #obtener(nombre) {
