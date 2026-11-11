@@ -1,6 +1,6 @@
 # Sprint Backlog y Product Backlog del Sprint 2
 
-Estado al 9 de noviembre de 2026 · Entrega: 10 de noviembre de 2026
+Estado al 10 de noviembre de 2026 · Entrega: 10 de noviembre de 2026
 
 Estas dos tablas pasan al documento del Sprint 2, en el mismo formato de las secciones 5 y 6 del documento del Sprint 1. El detalle de cada criterio de aceptación está en `historias-de-usuario.md`.
 
@@ -16,18 +16,18 @@ El sprint se manejó en Jira, en el tablero «SCRUM Sprint 2» (21 de octubre al
 | SCRUM-77 | HU-03 (cont.) Productos: editar, desactivar y eliminar | 5 | 5 | 5 | 5 | Terminada |
 | SCRUM-78 | HU-16 Familias de productos | 8 | 8 | 4 | 4 | Terminada |
 | SCRUM-79 | HU-07 / HU-08 Ingreso de mercancía y alerta de existencias | 10 | 10 | 5 | 5 | Terminada |
-| SCRUM-80 | HU-02 (cont.), PB-05, PB-18 y PB-19 Seguridad, empleados y bitácora | 16 | 11 | 9 | 9 | Parcial |
+| SCRUM-80 | HU-02 (cont.), PB-05, PB-18 y PB-19 Seguridad, empleados y bitácora | 16 | 11 | 10 | 9 | Parcial |
 | SCRUM-81 | HU-11 Registro de clientes | 5 | 5 | 4 | 4 | Terminada |
 | SCRUM-82 | HU-10 Carrito persistente con contrapedido | 8 | 8 | 4 | 4 | Terminada |
 | SCRUM-83 | HU-12 y PB-02 Confirmar el pedido, pago emulado y factura | 18 | 5 | 6 | 6 | Parcial |
 | SCRUM-84 | HU-17 Administración de pedidos | 13 | 13 | 7 | 7 | Terminada |
 | SCRUM-85 | PB-31 Créditos a favor del cliente | 5 | 5 | 2 | 2 | Terminada |
-| SCRUM-86 | Cierre del Sprint 2: pruebas, evidencia, documentación y demo | — | — | 10 | 4 | En curso |
-| | **Total** | **88** | **70** | **70** | **64** | |
+| SCRUM-86 | Cierre del Sprint 2: pruebas, evidencia, documentación y demo | — | — | 10 | 8 | En curso |
+| | **Total** | **88** | **70** | **71** | **68** | |
 
 Una historia puede tener todas sus tareas terminadas y quedar parcial, porque tiene criterios que esas tareas no cubrieron. Los puntos parciales no se cuentan como completos:
 
-- **SCRUM-80:** de los 16 puntos faltan los 5 de HU-02, porque el correo de recuperación no se envía de verdad. PB-05, PB-18 y PB-19 sí quedaron completas.
+- **SCRUM-80:** de los 16 puntos faltan los 5 de HU-02. El correo de recuperación ya se envía por SMTP (SCRUM-157), pero falta probarlo con una bandeja real. PB-05, PB-18 y PB-19 sí quedaron completas.
 - **SCRUM-83:** de los 18 puntos faltan los 13 de HU-12, porque la factura todavía dice «POR DEFINIR» en los datos del negocio. PB-02 sí quedó completa.
 
 ### Tareas del sprint
@@ -93,6 +93,7 @@ Una historia puede tener todas sus tareas terminadas y quedar parcial, porque ti
 | SCRUM-121 | [BE] Bitácora: suscriptor que guarda los eventos y GET /api/admin/bitacora | Jeferson Marín | Terminada |
 | SCRUM-122 | [FE] Consulta de la bitácora en el panel y en el detalle del pedido | Agussoto 48 | Terminada |
 | SCRUM-131 | [BE] Cerrar sesión, renovación y limpieza de sesiones vencidas, duración parametrizable | Jeferson Marín | Terminada |
+| SCRUM-157 | [BE] Envío real del correo de recuperación por SMTP | Jeferson Marín | En curso: implementado y probado con un SMTP local, falta la bandeja real |
 
 **SCRUM-81 · HU-11 Registro de clientes**
 
@@ -150,12 +151,12 @@ Una historia puede tener todas sus tareas terminadas y quedar parcial, porque ti
 | SCRUM-148 | [BD] Diagrama EER y mapeo actualizados; modelo-datos.md con los cambios C-15 a C-22 | Joaquin Rodriguez | Terminada |
 | SCRUM-149 | [Docs] Pruebas funcionales con evidencia (capturas) de todas las operaciones del Sprint 2 | Joaquin Rodriguez | En curso |
 | SCRUM-150 | [Docs] Historias de usuario y criterios de aceptación del Sprint 2 con su estado | Juan Loaiza | Terminada |
-| SCRUM-151 | [Docs] Sprint Backlog y Product Backlog actualizados; cambios-siguiente-sprint.md (Sprint 2 → 3) | Juan Loaiza | En curso |
-| SCRUM-152 | [Docs] Retrospectiva del Sprint 2 | Juan Loaiza | Por hacer |
-| SCRUM-153 | [Docs] Documento del Sprint 2 | Juan Loaiza | Por hacer |
+| SCRUM-151 | [Docs] Sprint Backlog y Product Backlog actualizados; cambios-siguiente-sprint.md (Sprint 2 → 3) | Juan Loaiza | Terminada |
+| SCRUM-152 | [Docs] Retrospectiva del Sprint 2 | Juan Loaiza | Terminada |
+| SCRUM-153 | [Docs] Documento del Sprint 2 | Juan Loaiza | Terminada |
 | SCRUM-154 | [Docs] Demo interna (6 de noviembre) y guion de la presentación en vivo | Juan Loaiza | En curso |
 | SCRUM-155 | [FE] Limpiezas: sesion.js e importaciones.js al clienteHttp; total y paginación de «Ver todo»; «Recién llegados» por fecha | Juan Loaiza | Terminada |
-| SCRUM-156 | [Docs] Actualizar matriz-permisos.md y arquitectura.md § 11 con los roles y las rutas nuevas | Juan Loaiza | En curso |
+| SCRUM-156 | [Docs] Actualizar matriz-permisos.md y arquitectura.md § 11 con los roles y las rutas nuevas | Juan Loaiza | Terminada |
 
 ## Product Backlog actualizado
 
@@ -164,7 +165,7 @@ Partimos del Product Backlog del 22 de octubre y lo dejamos con el estado de tod
 **Qué cambió durante el sprint:**
 
 - **Se adelantó:** el uso del crédito a favor en el pago, que estaba para el Sprint 3, entró en este sprint (SCRUM-146), incluido el pago parcial.
-- **Entró sin estar planeado:** la búsqueda, los filtros y el orden del catálogo de la tienda (PR #107), que son casi toda HU-06.
+- **Entró sin estar planeado:** la búsqueda, los filtros y el orden del catálogo de la tienda (PR #107), que son casi toda HU-06, y el bloqueo de un correo por 10 minutos después de 5 intentos fallidos de inicio de sesión (PR #142 y PR #145).
 - **Absorbidas por HU-17:** HU-09, PB-23 y la parte del administrador de HU-14.
 
 | ID | Historia / requerimiento | Prioridad | Est. | Sprint | Estado / nota |
@@ -176,7 +177,7 @@ Partimos del Product Backlog del 22 de octubre y lo dejamos con el estado de tod
 | PB-16 | Página de inicio con vitrina y productos por categoría | Media | — | S1 | Terminada. En S2 «Recién llegados» sale por fecha de ingreso (PR #125). |
 | PB-17 | Filtros del catálogo en el panel del administrador | Media | — | S1 | Terminada. |
 | **Sprint 2** | | | | | |
-| HU-02 | Inicio de sesión con permisos por rol (cont.) | Alta (M) | 5 | S1 → S2 | Parcial: el correo de recuperación no se envía de verdad. |
+| HU-02 | Inicio de sesión con permisos por rol (cont.) | Alta (M) | 5 | S1 → S2 | Parcial: el correo de recuperación ya sale por SMTP, pero falta probarlo con una bandeja real. |
 | HU-03 | Registro y clasificación de productos (cont.) | Alta (M) | 5 | S1 → S2 | Terminada. |
 | HU-16 | Familias de productos con importación y margen heredados | Alta (M) | 8 | S2 | Terminada. Nueva (profesor, 13/10). |
 | HU-07 | Ingreso de mercancía en una sola pantalla | Alta (M) | 5 | S2 | Terminada. |
