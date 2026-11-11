@@ -53,8 +53,8 @@ Completa lo que quedó parcial en el Sprint 1 y agrega eliminar, que el PDF del 
 |---|---|---|
 | Dado un producto<br>Cuando edito nombre, descripción, familia, proveedor o imagen desde el panel<br>Entonces el cambio se ve en la tienda | Cumplido | Captura `productos/edicion/modal-edicion-completo.png`, `productos/edicion/producto-actualizado.png`. Prueba «cambia el nombre, la descripción y el proveedor del producto», «mueve el producto a otra familia con el nombre como está guardado». |
 | Dado un producto activo<br>Cuando lo desactivo<br>Entonces desaparece del catálogo público, pero sigue en los reportes y en el panel con la etiqueta «Descontinuado» | Cumplido | Captura `productos/acciones/producto-descontinuado.png`. Prueba «RF-18: descontinuar un producto lo saca de la tienda, la ficha y las familias», «en el panel sale con disponibilidad y etiqueta descontinuado, y se puede filtrar». La pantalla de reportes es de HU-15 (Sprint 3); el producto se conserva en las vistas que la van a alimentar. |
-| Dado un producto con ventas o movimientos<br>Cuando intento eliminarlo<br>Entonces el sistema lo rechaza con un mensaje claro y me ofrece desactivarlo | Cumplido | Captura `productos/acciones/rechazo-por-historial.png`. Prueba «un producto con ventas o movimientos no se borra y pide desactivarlo». |
-| Dado un producto sin historial<br>Cuando lo elimino<br>Entonces desaparece del sistema | Cumplido | Captura `productos/acciones/confirmar-eliminacion.png`, `productos/acciones/producto-eliminado.png`. Prueba «borra un producto sin historial y lo publica para la bitácora». |
+| Dado un producto que está en un pedido sin finalizar<br>Cuando intento eliminarlo<br>Entonces el sistema lo rechaza diciendo en qué pedidos está y me ofrece desactivarlo | Cumplido<br>Ajustado | Prueba «RF-18: un producto en pedidos sin finalizar no se elimina y dice cuáles». Antes también lo impedían sus ventas y movimientos; ahora solo un pedido que no está entregado ni cancelado. La captura `productos/acciones/rechazo-por-historial.png` es de la regla anterior; falta la nueva. |
+| Dado un producto que no está en pedidos sin finalizar<br>Cuando lo elimino<br>Entonces desaparece del panel, de la tienda y de los carritos<br>Y si tiene historial, sus movimientos y ventas se conservan | Cumplido<br>Ajustado | Captura `productos/acciones/confirmar-eliminacion.png`, `productos/acciones/producto-eliminado.png`. Prueba «borra un producto sin historial y lo publica para la bitácora», «RF-18: un producto con historial se elimina conservándolo, y la bitácora lo dice». Con historial queda en estado «eliminado» (migración 023, probada en `database/pruebas/19_producto_eliminado.sql`) y su código no se puede reutilizar. |
 
 ## HU-07 — Ingresar mercancía en una sola pantalla · Terminada
 
@@ -172,6 +172,7 @@ Las tres historias que no venían del Sprint 0, con su estimación. La actualiza
 | HU-17 (antes HU-14) | Solo el administrador cancela un pedido; el cliente ya no puede | Cliente, entrevista 2, punto 2 |
 | HU-17 | El reemplazo de un producto solo se acepta por uno de igual o menor valor, sin cobrar diferencia | Cliente, entrevista 2, punto 4 |
 | HU-11 | «Crear cuenta» está disponible antes de comprar, no solo en la primera compra | PDF del Sprint 2 § b) |
+| HU-03 | Eliminar un producto solo se impide si está en un pedido sin finalizar; su historial ya no lo impide y se conserva | Equipo, 10/11 |
 | HU-10 | El carrito muestra el precio vigente y marca las líneas «fuera de stock» | Profesor, 13/10, § 4 y § 5 |
 | HU-12 | Las existencias se validan al confirmar y el pedido conserva el precio pagado | Profesor, 13/10, § 4 y § 5 |
 
