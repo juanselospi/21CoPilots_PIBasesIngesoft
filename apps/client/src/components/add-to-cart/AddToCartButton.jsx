@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router'
 import './AddToCartButton.css'
+import ConfirmDialog from '../confirm-dialog/ConfirmDialog.jsx'
+import ModalPresence from '../modal-presence/ModalPresence.jsx'
 import { useCarrito } from '../../hooks/useCarrito.js'
 import { useSesion } from '../../hooks/useSesion.js'
 import { avisoDeContrapedido } from '../../utils/carrito.js'
@@ -11,8 +14,8 @@ const CLIENT_ROLE = 'cliente'
 const SUCCESS_TIME = 5000
 
 // Boton "Agregar al carrito" de la tarjeta y de la ficha, con el mensaje de como salio debajo.
-// El visitante va a /acceso y regresa a esta misma pagina despues de entrar; lo que quiso agregar
-// queda guardado y se agrega solo cuando entra.
+// Al visitante primero se le avisa que necesita sesion; si acepta va a /acceso y regresa a esta misma
+// pagina despues de entrar, y lo que quiso agregar queda guardado y se agrega solo cuando entra.
 // `className` es el estilo del boton, cambia entre la tarjeta y la ficha
 function AddToCartButton({ sku, quantity = 1, className, onAdded }) {
     const { usuario, cargando } = useSesion()
@@ -21,6 +24,7 @@ function AddToCartButton({ sku, quantity = 1, className, onAdded }) {
     const location = useLocation()
     const [adding, setAdding] = useState(false)
     const [message, setMessage] = useState(null)
+    const [askingLogIn, setAskingLogIn] = useState(false)
 
     // El mensaje de exito se quita solo, el de error se queda hasta el siguiente intento
     useEffect(() => {
@@ -44,9 +48,7 @@ function AddToCartButton({ sku, quantity = 1, className, onAdded }) {
         olvidarResultadoPendiente()
 
         if (!usuario) {
-            guardarPendiente(sku, quantity)
-            const volver = encodeURIComponent(location.pathname + location.search)
-            navigate(`/acceso?volver=${volver}`)
+            setAskingLogIn(true)
             return
         }
 
@@ -68,6 +70,13 @@ function AddToCartButton({ sku, quantity = 1, className, onAdded }) {
         setAdding(false)
     }
 
+    // Solo si acepta ir a iniciar sesion se guarda el producto para agregarlo despues
+    const goToLogIn = () => {
+        guardarPendiente(sku, quantity)
+        const volver = encodeURIComponent(location.pathname + location.search)
+        navigate(`/acceso?volver=${volver}`)
+    }
+
     return (
         <div className='add-to-cart'>
             <button type='button' className={className} onClick={handleClick} disabled={adding || cargando}>
@@ -79,6 +88,23 @@ function AddToCartButton({ sku, quantity = 1, className, onAdded }) {
                 {shown?.type === 'ok' && <p className='add-to-cart-message add-to-cart-ok'>Agregado al carrito.</p>}
                 {shown?.backorder && <p className='add-to-cart-message add-to-cart-backorder'>{shown.backorder}</p>}
             </div>
+            {/* Va en el body para que ninguna tarjeta o carrusel lo recorte */}
+            {createPortal(
+                <ModalPresence>
+                    {askingLogIn && (
+                        <ConfirmDialog
+                            title='Inicia sesión para comprar'
+                            message='Para agregar productos al carrito necesitas iniciar sesión. Si todavía no tienes cuenta, la puedes crear en el siguiente paso. Este producto se agrega solo cuando entres.'
+                            confirmLabel='Iniciar sesión'
+                            busyLabel='Abriendo…'
+                            cancelLabel='Ahora no'
+                            onConfirm={goToLogIn}
+                            onCancel={() => setAskingLogIn(false)}
+                        />
+                    )}
+                </ModalPresence>,
+                document.body,
+            )}
             {shown?.type === 'error' && (
                 <p className='add-to-cart-message add-to-cart-error' role='alert'>{shown.text}</p>
             )}
