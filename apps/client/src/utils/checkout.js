@@ -52,9 +52,7 @@ export function reglasDePago(metodoPago, hoy = new Date(), { creditoCubreTodo = 
         ...reglas,
         numeroTarjeta: {
             obligatorio: true,
-            // Con o sin espacios o guiones entre los digitos, igual se limpian antes de enviarlo
-            patron: /^(?:\d[ -]?){12,19}$/,
-            mensajePatron: 'Ingrese de 12 a 19 dígitos.',
+            comprobar: problemaDelNumero,
         },
         vencimiento: {
             obligatorio: true,
@@ -83,6 +81,39 @@ export function marcaDeTarjeta(numero = '') {
     if (/^5[1-5]/.test(digitos) || (digitos.length >= 4 && primeros >= 2221 && primeros <= 2720)) return 'mastercard'
     return null
 }
+
+// Cuantos digitos lleva el numero de cada marca. Si no se reconoce se acepta de 12 a 19
+const LARGO_DEL_NUMERO = { visa: 16, mastercard: 16, amex: 15 }
+const LARGO_MINIMO = 12
+const LARGO_MAXIMO = 19
+export const largoDeLaTarjeta = (marca) => LARGO_DEL_NUMERO[marca] ?? LARGO_MAXIMO
+
+// Mientras se escribe: solo digitos, hasta los que lleva la marca y en grupos de 4
+export function formatoTarjeta(texto) {
+    const digitos = soloDigitos(texto)
+    return digitos.slice(0, largoDeLaTarjeta(marcaDeTarjeta(digitos))).replace(/(\d{4})(?=\d)/g, '$1 ')
+}
+
+// Cuantos caracteres ocupa ya formateado, con los espacios entre grupos
+export const largoConEspacios = (marca) => {
+    const digitos = largoDeLaTarjeta(marca)
+    return digitos + Math.ceil(digitos / 4) - 1
+}
+
+export function problemaDelNumero(numero) {
+    const digitos = soloDigitos(numero)
+    if (/[^\d\s-]/.test(numero)) return 'El número de la tarjeta solo lleva dígitos.'
+    const marca = marcaDeTarjeta(digitos)
+    const largo = LARGO_DEL_NUMERO[marca]
+    if (largo && digitos.length !== largo) return `Las tarjetas ${nombreDeMarca(marca)} llevan ${largo} dígitos.`
+    if (!largo && (digitos.length < LARGO_MINIMO || digitos.length > LARGO_MAXIMO)) {
+        return `Ingrese de ${LARGO_MINIMO} a ${LARGO_MAXIMO} dígitos.`
+    }
+    return null
+}
+
+// El CVV solo acepta digitos y no deja escribir mas de los que lleva la marca
+export const formatoCvv = (texto, marca) => soloDigitos(texto).slice(0, largoDelCvv(marca) ?? 4)
 
 // Cuantos digitos lleva el CVV: American Express trae 4 al frente, Visa y Mastercard 3 atras
 export const largoDelCvv = (marca) => (marca === 'amex' ? 4 : marca ? 3 : null)
