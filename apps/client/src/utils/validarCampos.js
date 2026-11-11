@@ -47,9 +47,10 @@ export function validarCampos(valores, definicion) {
             errores[campo] = reglas.mensajeIgualA ?? 'Los valores no coinciden.'
         }
 
-        // comprobar: para lo que no se puede revisar con un patron, devuelve el mensaje o null si esta bien
+        // comprobar: para lo que no se puede revisar con un patron, devuelve el mensaje o null si esta bien.
+        // Recibe tambien los demas valores por si depende de otro campo
         if (!errores[campo] && reglas.comprobar) {
-            const problema = reglas.comprobar(valor)
+            const problema = reglas.comprobar(valor, valores)
             if (problema) errores[campo] = problema
         }
     }

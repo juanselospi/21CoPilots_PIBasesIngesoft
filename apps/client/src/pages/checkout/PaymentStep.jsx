@@ -2,7 +2,8 @@ import { useEffect, useId, useState } from 'react'
 import { priceFormat } from '../../components/product-card/productFormat.js'
 import { useFormulario } from '../../hooks/useFormulario.js'
 import {
-    METODOS_DE_PAGO, camposDelPago, creditoQueSeUsa, formatoVencimiento, reglasDePago, restantePorPagar,
+    METODOS_DE_PAGO, camposDelPago, creditoQueSeUsa, formatoVencimiento, largoDelCvv, marcaDeTarjeta, nombreDeMarca,
+    reglasDePago, restantePorPagar,
 } from '../../utils/checkout.js'
 import StepTitle from './StepTitle.jsx'
 
@@ -33,6 +34,10 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
         // Solo al entrar al paso
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
+
+    // La marca se reconoce mientras se escribe el numero y cambia cuantos digitos lleva el CVV
+    const brand = marcaDeTarjeta(valores.numeroTarjeta)
+    const cvvLength = largoDelCvv(brand)
 
     const selectMethod = (metodo) => {
         cambiarCampo('metodoPago', metodo)
@@ -117,7 +122,11 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
                         <>
                             <p className='checkout-emulated'>Pago emulado: no se hace ningún cobro. No uses los datos de una tarjeta real.</p>
 
-                            {cardField('numeroTarjeta', 'Número de tarjeta', { placeholder: '0000 0000 0000 0000', maxLength: 23 })}
+                            {cardField('numeroTarjeta', 'Número de tarjeta', {
+                                placeholder: '0000 0000 0000 0000',
+                                maxLength: 23,
+                                hint: brand && `Tarjeta ${nombreDeMarca(brand)}`,
+                            })}
 
                             <div className='checkout-row'>
                                 {cardField('vencimiento', 'Vencimiento', {
@@ -125,7 +134,11 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
                                     maxLength: 5,
                                     format: formatoVencimiento,
                                 })}
-                                {cardField('cvv', 'CVV', { type: 'password', placeholder: '123', maxLength: 4 })}
+                                {cardField('cvv', 'CVV', {
+                                    type: 'password',
+                                    placeholder: cvvLength === 4 ? '1234' : '123',
+                                    maxLength: cvvLength ?? 4,
+                                })}
                             </div>
                         </>
                     )}
@@ -141,7 +154,7 @@ function PaymentStep({ values, saldoCredito = 0, total, serverError, onBack, onC
 }
 
 // `format` deja el texto como tiene que verse mientras se escribe, por ejemplo la barra del vencimiento
-function CardField({ label, value, onChange, inputAttributes, error, errorId, type = 'text', format, ...props }) {
+function CardField({ label, value, onChange, inputAttributes, error, errorId, hint, type = 'text', format, ...props }) {
     const inputId = useId()
 
     return (
@@ -158,6 +171,7 @@ function CardField({ label, value, onChange, inputAttributes, error, errorId, ty
                 onChange={(event) => onChange(format ? format(event.target.value) : event.target.value)}
             />
             {error && <p id={errorId} className='checkout-field-error'>{error}</p>}
+            {!error && hint && <p className='checkout-hint'>{hint}</p>}
         </div>
     )
 }
